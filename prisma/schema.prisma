@@ -1,0 +1,307 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================
+// AUTHENTICATION & AUTHORIZATION
+// ============================
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String   // bcrypt hashed
+  avatar    String?
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  articles Article[] @relation("ArticleAuthor")
+  pages    Page[]    @relation("PageAuthor")
+
+  @@index([roleId])
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  name        String       @unique // "Super Admin", "Admin", "Editor", "Viewer"
+  description String?
+  permissions Permission[]
+  users       User[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Permission {
+  id     String @id @default(cuid())
+  name   String @unique // e.g., "page.create", "article.delete"
+  module String // e.g., "page", "article", "category"
+  action String // e.g., "create", "read", "update", "delete"
+  roles  Role[]
+
+  @@index([module])
+}
+
+// ============================
+// CONTENT MANAGEMENT
+// ============================
+
+model Page {
+  id              String     @id @default(cuid())
+  title           String
+  slug            String     @unique
+  content         String     @db.Text // HTML content from TinyMCE
+  excerpt         String?    @db.Text
+  featuredImage   String?
+  status          PageStatus @default(DRAFT)
+  sortOrder       Int        @default(0)
+  authorId        String
+  author          User       @relation("PageAuthor", fields: [authorId], references: [id])
+  metaTitle       String?
+  metaDescription String?    @db.Text
+  navigations     Navigation[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([authorId])
+  @@index([status])
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Article {
+  id              String        @id @default(cuid())
+  title           String
+  slug            String        @unique
+  content         String        @db.Text // HTML content from TinyMCE
+  excerpt         String?       @db.Text
+  featuredImage   String?       // Cover image / Gambar sampul
+  status          ArticleStatus @default(DRAFT)
+  publishedAt     DateTime?
+  authorId        String
+  author          User          @relation("ArticleAuthor", fields: [authorId], references: [id])
+  categoryId      String?
+  category        Category?     @relation(fields: [categoryId], references: [id])
+  tags            Tag[]
+  viewCount       Int           @default(0)
+  metaTitle       String?
+  metaDescription String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([publishedAt])
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?   @db.Text
+  color       String?   // Hex color for category badge
+  articles    Article[]
+  navigations Navigation[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Tag {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  articles Article[]
+}
+
+// ============================
+// NAVIGATION
+// ============================
+
+model Navigation {
+  id           String       @id @default(cuid())
+  label        String
+  type         NavType      // LINK, PAGE, CATEGORY, EXTERNAL
+  url          String?      // for EXTERNAL type
+  pageId       String?
+  page         Page?        @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  categoryId   String?
+  category     Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  parentId     String?
+  parent       Navigation?  @relation("NavigationTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Navigation[] @relation("NavigationTree")
+  sortOrder    Int          @default(0)
+  location     NavLocation  @default(HEADER)
+  isActive     Boolean      @default(true)
+  openInNewTab Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([parentId])
+  @@index([location])
+}
+
+enum NavType {
+  LINK
+  PAGE
+  CATEGORY
+  EXTERNAL
+}
+
+enum NavLocation {
+  HEADER
+  FOOTER
+}
+
+// ============================
+// LANDING PAGE APPEARANCE
+// ============================
+
+model HeroSlide {
+  id              String   @id @default(cuid())
+  title           String
+  subtitle        String?  @db.Text
+  backgroundImage String
+  ctaText         String?
+  ctaLink         String?
+  sortOrder       Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  icon        String   // Lucide icon name
+  link        String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SocialMedia {
+  id        String   @id @default(cuid())
+  platform  String   // "instagram", "facebook", "twitter", "youtube"
+  username  String
+  url       String
+  embedCode String?  @db.Text // For Instagram embed
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SiteSettings {
+  id              String   @id @default(cuid())
+  siteName        String   @default("BIAS RISTEK")
+  siteDescription String?  @db.Text
+  logo            String?
+  favicon         String?
+  contactEmail    String?
+  contactPhone    String?
+  address         String?  @db.Text
+  newsPerPage     Int      @default(6)
+  heroEnabled     Boolean  @default(true)
+  serviceEnabled  Boolean  @default(true)
+  newsEnabled     Boolean  @default(true)
+  socialEnabled   Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AdminMenu {
+  id         String      @id @default(cuid())
+  label      String
+  icon       String?     // Lucide icon name
+  url        String
+  parentId   String?
+  parent     AdminMenu?  @relation("AdminMenuTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children   AdminMenu[] @relation("AdminMenuTree")
+  sortOrder  Int         @default(0)
+  isActive   Boolean     @default(true)
+  permission String?     // Required permission to see this menu
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([parentId])
+}
+
+model StatCounter {
+  id        String   @id @default(cuid())
+  value     String   // e.g. "2.500+", "180+", "98%"
+  label     String   // e.g. "Alumni Peneliti", "Artikel Scopus & SINTA"
+  icon      String?  // Lucide icon name
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LearningStep {
+  id          String   @id @default(cuid())
+  stepNumber  Int      // 1, 2, 3, 4
+  title       String
+  description String   @db.Text
+  icon        String?  // Lucide icon name
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Advantage {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  icon        String   // Lucide icon name
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Testimonial {
+  id          String   @id @default(cuid())
+  name        String
+  role        String   // e.g. "Mahasiswa S2 / Peneliti", "Dosen Universitas X"
+  institution String?  // e.g. "Universitas Lambung Mangkurat"
+  content     String   @db.Text
+  avatar      String?  // Image URL
+  rating      Int      @default(5)
+  achievement String?  // e.g. "Tembus Scopus Q2", "Lulus Tesis Nilai A"
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String   @db.Text
+  category  String?  // e.g. "Pendaftaran", "Bimbingan", "Sertifikat"
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

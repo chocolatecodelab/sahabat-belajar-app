@@ -1,0 +1,316 @@
+@import "tailwindcss";
+
+/* ============================
+   DESIGN TOKENS — BIAS RISTEK
+   Based on DESIGN.md "Academic Innovation"
+   ============================ */
+
+@theme inline {
+  /* Primary (Deep Research Blue) */
+  --color-primary: #001847;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #0b2c6b;
+  --color-on-primary-container: #7d96db;
+  --color-inverse-primary: #b2c5ff;
+
+  /* Secondary (Scholastic Gold) */
+  --color-secondary: #7a5900;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #fdbc13;
+  --color-on-secondary-container: #6b4d00;
+
+  /* Tertiary (Innovation Red) */
+  --color-tertiary: #340f00;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #561e00;
+  --color-on-tertiary-container: #d6825a;
+
+  /* Error */
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  /* Surface */
+  --color-surface: #f8f9ff;
+  --color-surface-dim: #ccdbf3;
+  --color-surface-bright: #f8f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container: #e6eeff;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d5e3fc;
+  --color-on-surface: #0d1c2e;
+  --color-on-surface-variant: #444650;
+  --color-inverse-surface: #233144;
+  --color-inverse-on-surface: #eaf1ff;
+
+  /* Outline */
+  --color-outline: #747781;
+  --color-outline-variant: #c4c6d2;
+
+  /* Fixed Colors */
+  --color-primary-fixed: #dae2ff;
+  --color-primary-fixed-dim: #b2c5ff;
+  --color-on-primary-fixed: #001848;
+  --color-on-primary-fixed-variant: #294483;
+  --color-secondary-fixed: #ffdea3;
+  --color-secondary-fixed-dim: #fdbc13;
+  --color-on-secondary-fixed: #261900;
+  --color-on-secondary-fixed-variant: #5d4200;
+  --color-tertiary-fixed: #ffdbcc;
+  --color-tertiary-fixed-dim: #ffb695;
+  --color-on-tertiary-fixed: #351000;
+  --color-on-tertiary-fixed-variant: #743413;
+
+  /* Background & Foreground */
+  --color-background: #f8f9ff;
+  --color-on-background: #0d1c2e;
+  --color-foreground: #0d1c2e;
+
+  /* Typography */
+  --font-heading: "Plus Jakarta Sans", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+/* ============================
+   BASE STYLES
+   ============================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #f8f9ff;
+  color: #0d1c2e;
+  font-family: var(--font-body, "Inter", sans-serif);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================
+   TYPOGRAPHY UTILITY CLASSES
+   ============================ */
+
+.text-display-lg {
+  font-family: var(--font-heading, "Plus Jakarta Sans", sans-serif);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.text-display-md {
+  font-family: var(--font-heading, "Plus Jakarta Sans", sans-serif);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.text-headline-lg {
+  font-family: var(--font-heading, "Plus Jakarta Sans", sans-serif);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.text-headline-lg-mobile {
+  font-family: var(--font-heading, "Plus Jakarta Sans", sans-serif);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.text-headline-md {
+  font-family: var(--font-heading, "Plus Jakarta Sans", sans-serif);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.text-body-lg {
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.text-body-md {
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.text-body-sm {
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.text-label-lg {
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.text-label-md {
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* ============================
+   ELEVATION / SHADOW SYSTEM
+   ============================ */
+
+.elevation-0 {
+  background-color: #f8f9ff;
+}
+
+.elevation-1 {
+  background-color: #ffffff;
+  box-shadow: 0px 4px 20px rgba(11, 44, 107, 0.05);
+}
+
+.elevation-2 {
+  background-color: #ffffff;
+  box-shadow: 0px 10px 30px rgba(11, 44, 107, 0.10);
+}
+
+/* ============================
+   FOCUS RING (Inputs)
+   ============================ */
+
+.focus-ring:focus {
+  outline: none;
+  border-color: #001847;
+  box-shadow: 0 0 0 3px rgba(0, 24, 71, 0.1);
+}
+
+/* ============================
+   SCROLLBAR STYLING
+   ============================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c4c6d2;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #747781;
+}
+
+/* ============================
+   TINYMCE CONTENT STYLES
+   ============================ */
+
+.prose-content {
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: 16px;
+  line-height: 1.8;
+  color: #0d1c2e;
+}
+
+.prose-content h1,
+.prose-content h2,
+.prose-content h3,
+.prose-content h4,
+.prose-content h5,
+.prose-content h6 {
+  font-family: var(--font-heading, "Plus Jakarta Sans", sans-serif);
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: #001847;
+}
+
+.prose-content h1 { font-size: 2em; }
+.prose-content h2 { font-size: 1.5em; }
+.prose-content h3 { font-size: 1.25em; }
+
+.prose-content p {
+  margin-bottom: 1em;
+}
+
+.prose-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 1.5em 0;
+}
+
+.prose-content a {
+  color: #0b2c6b;
+  text-decoration: underline;
+}
+
+.prose-content blockquote {
+  border-left: 4px solid #fdbc13;
+  padding-left: 1em;
+  margin: 1.5em 0;
+  color: #444650;
+  font-style: italic;
+}
+
+.prose-content ul,
+.prose-content ol {
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.prose-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+}
+
+.prose-content th,
+.prose-content td {
+  border: 1px solid #c4c6d2;
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.prose-content th {
+  background: #e6eeff;
+  font-weight: 600;
+}
+
+.prose-content pre {
+  background: #233144;
+  color: #eaf1ff;
+  padding: 1em;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1.5em 0;
+}
+
+.prose-content code {
+  background: #e6eeff;
+  padding: 0.15em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+.prose-content pre code {
+  background: transparent;
+  padding: 0;
+}
