@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Save, ArrowLeft, AlertCircle } from "lucide-react";
 import TinyEditor from "@/components/admin/TinyEditor";
 import CoverImageUpload from "@/components/admin/CoverImageUpload";
+import AiArticleAssistant from "@/components/admin/AiArticleAssistant";
 import slugify from "slugify";
 import { createArticle, updateArticle } from "@/actions/berita";
 
@@ -175,6 +176,27 @@ export default function ArticleForm({ initialData, categories, action }: Article
 
         {/* Sidebar */}
         <div className="space-y-5">
+          {/* AI Research Copilot Assistant */}
+          <AiArticleAssistant
+            title={title}
+            content={content}
+            onApplySeo={({ excerpt: newExcerpt, metaTitle: newMetaTitle, metaDescription: newMetaDescription }) => {
+              if (newExcerpt) setExcerpt(newExcerpt);
+              if (newMetaTitle) setMetaTitle(newMetaTitle);
+              if (newMetaDescription) setMetaDescription(newMetaDescription);
+            }}
+            onApplyTitle={(newTitle) => {
+              handleTitleChange(newTitle);
+            }}
+            onInsertContent={(html, replace) => {
+              if (replace) {
+                setContent(html);
+              } else {
+                setContent((prev) => (prev ? prev + "\n" + html : html));
+              }
+            }}
+          />
+
           {/* Category */}
           <div className="elevation-1 rounded-2xl p-5">
             <label className="text-label-lg block mb-2" style={{ color: "var(--color-on-surface-variant)" }}>Kategori</label>

@@ -57,3 +57,12 @@ export function getInitials(name: string): string {
 export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/**
+ * Strips HTML tags and returns plain text
+ */
+export function cleanHtmlToText(html: string): string {
+  if (!html) return "";
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+

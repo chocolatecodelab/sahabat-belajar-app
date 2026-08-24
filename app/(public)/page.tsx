@@ -10,12 +10,13 @@ import SosialMediaSection from "@/components/public/SosialMediaSection";
 import FaqSection from "@/components/public/FaqSection";
 import CtaSection from "@/components/public/CtaSection";
 import { getStats, getLearningSteps, getAdvantages, getTestimonials, getFaqs } from "@/actions/tampilan";
+import { getCourses, type CourseItem } from "@/actions/kursus";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   let slides: any[] = [];
-  let services: any[] = [];
+  let courses: CourseItem[] = [];
   let settings: any = null;
   let socialMedia: any[] = [];
   let articles: any[] = [];
@@ -28,7 +29,7 @@ export default async function HomePage() {
   try {
     const [
       slidesRes,
-      servicesRes,
+      coursesData,
       settingsRes,
       socialRes,
       statsData,
@@ -38,7 +39,7 @@ export default async function HomePage() {
       faqsData,
     ] = await Promise.all([
       supabaseAdmin.from("HeroSlide").select("*").eq("isActive", true).order("sortOrder", { ascending: true }),
-      supabaseAdmin.from("Service").select("*").eq("isActive", true).order("sortOrder", { ascending: true }),
+      getCourses({ activeOnly: true }),
       supabaseAdmin.from("SiteSettings").select("*").limit(1).maybeSingle(),
       supabaseAdmin.from("SocialMedia").select("*").eq("isActive", true).order("sortOrder", { ascending: true }),
       getStats(),
@@ -49,7 +50,7 @@ export default async function HomePage() {
     ]);
 
     slides = slidesRes.data || [];
-    services = servicesRes.data || [];
+    courses = coursesData || [];
     settings = settingsRes.data;
     socialMedia = socialRes.data || [];
     stats = (statsData || []).filter((s: any) => s.isActive);
@@ -96,7 +97,7 @@ export default async function HomePage() {
       <StatsSection stats={stats} />
 
       {/* 3. Program Kursus & Mentorship */}
-      {settings?.serviceEnabled !== false && <LayananSection services={services} />}
+      {settings?.serviceEnabled !== false && <LayananSection courses={courses} />}
 
       {/* 4. Alur Belajar & Roadmap Bimbingan */}
       <AlurBelajarSection steps={learningSteps} />

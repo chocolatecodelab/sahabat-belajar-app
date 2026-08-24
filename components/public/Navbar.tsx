@@ -105,6 +105,13 @@ export default function Navbar({ siteName, navigations }: NavbarProps) {
             })}
 
             <Link
+              href="/kursus"
+              className="px-3.5 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-blue-900 hover:bg-gray-50 transition-colors"
+            >
+              Program Kursus
+            </Link>
+
+            <Link
               href="/berita"
               className="px-3.5 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-blue-900 hover:bg-gray-50 transition-colors"
             >
@@ -139,9 +146,17 @@ export default function Navbar({ siteName, navigations }: NavbarProps) {
           <Link
             href="/"
             onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-gray-800 hover:bg-gray-50"
+            className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
           >
             Beranda
+          </Link>
+
+          <Link
+            href="/kursus"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Program Kursus
           </Link>
 
           {navigations.map((item) => (

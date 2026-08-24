@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Save, ArrowLeft, AlertCircle } from "lucide-react";
 import TinyEditor from "@/components/admin/TinyEditor";
 import CoverImageUpload from "@/components/admin/CoverImageUpload";
+import AiArticleAssistant from "@/components/admin/AiArticleAssistant";
 import slugify from "slugify";
 import { createPage, updatePage } from "@/actions/halaman";
 
@@ -161,6 +162,27 @@ export default function PageForm({ initialData, action }: PageFormProps) {
 
         {/* Sidebar */}
         <div className="space-y-5">
+          {/* AI Copilot */}
+          <AiArticleAssistant
+            title={title}
+            content={content}
+            onApplySeo={({ excerpt: newExcerpt, metaTitle: newMetaTitle, metaDescription: newMetaDescription }) => {
+              if (newExcerpt) setExcerpt(newExcerpt);
+              if (newMetaTitle) setMetaTitle(newMetaTitle);
+              if (newMetaDescription) setMetaDescription(newMetaDescription);
+            }}
+            onApplyTitle={(newTitle) => {
+              handleTitleChange(newTitle);
+            }}
+            onInsertContent={(html, replace) => {
+              if (replace) {
+                setContent(html);
+              } else {
+                setContent((prev) => (prev ? prev + "\n" + html : html));
+              }
+            }}
+          />
+
           {/* Featured Image */}
           <div className="elevation-1 rounded-2xl p-5">
             <label className="text-label-lg block mb-3" style={{ color: "var(--color-on-surface-variant)" }}>Gambar Utama</label>

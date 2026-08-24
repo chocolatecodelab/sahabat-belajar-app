@@ -399,17 +399,38 @@ CREATE TABLE IF NOT EXISTS "AdminMenu" (
 );
 CREATE INDEX IF NOT EXISTS "AdminMenu_parentId_idx" ON "AdminMenu"("parentId");
 
+-- MediaFile (Pustaka Media Terpusat)
+CREATE TABLE IF NOT EXISTS "MediaFile" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "filename" TEXT NOT NULL,
+    "originalName" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "mimeType" TEXT NOT NULL,
+    "size" INTEGER NOT NULL,
+    "folder" TEXT NOT NULL DEFAULT 'general',
+    "uploadedById" TEXT REFERENCES "User"("id") ON DELETE SET NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "MediaFile_folder_idx" ON "MediaFile"("folder");
+CREATE INDEX IF NOT EXISTS "MediaFile_mimeType_idx" ON "MediaFile"("mimeType");
+CREATE INDEX IF NOT EXISTS "MediaFile_uploadedById_idx" ON "MediaFile"("uploadedById");
+CREATE INDEX IF NOT EXISTS "MediaFile_createdAt_idx" ON "MediaFile"("createdAt");
+
 -- Default Admin Menu Items
 INSERT INTO "AdminMenu" ("id", "label", "icon", "url", "parentId", "sortOrder", "isActive", "permission", "updatedAt")
 VALUES
   ('menu_dashboard', 'Dashboard', 'LayoutDashboard', '/dashboard', NULL, 1, true, NULL, NOW()),
-  ('menu_halaman', 'Halaman', 'FileText', '/dashboard/halaman', NULL, 2, true, 'page.read', NOW()),
-  ('menu_berita', 'Berita', 'Newspaper', '/dashboard/berita', NULL, 3, true, 'article.read', NOW()),
-  ('menu_kategori', 'Kategori', 'FolderOpen', '/dashboard/kategori', NULL, 4, true, 'category.read', NOW()),
-  ('menu_navigasi', 'Navigasi', 'Navigation', '/dashboard/navigasi', NULL, 5, true, 'navigation.read', NOW()),
-  ('menu_tampilan', 'Tampilan', 'Palette', '#', NULL, 6, true, 'appearance.read', NOW()),
+  ('menu_kursus', 'Program Kursus', 'BookOpen', '/dashboard/kursus', NULL, 2, true, 'page.read', NOW()),
+  ('menu_pendaftaran', 'Pendaftaran & Transaksi', 'GraduationCap', '/dashboard/pendaftaran', NULL, 3, true, 'page.read', NOW()),
+  ('menu_berita', 'Berita & Publikasi', 'Newspaper', '/dashboard/berita', NULL, 4, true, 'article.read', NOW()),
+  ('menu_media', 'Pustaka Media', 'Image', '/dashboard/media', NULL, 5, true, 'page.read', NOW()),
+  ('menu_halaman', 'Halaman Statis', 'FileText', '/dashboard/halaman', NULL, 6, true, 'page.read', NOW()),
+  ('menu_kategori', 'Kategori', 'FolderOpen', '/dashboard/kategori', NULL, 7, true, 'category.read', NOW()),
+  ('menu_navigasi', 'Navigasi', 'Navigation', '/dashboard/navigasi', NULL, 8, true, 'navigation.read', NOW()),
+  ('menu_tampilan', 'Tampilan', 'Palette', '#', NULL, 9, true, 'appearance.read', NOW()),
   ('menu_hero', 'Hero Section', 'Image', '/dashboard/tampilan/hero', 'menu_tampilan', 1, true, 'appearance.read', NOW()),
-  ('menu_layanan', 'Program Kursus', 'Heart', '/dashboard/tampilan/layanan', 'menu_tampilan', 2, true, 'appearance.read', NOW()),
+  ('menu_layanan', 'Program Kursus Beranda', 'Heart', '/dashboard/tampilan/layanan', 'menu_tampilan', 2, true, 'appearance.read', NOW()),
   ('menu_stat', 'Statistik Alumni', 'Users', '/dashboard/tampilan/statistik', 'menu_tampilan', 3, true, 'appearance.read', NOW()),
   ('menu_alur', 'Alur Belajar', 'Link', '/dashboard/tampilan/alur-belajar', 'menu_tampilan', 4, true, 'appearance.read', NOW()),
   ('menu_keunggulan', 'Keunggulan', 'Shield', '/dashboard/tampilan/keunggulan', 'menu_tampilan', 5, true, 'appearance.read', NOW()),
@@ -417,10 +438,11 @@ VALUES
   ('menu_faq', 'FAQ', 'FileText', '/dashboard/tampilan/faq', 'menu_tampilan', 7, true, 'appearance.read', NOW()),
   ('menu_tampilan_berita', 'Pengaturan Berita', 'Rss', '/dashboard/tampilan/berita', 'menu_tampilan', 8, true, 'appearance.read', NOW()),
   ('menu_sosmed', 'Sosial Media', 'Share2', '/dashboard/tampilan/sosial-media', 'menu_tampilan', 9, true, 'appearance.read', NOW()),
-  ('menu_pengguna', 'Pengguna', 'Users', '/dashboard/pengguna', NULL, 7, true, 'user.read', NOW()),
-  ('menu_role', 'Role & Akses', 'Shield', '/dashboard/pengguna/role', NULL, 8, true, 'role.read', NOW()),
-  ('menu_admin_menu', 'Menu Admin', 'Menu', '/dashboard/pengguna/menu', NULL, 9, true, 'settings.read', NOW()),
-  ('menu_pengaturan', 'Pengaturan', 'Settings', '/dashboard/pengaturan', NULL, 10, true, 'settings.read', NOW())
+  ('menu_pengguna', 'Pengguna', 'Users', '/dashboard/pengguna', NULL, 10, true, 'user.read', NOW()),
+  ('menu_role', 'Role & Akses', 'Shield', '/dashboard/pengguna/role', NULL, 11, true, 'role.read', NOW()),
+  ('menu_admin_menu', 'Menu Admin', 'Menu', '/dashboard/pengguna/menu', NULL, 12, true, 'settings.read', NOW()),
+  ('menu_pengaturan_pembayaran', 'Pengaturan Pembayaran', 'CreditCard', '/dashboard/pengaturan/pembayaran', NULL, 13, true, 'settings.read', NOW()),
+  ('menu_pengaturan', 'Pengaturan Umum', 'Settings', '/dashboard/pengaturan', NULL, 14, true, 'settings.read', NOW())
 ON CONFLICT ("id") DO UPDATE SET
   "label" = EXCLUDED."label",
   "icon" = EXCLUDED."icon",
@@ -430,5 +452,92 @@ ON CONFLICT ("id") DO UPDATE SET
   "isActive" = EXCLUDED."isActive",
   "permission" = EXCLUDED."permission",
   "updatedAt" = NOW();
+
+-- Course (Katalog Program Kursus & Mentorship)
+CREATE TABLE IF NOT EXISTS "Course" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "title" TEXT NOT NULL,
+    "slug" TEXT NOT NULL UNIQUE,
+    "tagline" TEXT,
+    "description" TEXT NOT NULL,
+    "category" TEXT NOT NULL,
+    "price" INTEGER NOT NULL DEFAULT 0,
+    "salePrice" INTEGER,
+    "isFree" BOOLEAN NOT NULL DEFAULT false,
+    "level" TEXT NOT NULL DEFAULT 'Semua Jenjang',
+    "deliveryMode" TEXT NOT NULL DEFAULT 'Live Zoom & Mentorship',
+    "batchNumber" TEXT,
+    "startDate" TEXT,
+    "duration" TEXT,
+    "maxQuota" INTEGER NOT NULL DEFAULT 30,
+    "currentEnrolled" INTEGER NOT NULL DEFAULT 0,
+    "featuredImage" TEXT,
+    "mentorName" TEXT NOT NULL DEFAULT 'Dr. Ir. Tim Pakar Riset',
+    "mentorTitle" TEXT NOT NULL DEFAULT 'Senior Researcher & Reviewer Scopus Q1',
+    "mentorAvatar" TEXT,
+    "curriculum" TEXT,
+    "benefits" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'OPEN',
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "Course_category_idx" ON "Course"("category");
+CREATE INDEX IF NOT EXISTS "Course_status_idx" ON "Course"("status");
+CREATE INDEX IF NOT EXISTS "Course_isActive_idx" ON "Course"("isActive");
+
+-- CourseRegistration (Transaksi & Pendaftaran Kelas)
+CREATE TABLE IF NOT EXISTS "CourseRegistration" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "invoiceNumber" TEXT NOT NULL UNIQUE,
+    "courseId" TEXT NOT NULL REFERENCES "Course"("id") ON DELETE CASCADE,
+    "courseTitle" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
+    "institution" TEXT NOT NULL,
+    "educationLevel" TEXT NOT NULL,
+    "researchTopic" TEXT,
+    "totalAmount" INTEGER NOT NULL DEFAULT 0,
+    "uniqueCode" INTEGER NOT NULL DEFAULT 0,
+    "paymentMethod" TEXT NOT NULL DEFAULT 'QRIS',
+    "bankName" TEXT,
+    "paymentProof" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'PENDING_PAYMENT',
+    "adminNotes" TEXT,
+    "verifiedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "CourseRegistration_courseId_idx" ON "CourseRegistration"("courseId");
+CREATE INDEX IF NOT EXISTS "CourseRegistration_status_idx" ON "CourseRegistration"("status");
+CREATE INDEX IF NOT EXISTS "CourseRegistration_createdAt_idx" ON "CourseRegistration"("createdAt");
+
+-- PaymentAccount (Rekening Bank & QRIS)
+CREATE TABLE IF NOT EXISTS "PaymentAccount" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "type" TEXT NOT NULL DEFAULT 'BANK',
+    "bankName" TEXT NOT NULL,
+    "accountNumber" TEXT,
+    "accountHolder" TEXT,
+    "qrisImage" TEXT,
+    "instructions" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Seed Default Payment Accounts
+INSERT INTO "PaymentAccount" ("id", "type", "bankName", "accountNumber", "accountHolder", "instructions", "sortOrder", "isActive", "updatedAt")
+VALUES
+  ('pay_qris', 'QRIS', 'QRIS BIAS RISTEK (Semua E-Wallet & M-Banking)', NULL, 'BIAS RISTEK OFFICIAL', 'Scan kode QRIS menggunakan GoPay, OVO, Dana, ShopeePay, atau Mobile Banking BCA/Mandiri/BRI/BSI.', 1, true, NOW()),
+  ('pay_bca', 'BANK', 'Bank Central Asia (BCA)', '8392019283', 'BIAS RISTEK INDONESIA', 'Transfer tepat hingga 3 digit terakhir kode unik verifikasi.', 2, true, NOW()),
+  ('pay_mandiri', 'BANK', 'Bank Mandiri', '1320084920194', 'BIAS RISTEK INDONESIA', 'Transfer tepat hingga 3 digit terakhir kode unik verifikasi.', 3, true, NOW()),
+  ('pay_bsi', 'BANK', 'Bank Syariah Indonesia (BSI)', '7182930491', 'BIAS RISTEK INDONESIA', 'Transfer tepat hingga 3 digit terakhir kode unik verifikasi.', 4, true, NOW())
+ON CONFLICT ("id") DO NOTHING;
+
+
 
 

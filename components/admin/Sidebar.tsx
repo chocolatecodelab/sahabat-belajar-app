@@ -36,6 +36,7 @@ import {
   HelpCircle,
   MessageSquare,
   Trophy,
+  CreditCard,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useAdminSidebar } from "./AdminLayoutClient";
@@ -69,6 +70,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   HelpCircle: <HelpCircle size={18} />,
   MessageSquare: <MessageSquare size={18} />,
   Trophy: <Trophy size={18} />,
+  CreditCard: <CreditCard size={18} />,
 };
 
 interface SidebarProps {

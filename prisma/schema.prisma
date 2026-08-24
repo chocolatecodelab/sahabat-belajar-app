@@ -22,8 +22,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  articles Article[] @relation("ArticleAuthor")
-  pages    Page[]    @relation("PageAuthor")
+  articles   Article[]   @relation("ArticleAuthor")
+  pages      Page[]      @relation("PageAuthor")
+  mediaFiles MediaFile[]
 
   @@index([roleId])
 }
@@ -304,4 +305,126 @@ model Faq {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ============================
+// MEDIA & ASSET MANAGEMENT
+// ============================
+
+model MediaFile {
+  id           String   @id @default(cuid())
+  filename     String   // Sanitized filename on disk
+  originalName String   // Original upload name
+  url          String   // Public URL e.g. "/uploads/covers/xxx.webp"
+  mimeType     String   // e.g. "image/webp", "image/png", "application/pdf"
+  size         Int      // Size in bytes
+  folder       String   @default("general") // "covers", "pages", "general", "avatars", "documents"
+  uploadedById String?
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([folder])
+  @@index([mimeType])
+  @@index([uploadedById])
+  @@index([createdAt])
+}
+
+// ============================
+// ACADEMIC COURSE & ENROLLMENT
+// ============================
+
+model Course {
+  id              String         @id @default(cuid())
+  title           String
+  slug            String         @unique
+  tagline         String?        // e.g. "Panduan Tembus Scopus Q1/Q2 Dari Nol"
+  description     String         @db.Text // Full overview HTML
+  category        String         // "Scopus & SINTA", "SmartPLS & SEM", "SPSS & Statistik", "Bimbingan Tesis", "Metodologi"
+  price           Int            @default(0) // Normal price in IDR
+  salePrice       Int?           // Discounted promo price
+  isFree          Boolean        @default(false)
+  level           String         @default("Semua Jenjang") // "Pemula", "Menengah", "Lanjutan", "Semua Jenjang"
+  deliveryMode    String         @default("Live Zoom & Mentorship") // "Live Zoom", "1-on-1 Mentorship", "Video On-Demand"
+  batchNumber     String?        // e.g. "Batch 14"
+  startDate       String?        // e.g. "15 September 2026"
+  duration        String?        // e.g. "4 Minggu (8 Sesi Bimbingan)"
+  maxQuota        Int            @default(30)
+  currentEnrolled Int            @default(0)
+  featuredImage   String?        // Cover image URL
+  mentorName      String         @default("Dr. Ir. Tim Pakar Riset")
+  mentorTitle     String         @default("Senior Researcher & Reviewer Scopus Q1")
+  mentorAvatar    String?
+  curriculum      String?        @db.Text // JSON or bullet points of syllabus
+  benefits        String?        @db.Text // JSON or bullet points of features (E-Sertifikat, Rekaman, Template Olah Data)
+  status          CourseStatus   @default(OPEN)
+  sortOrder       Int            @default(0)
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  registrations   CourseRegistration[]
+
+  @@index([category])
+  @@index([status])
+  @@index([isActive])
+}
+
+enum CourseStatus {
+  OPEN
+  UPCOMING
+  FULL
+  CLOSED
+}
+
+model CourseRegistration {
+  id             String             @id @default(cuid())
+  invoiceNumber  String             @unique // e.g. "INV-202608-001"
+  courseId       String
+  course         Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseTitle    String
+  name           String             // Full name for Certificate
+  email          String
+  phone          String             // WhatsApp number
+  institution    String             // University / Research Institution
+  educationLevel String             // "S1 (Skripsi)", "S2 (Tesis)", "S3 (Disertasi)", "Dosen / Peneliti", "Umum"
+  researchTopic  String?            @db.Text // Topic / research obstacles
+  totalAmount    Int                @default(0)
+  uniqueCode     Int                @default(0) // 3-digit verification code (e.g. 347)
+  paymentMethod  String             @default("QRIS") // "QRIS", "BANK_TRANSFER", "FREE"
+  bankName       String?            // "BCA", "Mandiri", "BSI", etc.
+  paymentProof   String?            // Image receipt URL
+  status         EnrollmentStatus   @default(PENDING_PAYMENT)
+  adminNotes     String?            @db.Text // Internal follow-up notes
+  verifiedAt     DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([courseId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum EnrollmentStatus {
+  PENDING_PAYMENT    // Belum Melakukan Pembayaran
+  PAYMENT_UPLOADED   // Bukti Transfer Diunggah (Menunggu Verifikasi)
+  VERIFIED           // Lunas & Resmi Terdaftar
+  REJECTED           // Bukti Tidak Valid / Ditolak
+  CANCELLED          // Dibatalkan
+}
+
+model PaymentAccount {
+  id            String   @id @default(cuid())
+  type          String   @default("BANK") // "BANK" or "QRIS"
+  bankName      String   // "BCA", "Bank Mandiri", "BSI", "QRIS Official"
+  accountNumber String?  // "1234567890" (or null if QRIS)
+  accountHolder String?  // "BIAS RISTEK AKADEMIK"
+  qrisImage     String?  // Image barcode URL
+  instructions  String?  @db.Text // Transfer instructions
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+
 
