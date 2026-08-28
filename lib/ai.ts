@@ -247,3 +247,111 @@ Keluarkan HANYA format JSON valid:
     };
   }
 }
+
+/**
+ * 5. AI Course Counselor Chatbot Engine
+ */
+export async function callGeminiCounselor(
+  messages: { role: "user" | "assistant"; content: string }[],
+  coursesContext: string
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  if (!GEMINI_API_KEY) {
+    return { success: false, error: "GEMINI_API_KEY belum disetel di file .env" };
+  }
+
+  try {
+    const systemInstruction = `Anda adalah "Dr. Ristek AI", Konsultan Akademik Senior & Penasihat Program Riset di BIAS RISTEK.
+
+IDENTITAS & KARAKTER:
+- Nama: Dr. Ristek AI
+- Gaya Bahasa: Ramah, empatik, berbasis solusi akademik, profesional, dan menyemangati (Academic Innovation).
+- Tugas Utama:
+  1. Membantu calon peserta (mahasiswa S1/S2/S3, dosen, dan peneliti) mendiagnosis kendala riset mereka (misal: penyusunan Bab 1-5 tesis/disertasi, perumusan GAP analysis/novelty, olah data statistik dengan SmartPLS 4 atau SPSS, penulisan artikel Scopus Q1-Q4 / SINTA 1-2, dan strategi menjawab reviewer).
+  2. Memberikan solusi akademis ringkas dan merekomendasikan program kursus / bimbingan BIAS RISTEK yang paling cocok dari daftar kelas aktif yang tersedia.
+  3. Menjawab pertanyaan seputar fasilitas (E-Sertifikat 32 JP, rekaman Zoom seumur hidup, review draft 1-on-1, komunitas alumni), jadwal batch, harga promo, dan metode pembayaran (QRIS & Transfer Bank BCA/Mandiri/BSI).
+  4. Jika peserta butuh konsultasi instansi kustom, sarankan untuk klik tombol WhatsApp Admin.
+
+DATA KATALOG PROGRAM KELAS AKTIF BIAS RISTEK:
+${coursesContext}
+
+PETUNJUK FORMAT RESPON:
+Wajib memberikan output HANYA dalam format JSON valid berikut:
+{
+  "reply": "Teks jawaban Anda dalam format Markdown (gunakan bold, bullet points, penomoran yang rapi). Berikan empati, panduan akademis praktis, dan jelaskan mengapa program yang disarankan sangat relevan.",
+  "recommendedCourseSlugs": ["slug-kursus-1", "slug-kursus-2"],
+  "suggestedQuestions": [
+    "Saran pertanyaan cepat 1",
+    "Saran pertanyaan cepat 2",
+    "Saran pertanyaan cepat 3"
+  ]
+}
+
+Catatan: "recommendedCourseSlugs" hanya diisi slug kelas yang benar-benar relevan dengan pertanyaan user (bisa kosong [] jika user hanya menyapa atau bertanya hal umum).`;
+
+    // Map messages to Gemini format (user / model)
+    const contents = messages.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
+
+    const payload: any = {
+      contents,
+      systemInstruction: {
+        parts: [{ text: systemInstruction }],
+      },
+      generationConfig: {
+        temperature: 0.7,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+        response_mime_type: "application/json",
+      },
+    };
+
+    const response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const rawMsg = errorData?.error?.message || "";
+      const code = response.status;
+
+      if (code === 429 || rawMsg.toLowerCase().includes("quota") || rawMsg.toLowerCase().includes("resource_exhausted")) {
+        return { success: false, error: "Batas kuota AI tercapai. Silakan coba lagi beberapa saat." };
+      }
+      return { success: false, error: rawMsg || `Gemini API error (Status ${code})` };
+    }
+
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+
+    try {
+      const parsed = JSON.parse(cleanJsonOutput(text));
+      return {
+        success: true,
+        data: parsed,
+      };
+    } catch {
+      return {
+        success: true,
+        data: {
+          reply: text,
+          recommendedCourseSlugs: [],
+          suggestedQuestions: [
+            "Bagaimana cara daftar kelas?",
+            "Apakah dapat sertifikat 32 JP?",
+            "Berapa biaya bimbingan riset?"
+          ],
+        },
+      };
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message || "Gagal menghubungi layanan Gemini AI",
+    };
+  }
+}
+

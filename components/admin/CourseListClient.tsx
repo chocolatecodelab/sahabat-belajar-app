@@ -15,6 +15,7 @@ import {
   RefreshCw,
   X,
   CheckCircle2,
+  Layers,
 } from "lucide-react";
 import { deleteCourse, type CourseItem } from "@/actions/kursus";
 
@@ -192,36 +193,36 @@ export default function CourseListClient({ initialCourses }: CourseListClientPro
                       </td>
 
                       <td className="py-3 px-4">
-                        <span className="px-2.5 py-1 rounded-full text-3xs font-bold uppercase bg-blue-50 text-blue-900 border border-blue-200">
+                        <span className="px-2.5 py-1 rounded-md text-3xs font-semibold text-slate-700 bg-slate-100 border border-slate-200">
                           {course.category}
                         </span>
                       </td>
 
                       <td className="py-3 px-4">
-                        <strong className="text-body-sm font-bold text-gray-900">
+                        <strong className="text-body-sm font-bold text-slate-900">
                           {course.isFree ? "Gratis" : `Rp ${basePrice.toLocaleString("id-ID")}`}
                         </strong>
                         {course.salePrice && (
-                          <span className="text-3xs text-gray-400 line-through block">
+                          <span className="text-3xs text-slate-400 line-through block">
                             Rp {course.price.toLocaleString("id-ID")}
                           </span>
                         )}
                       </td>
 
-                      <td className="py-3 px-4 text-2xs text-gray-600">
-                        <span className="font-bold text-blue-950 block">{course.batchNumber || "-"}</span>
+                      <td className="py-3 px-4 text-2xs text-slate-600">
+                        <span className="font-bold text-slate-900 block">{course.batchNumber || "-"}</span>
                         <span>{course.startDate || "Jadwal Fleksibel"}</span>
                       </td>
 
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
-                          <span className="text-2xs font-bold text-gray-800">
+                          <span className="text-2xs font-semibold text-slate-700">
                             {course.currentEnrolled} / {course.maxQuota}
                           </span>
                         </div>
                         <div className="w-20 h-1.5 rounded-full bg-slate-100 overflow-hidden mt-1">
                           <div
-                            className="h-full bg-blue-600 rounded-full"
+                            className="h-full bg-slate-800 rounded-full"
                             style={{ width: `${Math.min(100, (course.currentEnrolled / course.maxQuota) * 100)}%` }}
                           />
                         </div>
@@ -229,12 +230,12 @@ export default function CourseListClient({ initialCourses }: CourseListClientPro
 
                       <td className="py-3 px-4">
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-3xs font-bold ${
+                          className={`px-2.5 py-0.5 rounded-full text-3xs font-semibold border ${
                             course.status === "OPEN"
-                              ? "bg-emerald-100 text-emerald-800"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                               : course.status === "FULL"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-amber-100 text-amber-800"
+                              ? "bg-rose-50 text-rose-700 border-rose-200"
+                              : "bg-slate-100 text-slate-600 border-slate-200"
                           }`}
                         >
                           {course.status}
@@ -243,18 +244,26 @@ export default function CourseListClient({ initialCourses }: CourseListClientPro
 
                       <td className="py-3 px-4 text-right">
                         <div className="inline-flex items-center gap-1.5">
+                          <Link
+                            href={`/dashboard/kursus/${course.id}/materi`}
+                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 transition-colors flex items-center gap-1 text-3xs font-semibold shadow-2xs"
+                            title="Kelola Modul, Video & Berkas Latihan"
+                          >
+                            <Layers size={13} className="text-slate-600" />
+                            <span>Materi</span>
+                          </Link>
                           <a
                             href={`/kursus/${course.slug}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="p-1.5 rounded-lg border hover:bg-slate-100 text-gray-600 transition-colors"
+                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
                             title="Buka Halaman Publik"
                           >
                             <ExternalLink size={14} />
                           </a>
                           <Link
                             href={`/dashboard/kursus/${course.id}/edit`}
-                            className="p-1.5 rounded-lg border hover:bg-blue-50 text-blue-900 transition-colors"
+                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
                             title="Edit Kursus"
                           >
                             <Edit2 size={14} />
@@ -262,7 +271,7 @@ export default function CourseListClient({ initialCourses }: CourseListClientPro
                           <button
                             type="button"
                             onClick={() => setDeleteId(course.id)}
-                            className="p-1.5 rounded-lg border hover:bg-red-50 text-red-600 transition-colors"
+                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 hover:border-rose-200 text-rose-600 transition-colors"
                             title="Hapus Kursus"
                           >
                             <Trash2 size={14} />

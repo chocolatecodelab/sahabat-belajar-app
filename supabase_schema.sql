@@ -538,6 +538,116 @@ VALUES
   ('pay_bsi', 'BANK', 'Bank Syariah Indonesia (BSI)', '7182930491', 'BIAS RISTEK INDONESIA', 'Transfer tepat hingga 3 digit terakhir kode unik verifikasi.', 4, true, NOW())
 ON CONFLICT ("id") DO NOTHING;
 
+-- ==========================================
+-- 6. STUDENT LMS & RESEARCH WORKSPACE DDL
+-- ==========================================
+
+-- CourseModule (Modul Pembelajaran Mingguan)
+CREATE TABLE IF NOT EXISTS "CourseModule" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "courseId" TEXT NOT NULL REFERENCES "Course"("id") ON DELETE CASCADE,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "CourseModule_courseId_idx" ON "CourseModule"("courseId");
+CREATE INDEX IF NOT EXISTS "CourseModule_sortOrder_idx" ON "CourseModule"("sortOrder");
+
+-- CourseLesson (Sesi Materi, Video/Zoom & File Pendukung)
+CREATE TABLE IF NOT EXISTS "CourseLesson" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "moduleId" TEXT NOT NULL REFERENCES "CourseModule"("id") ON DELETE CASCADE,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "videoUrl" TEXT,
+    "pdfSlideUrl" TEXT,
+    "datasetUrl" TEXT,
+    "attachments" JSONB,
+    "durationMin" INTEGER NOT NULL DEFAULT 90,
+    "isFreePreview" BOOLEAN NOT NULL DEFAULT false,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "CourseLesson_moduleId_idx" ON "CourseLesson"("moduleId");
+CREATE INDEX IF NOT EXISTS "CourseLesson_sortOrder_idx" ON "CourseLesson"("sortOrder");
+
+-- CourseEnrollment (Hak Akses Kelas Peserta)
+CREATE TABLE IF NOT EXISTS "CourseEnrollment" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT,
+    "userEmail" TEXT NOT NULL,
+    "userName" TEXT NOT NULL,
+    "courseId" TEXT NOT NULL REFERENCES "Course"("id") ON DELETE CASCADE,
+    "registrationId" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "progressPercentage" INTEGER NOT NULL DEFAULT 0,
+    "enrolledAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "CourseEnrollment_userEmail_idx" ON "CourseEnrollment"("userEmail");
+CREATE INDEX IF NOT EXISTS "CourseEnrollment_courseId_idx" ON "CourseEnrollment"("courseId");
+CREATE INDEX IF NOT EXISTS "CourseEnrollment_status_idx" ON "CourseEnrollment"("status");
+
+-- LessonProgress (Pelacak Progres Sesi per Siswa)
+CREATE TABLE IF NOT EXISTS "LessonProgress" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "enrollmentId" TEXT NOT NULL REFERENCES "CourseEnrollment"("id") ON DELETE CASCADE,
+    "lessonId" TEXT NOT NULL REFERENCES "CourseLesson"("id") ON DELETE CASCADE,
+    "isCompleted" BOOLEAN NOT NULL DEFAULT true,
+    "completedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE("enrollmentId", "lessonId")
+);
+CREATE INDEX IF NOT EXISTS "LessonProgress_enrollmentId_idx" ON "LessonProgress"("enrollmentId");
+CREATE INDEX IF NOT EXISTS "LessonProgress_lessonId_idx" ON "LessonProgress"("lessonId");
+
+-- StudentSubmission (Pengumpulan Draf Naskah Riset & Review Mentor)
+CREATE TABLE IF NOT EXISTS "StudentSubmission" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "enrollmentId" TEXT NOT NULL REFERENCES "CourseEnrollment"("id") ON DELETE CASCADE,
+    "lessonId" TEXT REFERENCES "CourseLesson"("id") ON DELETE SET NULL,
+    "title" TEXT NOT NULL,
+    "fileUrl" TEXT NOT NULL,
+    "studentNotes" TEXT,
+    "mentorFeedback" TEXT,
+    "score" INTEGER,
+    "status" TEXT NOT NULL DEFAULT 'SUBMITTED',
+    "submittedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "reviewedAt" TIMESTAMP(3),
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "StudentSubmission_enrollmentId_idx" ON "StudentSubmission"("enrollmentId");
+CREATE INDEX IF NOT EXISTS "StudentSubmission_status_idx" ON "StudentSubmission"("status");
+
+-- Certificate (E-Sertifikat 32 JP Digital)
+CREATE TABLE IF NOT EXISTS "Certificate" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "certificateCode" TEXT NOT NULL UNIQUE,
+    "enrollmentId" TEXT NOT NULL REFERENCES "CourseEnrollment"("id") ON DELETE CASCADE,
+    "recipientName" TEXT NOT NULL,
+    "courseTitle" TEXT NOT NULL,
+    "totalHours" TEXT NOT NULL DEFAULT '32 JP',
+    "credentialUrl" TEXT,
+    "issuedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "Certificate_certificateCode_idx" ON "Certificate"("certificateCode");
+CREATE INDEX IF NOT EXISTS "Certificate_enrollmentId_idx" ON "Certificate"("enrollmentId");
+
+-- Menu Review Draf Naskah di Admin Menu
+INSERT INTO "AdminMenu" ("id", "label", "icon", "url", "parentId", "sortOrder", "isActive", "permission", "updatedAt")
+VALUES
+  ('menu_tugas', 'Review Draf Naskah', 'FileCheck', '/dashboard/tugas', NULL, 4, true, 'article.read', NOW())
+ON CONFLICT ("id") DO UPDATE SET
+  "label" = EXCLUDED."label",
+  "icon" = EXCLUDED."icon",
+  "url" = EXCLUDED."url",
+  "sortOrder" = EXCLUDED."sortOrder",
+  "isActive" = EXCLUDED."isActive";
+
+
 
 
 

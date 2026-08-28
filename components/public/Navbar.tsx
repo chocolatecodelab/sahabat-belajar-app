@@ -112,6 +112,14 @@ export default function Navbar({ siteName, navigations }: NavbarProps) {
             </Link>
 
             <Link
+              href="/belajar"
+              className="px-3.5 py-2 rounded-lg text-sm font-semibold text-blue-950 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 transition-colors flex items-center gap-1.5"
+            >
+              <span className="w-2 h-2 rounded-full bg-[#fdbc13]" />
+              <span>Ruang Belajar</span>
+            </Link>
+
+            <Link
               href="/berita"
               className="px-3.5 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-blue-900 hover:bg-gray-50 transition-colors"
             >
@@ -157,6 +165,14 @@ export default function Navbar({ siteName, navigations }: NavbarProps) {
             className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50"
           >
             Program Kursus
+          </Link>
+
+          <Link
+            href="/belajar"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-base font-semibold text-blue-950 bg-amber-50 hover:bg-amber-100"
+          >
+            🎓 Ruang Belajar Siswa
           </Link>
 
           {navigations.map((item) => (

@@ -60,10 +60,13 @@ export async function getUsers(
 
   const total = count || 0;
   return {
-    data: (users || []).map((u: any) => ({
-      ...u,
-      role: Array.isArray(u.role) ? u.role[0] : u.role,
-    })),
+    data: (users || []).map((u: any) => {
+      const roleObj = Array.isArray(u.role) ? u.role[0] : u.role;
+      return {
+        ...u,
+        role: roleObj || { name: "Peserta (Student)" },
+      };
+    }),
     meta: {
       page,
       perPage,

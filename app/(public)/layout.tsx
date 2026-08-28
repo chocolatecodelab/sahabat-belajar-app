@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import Navbar from "@/components/public/Navbar";
 import Footer from "@/components/public/Footer";
+import AiCounselorWidget from "@/components/public/AiCounselorWidget";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +83,7 @@ export default async function PublicLayout({
         footerNavigations={footerNavs}
         socialMedia={socialMedia}
       />
+      <AiCounselorWidget />
     </div>
   );
 }

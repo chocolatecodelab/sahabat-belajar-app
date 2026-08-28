@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { hash } from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase";
 import { requireAuth } from "@/lib/auth";
 
@@ -315,7 +316,7 @@ export async function updateRegistrationStatus(
   try {
     const { data: current, error: fetchErr } = await supabaseAdmin
       .from("CourseRegistration")
-      .select("id, status, courseId")
+      .select("id, status, courseId, email, name, phone")
       .eq("id", id)
       .single();
 
@@ -347,6 +348,55 @@ export async function updateRegistrationStatus(
           .from("Course")
           .update({ currentEnrolled: (course.currentEnrolled || 0) + 1 })
           .eq("id", current.courseId);
+      }
+
+      // Auto-provision Student User Account & CourseEnrollment for LMS access
+      try {
+        const studentEmail = (current.email || "peserta@biasristek.id").trim().toLowerCase();
+        const studentName = current.name || "Peserta Riset";
+        const studentPhone = (current.phone || "12345678").replace(/\D/g, "");
+
+        // 1. Check if User already exists
+        const { data: existingUser } = await supabaseAdmin
+          .from("User")
+          .select("id, email")
+          .eq("email", studentEmail)
+          .maybeSingle();
+
+        if (!existingUser) {
+          const defaultPassword = studentPhone.length >= 6 ? studentPhone : "12345678";
+          const hashedPassword = await hash(defaultPassword, 10);
+          const newUserId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+
+          await supabaseAdmin.from("User").insert({
+            id: newUserId,
+            name: studentName,
+            email: studentEmail,
+            password: hashedPassword,
+            roleId: null, // null roleId defaults to Student in auth.ts
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        }
+
+        // 2. Provision CourseEnrollment
+        const enrollmentId = `enroll_${current.courseId}_${id.replace("reg_", "")}`;
+        await supabaseAdmin.from("CourseEnrollment").upsert(
+          {
+            id: enrollmentId,
+            userEmail: studentEmail,
+            userName: studentName,
+            courseId: current.courseId,
+            registrationId: id,
+            status: "ACTIVE",
+            progressPercentage: 0,
+            enrolledAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        );
+      } catch (enrollErr) {
+        console.error("Auto-provision Student User / Enrollment error:", enrollErr);
       }
     }
 

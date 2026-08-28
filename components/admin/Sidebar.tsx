@@ -37,6 +37,7 @@ import {
   MessageSquare,
   Trophy,
   CreditCard,
+  FileCheck,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useAdminSidebar } from "./AdminLayoutClient";
@@ -71,6 +72,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   MessageSquare: <MessageSquare size={18} />,
   Trophy: <Trophy size={18} />,
   CreditCard: <CreditCard size={18} />,
+  FileCheck: <FileCheck size={18} />,
 };
 
 interface SidebarProps {

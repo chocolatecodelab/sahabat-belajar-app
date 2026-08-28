@@ -363,6 +363,8 @@ model Course {
   updatedAt       DateTime       @updatedAt
 
   registrations   CourseRegistration[]
+  modules         CourseModule[]
+  enrollments     CourseEnrollment[]
 
   @@index([category])
   @@index([status])
@@ -424,6 +426,121 @@ model PaymentAccount {
   sortOrder     Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// ==========================================
+// 6. STUDENT LMS & RESEARCH WORKSPACE MODELS
+// ==========================================
+
+model CourseModule {
+  id          String         @id @default(cuid())
+  courseId    String
+  course      Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?        @db.Text
+  sortOrder   Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  lessons     CourseLesson[]
+
+  @@index([courseId])
+  @@index([sortOrder])
+}
+
+model CourseLesson {
+  id            String         @id @default(cuid())
+  moduleId      String
+  module        CourseModule   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?        @db.Text
+  videoUrl      String?        // Zoom recording / YouTube / Drive link
+  pdfSlideUrl   String?        // Presentation handout URL
+  datasetUrl    String?        // Exercise files (Excel, SmartPLS project)
+  attachments   Json?          // Dynamic multi-file attachments [{ title, url, type, size }]
+  durationMin   Int            @default(90) // Estimated duration in minutes
+  isFreePreview Boolean        @default(false)
+  sortOrder     Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  progress      LessonProgress[]
+  submissions   StudentSubmission[]
+
+  @@index([moduleId])
+  @@index([sortOrder])
+}
+
+model CourseEnrollment {
+  id                 String              @id @default(cuid())
+  userId             String?             // Linked User if authenticated
+  userEmail          String              // Linked student email
+  userName           String              // Student full name
+  courseId           String
+  course             Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  registrationId     String?             // Linked transaction
+  status             String              @default("ACTIVE") // ACTIVE, COMPLETED, EXPIRED
+  progressPercentage Int                 @default(0)
+  enrolledAt         DateTime            @default(now())
+  completedAt        DateTime?
+  updatedAt          DateTime            @updatedAt
+
+  progress           LessonProgress[]
+  submissions        StudentSubmission[]
+  certificates       Certificate[]
+
+  @@index([userEmail])
+  @@index([courseId])
+  @@index([status])
+}
+
+model LessonProgress {
+  id           String           @id @default(cuid())
+  enrollmentId String
+  enrollment   CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lessonId     String
+  lesson       CourseLesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  isCompleted  Boolean          @default(true)
+  completedAt  DateTime         @default(now())
+
+  @@unique([enrollmentId, lessonId])
+  @@index([enrollmentId])
+  @@index([lessonId])
+}
+
+model StudentSubmission {
+  id             String           @id @default(cuid())
+  enrollmentId   String
+  enrollment     CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lessonId       String?
+  lesson         CourseLesson?    @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  title          String           // "Draf Bab 1-3 Skripsi" or "Naskah Artikel Scopus"
+  fileUrl        String           // PDF or DOCX file link
+  studentNotes   String?          @db.Text
+  mentorFeedback String?          @db.Text
+  score          Int?             // 0 - 100
+  status         String           @default("SUBMITTED") // SUBMITTED, REVIEWED, REVISION_NEEDED, APPROVED
+  submittedAt    DateTime         @default(now())
+  reviewedAt     DateTime?
+  updatedAt      DateTime         @updatedAt
+
+  @@index([enrollmentId])
+  @@index([status])
+}
+
+model Certificate {
+  id              String           @id @default(cuid())
+  certificateCode String           @unique // "BIAS-2026-SCP-0192"
+  enrollmentId    String
+  enrollment      CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  recipientName   String
+  courseTitle     String
+  totalHours      String           @default("32 JP")
+  credentialUrl   String?
+  issuedAt        DateTime         @default(now())
+
+  @@index([certificateCode])
+  @@index([enrollmentId])
 }
 
 
