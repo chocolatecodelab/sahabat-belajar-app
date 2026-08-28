@@ -281,6 +281,14 @@ export async function updateCourse(id: string, formData: FormData): Promise<Acti
   }
 }
 
+function safeRevalidatePath(path: string) {
+  try {
+    revalidatePath(path);
+  } catch {
+    // Non-HTTP context fallback
+  }
+}
+
 /**
  * Delete course
  */
@@ -299,9 +307,9 @@ export async function deleteCourse(id: string): Promise<ActionResponse> {
     const { error } = await supabaseAdmin.from("Course").delete().eq("id", id);
     if (error) throw error;
 
-    revalidatePath("/kursus");
-    revalidatePath("/dashboard/kursus");
-    revalidatePath("/belajar");
+    safeRevalidatePath("/kursus");
+    safeRevalidatePath("/dashboard/kursus");
+    safeRevalidatePath("/belajar");
     return { success: true, message: "Program kursus berhasil dihapus permanen" };
   } catch (err: any) {
     console.error("deleteCourse error:", err);

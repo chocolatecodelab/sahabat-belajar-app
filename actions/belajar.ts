@@ -446,7 +446,10 @@ export async function getCourseClassroom(courseSlug: string, userEmail?: string)
     }
 
     // 3. Fetch modules & lessons
-    const { data: modulesData, error: modErr } = await supabaseAdmin
+    let modulesData: any = null;
+    let modErr: any = null;
+
+    const firstRes = await supabaseAdmin
       .from("CourseModule")
       .select(`
         id,
@@ -471,6 +474,37 @@ export async function getCourseClassroom(courseSlug: string, userEmail?: string)
       .eq("courseId", course.id)
       .order("sortOrder", { ascending: true });
 
+    modulesData = firstRes.data;
+    modErr = firstRes.error;
+
+    if (modErr && (modErr.code === "PGRST204" || modErr.message?.includes("attachments"))) {
+      const retryRes = await supabaseAdmin
+        .from("CourseModule")
+        .select(`
+          id,
+          courseId,
+          title,
+          description,
+          sortOrder,
+          lessons:CourseLesson(
+            id,
+            moduleId,
+            title,
+            description,
+            videoUrl,
+            pdfSlideUrl,
+            datasetUrl,
+            durationMin,
+            isFreePreview,
+            sortOrder
+          )
+        `)
+        .eq("courseId", course.id)
+        .order("sortOrder", { ascending: true });
+      modulesData = retryRes.data;
+      modErr = retryRes.error;
+    }
+
     let modules: ModuleItem[] = [];
 
     if (modErr || !modulesData || modulesData.length === 0) {
@@ -478,7 +512,21 @@ export async function getCourseClassroom(courseSlug: string, userEmail?: string)
     } else {
       modules = modulesData.map((m: any) => ({
         ...m,
-        lessons: (m.lessons || []).sort((a: any, b: any) => a.sortOrder - b.sortOrder),
+        lessons: (m.lessons || [])
+          .map((l: any) => {
+            let atts = l.attachments;
+            if (!atts || atts.length === 0) {
+              atts = [
+                ...(l.pdfSlideUrl ? [{ name: "Slide Presentasi Materi", url: l.pdfSlideUrl, type: "PDF" }] : []),
+                ...(l.datasetUrl ? [{ name: "Dataset & Berkas Latihan", url: l.datasetUrl, type: "SMARTPLS" }] : []),
+              ];
+            }
+            return {
+              ...l,
+              attachments: atts,
+            };
+          })
+          .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
       }));
     }
 
@@ -578,7 +626,10 @@ export async function getCourseCurriculumAdmin(courseId: string) {
       .eq("id", courseId)
       .maybeSingle();
 
-    const { data: modulesData, error: mErr } = await supabaseAdmin
+    let modulesData: any = null;
+    let mErr: any = null;
+
+    const firstAdminRes = await supabaseAdmin
       .from("CourseModule")
       .select(`
         id,
@@ -603,11 +654,56 @@ export async function getCourseCurriculumAdmin(courseId: string) {
       .eq("courseId", courseId)
       .order("sortOrder", { ascending: true });
 
+    modulesData = firstAdminRes.data;
+    mErr = firstAdminRes.error;
+
+    if (mErr && (mErr.code === "PGRST204" || mErr.message?.includes("attachments"))) {
+      const retryRes = await supabaseAdmin
+        .from("CourseModule")
+        .select(`
+          id,
+          courseId,
+          title,
+          description,
+          sortOrder,
+          lessons:CourseLesson(
+            id,
+            moduleId,
+            title,
+            description,
+            videoUrl,
+            pdfSlideUrl,
+            datasetUrl,
+            durationMin,
+            isFreePreview,
+            sortOrder
+          )
+        `)
+        .eq("courseId", courseId)
+        .order("sortOrder", { ascending: true });
+      modulesData = retryRes.data;
+      mErr = retryRes.error;
+    }
+
     let modules: ModuleItem[] = [];
     if (!mErr && modulesData && modulesData.length > 0) {
       modules = modulesData.map((m: any) => ({
         ...m,
-        lessons: (m.lessons || []).sort((a: any, b: any) => a.sortOrder - b.sortOrder),
+        lessons: (m.lessons || [])
+          .map((l: any) => {
+            let atts = l.attachments;
+            if (!atts || atts.length === 0) {
+              atts = [
+                ...(l.pdfSlideUrl ? [{ name: "Slide Presentasi Materi", url: l.pdfSlideUrl, type: "PDF" }] : []),
+                ...(l.datasetUrl ? [{ name: "Dataset & Berkas Latihan", url: l.datasetUrl, type: "SMARTPLS" }] : []),
+              ];
+            }
+            return {
+              ...l,
+              attachments: atts,
+            };
+          })
+          .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
       }));
     } else {
       modules = DEFAULT_SCOPUS_MODULES;
@@ -761,6 +857,8 @@ export async function upsertCourseLesson(data: {
     }
 
     const lessonId = id || `les_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const finalPdfSlideUrl = pdfSlideUrl?.trim() || (attachments.find((a: any) => a.type === "PDF")?.url || attachments[0]?.url || null);
+    const finalDatasetUrl = datasetUrl?.trim() || (attachments.find((a: any) => a.type === "SMARTPLS" || a.type === "EXCEL" || a.type === "SPSS" || a.type === "DOCX")?.url || attachments[1]?.url || null);
 
     let { error } = await supabaseAdmin.from("CourseLesson").upsert(
       {
@@ -769,8 +867,8 @@ export async function upsertCourseLesson(data: {
         title: title.trim(),
         description: description?.trim() || null,
         videoUrl: videoUrl?.trim() || null,
-        pdfSlideUrl: pdfSlideUrl?.trim() || null,
-        datasetUrl: datasetUrl?.trim() || null,
+        pdfSlideUrl: finalPdfSlideUrl,
+        datasetUrl: finalDatasetUrl,
         attachments: attachments && attachments.length > 0 ? attachments : null,
         durationMin: Number(durationMin) || 90,
         isFreePreview: Boolean(isFreePreview),
@@ -789,8 +887,8 @@ export async function upsertCourseLesson(data: {
           title: title.trim(),
           description: description?.trim() || null,
           videoUrl: videoUrl?.trim() || null,
-          pdfSlideUrl: pdfSlideUrl?.trim() || null,
-          datasetUrl: datasetUrl?.trim() || null,
+          pdfSlideUrl: finalPdfSlideUrl,
+          datasetUrl: finalDatasetUrl,
           durationMin: Number(durationMin) || 90,
           isFreePreview: Boolean(isFreePreview),
           sortOrder: Number(sortOrder) || 0,

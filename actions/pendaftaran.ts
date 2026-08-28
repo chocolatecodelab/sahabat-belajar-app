@@ -67,7 +67,7 @@ export async function createEnrollment(data: {
   researchTopic?: string;
   paymentMethod: string;
   bankName?: string;
-}): Promise<ActionResponse<{ invoiceNumber: string; totalAmount: number; uniqueCode: number }>> {
+}): Promise<ActionResponse<{ id: string; invoiceNumber: string; totalAmount: number; uniqueCode: number }>> {
   try {
     const { courseId, name, email, phone, institution, educationLevel, researchTopic, paymentMethod, bankName } = data;
 
@@ -135,6 +135,7 @@ export async function createEnrollment(data: {
       success: true,
       message: "Pendaftaran berhasil dibuat",
       data: {
+        id,
         invoiceNumber,
         totalAmount,
         uniqueCode,
@@ -373,7 +374,7 @@ export async function updateRegistrationStatus(
             name: studentName,
             email: studentEmail,
             password: hashedPassword,
-            roleId: null, // null roleId defaults to Student in auth.ts
+            roleId: "role_student",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           });
