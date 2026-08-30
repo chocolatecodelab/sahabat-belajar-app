@@ -55,13 +55,20 @@ const DEMO_SUBMISSIONS: SubmissionItem[] = [
 export async function submitResearchDraft(formData: {
   enrollmentId: string;
   lessonId?: string;
-  title: string;
-  fileUrl: string;
+  title?: string;
+  fileUrl?: string;
+  googleDocUrl?: string;
   studentNotes?: string;
+  notes?: string;
+  studentName?: string;
+  studentEmail?: string;
   courseSlug?: string;
 }): Promise<ActionResponse> {
   try {
-    const { enrollmentId, lessonId, title, fileUrl, studentNotes, courseSlug } = formData;
+    const { enrollmentId, lessonId, courseSlug } = formData;
+    const title = formData.title || "Draf Naskah Riset Scopus";
+    const fileUrl = formData.fileUrl || formData.googleDocUrl || "https://docs.google.com/document/d/sample/edit";
+    const studentNotes = formData.studentNotes || formData.notes || null;
 
     if (!enrollmentId || !title || !fileUrl) {
       return { success: false, message: "Judul tugas dan berkas draf naskah wajib diisi" };

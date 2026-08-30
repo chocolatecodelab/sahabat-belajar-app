@@ -38,7 +38,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        // 3. Fetch user role
+        // 3. Fetch user role and dynamic permissions
         let roleName = "Student";
         let permissions: string[] = [];
 
@@ -52,18 +52,44 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (role?.name) {
             roleName = role.name;
           }
+
+          // Fetch permissions assigned to this role from _PermissionToRole
+          const { data: pivots } = await supabaseAdmin
+            .from("_PermissionToRole")
+            .select("A")
+            .eq("B", user.roleId);
+
+          if (pivots && pivots.length > 0) {
+            const pIds = pivots.map((p: any) => p.A);
+            const { data: permRecords } = await supabaseAdmin
+              .from("Permission")
+              .select("name")
+              .in("id", pIds);
+
+            if (permRecords && permRecords.length > 0) {
+              permissions = permRecords.map((pr: any) => pr.name);
+            }
+          }
         }
 
-        // 4. If Super Admin, grant all permissions
-        if (roleName === "Super Admin") {
+        // 4. If Super Admin, guarantee all system permissions
+        if (roleName === "Super Admin" || user.roleId === "role_superadmin") {
           permissions = [
-            "page.create", "page.read", "page.update", "page.delete",
-            "article.create", "article.read", "article.update", "article.delete",
-            "category.create", "category.read", "category.update", "category.delete",
-            "navigation.create", "navigation.read", "navigation.update", "navigation.delete",
-            "appearance.create", "appearance.read", "appearance.update", "appearance.delete",
-            "user.create", "user.read", "user.update", "user.delete",
-            "role.create", "role.read", "role.update", "role.delete",
+            "dashboard.read", "analytics.read",
+            "course.read", "course.create", "course.update", "course.delete",
+            "registration.read", "registration.update", "registration.delete",
+            "submission.read", "submission.review",
+            "certificate.read", "certificate.create", "certificate.delete",
+            "article.read", "article.create", "article.update", "article.delete",
+            "category.read", "category.create", "category.update", "category.delete",
+            "media.read", "media.create", "media.delete",
+            "page.read", "page.create", "page.update", "page.delete",
+            "navigation.read", "navigation.create", "navigation.update", "navigation.delete",
+            "appearance.read", "appearance.update",
+            "user.read", "user.create", "user.update", "user.delete",
+            "role.read", "role.create", "role.update", "role.delete",
+            "menu.read", "menu.update",
+            "payment_account.read", "payment_account.update",
             "settings.read", "settings.update"
           ];
         }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect } from "react";
 import {
   X,
   Search,
@@ -39,15 +39,15 @@ export default function MediaPickerModal({
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
-  const [, startTransition] = useTransition();
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const loadMedia = async () => {
     setLoading(true);
     try {
       const res = await getMediaFiles({
-        folder: selectedFolder,
+        folder: selectedFolder === "all" ? undefined : selectedFolder,
         search: searchQuery,
-        limit: 40,
+        limit: 50,
       });
       setMediaList(res.data);
       setFolders(res.folders);
@@ -60,7 +60,14 @@ export default function MediaPickerModal({
 
   useEffect(() => {
     if (isOpen) {
+      setUploading(false);
+      setUploadError("");
       loadMedia();
+    } else {
+      setUploading(false);
+      setUploadError("");
+      setSelectedMedia(null);
+      setUploadSuccess(false);
     }
   }, [isOpen, selectedFolder, searchQuery]);
 
@@ -70,26 +77,45 @@ export default function MediaPickerModal({
 
     setUploading(true);
     setUploadError("");
+    setUploadSuccess(false);
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("folder", defaultFolder || "general");
 
-    const result = await uploadMediaFile(formData);
-    if (result.success && result.data) {
-      startTransition(() => {
-        onSelect(result.data!.url);
-        onClose();
-      });
-    } else {
-      setUploadError(result.message || "Gagal mengunggah file");
+    try {
+      const result = await uploadMediaFile(formData);
+      if (result.success && result.data) {
+        setUploadSuccess(true);
+        // Refresh media library list
+        await loadMedia();
+        // Highlight and auto-select newly uploaded media
+        setSelectedMedia(result.data);
+        // Switch view to saved gallery tab
+        setActiveTab("library");
+      } else {
+        setUploadError(result.message || "Gagal mengunggah file");
+      }
+    } catch (err: any) {
+      console.error("handleFileUpload error:", err);
+      setUploadError(err?.message || "Gagal mengunggah file");
+    } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 
   const handleConfirmSelect = () => {
     if (!selectedMedia) return;
     onSelect(selectedMedia.url);
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setUploading(false);
+    setUploadError("");
+    setSelectedMedia(null);
+    setUploadSuccess(false);
     onClose();
   };
 
@@ -126,7 +152,7 @@ export default function MediaPickerModal({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
           >
             <X size={20} />
@@ -218,61 +244,70 @@ export default function MediaPickerModal({
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3.5">
-                {mediaList.map((item) => {
-                  const isSelected = selectedMedia?.id === item.id;
-                  const isImage = item.mimeType.startsWith("image/");
+              <div className="space-y-3">
+                {uploadSuccess && (
+                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-2xs font-semibold flex items-center gap-2">
+                    <Check size={14} className="text-emerald-600" />
+                    <span>Gambar berhasil diunggah dan otomatis dipilih! Klik &quot;Gunakan Gambar Ini&quot; untuk menyisipkan.</span>
+                  </div>
+                )}
 
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => setSelectedMedia(item)}
-                      onDoubleClick={() => {
-                        onSelect(item.url);
-                        onClose();
-                      }}
-                      className={`group relative rounded-xl border overflow-hidden cursor-pointer transition-all aspect-square flex flex-col justify-between bg-slate-50 ${
-                        isSelected
-                          ? "ring-2 ring-[var(--color-primary)] border-transparent shadow-md"
-                          : "hover:border-blue-400 hover:shadow-xs"
-                      }`}
-                      style={{ borderColor: isSelected ? "var(--color-primary)" : "var(--color-outline-variant)" }}
-                    >
-                      {/* Image Preview / Icon */}
-                      <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-slate-100">
-                        {isImage ? (
-                          <Image
-                            src={item.url}
-                            alt={item.originalName}
-                            fill
-                            sizes="160px"
-                            className="object-cover transition-transform group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center gap-1 text-gray-500">
-                            <FileText size={32} />
-                            <span className="text-3xs uppercase font-bold">{item.mimeType.split("/")[1]}</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3.5">
+                  {mediaList.map((item) => {
+                    const isSelected = selectedMedia?.id === item.id;
+                    const isImage = item.mimeType.startsWith("image/");
+
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => setSelectedMedia(item)}
+                        onDoubleClick={() => {
+                          onSelect(item.url);
+                          handleClose();
+                        }}
+                        className={`group relative rounded-xl border overflow-hidden cursor-pointer transition-all aspect-square flex flex-col justify-between bg-slate-50 ${
+                          isSelected
+                            ? "ring-2 ring-[var(--color-primary)] border-transparent shadow-md"
+                            : "hover:border-blue-400 hover:shadow-xs"
+                        }`}
+                        style={{ borderColor: isSelected ? "var(--color-primary)" : "var(--color-outline-variant)" }}
+                      >
+                        {/* Image Preview / Icon */}
+                        <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-slate-100">
+                          {isImage ? (
+                            <Image
+                              src={item.url}
+                              alt={item.originalName}
+                              fill
+                              sizes="160px"
+                              className="object-cover transition-transform group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center gap-1 text-gray-500">
+                              <FileText size={32} />
+                              <span className="text-3xs uppercase font-bold">{item.mimeType.split("/")[1]}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Selected Badge */}
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shadow-md">
+                            <Check size={14} />
                           </div>
                         )}
-                      </div>
 
-                      {/* Selected Badge */}
-                      {isSelected && (
-                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shadow-md">
-                          <Check size={14} />
+                        {/* File Name Label */}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 text-white">
+                          <p className="text-3xs font-medium truncate">{item.originalName}</p>
+                          <span className="text-3xs text-white/70 block">
+                            {(item.size / 1024).toFixed(0)} KB
+                          </span>
                         </div>
-                      )}
-
-                      {/* File Name Label */}
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 text-white">
-                        <p className="text-3xs font-medium truncate">{item.originalName}</p>
-                        <span className="text-3xs text-white/70 block">
-                          {(item.size / 1024).toFixed(0)} KB
-                        </span>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             )
           ) : (
@@ -340,7 +375,7 @@ export default function MediaPickerModal({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 className="px-4 py-2 rounded-lg border text-body-sm font-semibold hover:bg-gray-100 transition-colors"
                 style={{ borderColor: "var(--color-outline-variant)" }}
               >
@@ -350,7 +385,7 @@ export default function MediaPickerModal({
                 type="button"
                 disabled={!selectedMedia}
                 onClick={handleConfirmSelect}
-                className="px-5 py-2 rounded-lg text-body-sm font-bold text-white shadow-xs disabled:opacity-50 transition-opacity flex items-center gap-1.5"
+                className="px-5 py-2 rounded-lg text-body-sm font-bold text-white shadow-xs disabled:opacity-50 transition-opacity flex items-center gap-1.5 cursor-pointer"
                 style={{ background: "var(--color-primary)" }}
               >
                 <Check size={16} />

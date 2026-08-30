@@ -45,11 +45,26 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
   const [password, setPassword] = useState("");
   const [roleId, setRoleId] = useState("");
 
+  const dynamicRoleTabs = [
+    { key: "ALL", label: "Semua Role", count: users.length },
+    ...roles.map((r) => ({
+      key: r.id,
+      label: r.name,
+      count: users.filter(
+        (u) =>
+          u.roleId === r.id ||
+          (u.role?.name && u.role.name.toLowerCase() === r.name.toLowerCase())
+      ).length,
+    })),
+  ];
+
   const filteredUsers = users.filter((u) => {
-    const roleName = u.role?.name || "Peserta (Student)";
     const matchesRole =
       selectedRoleFilter === "ALL" ||
-      roleName.toLowerCase().includes(selectedRoleFilter.toLowerCase());
+      u.roleId === selectedRoleFilter ||
+      (u.role?.name &&
+        roles.find((r) => r.id === selectedRoleFilter)?.name?.toLowerCase() ===
+          u.role.name.toLowerCase());
     const matchesSearch =
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase());
@@ -124,7 +139,10 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
   };
 
   return (
-    <div className="space-y-6 font-[var(--font-body)] animate-fade-in">
+    <div
+      className="space-y-6 font-[var(--font-body)] animate-fade-in"
+      suppressHydrationWarning
+    >
       {/* Header Banner */}
       <div
         className="elevation-1 rounded-2xl p-6 bg-white border flex flex-col sm:flex-row sm:items-center justify-between gap-4"
@@ -181,23 +199,27 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
       >
         {/* Role Filters */}
         <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-          {[
-            { key: "ALL", label: "Semua Role" },
-            { key: "admin", label: "Admin" },
-            { key: "mentor", label: "Mentor Riset" },
-            { key: "student", label: "Peserta (Student)" },
-          ].map((item) => (
+          {dynamicRoleTabs.map((item) => (
             <button
               key={item.key}
               type="button"
               onClick={() => setSelectedRoleFilter(item.key)}
-              className={`px-3.5 py-1.5 rounded-lg text-2xs font-semibold transition-all shrink-0 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
                 selectedRoleFilter === item.key
-                  ? "bg-[#001847] text-white shadow-2xs"
+                  ? "bg-[#001847] text-white shadow-sm"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
-              {item.label}
+              <span>{item.label}</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  selectedRoleFilter === item.key
+                    ? "bg-white/20 text-white"
+                    : "bg-slate-200/80 text-slate-700"
+                }`}
+              >
+                {item.count}
+              </span>
             </button>
           ))}
         </div>

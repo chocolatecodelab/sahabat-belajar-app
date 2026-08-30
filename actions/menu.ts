@@ -18,12 +18,12 @@ export type AdminMenuItem = {
 };
 
 const INITIAL_MENUS = [
-  { id: "menu_dashboard", label: "Dashboard", icon: "LayoutDashboard", url: "/dashboard", parentId: null, sortOrder: 1, isActive: true, permission: null },
-  { id: "menu_kursus", label: "Program Kursus", icon: "BookOpen", url: "/dashboard/kursus", parentId: null, sortOrder: 2, isActive: true, permission: "page.read" },
-  { id: "menu_pendaftaran", label: "Pendaftaran & Transaksi", icon: "GraduationCap", url: "/dashboard/pendaftaran", parentId: null, sortOrder: 3, isActive: true, permission: "page.read" },
-  { id: "menu_tugas", label: "Review Draf Naskah", icon: "FileCheck", url: "/dashboard/tugas", parentId: null, sortOrder: 4, isActive: true, permission: "article.read" },
+  { id: "menu_dashboard", label: "Dashboard", icon: "LayoutDashboard", url: "/dashboard", parentId: null, sortOrder: 1, isActive: true, permission: "dashboard.read" },
+  { id: "menu_kursus", label: "Program Kursus", icon: "BookOpen", url: "/dashboard/kursus", parentId: null, sortOrder: 2, isActive: true, permission: "course.read" },
+  { id: "menu_pendaftaran", label: "Pendaftaran & Transaksi", icon: "GraduationCap", url: "/dashboard/pendaftaran", parentId: null, sortOrder: 3, isActive: true, permission: "registration.read" },
+  { id: "menu_tugas", label: "Review Draf Naskah", icon: "FileCheck", url: "/dashboard/tugas", parentId: null, sortOrder: 4, isActive: true, permission: "submission.read" },
   { id: "menu_berita", label: "Berita & Publikasi", icon: "Newspaper", url: "/dashboard/berita", parentId: null, sortOrder: 5, isActive: true, permission: "article.read" },
-  { id: "menu_media", label: "Pustaka Media", icon: "Image", url: "/dashboard/media", parentId: null, sortOrder: 6, isActive: true, permission: "page.read" },
+  { id: "menu_media", label: "Pustaka Media", icon: "Image", url: "/dashboard/media", parentId: null, sortOrder: 6, isActive: true, permission: "media.read" },
   { id: "menu_halaman", label: "Halaman Statis", icon: "FileText", url: "/dashboard/halaman", parentId: null, sortOrder: 7, isActive: true, permission: "page.read" },
   { id: "menu_kategori", label: "Kategori", icon: "FolderOpen", url: "/dashboard/kategori", parentId: null, sortOrder: 8, isActive: true, permission: "category.read" },
   { id: "menu_navigasi", label: "Navigasi", icon: "Navigation", url: "/dashboard/navigasi", parentId: null, sortOrder: 9, isActive: true, permission: "navigation.read" },
@@ -36,11 +36,11 @@ const INITIAL_MENUS = [
   { id: "menu_faq", label: "FAQ", icon: "FileText", url: "/dashboard/tampilan/faq", parentId: "menu_tampilan", sortOrder: 6, isActive: true, permission: "appearance.read" },
   { id: "menu_tampilan_berita", label: "Pengaturan Berita", icon: "Rss", url: "/dashboard/tampilan/berita", parentId: "menu_tampilan", sortOrder: 7, isActive: true, permission: "appearance.read" },
   { id: "menu_sosmed", label: "Sosial Media", icon: "Share2", url: "/dashboard/tampilan/sosial-media", parentId: "menu_tampilan", sortOrder: 8, isActive: true, permission: "appearance.read" },
-  { id: "menu_pengguna", label: "Pengguna", icon: "Users", url: "/dashboard/pengguna", parentId: null, sortOrder: 10, isActive: true, permission: "user.read" },
-  { id: "menu_role", label: "Role & Akses", icon: "Shield", url: "/dashboard/pengguna/role", parentId: null, sortOrder: 11, isActive: true, permission: "role.read" },
-  { id: "menu_admin_menu", label: "Menu Admin", icon: "Menu", url: "/dashboard/pengguna/menu", parentId: null, sortOrder: 12, isActive: true, permission: "settings.read" },
-  { id: "menu_pengaturan_pembayaran", label: "Pengaturan Pembayaran", icon: "CreditCard", url: "/dashboard/pengaturan/pembayaran", parentId: null, sortOrder: 13, isActive: true, permission: "settings.read" },
-  { id: "menu_pengaturan", label: "Pengaturan Umum", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 14, isActive: true, permission: "settings.read" },
+  { id: "menu_pengguna", label: "Pengguna", icon: "Users", url: "/dashboard/pengguna", parentId: null, sortOrder: 11, isActive: true, permission: "user.read" },
+  { id: "menu_role", label: "Role & Akses", icon: "Shield", url: "/dashboard/pengguna/role", parentId: null, sortOrder: 12, isActive: true, permission: "role.read" },
+  { id: "menu_admin_menu", label: "Menu Admin", icon: "Menu", url: "/dashboard/pengguna/menu", parentId: null, sortOrder: 13, isActive: true, permission: "menu.read" },
+  { id: "menu_pengaturan_pembayaran", label: "Pengaturan Pembayaran", icon: "CreditCard", url: "/dashboard/pengaturan/pembayaran", parentId: null, sortOrder: 14, isActive: true, permission: "payment_account.read" },
+  { id: "menu_pengaturan", label: "Pengaturan Umum", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 15, isActive: true, permission: "settings.read" },
 ];
 
 export async function getAdminMenus(): Promise<AdminMenuItem[]> {
@@ -71,13 +71,26 @@ export async function getAdminMenus(): Promise<AdminMenuItem[]> {
       return groupMenus(INITIAL_MENUS as AdminMenuItem[]);
     }
 
-    // Auto-sync any missing menu items from INITIAL_MENUS
-    const existingIds = new Set(menus.map((m: any) => m.id));
-    const missingMenus = INITIAL_MENUS.filter((m) => !existingIds.has(m.id));
-    if (missingMenus.length > 0) {
+    // Auto-sync permissions & missing menus from INITIAL_MENUS
+    const existingMap = new Map(menus.map((m: any) => [m.id, m]));
+    const needsUpdate: any[] = [];
+
+    for (const init of INITIAL_MENUS) {
+      const existing = existingMap.get(init.id);
+      if (!existing) {
+        needsUpdate.push(init);
+      } else if (existing.permission !== init.permission) {
+        needsUpdate.push({
+          ...existing,
+          permission: init.permission,
+        });
+      }
+    }
+
+    if (needsUpdate.length > 0) {
       try {
         await supabaseAdmin.from("AdminMenu").upsert(
-          missingMenus.map((m) => ({
+          needsUpdate.map((m) => ({
             id: m.id,
             label: m.label,
             icon: m.icon,

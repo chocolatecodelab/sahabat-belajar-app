@@ -49,8 +49,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={`${plusJakarta.variable} ${inter.variable}`}>
-      <body className="min-h-screen antialiased">{children}</body>
+    <html
+      lang="id"
+      className={`${plusJakarta.variable} ${inter.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-screen antialiased" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }

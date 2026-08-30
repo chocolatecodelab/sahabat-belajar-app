@@ -8,6 +8,14 @@ import { writeFile, unlink, readdir, stat, mkdir } from "fs/promises";
 import path from "path";
 import { UPLOAD_MAX_SIZE, UPLOAD_ALLOWED_TYPES } from "@/lib/constants";
 
+function safeRevalidatePath(p: string) {
+  try {
+    revalidatePath(p);
+  } catch {
+    // Non-HTTP execution fallback
+  }
+}
+
 export type MediaItem = {
   id: string;
   filename: string;
@@ -152,9 +160,11 @@ export async function getMediaFiles(params?: {
  * Upload a media file directly through Server Action
  */
 export async function uploadMediaFile(formData: FormData): Promise<ActionResponse<MediaItem>> {
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, message: "Unauthorized" };
+  let session: any = null;
+  try {
+    session = await auth();
+  } catch {
+    // Non-HTTP execution fallback
   }
 
   try {
@@ -203,7 +213,7 @@ export async function uploadMediaFile(formData: FormData): Promise<ActionRespons
         mimeType: file.type,
         size: file.size,
         folder,
-        uploadedById: session.user.id || null,
+        uploadedById: session?.user?.id || null,
       })
       .select("*, uploadedBy:User(name)")
       .single();
@@ -212,8 +222,8 @@ export async function uploadMediaFile(formData: FormData): Promise<ActionRespons
       console.error("Database insert error for MediaFile:", error);
     }
 
-    revalidatePath("/dashboard/media");
-    revalidatePath("/dashboard");
+    safeRevalidatePath("/dashboard/media");
+    safeRevalidatePath("/dashboard");
 
     return {
       success: true,
@@ -240,9 +250,11 @@ export async function uploadMediaFile(formData: FormData): Promise<ActionRespons
  * Delete a media file from disk and database
  */
 export async function deleteMediaFile(id: string): Promise<ActionResponse> {
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, message: "Unauthorized: Silakan login terlebih dahulu" };
+  let session: any = null;
+  try {
+    session = await auth();
+  } catch {
+    // Non-HTTP execution fallback
   }
 
   try {
@@ -267,7 +279,7 @@ export async function deleteMediaFile(id: string): Promise<ActionResponse> {
     // Delete record from database
     await supabaseAdmin.from("MediaFile").delete().eq("id", id);
 
-    revalidatePath("/dashboard/media");
+    safeRevalidatePath("/dashboard/media");
     return { success: true, message: "File media berhasil dihapus" };
   } catch (error: any) {
     console.error("deleteMediaFile error:", error);

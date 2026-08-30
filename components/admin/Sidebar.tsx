@@ -127,6 +127,7 @@ export default function Sidebar({
 
   return (
     <aside
+      suppressHydrationWarning
       className={`fixed top-0 left-0 h-screen flex flex-col transition-all duration-300 z-50 shadow-xl ${
         /* Desktop */
         collapsed ? "lg:w-[72px]" : "lg:w-[260px]"
