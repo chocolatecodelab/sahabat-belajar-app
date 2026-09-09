@@ -1,0 +1,117 @@
+[
+  {
+    "id": "notif_1788184840136_bnl48",
+    "channel": "EMAIL",
+    "recipient": "nurul@campus.ac.id",
+    "recipientName": "Nurul Hidayah, M.Si",
+    "event": "CERTIFICATE_ISSUED",
+    "subject": "[BIAS RISTEK] E-Sertifikat Resmi 32 JP Telah Terbit - BIAS-2026-PLS-7712",
+    "message": "<h2>Selamat! E-Sertifikat Resmi 32 JP Telah Terbit</h2>\n<p>Halo <strong>Nurul Hidayah, M.Si</strong>,</p>\n<p>Selamat atas kelulusan dan penyelesaian seluruh kurikulum program <strong>Mastery SmartPLS 4 & Structural Equation Modeling</strong> di BIAS RISTEK!</p>\n<p>E-Sertifikat resmi berbobot <strong>32 JP</strong> telah diterbitkan dengan nomor seri:</p>\n<h3 style=\"color:#001847;letter-spacing:1px;\">BIAS-2026-PLS-7712</h3>\n<p><a href=\"http://localhost:3000/sertifikat/BIAS-2026-PLS-7712\" style=\"display:inline-block;padding:10px 20px;background:#001847;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;\">Lihat & Unduh E-Sertifikat</a></p>\n<p>Sertifikat ini dapat divalidasi keasliannya oleh institusi/kampus secara publik melalui tautan di atas.<br /><strong>Direktur Akademik BIAS RISTEK</strong></p>",
+    "status": "SIMULATED",
+    "sentAt": "2026-08-31T14:00:40.136Z"
+  },
+  {
+    "id": "notif_1788184839845_1awkp",
+    "channel": "WHATSAPP",
+    "recipient": "6285811223344",
+    "recipientName": "Nurul Hidayah, M.Si",
+    "event": "CERTIFICATE_ISSUED",
+    "message": "Selamat Nurul Hidayah, M.Si! 🎓✨\n\nAnda telah berhasil menyelesaikan seluruh rangkaian program *Mastery SmartPLS 4 & Structural Equation Modeling*. \n\nE-Sertifikat Resmi *32 JP* Anda telah diterbitkan:\n📜 *Kode Sertifikat:* BIAS-2026-PLS-7712\n🔍 *Validasi & Unduh E-Sertifikat:* http://localhost:3000/sertifikat/BIAS-2026-PLS-7712\n\nSertifikat ini dapat dicantumkan pada portofolio akademik dan divalidasi keasliannya secara online.\n\nSalam hormat,\n*Direktur Akademik BIAS RISTEK*",
+    "status": "SIMULATED",
+    "sentAt": "2026-08-31T14:00:39.845Z"
+  },
+  {
+    "id": "notif_1788184839405_uap76",
+    "channel": "EMAIL",
+    "recipient": "nurul@campus.ac.id",
+    "recipientName": "Nurul Hidayah, M.Si",
+    "event": "SUBMISSION_REVIEWED",
+    "subject": "[BIAS RISTEK] Review Tugas: Draf Bab 4: Analisis Outer Model & Inner Model (DISETUJUI / LULUS)",
+    "message": "<h2>Review Draf Naskah Selesai</h2>\n<p>Halo <strong>Nurul Hidayah, M.Si</strong>,</p>\n<p>Mentor telah selesai meninjau draf tugas naskah Anda pada program <strong>Mastery SmartPLS 4 & Structural Equation Modeling</strong>.</p>\n<ul>\n  <li><strong>Judul Tugas:</strong> Draf Bab 4: Analisis Outer Model & Inner Model</li>\n  <li><strong>Status:</strong> <strong>DISETUJUI / LULUS</strong></li>\n  <li><strong>Nilai Evaluasi:</strong> 95/100 / 100</li>\n</ul>\n<div style=\"background:#f8fafc;border-left:4px solid #001847;padding:12px 16px;margin:16px 0;\">\n  <strong>Catatan Mentor:</strong><br />\n  <em>Metodologi dan interpretasi bootstrapping SmartPLS sudah sangat baik dan sesuai kaidah Scopus Q1.</em>\n</div>\n<p><a href=\"http://localhost:3000/belajar\" style=\"display:inline-block;padding:10px 20px;background:#001847;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;\">Buka Ruang Belajar & Tugas</a></p>\n<p>Salam riset,<br /><strong>Mentor Riset BIAS RISTEK</strong></p>",
+    "status": "SIMULATED",
+    "sentAt": "2026-08-31T14:00:39.405Z"
+  },
+  {
+    "id": "notif_1788184839121_ghq5b",
+    "channel": "WHATSAPP",
+    "recipient": "6285811223344",
+    "recipientName": "Nurul Hidayah, M.Si",
+    "event": "SUBMISSION_REVIEWED",
+    "message": "Halo Nurul Hidayah, M.Si, draf naskah Anda telah direview oleh Mentor! 📑\n\n📌 *Program:* Mastery SmartPLS 4 & Structural Equation Modeling\n📝 *Tugas:* Draf Bab 4: Analisis Outer Model & Inner Model\n📊 *Status:* *DISETUJUI / LULUS* (Nilai: 95/100)\n\n💬 *Catatan Mentor:*\n\"Metodologi dan interpretasi bootstrapping SmartPLS sudah sangat baik dan sesuai kaidah Scopus Q1.\"\n\nSilakan periksa detail masukan dan tindak lanjuti revisi Anda di Ruang Belajar:\n🔗 http://localhost:3000/belajar\n\nSemangat berkarya!\n*Mentor Riset BIAS RISTEK*",
+    "status": "SIMULATED",
+    "sentAt": "2026-08-31T14:00:39.121Z"
+  },
+  {
+    "id": "notif_1788184838692_ymc8x",
+    "channel": "EMAIL",
+    "recipient": "nurul@campus.ac.id",
+    "recipientName": "Nurul Hidayah, M.Si",
+    "event": "PAYMENT_VERIFIED",
+    "subject": "[BIAS RISTEK] Pembayaran Diterima & Akun Ruang Belajar Aktif!",
+    "message": "<h2>Pembayaran Diverifikasi & Akses LMS Aktif</h2>\n<p>Halo <strong>Nurul Hidayah, M.Si</strong>,</p>\n<p>Pembayaran Anda untuk program <strong>Mastery SmartPLS 4 & Structural Equation Modeling</strong> telah berhasil kami verifikasi.</p>\n<p>Akun digital Anda telah aktif dan dapat langsung mengakses seluruh video, materi presentasi, dan modul riset:</p>\n<ul>\n  <li><strong>Email Login:</strong> nurul@campus.ac.id</li>\n  <li><strong>Ruang Belajar:</strong> <a href=\"http://localhost:3000/belajar/mastery-smartpls-4\">http://localhost:3000/belajar/mastery-smartpls-4</a></li>\n</ul>\n<p><a href=\"http://localhost:3000/login\" style=\"display:inline-block;padding:10px 20px;background:#001847;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;\">Masuk ke Ruang Belajar</a></p>\n<p>Selamat belajar dan semoga sukses mencapai target publikasi Anda!<br /><strong>Tim Akademik BIAS RISTEK</strong></p>",
+    "status": "SIMULATED",
+    "sentAt": "2026-08-31T14:00:38.692Z"
+  },
+  {
+    "id": "notif_1788184838404_svpb2",
+    "channel": "WHATSAPP",
+    "recipient": "6285811223344",
+    "recipientName": "Nurul Hidayah, M.Si",
+    "event": "PAYMENT_VERIFIED",
+    "message": "Halo Nurul Hidayah, M.Si, kabar gembira! 🎉\n\nPembayaran untuk program *Mastery SmartPLS 4 & Structural Equation Modeling* (Invoice: INV-202608-8812) telah *BERHASIL DIVERIFIKASI*.\n\nAkun Ruang Belajar (LMS) Anda telah aktif:\n📧 *Email Login:* nurul@campus.ac.id\n🔑 *Password:* Gunakan nomor WhatsApp Anda (atau yang didaftarkan)\n🌐 *Masuk ke Ruang Belajar:* http://localhost:3000/belajar/mastery-smartpls-4\n\nSelamat belajar dan semoga sukses dalam publikasi riset Anda!\n\nSalam,\n*Tim Akademik BIAS RISTEK*",
+    "status": "SIMULATED",
+    "sentAt": "2026-08-31T14:00:38.404Z"
+  },
+  {
+    "id": "notif_1788184837695_pujx7",
+    "channel": "WHATSAPP",
+    "recipient": "6287777659482",
+    "recipientName": "Admin BIAS RISTEK",
+    "event": "ADMIN_ALERT_INVOICE",
+    "message": "🚨 *PESANAN BARU MASUK!* 🧾\n\nNama: Nurul Hidayah, M.Si\nProgram: Mastery SmartPLS 4 & Structural Equation Modeling\nTotal: Rp 499.342\nInvoice: INV-202608-8812\n\nLihat di Dashboard: http://localhost:3000/dashboard/pendaftaran",
+    "status": "SIMULATED",
+    "sentAt": "2026-08-31T14:00:37.695Z"
+  },
+  {
+    "id": "notif_1788184837386_xrs77",
+    "channel": "EMAIL",
+    "recipient": "nurul@campus.ac.id",
+    "recipientName": "Nurul Hidayah, M.Si",
+    "event": "INVOICE_CREATED",
+    "subject": "[BIAS RISTEK] Rincian Tagihan Pendaftaran - INV-202608-8812",
+    "message": "<h2>Pendaftaran Program Riset BIAS RISTEK</h2>\n<p>Halo <strong>Nurul Hidayah, M.Si</strong>,</p>\n<p>Terima kasih telah mendaftar pada program <strong>Mastery SmartPLS 4 & Structural Equation Modeling</strong> di BIAS RISTEK.</p>\n<hr />\n<h3>Rincian Tagihan:</h3>\n<ul>\n  <li><strong>Nomor Invoice:</strong> INV-202608-8812</li>\n  <li><strong>Total Tagihan:</strong> Rp 499.342 (termasuk kode unik 342)</li>\n  <li><strong>Metode Pembayaran:</strong> QRIS</li>\n</ul>\n<p>Silakan lakukan pembayaran sesuai nominal di atas dan unggah bukti transfer melalui halaman tracking invoice:</p>\n<p><a href=\"http://localhost:3000/pembayaran/sukses?inv=INV-202608-8812\" style=\"display:inline-block;padding:10px 20px;background:#001847;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;\">Lihat Rincian & Konfirmasi Pembayaran</a></p>\n<p>Salam hangat,<br /><strong>Tim Akademik BIAS RISTEK</strong></p>",
+    "status": "SIMULATED",
+    "sentAt": "2026-08-31T14:00:37.386Z"
+  },
+  {
+    "id": "notif_1788184837087_nym87",
+    "channel": "WHATSAPP",
+    "recipient": "6285811223344",
+    "recipientName": "Nurul Hidayah, M.Si",
+    "event": "INVOICE_CREATED",
+    "message": "Halo Nurul Hidayah, M.Si, terima kasih telah mendaftar di *BIAS RISTEK*! 🔬\n\nBerikut rincian tagihan pendaftaran Anda:\n📌 *Program:* Mastery SmartPLS 4 & Structural Equation Modeling\n🧾 *No. Invoice:* INV-202608-8812\n💰 *Total Tagihan:* Rp 499.342\n💳 *Metode:* QRIS (Kode Unik: 342)\n\nSilakan lakukan transfer dan konfirmasi pembayaran melalui tautan berikut:\n🔗 http://localhost:3000/pembayaran/sukses?inv=INV-202608-8812\n\nSalam hangat,\n*Tim Akademik BIAS RISTEK*",
+    "status": "SIMULATED",
+    "sentAt": "2026-08-31T14:00:37.087Z"
+  },
+  {
+    "id": "notif_1788184836231_8fn1v",
+    "channel": "EMAIL",
+    "recipient": "budi@universitas.ac.id",
+    "recipientName": "Dr. Budi Santoso",
+    "event": "TEST_MESSAGE",
+    "subject": "Uji Coba Email Transaksional",
+    "message": "<p>Halo Budi, ini email uji coba sistem.</p>",
+    "status": "SIMULATED",
+    "sentAt": "2026-08-31T14:00:36.231Z"
+  },
+  {
+    "id": "notif_1788184835911_vsnlr",
+    "channel": "WHATSAPP",
+    "recipient": "6281234567890",
+    "recipientName": "Dr. Budi Santoso",
+    "event": "TEST_MESSAGE",
+    "message": "Pesan uji coba WhatsApp BIAS RISTEK",
+    "status": "SIMULATED",
+    "sentAt": "2026-08-31T14:00:35.911Z"
+  }
+]

@@ -40,7 +40,8 @@ const INITIAL_MENUS = [
   { id: "menu_role", label: "Role & Akses", icon: "Shield", url: "/dashboard/pengguna/role", parentId: null, sortOrder: 12, isActive: true, permission: "role.read" },
   { id: "menu_admin_menu", label: "Menu Admin", icon: "Menu", url: "/dashboard/pengguna/menu", parentId: null, sortOrder: 13, isActive: true, permission: "menu.read" },
   { id: "menu_pengaturan_pembayaran", label: "Pengaturan Pembayaran", icon: "CreditCard", url: "/dashboard/pengaturan/pembayaran", parentId: null, sortOrder: 14, isActive: true, permission: "payment_account.read" },
-  { id: "menu_pengaturan", label: "Pengaturan Umum", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 15, isActive: true, permission: "settings.read" },
+  { id: "menu_pengaturan_notifikasi", label: "Notifikasi & Gateway", icon: "Bell", url: "/dashboard/pengaturan/notifikasi", parentId: null, sortOrder: 15, isActive: true, permission: "settings.read" },
+  { id: "menu_pengaturan", label: "Pengaturan Umum", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 16, isActive: true, permission: "settings.read" },
 ];
 
 export async function getAdminMenus(): Promise<AdminMenuItem[]> {

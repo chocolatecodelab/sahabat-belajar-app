@@ -543,5 +543,73 @@ model Certificate {
   @@index([enrollmentId])
 }
 
+// ==========================================
+// 7. OMNICHANNEL NOTIFICATIONS (WHATSAPP & EMAIL)
+// ==========================================
+
+model NotificationSettings {
+  id                            String   @id @default("global_notification_settings")
+  // WhatsApp Gateway
+  whatsappProvider              String   @default("SIMULATED") // "FONNTE", "WABLAS", "CUSTOM", "SIMULATED"
+  whatsappApiToken              String?  @db.Text
+  whatsappEndpointUrl           String?  // Custom gateway / self-hosted endpoint
+  whatsappSenderNumber          String?  // e.g. "08123456789"
+  whatsappAdminNumber           String?  // Admin WhatsApp to receive new order/submission alerts
+
+  // Email Gateway
+  emailProvider                 String   @default("SIMULATED") // "SMTP", "RESEND", "SIMULATED", "DISABLED"
+  emailSmtpHost                 String?
+  emailSmtpPort                 Int      @default(587)
+  emailSmtpSecure               Boolean  @default(false)
+  emailSmtpUser                 String?
+  emailSmtpPass                 String?
+  emailResendApiKey             String?  @db.Text
+  emailSenderName               String   @default("BIAS RISTEK Akademik")
+  emailSenderAddress            String   @default("no-reply@biasristek.id")
+
+  // Event Toggles
+  waEnabled_invoiceCreated      Boolean  @default(true)
+  waEnabled_paymentVerified     Boolean  @default(true)
+  waEnabled_submissionReviewed  Boolean  @default(true)
+  waEnabled_certificateIssued   Boolean  @default(true)
+
+  emailEnabled_invoiceCreated     Boolean  @default(true)
+  emailEnabled_paymentVerified    Boolean  @default(true)
+  emailEnabled_submissionReviewed Boolean  @default(true)
+  emailEnabled_certificateIssued  Boolean  @default(true)
+
+  // Customizable Message Templates
+  template_wa_invoiceCreated      String?  @db.Text
+  template_wa_paymentVerified     String?  @db.Text
+  template_wa_submissionReviewed  String?  @db.Text
+  template_wa_certificateIssued   String?  @db.Text
+
+  template_email_invoiceCreated      String?  @db.Text
+  template_email_paymentVerified     String?  @db.Text
+  template_email_submissionReviewed  String?  @db.Text
+  template_email_certificateIssued   String?  @db.Text
+
+  updatedAt                     DateTime @default(now()) @updatedAt
+}
+
+model NotificationLog {
+  id            String   @id @default(cuid())
+  channel       String   // "WHATSAPP" | "EMAIL"
+  recipient     String   // Phone or Email address
+  recipientName String?  // Student / recipient name
+  event         String   // "INVOICE_CREATED", "PAYMENT_VERIFIED", "SUBMISSION_REVIEWED", "CERTIFICATE_ISSUED", "TEST_MESSAGE"
+  subject       String?  // Subject title
+  message       String   @db.Text // Full message content sent
+  status        String   @default("SENT") // "SENT", "FAILED", "SIMULATED"
+  errorMessage  String?  @db.Text
+  sentAt        DateTime @default(now())
+
+  @@index([channel])
+  @@index([event])
+  @@index([status])
+  @@index([sentAt])
+}
+
+
 
 

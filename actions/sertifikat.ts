@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase";
 import type { ActionResponse } from "@/types";
+import { notifyCertificateIssued } from "@/lib/notifications";
 
 function safeRevalidatePath(path: string) {
   try {
@@ -102,6 +103,22 @@ export async function claimCertificate(enrollmentId: string): Promise<ActionResp
 
     safeRevalidatePath("/belajar");
     safeRevalidatePath(`/sertifikat/${certificateCode}`);
+
+    // Async Dispatch E-Certificate Issued Notification
+    (async () => {
+      try {
+        const studentEmail = (enrollment as any)?.userEmail;
+        notifyCertificateIssued({
+          studentName: recipientName,
+          studentEmail: studentEmail || "peserta@biasristek.id",
+          courseTitle,
+          certificateCode,
+          totalHours: "32 JP",
+        }).catch((e) => console.error("notifyCertificateIssued error:", e));
+      } catch (notifErr) {
+        console.error("notifyCertificateIssued error:", notifErr);
+      }
+    })();
 
     return {
       success: true,

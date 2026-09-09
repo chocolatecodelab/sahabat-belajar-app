@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase";
 import { requireAuth } from "@/lib/auth";
 import type { ActionResponse } from "@/types";
+import { notifySubmissionReviewed } from "@/lib/notifications";
 
 function safeRevalidatePath(path: string) {
   try {
@@ -195,10 +196,48 @@ export async function reviewSubmission(formData: {
       })
       .eq("id", submissionId);
 
-    if (error) throw error;
-
     safeRevalidatePath("/dashboard/tugas");
     safeRevalidatePath("/belajar");
+
+    // Async Dispatch Notification to Student
+    (async () => {
+      try {
+        const { data: subData } = await supabaseAdmin
+          .from("StudentSubmission")
+          .select(`
+            title,
+            enrollment:CourseEnrollment(
+              userName,
+              userEmail,
+              course:Course(title, slug)
+            )
+          `)
+          .eq("id", submissionId)
+          .maybeSingle();
+
+        if (subData) {
+          const rawEnrollment: any = subData.enrollment;
+          const enrollment = Array.isArray(rawEnrollment) ? rawEnrollment[0] : rawEnrollment;
+          const rawCourse: any = enrollment?.course;
+          const course = Array.isArray(rawCourse) ? rawCourse[0] : rawCourse;
+
+          if (enrollment?.userEmail) {
+            notifySubmissionReviewed({
+              studentName: enrollment.userName || "Peserta Riset",
+              studentEmail: enrollment.userEmail,
+              courseTitle: course?.title || "Program Kursus",
+              courseSlug: course?.slug,
+              taskTitle: subData.title,
+              status,
+              score,
+              mentorFeedback: feedback,
+            }).catch((e) => console.error("notifySubmissionReviewed error:", e));
+          }
+        }
+      } catch (subErr) {
+        console.error("Failed to lookup submission for notification:", subErr);
+      }
+    })();
 
     return { success: true, message: "Hasil review & catatan revisi berhasil dikirimkan ke siswa" };
   } catch (err: any) {

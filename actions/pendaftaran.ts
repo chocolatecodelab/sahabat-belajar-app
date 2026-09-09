@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { hash } from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase";
 import { requireAuth } from "@/lib/auth";
+import { notifyInvoiceCreated, notifyPaymentVerified } from "@/lib/notifications";
 
 function safeRevalidatePath(path: string) {
   try {
@@ -130,6 +131,19 @@ export async function createEnrollment(data: {
 
     safeRevalidatePath("/dashboard/pendaftaran");
     safeRevalidatePath("/dashboard");
+
+    // Async Dispatch Omnichannel Notification
+    notifyInvoiceCreated({
+      registrationId: id,
+      invoiceNumber,
+      studentName: name,
+      studentEmail: email,
+      studentPhone: phone,
+      courseTitle: course.title,
+      totalAmount,
+      uniqueCode,
+      paymentMethod: course.isFree ? "FREE" : paymentMethod || "QRIS",
+    }).catch((notifErr) => console.error("Notification dispatch error:", notifErr));
 
     return {
       success: true,
@@ -411,6 +425,24 @@ export async function updateRegistrationStatus(
     safeRevalidatePath("/dashboard/pendaftaran");
     safeRevalidatePath("/dashboard/kursus");
     safeRevalidatePath("/dashboard");
+
+    // Async Dispatch Payment Verified Notification
+    if (newStatus === "VERIFIED" && current.status !== "VERIFIED") {
+      const { data: courseInfo } = await supabaseAdmin
+        .from("Course")
+        .select("title, slug")
+        .eq("id", current.courseId)
+        .maybeSingle();
+
+      notifyPaymentVerified({
+        invoiceNumber: (current as any).invoiceNumber || id,
+        studentName: current.name,
+        studentEmail: current.email,
+        studentPhone: current.phone,
+        courseTitle: courseInfo?.title || "Program Kursus",
+        courseSlug: courseInfo?.slug,
+      }).catch((notifErr) => console.error("Payment verified notification error:", notifErr));
+    }
 
     return { success: true, message: `Status pendaftaran berhasil diperbarui menjadi ${newStatus}` };
   } catch (err: any) {
