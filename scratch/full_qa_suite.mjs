@@ -150,9 +150,9 @@ async function runQASuite() {
     ];
     const coursesContext = allCourses.map(c => `[SLUG: ${c.slug}] ${c.title} (${c.category})`).join("\n");
     const counselorRes = await callGeminiCounselor(testMessages, coursesContext);
-    assert(counselorRes.success === true, "TC-24: AI Counselor successfully generates advice");
-    assert(typeof counselorRes.data?.reply === "string" && counselorRes.data.reply.length > 20, "TC-25: AI Counselor generates structured reply");
-    assert(Array.isArray(counselorRes.data?.suggestedQuestions), "TC-26: AI Counselor returns quick follow-up questions");
+    assert(counselorRes.success === true, "TC-24: AI Counselor successfully generates advice", counselorRes.error || JSON.stringify(counselorRes));
+    assert(typeof counselorRes.data?.reply === "string" && counselorRes.data.reply.length > 20, "TC-25: AI Counselor generates structured reply", counselorRes.error);
+    assert(Array.isArray(counselorRes.data?.suggestedQuestions), "TC-26: AI Counselor returns quick follow-up questions", counselorRes.error);
 
     // ---------------------------------------------------------
     // TEST SUITE 7: Student LMS, Manuscript Review & E-Certificate
@@ -172,12 +172,20 @@ async function runQASuite() {
     assert(!!classroom && !!classroom.course && Array.isArray(classroom.modules), "TC-29: Load classroom modules and syllabus playlist");
     assert(classroom.modules.length >= 1, "TC-30: Classroom contains weekly curriculum structure");
 
-    const toggleRes = await toggleLessonCompletion("enroll_demo_scopus", "les_scopus_1_1", true);
+    const testEnrollId = `enroll_qa_${Date.now()}`;
+    await supabaseAdmin.from("CourseEnrollment").insert({
+      id: testEnrollId,
+      userEmail: "ahmad.student@biasristek.id",
+      userName: "Ahmad Mahasiswa Riset, S.Kom.",
+      courseId: testCourseId,
+      status: "ACTIVE",
+    });
+
+    const toggleRes = await toggleLessonCompletion(testEnrollId, "les_scopus_1_1", true);
     assert(toggleRes.success === true, "TC-31: Toggle lesson completion status");
 
     const draftRes = await submitResearchDraft({
-      enrollmentId: "enroll_demo_scopus",
-      lessonId: "les_scopus_1_1",
+      enrollmentId: testEnrollId,
       studentName: "Ahmad Mahasiswa Riset, S.Kom.",
       studentEmail: "ahmad.student@biasristek.id",
       googleDocUrl: "https://docs.google.com/document/d/1SAMPLE_DRAFT_SCOPUS_Q1/edit",
@@ -188,7 +196,7 @@ async function runQASuite() {
     const mentorSubmissions = await getAdminSubmissions();
     assert(Array.isArray(mentorSubmissions), "TC-33: Mentor retrieve manuscript submissions queue");
 
-    const certRes = await claimCertificate("enroll_demo_scopus", "Ahmad Mahasiswa Riset, S.Kom.", "Mentorship Scopus & SINTA 1-2");
+    const certRes = await claimCertificate(testEnrollId, "Ahmad Mahasiswa Riset, S.Kom.", "Mentorship Scopus & SINTA 1-2");
     assert(certRes.success === true && !!certRes.data?.certificateCode, "TC-34: Claim 32 JP E-Certificate", `Code: ${certRes.data?.certificateCode}`);
 
     if (certRes.data?.certificateCode) {

@@ -14,7 +14,6 @@ import {
   DollarSign,
   User,
   CheckCircle2,
-  Sparkles,
 } from "lucide-react";
 import TinyEditor from "@/components/admin/TinyEditor";
 import CoverImageUpload from "@/components/admin/CoverImageUpload";
@@ -301,15 +300,15 @@ export default function CourseForm({ initialData, isEditing = false }: CourseFor
                   style={{ borderColor: "var(--color-outline-variant)" }}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="w-6 h-6 rounded-md bg-blue-900 text-white font-bold text-3xs flex items-center justify-center shrink-0">
+                    <span className="w-6 h-6 rounded-md bg-[#001847] text-white font-semibold text-xs flex items-center justify-center shrink-0">
                       {idx + 1}
                     </span>
-                    <span className="text-2xs font-semibold text-gray-800 truncate">{item}</span>
+                    <span className="text-xs font-medium text-slate-800 truncate">{item}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleRemoveCurriculum(idx)}
-                    className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
+                    className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -323,7 +322,7 @@ export default function CourseForm({ initialData, isEditing = false }: CourseFor
                 value={newSession}
                 onChange={(e) => setNewSession(e.target.value)}
                 placeholder="Tambah judul sesi baru..."
-                className="flex-1 px-3 py-2 rounded-lg border text-2xs focus-ring bg-white"
+                className="flex-1 px-3 py-2 rounded-lg border text-xs focus-ring bg-white"
                 style={{ borderColor: "var(--color-outline-variant)" }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -335,7 +334,7 @@ export default function CourseForm({ initialData, isEditing = false }: CourseFor
               <button
                 type="button"
                 onClick={handleAddCurriculum}
-                className="px-4 py-2 rounded-lg text-2xs font-bold text-white bg-blue-900 hover:bg-blue-950 flex items-center gap-1 shrink-0"
+                className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-[#001847] hover:bg-[#0b2c6b] flex items-center gap-1 shrink-0 transition"
               >
                 <Plus size={14} /> Tambah Sesi
               </button>

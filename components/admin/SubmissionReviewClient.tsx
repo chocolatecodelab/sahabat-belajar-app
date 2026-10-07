@@ -273,14 +273,14 @@ export default function SubmissionReviewClient({ initialSubmissions }: Submissio
             {/* Link to view document */}
             <div className="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200 flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-blue-950">Berkas Naskah Peserta</p>
-                <p className="text-3xs text-blue-800 truncate max-w-xs">{selectedSub.fileUrl}</p>
+                <p className="text-xs font-bold text-[#001847]">Berkas Naskah Peserta</p>
+                <p className="text-xs text-slate-500 truncate max-w-xs">{selectedSub.fileUrl}</p>
               </div>
               <a
                 href={selectedSub.fileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="px-3 py-1.5 rounded-lg bg-blue-900 text-white text-xs font-bold hover:opacity-90 flex items-center gap-1 shrink-0"
+                className="px-3 py-1.5 rounded-lg bg-[#001847] text-white text-xs font-semibold hover:bg-[#0b2c6b] flex items-center gap-1.5 shrink-0 transition"
               >
                 <ExternalLink size={12} />
                 <span>Buka Naskah</span>

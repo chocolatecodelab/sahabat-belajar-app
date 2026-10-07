@@ -4,7 +4,7 @@ import { useState, Suspense } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, LogIn, AlertCircle, Sparkles, BookOpen } from "lucide-react";
+import { Eye, EyeOff, LogIn, AlertCircle, BookOpen } from "lucide-react";
 
 function LoginFormInner() {
   const router = useRouter();

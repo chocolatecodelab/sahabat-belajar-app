@@ -18,6 +18,7 @@ import {
   ExternalLink,
   HardDrive,
   Filter,
+  Folder,
 } from "lucide-react";
 import Image from "next/image";
 import { uploadMediaFile, deleteMediaFile, getMediaFiles, type MediaItem } from "@/actions/media";
@@ -231,13 +232,13 @@ export default function MediaLibraryClient({ initialData }: MediaLibraryClientPr
                   key={f}
                   type="button"
                   onClick={() => handleFolderChange(f)}
-                  className={`px-3 py-1.5 rounded-lg text-2xs font-bold transition-all shrink-0 uppercase ${
+                  className={`px-3 py-1.5 rounded-lg text-2xs font-bold transition-all shrink-0 uppercase inline-flex items-center gap-1.5 ${
                     selectedFolder === f
                       ? "bg-[var(--color-primary)] text-white shadow-xs"
                       : "bg-slate-50 text-gray-600 hover:bg-slate-100"
                   }`}
                 >
-                  📁 {f}
+                  <Folder size={12} /> {f}
                 </button>
               ))}
             </div>
@@ -505,7 +506,9 @@ export default function MediaLibraryClient({ initialData }: MediaLibraryClientPr
                   </div>
                   <div>
                     <span className="text-gray-400 font-medium block">Folder:</span>
-                    <p className="font-bold text-blue-900 uppercase">📁 {selectedMedia.folder}</p>
+                    <p className="font-bold text-blue-900 uppercase flex items-center gap-1">
+                      <Folder size={14} className="text-blue-700" /> {selectedMedia.folder}
+                    </p>
                   </div>
                 </div>
 

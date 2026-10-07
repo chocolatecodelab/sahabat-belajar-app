@@ -9,7 +9,6 @@ import {
   BarChart2,
   FileText,
   TrendingUp,
-  Sparkles,
   BookOpen,
 } from "lucide-react";
 import type { CourseItem } from "@/actions/kursus";
@@ -33,7 +32,7 @@ export default function LayananSection({ courses = [] }: LayananSectionProps) {
   const featuredCourses = courses.slice(0, 3);
 
   return (
-    <section id="layanan" className="py-20 bg-[var(--color-surface)] font-[var(--font-body)]">
+    <section id="layanan" className="scroll-mt-28 pt-20 sm:pt-28 pb-16 sm:pb-24 bg-[var(--color-surface)] font-[var(--font-body)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
@@ -151,12 +150,12 @@ export default function LayananSection({ courses = [] }: LayananSectionProps) {
 
                   {/* Mentor Badge */}
                   <div className="pt-3 border-t flex items-center gap-2.5" style={{ borderColor: "var(--color-outline-variant)" }}>
-                    <div className="w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-[#001847] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                       {course.mentorName.slice(0, 2)}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-3xs font-bold text-gray-900 truncate">{course.mentorName}</p>
-                      <p className="text-3xs text-gray-400 truncate">{course.mentorTitle}</p>
+                      <p className="text-xs font-semibold text-slate-900 truncate">{course.mentorName}</p>
+                      <p className="text-2xs text-slate-500 truncate">{course.mentorTitle}</p>
                     </div>
                   </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   X,
@@ -11,7 +11,6 @@ import {
   Upload,
   ArrowRight,
   RefreshCw,
-  Sparkles,
   ShieldCheck,
   Check,
   Calendar,
@@ -19,6 +18,7 @@ import {
   User,
   School,
   FileText,
+  GraduationCap,
 } from "lucide-react";
 import Image from "next/image";
 import { createEnrollment, uploadPaymentProof } from "@/actions/pendaftaran";
@@ -67,6 +67,14 @@ export default function CourseCheckoutModal({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Reset scroll container position when switching between step 1 and step 2
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [step]);
 
   useEffect(() => {
     if (isOpen) {
@@ -201,7 +209,7 @@ export default function CourseCheckoutModal({
                 color: "var(--color-primary)",
               }}
             >
-              <Sparkles size={20} />
+              <GraduationCap size={20} />
             </div>
             <div>
               <h3 className="font-bold text-headline-sm font-[var(--font-heading)]" style={{ color: "var(--color-on-surface)" }}>
@@ -247,7 +255,7 @@ export default function CourseCheckoutModal({
         )}
 
         {/* Modal Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-6">
           {/* STEP 1: FORM BIODATA */}
           {step === 1 && (
             <form onSubmit={handleProceedToPayment} className="space-y-4">
@@ -274,12 +282,13 @@ export default function CourseCheckoutModal({
               {/* Biodata Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="text-label-md font-bold block mb-1" style={{ color: "var(--color-on-surface)" }}>
+                  <label htmlFor="checkout-name" className="text-label-md font-bold block mb-1" style={{ color: "var(--color-on-surface)" }}>
                     Nama Lengkap <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
+                      id="checkout-name"
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
@@ -292,10 +301,11 @@ export default function CourseCheckoutModal({
                 </div>
 
                 <div>
-                  <label className="text-label-md font-bold block mb-1" style={{ color: "var(--color-on-surface)" }}>
+                  <label htmlFor="checkout-phone" className="text-label-md font-bold block mb-1" style={{ color: "var(--color-on-surface)" }}>
                     Nomor WhatsApp Aktif <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="checkout-phone"
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
@@ -309,10 +319,11 @@ export default function CourseCheckoutModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="text-label-md font-bold block mb-1" style={{ color: "var(--color-on-surface)" }}>
+                  <label htmlFor="checkout-email" className="text-label-md font-bold block mb-1" style={{ color: "var(--color-on-surface)" }}>
                     Email Aktif <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="checkout-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -324,12 +335,13 @@ export default function CourseCheckoutModal({
                 </div>
 
                 <div>
-                  <label className="text-label-md font-bold block mb-1" style={{ color: "var(--color-on-surface)" }}>
+                  <label htmlFor="checkout-institution" className="text-label-md font-bold block mb-1" style={{ color: "var(--color-on-surface)" }}>
                     Asal Kampus / Instansi <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <School size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
+                      id="checkout-institution"
                       type="text"
                       value={institution}
                       onChange={(e) => setInstitution(e.target.value)}
@@ -344,10 +356,11 @@ export default function CourseCheckoutModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="text-label-md font-bold block mb-1" style={{ color: "var(--color-on-surface)" }}>
+                  <label htmlFor="checkout-education-level" className="text-label-md font-bold block mb-1" style={{ color: "var(--color-on-surface)" }}>
                     Jenjang Studi / Profesi
                   </label>
                   <select
+                    id="checkout-education-level"
                     value={educationLevel}
                     onChange={(e) => setEducationLevel(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border text-body-sm focus-ring bg-white font-medium"
@@ -395,10 +408,11 @@ export default function CourseCheckoutModal({
               </div>
 
               <div>
-                <label className="text-label-md font-bold block mb-1" style={{ color: "var(--color-on-surface)" }}>
+                <label htmlFor="checkout-research-topic" className="text-label-md font-bold block mb-1" style={{ color: "var(--color-on-surface)" }}>
                   Topik Penelitian / Kendala Riset Anda (Opsional)
                 </label>
                 <textarea
+                  id="checkout-research-topic"
                   value={researchTopic}
                   onChange={(e) => setResearchTopic(e.target.value)}
                   rows={2}
@@ -456,7 +470,7 @@ export default function CourseCheckoutModal({
                   Rp {invoiceData.totalAmount.toLocaleString("id-ID")}
                 </div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/70 border border-amber-300 text-amber-900 text-2xs font-semibold">
-                  <Sparkles size={12} className="text-amber-700" />
+                  <ShieldCheck size={12} className="text-amber-800" />
                   <span>Sudah termasuk 3 digit kode unik verifikasi: <strong>{invoiceData.uniqueCode}</strong></span>
                 </div>
                 <p className="text-3xs text-gray-400 mt-2">
@@ -468,7 +482,7 @@ export default function CourseCheckoutModal({
               {selectedMethod === "QRIS" ? (
                 <div className="p-4 rounded-xl border bg-slate-50 text-center space-y-3" style={{ borderColor: "var(--color-outline-variant)" }}>
                   <div className="flex items-center justify-center gap-2 text-label-lg font-bold text-gray-900">
-                    <QrCode size={18} className="text-blue-900" />
+                    <QrCode size={18} className="text-[#001847]" />
                     <span>Scan QRIS Resmi BIAS RISTEK</span>
                   </div>
                   <p className="text-2xs text-gray-500 max-w-sm mx-auto">
@@ -512,7 +526,7 @@ export default function CourseCheckoutModal({
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-lg bg-blue-900 text-white flex items-center justify-center font-bold text-xs">
+                            <div className="w-9 h-9 rounded-lg bg-[#001847] text-white flex items-center justify-center font-bold text-xs shadow-2xs">
                               {b.bankName.slice(0, 3)}
                             </div>
                             <div>

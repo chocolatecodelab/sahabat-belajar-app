@@ -610,6 +610,82 @@ model NotificationLog {
   @@index([sentAt])
 }
 
+// ==========================================
+// 8. 200+ TUTOR DIRECTORY & MENTORSHIP DISPATCHING (PHASE #4)
+// ==========================================
 
+model TutorProfile {
+  id                String   @id @default(cuid())
+  userId            String?  @unique
+  fullName          String
+  whatsappNumber    String
+  email             String?
+  academicTitle     String   // e.g. "Dr. techn. Ir., S.T., M.T.", "Prof. Dr., M.Sc."
+  institution       String   // e.g. "Institut Teknologi Bandung"
+  specializations   String[] // ["SmartPLS", "Bibliometrik", "Scopus Teknik Mesin"]
+  scopusId          String?
+  hIndex            Int      @default(0)
+  maxActiveStudents Int      @default(5)
+  currentActive     Int      @default(0)
+  isActive          Boolean  @default(true)
+  rating            Float    @default(5.0)
+  avatar            String?
+  bio               String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
+  availabilities    TutorAvailability[]
+  bookings          MentorshipBooking[]
 
+  @@index([whatsappNumber])
+  @@index([isActive])
+}
+
+model TutorAvailability {
+  id        String       @id @default(cuid())
+  tutorId   String
+  tutor     TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  dayOfWeek String       // "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU", "MINGGU"
+  timeStart String       // "19:30"
+  timeEnd   String       // "21:00"
+  isBooked  Boolean      @default(false)
+  createdAt DateTime     @default(now())
+
+  @@index([tutorId, dayOfWeek])
+}
+
+model MentorshipBooking {
+  id                String        @id @default(cuid())
+  registrationId    String?
+  studentName       String
+  studentWhatsapp   String
+  studentEmail      String?
+  tutorId           String
+  tutor             TutorProfile  @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  researchTopic     String        @db.Text
+  researchSoftware  String?
+  scheduledDate     DateTime
+  timeSlot          String        // "19:30 - 21:00 WIB"
+  zoomJoinUrl       String?
+  zoomHostUrl       String?
+  status            BookingStatus @default(PENDING_TUTOR_CONFIRMATION)
+  confirmationToken String        @unique // Magic Token for 1-Click WhatsApp Confirmation
+  tutorNotes        String?       @db.Text
+  confirmedAt       DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([tutorId])
+  @@index([status])
+  @@index([confirmationToken])
+}
+
+enum BookingStatus {
+  DRAFT_MATCHING
+  PENDING_TUTOR_CONFIRMATION
+  CONFIRMED
+  DECLINED_BY_TUTOR
+  COMPLETED
+  RESCHEDULED
+}

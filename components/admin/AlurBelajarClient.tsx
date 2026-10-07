@@ -126,13 +126,13 @@ export default function AlurBelajarClient({ steps: initial }: { steps: LearningS
             }`}
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-sm">
+              <span className="w-8 h-8 rounded-full bg-[#001847] text-white flex items-center justify-center font-bold text-xs shadow-2xs">
                 {item.stepNumber}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => openEdit(item)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-blue-900 hover:bg-blue-50 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-[#001847] hover:bg-slate-100 transition-colors"
                   title="Edit"
                 >
                   <Edit size={16} />

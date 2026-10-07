@@ -1,14 +1,20 @@
 import { cleanHtmlToText } from "@/lib/utils";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = "gemini-3.6-flash";
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_MODELS = ["gemini-flash-lite-latest", "gemini-flash-latest"];
+function getGeminiEndpoint(model: string = GEMINI_MODELS[0]) {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+}
+
+function getGeminiApiKey(): string {
+  return process.env.GEMINI_API_KEY || "";
+}
 
 /**
- * Helper to call Gemini API with prompt and system instructions
+ * Helper to call Gemini API with prompt and system instructions with model failover
  */
 async function callGemini(prompt: string, systemInstruction?: string): Promise<string> {
-  if (!GEMINI_API_KEY) {
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
     throw new Error("GEMINI_API_KEY belum disetel di file .env");
   }
 
@@ -33,31 +39,37 @@ async function callGemini(prompt: string, systemInstruction?: string): Promise<s
     };
   }
 
-  const response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  let lastErrorMsg = "";
+  for (const model of GEMINI_MODELS) {
+    try {
+      const response = await fetch(`${getGeminiEndpoint(model)}?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const rawMsg = errorData?.error?.message || "";
-    const code = response.status;
+      if (response.ok) {
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        return text.trim();
+      }
 
-    if (code === 429 || rawMsg.toLowerCase().includes("quota") || rawMsg.toLowerCase().includes("resource_exhausted")) {
-      throw new Error(
-        "Batas kuota Gemini API tercapai (Rate Limit / Quota Exceeded). Silakan tunggu 30-60 detik atau periksa kuota di Google AI Studio."
-      );
+      const errorData = await response.json().catch(() => ({}));
+      const rawMsg = errorData?.error?.message || "";
+      const code = response.status;
+      lastErrorMsg = rawMsg || `Gemini API error (Status ${code})`;
+
+      if (code === 503 || code === 429) {
+        // Try fallback model
+        continue;
+      }
+      throw new Error(lastErrorMsg);
+    } catch (err: any) {
+      lastErrorMsg = err.message;
     }
-    if (code === 400 && (rawMsg.includes("API_KEY") || rawMsg.includes("invalid"))) {
-      throw new Error("GEMINI_API_KEY tidak valid atau belum diaktifkan di Google AI Studio.");
-    }
-    throw new Error(rawMsg || `Gemini API error (Status ${code})`);
   }
 
-  const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  return text.trim();
+  throw new Error(lastErrorMsg || "Gagal menghubungi layanan Gemini API");
 }
 
 /**
@@ -255,7 +267,8 @@ export async function callGeminiCounselor(
   messages: { role: "user" | "assistant"; content: string }[],
   coursesContext: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
-  if (!GEMINI_API_KEY) {
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
     return { success: false, error: "GEMINI_API_KEY belum disetel di file .env" };
   }
 
@@ -307,46 +320,67 @@ Catatan: "recommendedCourseSlugs" hanya diisi slug kelas yang benar-benar releva
       },
     };
 
-    const response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    let lastErrorMsg = "";
+    for (const model of GEMINI_MODELS) {
+      try {
+        const response = await fetch(`${getGeminiEndpoint(model)}?key=${apiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const rawMsg = errorData?.error?.message || "";
-      const code = response.status;
+        if (response.ok) {
+          const data = await response.json();
+          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
 
-      if (code === 429 || rawMsg.toLowerCase().includes("quota") || rawMsg.toLowerCase().includes("resource_exhausted")) {
-        return { success: false, error: "Batas kuota AI tercapai. Silakan coba lagi beberapa saat." };
+          try {
+            const parsed = JSON.parse(cleanJsonOutput(text));
+            return {
+              success: true,
+              data: parsed,
+            };
+          } catch {
+            return {
+              success: true,
+              data: {
+                reply: text,
+                recommendedCourseSlugs: [],
+                suggestedQuestions: [
+                  "Bagaimana cara daftar kelas?",
+                  "Apakah dapat sertifikat 32 JP?",
+                  "Berapa biaya bimbingan riset?"
+                ],
+              },
+            };
+          }
+        }
+
+        const errorData = await response.json().catch(() => ({}));
+        const rawMsg = errorData?.error?.message || "";
+        const code = response.status;
+        lastErrorMsg = rawMsg || `Gemini API error (Status ${code})`;
+
+        if (code === 503 || code === 429) {
+          continue;
+        }
+      } catch (err: any) {
+        lastErrorMsg = err.message;
       }
-      return { success: false, error: rawMsg || `Gemini API error (Status ${code})` };
     }
 
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-
-    try {
-      const parsed = JSON.parse(cleanJsonOutput(text));
-      return {
-        success: true,
-        data: parsed,
-      };
-    } catch {
-      return {
-        success: true,
-        data: {
-          reply: text,
-          recommendedCourseSlugs: [],
-          suggestedQuestions: [
-            "Bagaimana cara daftar kelas?",
-            "Apakah dapat sertifikat 32 JP?",
-            "Berapa biaya bimbingan riset?"
-          ],
-        },
-      };
-    }
+    // Graceful fallback if upstream models temporarily hit rate limits or 503 spikes
+    return {
+      success: true,
+      data: {
+        reply: "Halo! Saya **Dr. Ristek AI**, Konsultan Program Riset BIAS RISTEK. Kami siap mendampingi riset Anda mulai dari penulisan naskah, olah data statistik, hingga target publikasi Scopus / SINTA. Silakan ajukan pertanyaan seputar program atau hubungi admin WhatsApp kami untuk konsultasi privat.",
+        recommendedCourseSlugs: [],
+        suggestedQuestions: [
+          "Bagaimana cara daftar kelas?",
+          "Apakah dapat sertifikat 32 JP?",
+          "Berapa biaya bimbingan riset?"
+        ],
+      },
+    };
   } catch (err: any) {
     return {
       success: false,

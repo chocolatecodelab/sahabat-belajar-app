@@ -10,7 +10,6 @@ import {
   Award,
   BookOpen,
   CheckCircle2,
-  Sparkles,
   ShieldCheck,
   ChevronRight,
   User,
@@ -234,7 +233,7 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
               </h2>
 
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 p-5 rounded-xl bg-slate-50 border" style={{ borderColor: "var(--color-outline-variant)" }}>
-                <div className="w-18 h-18 rounded-2xl bg-blue-900 text-white flex items-center justify-center font-bold text-xl shadow-sm shrink-0">
+                <div className="w-18 h-18 rounded-2xl bg-[#001847] text-white flex items-center justify-center font-bold text-xl shadow-sm shrink-0">
                   {course.mentorAvatar ? (
                     <Image src={course.mentorAvatar} alt={course.mentorName} width={72} height={72} className="rounded-2xl object-cover" />
                   ) : (
@@ -244,7 +243,7 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
 
                 <div className="text-center sm:text-left space-y-1">
                   <h3 className="font-bold text-headline-sm text-gray-900">{course.mentorName}</h3>
-                  <p className="text-body-sm font-semibold text-blue-900">{course.mentorTitle}</p>
+                  <p className="text-body-sm font-semibold text-[#001847]">{course.mentorTitle}</p>
                   <p className="text-2xs text-gray-500 leading-relaxed pt-1">
                     Praktisi riset dengan pengalaman publikasi di jurnal Scopus Q1/Q2 dan pembimbing ratusan tesis serta disertasi di berbagai perguruan tinggi terkemuka.
                   </p>
@@ -305,11 +304,12 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
               <button
                 type="button"
                 onClick={() => setIsCheckoutOpen(true)}
-                className="w-full py-3.5 px-4 rounded-xl text-label-lg font-bold text-white shadow-md transition-all hover:opacity-95 flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-4 rounded-xl text-label-lg font-bold text-white shadow-md transition-all hover:bg-[#0b2c6b] flex items-center justify-center gap-2 group cursor-pointer"
                 style={{ background: "var(--color-primary)" }}
               >
-                <Sparkles size={18} />
+                <GraduationCap size={18} />
                 <span>{course.isFree ? "Daftar Sekarang (Gratis)" : "Daftar & Amankan Slot"}</span>
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
               </button>
 
               {/* Highlights Checklist */}

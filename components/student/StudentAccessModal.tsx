@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LogIn, Sparkles, Mail, Phone, ArrowRight, ShieldCheck, X } from "lucide-react";
+import { LogIn, Mail, Phone, ArrowRight, ShieldCheck, X } from "lucide-react";
 import { verifyStudentAccess, type EnrolledCourseItem } from "@/actions/belajar";
 
 interface StudentAccessModalProps {
@@ -116,7 +116,7 @@ export default function StudentAccessModal({ isOpen, onClose, onSuccess }: Stude
 
         <div className="mt-6 pt-4 border-t border-slate-100 text-center">
           <p className="text-3xs text-slate-400 flex items-center justify-center gap-1.5">
-            <Sparkles size={13} className="text-[#fdbc13]" />
+            <ShieldCheck size={13} className="text-slate-400" />
             <span>Akses instan otomatis tanpa perlu mengingat password</span>
           </p>
         </div>

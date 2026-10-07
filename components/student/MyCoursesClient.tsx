@@ -10,7 +10,6 @@ import {
   Clock,
   CheckCircle2,
   Award,
-  Sparkles,
   PlayCircle,
   ExternalLink,
   ShieldCheck,
@@ -207,14 +206,14 @@ export default function MyCoursesClient({ initialCourses, user }: MyCoursesClien
                       {/* Card Header & Badge */}
                       <div className="p-6 pb-4 space-y-3">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-3xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-50 text-blue-900 border border-blue-200">
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-[#001847]/6 text-[#001847] border border-[#001847]/12">
                             {course.category}
                           </span>
                           <span
-                            className={`text-3xs font-bold px-2.5 py-1 rounded-full uppercase ${
+                            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                               isCompleted
-                                ? "bg-emerald-100 text-emerald-800"
-                                : "bg-blue-100 text-blue-900"
+                                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                                : "bg-blue-50 text-[#001847] border border-blue-200"
                             }`}
                           >
                             {isCompleted ? "Selesai 100%" : "Sedang Berjalan"}
@@ -222,7 +221,7 @@ export default function MyCoursesClient({ initialCourses, user }: MyCoursesClien
                         </div>
 
                         <Link href={`/belajar/${course.courseSlug}`}>
-                          <h3 className="text-base font-bold font-[var(--font-heading)] text-slate-900 group-hover:text-blue-900 transition-colors line-clamp-2 leading-snug">
+                          <h3 className="text-base font-bold font-display text-[#001847] group-hover:text-[#0b2c6b] transition-colors line-clamp-2 leading-snug">
                             {course.courseTitle}
                           </h3>
                         </Link>
@@ -290,9 +289,9 @@ export default function MyCoursesClient({ initialCourses, user }: MyCoursesClien
                               type="button"
                               disabled={claimingId === course.enrollmentId}
                               onClick={() => handleClaim(course.enrollmentId)}
-                              className="w-full py-2 rounded-xl text-3xs font-bold text-[#001847] bg-[#fdbc13] hover:opacity-95 shadow-xs flex items-center justify-center gap-1.5 transition-opacity"
+                              className="w-full py-2.5 rounded-lg text-xs font-semibold text-white bg-[#001847] hover:bg-[#0b2c6b] shadow-sm flex items-center justify-center gap-1.5 transition disabled:opacity-50"
                             >
-                              <Sparkles size={13} />
+                              <Award size={14} />
                               <span>
                                 {claimingId === course.enrollmentId
                                   ? "Menerbitkan Sertifikat..."

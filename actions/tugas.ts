@@ -90,6 +90,7 @@ export async function submitResearchDraft(formData: {
 
     if (error) {
       console.error("submitResearchDraft error:", error);
+      return { success: false, message: `Gagal menyimpan draf naskah: ${error.message}` };
     }
 
     if (courseSlug) {
@@ -100,7 +101,7 @@ export async function submitResearchDraft(formData: {
     return { success: true, message: "Draf naskah berhasil dikumpulkan dan masuk ke antrean review mentor!" };
   } catch (err: any) {
     console.error("submitResearchDraft error:", err);
-    return { success: true, message: "Draf naskah berhasil dikumpulkan!" };
+    return { success: false, message: err?.message || "Terjadi kesalahan sistem saat mengumpulkan draf naskah" };
   }
 }
 
@@ -195,6 +196,11 @@ export async function reviewSubmission(formData: {
         updatedAt: new Date().toISOString(),
       })
       .eq("id", submissionId);
+
+    if (error) {
+      console.error("reviewSubmission update error:", error);
+      return { success: false, message: `Gagal memperbarui review naskah: ${error.message}` };
+    }
 
     safeRevalidatePath("/dashboard/tugas");
     safeRevalidatePath("/belajar");

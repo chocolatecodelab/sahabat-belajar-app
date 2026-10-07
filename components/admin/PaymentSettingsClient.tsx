@@ -412,7 +412,7 @@ export default function PaymentSettingsClient({ initialAccounts }: PaymentSettin
               <button
                 type="submit"
                 disabled={isPending}
-                className="px-5 py-2 rounded-lg text-2xs font-bold text-white bg-blue-900 hover:bg-blue-950 flex items-center gap-1.5 shadow-xs"
+                className="px-5 py-2 rounded-lg text-xs font-semibold text-white bg-[#001847] hover:bg-[#0b2c6b] flex items-center gap-1.5 shadow-sm transition"
               >
                 {isPending ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
                 <span>Simpan Rekening</span>

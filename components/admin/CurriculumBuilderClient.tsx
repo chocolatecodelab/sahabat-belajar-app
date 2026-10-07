@@ -22,7 +22,6 @@ import {
   X,
   Upload,
   Layers,
-  Sparkles,
 } from "lucide-react";
 import {
   upsertCourseModule,
@@ -304,60 +303,63 @@ export default function CurriculumBuilderClient({
     <div className="space-y-6">
       {/* Toast Notification */}
       {toastMsg && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-sm animate-fade-in">
-          <CheckCircle2 size={16} className="text-emerald-600" />
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 shadow-sm animate-fade-in">
+          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
           <span>{toastMsg}</span>
         </div>
       )}
 
-      {/* Header Banner (Level 1 Elevation) */}
-      <div
-        className="elevation-1 rounded-2xl p-6 bg-white border border-slate-200/80 shadow-[0px_4px_20px_rgba(11,44,107,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-4"
-        style={{ borderTop: "4px solid var(--color-primary)" }}
-      >
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
+      {/* Header Banner (Academic Innovation) */}
+      <div className="rounded-2xl p-6 bg-white border border-[#e2e8f0] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <Link
               href="/dashboard/kursus"
-              className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors"
+              className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-[#001847] hover:bg-slate-50 transition-colors"
               title="Kembali ke Daftar Kursus"
             >
               <ArrowLeft size={16} />
             </Link>
-            <span className="px-2.5 py-0.5 rounded text-3xs font-bold uppercase bg-blue-900 text-white">
+
+            {/* Academic Category Badge */}
+            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-[#001847]/6 text-[#001847] border border-[#001847]/12">
               {course.category}
             </span>
+
+            {/* Scholastic Gold Batch Badge */}
             {course.batchNumber && (
-              <span className="text-3xs font-bold bg-[#fdbc13] text-blue-950 px-2 py-0.5 rounded">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-[#fef9c3] text-[#7a5900] border border-[#fef08a]">
                 {course.batchNumber}
               </span>
             )}
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-extrabold font-[var(--font-heading)] text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#001847] tracking-tight">
             Manajemen Materi & Silabus: {course.title}
           </h1>
-          <p className="text-xs text-slate-500">
-            Mentor: <strong>{course.mentorName}</strong> • Total {modules.length} Modul ({totalLessonsCount} Sesi Materi)
+
+          <p className="text-sm text-slate-500">
+            Mentor: <span className="font-semibold text-slate-700">{course.mentorName}</span>
+            <span className="mx-2 text-slate-300">•</span>
+            <span>Total {modules.length} Modul ({totalLessonsCount} Sesi Materi)</span>
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
           <Link
             href={`/belajar/${course.slug}`}
             target="_blank"
-            className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 shadow-2xs flex items-center gap-1.5 transition-all"
+            className="px-3.5 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-2xs flex items-center gap-1.5 transition"
           >
-            <ExternalLink size={13} className="text-blue-900" />
+            <ExternalLink size={14} className="text-[#001847]" />
             <span>Lihat Tampilan Siswa</span>
           </Link>
 
           <button
             type="button"
             onClick={handleOpenAddModule}
-            className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs flex items-center gap-1.5 transition-all hover:opacity-90"
-            style={{ background: "var(--color-primary)" }}
+            className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-[#001847] hover:bg-[#0b2c6b] shadow-sm flex items-center gap-1.5 transition"
           >
             <Plus size={15} />
             <span>Tambah Modul Baru</span>
@@ -368,17 +370,16 @@ export default function CurriculumBuilderClient({
       {/* Modules & Lessons List */}
       <div className="space-y-4">
         {modules.length === 0 ? (
-          <div className="elevation-1 rounded-2xl p-12 bg-white border text-center space-y-3">
-            <Layers size={44} className="mx-auto text-slate-300" />
-            <h3 className="text-base font-bold text-slate-800">Belum ada modul kurikulum</h3>
+          <div className="rounded-2xl p-12 bg-white border border-[#e2e8f0] shadow-sm text-center space-y-3">
+            <Layers size={40} className="mx-auto text-slate-300" />
+            <h3 className="text-base font-bold text-slate-800 font-display">Belum ada modul kurikulum</h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
               Silakan buat modul mingguan pertama untuk mengunggah materi rekaman video, slide PDF, dan dataset.
             </p>
             <button
               type="button"
               onClick={handleOpenAddModule}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs"
-              style={{ background: "var(--color-primary)" }}
+              className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-[#001847] hover:bg-[#0b2c6b] shadow-sm"
             >
               + Tambah Modul Baru
             </button>
@@ -390,47 +391,48 @@ export default function CurriculumBuilderClient({
             return (
               <div
                 key={mod.id}
-                className="elevation-1 rounded-2xl bg-white border border-slate-200/80 overflow-hidden shadow-xs"
+                className="rounded-xl bg-white border border-slate-200/90 shadow-sm overflow-hidden transition"
               >
                 {/* Module Header Bar */}
-                <div className="p-4 sm:p-5 bg-slate-50/70 border-b border-slate-200/80 flex items-center justify-between gap-4">
+                <div className="p-4 sm:p-5 bg-[#f8f9ff]/70 border-b border-slate-200/80 flex items-center justify-between gap-4">
                   <button
                     type="button"
                     onClick={() => toggleModuleAccordion(mod.id)}
                     className="flex items-center gap-3 text-left min-w-0 flex-1 group"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-blue-900 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[#001847] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                       {mod.sortOrder || modIdx + 1}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-sm sm:text-base font-bold font-[var(--font-heading)] text-slate-900 group-hover:text-blue-900 transition-colors truncate">
+                      <h3 className="text-sm sm:text-base font-bold font-display text-[#001847] group-hover:text-[#0b2c6b] transition-colors truncate">
                         {mod.title}
                       </h3>
                       {mod.description && (
-                        <p className="text-xs text-slate-500 truncate max-w-xl">{mod.description}</p>
+                        <p className="text-xs text-slate-500 truncate max-w-xl font-normal mt-0.5">{mod.description}</p>
                       )}
                     </div>
                   </button>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-3xs font-extrabold text-blue-900 bg-blue-50 px-2.5 py-1 rounded-md hidden sm:inline-block">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200/60 hidden sm:inline-block">
                       {mod.lessons?.length || 0} Sesi Materi
                     </span>
 
+                    {/* Secondary "+ Tambah Sesi" Button (Refined & Academic) */}
                     <button
                       type="button"
                       onClick={() => handleOpenAddLesson(mod.id)}
-                      className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#fdbc13] text-blue-950 hover:opacity-90 transition-all flex items-center gap-1 shadow-2xs"
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 flex items-center gap-1 shadow-2xs transition"
                       title="Tambah Sesi Materi ke Modul Ini"
                     >
-                      <Plus size={13} />
+                      <Plus size={13} className="text-[#001847]" />
                       <span className="hidden sm:inline">Tambah Sesi</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleOpenEditModule(mod)}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-blue-900 hover:bg-slate-100 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-[#001847] hover:bg-slate-100 transition-colors"
                       title="Edit Modul"
                     >
                       <Edit2 size={14} />
@@ -439,7 +441,7 @@ export default function CurriculumBuilderClient({
                     <button
                       type="button"
                       onClick={() => handleDeleteModule(mod.id)}
-                      className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                       title="Hapus Modul"
                     >
                       <Trash2 size={14} />
@@ -457,7 +459,7 @@ export default function CurriculumBuilderClient({
 
                 {/* Lessons Playlist in Module */}
                 {isOpen && (
-                  <div className="p-4 sm:p-5 space-y-3">
+                  <div className="p-4 sm:p-5 space-y-2.5">
                     {(!mod.lessons || mod.lessons.length === 0) ? (
                       <p className="text-xs text-slate-400 text-center py-4 italic">
                         Belum ada sesi materi di modul ini. Klik "+ Tambah Sesi" untuk mengunggah materi.
@@ -466,47 +468,52 @@ export default function CurriculumBuilderClient({
                       mod.lessons.map((lesson, lesIdx) => (
                         <div
                           key={lesson.id}
-                          className="p-4 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50/50 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                          className="p-3.5 sm:p-4 rounded-lg border border-slate-200/80 bg-white hover:bg-slate-50/50 hover:border-slate-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
                         >
                           <div className="flex items-start gap-3 min-w-0">
-                            <div className="w-7 h-7 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                            <div className="w-6 h-6 rounded-md bg-slate-100 border border-slate-200/70 text-slate-600 flex items-center justify-center font-semibold text-xs shrink-0 mt-0.5">
                               {lesson.sortOrder || lesIdx + 1}
                             </div>
 
-                            <div className="space-y-1 min-w-0">
+                            <div className="space-y-1.5 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
+                                <h4 className="text-sm font-semibold text-slate-800 leading-snug">
                                   {lesson.title}
                                 </h4>
                                 {lesson.isFreePreview && (
-                                  <span className="px-2 py-0.2 rounded text-3xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
                                     Free Preview
                                   </span>
                                 )}
                               </div>
 
-                              <div className="flex items-center gap-3 text-3xs text-slate-500 flex-wrap">
-                                <span className="flex items-center gap-1">
-                                  <Clock size={11} /> {lesson.durationMin || 90} Menit
+                              {/* Cohesive, Academic Metadata Row */}
+                              <div className="flex items-center gap-2 flex-wrap text-xs text-slate-500">
+                                <span className="flex items-center gap-1 text-slate-500">
+                                  <Clock size={12} className="text-slate-400" /> {lesson.durationMin || 90} Menit
                                 </span>
+
                                 {lesson.videoUrl && (
-                                  <span className="text-blue-900 font-bold flex items-center gap-1">
-                                    <Video size={11} /> Video/Zoom Siap
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">
+                                    <Video size={11} className="text-[#001847]" /> Video Siap
                                   </span>
                                 )}
+
                                 {lesson.pdfSlideUrl && (
-                                  <span className="text-rose-600 font-bold flex items-center gap-1">
-                                    <FileText size={11} /> Slide PDF
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">
+                                    <FileText size={11} className="text-slate-600" /> Slide PDF
                                   </span>
                                 )}
+
                                 {lesson.datasetUrl && (
-                                  <span className="text-emerald-700 font-bold flex items-center gap-1">
-                                    <FileSpreadsheet size={11} /> Dataset Latihan
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">
+                                    <FileSpreadsheet size={11} className="text-slate-600" /> Dataset
                                   </span>
                                 )}
+
                                 {lesson.attachments && lesson.attachments.length > 0 && (
-                                  <span className="text-purple-700 font-bold flex items-center gap-1">
-                                    <Paperclip size={11} /> {lesson.attachments.length} Lampiran Tambahan
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">
+                                    <Paperclip size={11} className="text-slate-600" /> {lesson.attachments.length} Berkas
                                   </span>
                                 )}
                               </div>
@@ -518,16 +525,16 @@ export default function CurriculumBuilderClient({
                             <button
                               type="button"
                               onClick={() => handleOpenEditLesson(mod.id, lesson)}
-                              className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-2xs transition-colors flex items-center gap-1"
+                              className="px-3 py-1.5 rounded-lg border border-slate-200/90 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-2xs transition flex items-center gap-1"
                             >
-                              <Edit2 size={12} />
+                              <Edit2 size={12} className="text-slate-500" />
                               <span>Edit Sesi</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={() => handleDeleteLesson(mod.id, lesson.id)}
-                              className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
                               title="Hapus Sesi"
                             >
                               <Trash2 size={13} />
@@ -546,68 +553,73 @@ export default function CurriculumBuilderClient({
 
       {/* 1. Modal Add/Edit Module */}
       {moduleModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold font-[var(--font-heading)] text-slate-900">
-                {editingModule ? "Edit Modul Kurikulum" : "Tambah Modul Kurikulum Baru"}
-              </h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200">
+            {/* Modal Header */}
+            <div className="bg-[#001847] p-5 text-white flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#fdbc13]">
+                  Silabus Kurikulum
+                </span>
+                <h3 className="text-base font-bold font-display text-white mt-0.5">
+                  {editingModule ? "Edit Modul Kurikulum" : "Tambah Modul Kurikulum Baru"}
+                </h3>
+              </div>
               <button
                 type="button"
                 onClick={() => setModuleModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400"
+                className="p-1 rounded-lg text-white/70 hover:text-white transition"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveModule} className="space-y-4">
+            <form onSubmit={handleSaveModule} className="p-6 space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-800 block mb-1">Judul Modul / Section</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">Judul Modul / Section</label>
                 <input
                   type="text"
                   required
                   value={moduleTitle}
                   onChange={(e) => setModuleTitle(e.target.value)}
                   placeholder="Contoh: Minggu 1: Anatomi & Standar Naskah Jurnal Scopus"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus-ring font-medium"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001847]/20 focus:border-[#001847]"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-800 block mb-1">Deskripsi Singkat (Opsional)</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">Deskripsi Singkat (Opsional)</label>
                 <textarea
                   rows={2}
                   value={moduleDesc}
                   onChange={(e) => setModuleDesc(e.target.value)}
                   placeholder="Membedah struktur naskah IMRaD dan formula GAP Analysis..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus-ring leading-relaxed"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001847]/20 focus:border-[#001847]"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-800 block mb-1">Urutan Modul</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">Urutan Modul</label>
                 <input
                   type="number"
                   value={moduleSort}
                   onChange={(e) => setModuleSort(Number(e.target.value))}
-                  className="w-24 px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus-ring font-bold tabular-nums"
+                  className="w-24 px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white text-slate-800 font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#001847]/20 focus:border-[#001847]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setModuleModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving || !moduleTitle.trim()}
-                  className="px-5 py-2 rounded-xl text-xs font-bold text-white shadow-xs"
-                  style={{ background: "var(--color-primary)" }}
+                  className="px-5 py-2 rounded-lg text-xs font-semibold text-white bg-[#001847] hover:bg-[#0b2c6b] shadow-sm transition disabled:opacity-50"
                 >
                   {isSaving ? "Menyimpan..." : "Simpan Modul"}
                 </button>
@@ -619,67 +631,68 @@ export default function CurriculumBuilderClient({
 
       {/* 2. Modal Add/Edit Lesson (Multi-Attachment Manager) */}
       {lessonModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="bg-[#001847] p-5 text-white flex items-center justify-between sticky top-0 z-10">
               <div>
-                <span className="text-3xs font-bold uppercase tracking-wider text-blue-900">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#fdbc13]">
                   Manajemen Sesi Materi
                 </span>
-                <h3 className="text-base sm:text-lg font-bold font-[var(--font-heading)] text-slate-900">
-                  {editingLesson ? "Edit Sesi Materi" : "Tambah Sesi Materi Baru"}
+                <h3 className="text-base sm:text-lg font-bold font-display text-white mt-0.5">
+                  {editingLesson ? "Edit Sesi Pembelajaran" : "Tambah Sesi Pembelajaran Baru"}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setLessonModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400"
+                className="p-1 rounded-lg text-white/70 hover:text-white transition"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveLesson} className="space-y-4">
+            <form onSubmit={handleSaveLesson} className="p-6 space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-800 block mb-1">Judul Sesi Pembelajaran</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">Judul Sesi Pembelajaran</label>
                 <input
                   type="text"
                   required
                   value={lessonTitle}
                   onChange={(e) => setLessonTitle(e.target.value)}
                   placeholder="Contoh: Sesi 1: Standar Ekspektasi Reviewer Scopus Q1 & Anatomi IMRaD"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus-ring font-medium"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001847]/20 focus:border-[#001847]"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-800 block mb-1">Durasi Sesi (Menit)</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Durasi Sesi (Menit)</label>
                   <input
                     type="number"
                     value={durationMin}
                     onChange={(e) => setDurationMin(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus-ring font-bold tabular-nums"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white text-slate-800 font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#001847]/20 focus:border-[#001847]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-800 block mb-1">Urutan Sesi</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Urutan Sesi</label>
                   <input
                     type="number"
                     value={lessonSort}
                     onChange={(e) => setLessonSort(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus-ring font-bold tabular-nums"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white text-slate-800 font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#001847]/20 focus:border-[#001847]"
                   />
                 </div>
 
                 <div className="flex items-center sm:pt-6">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
                     <input
                       type="checkbox"
                       checked={isFreePreview}
                       onChange={(e) => setIsFreePreview(e.target.checked)}
-                      className="rounded border-slate-300 text-blue-900 focus-ring"
+                      className="rounded border-slate-300 text-[#001847] focus:ring-[#001847]"
                     />
                     <span>Free Preview (Bisa Ditonton Gratis)</span>
                   </label>
@@ -688,8 +701,8 @@ export default function CurriculumBuilderClient({
 
               {/* Video URL */}
               <div>
-                <label className="text-xs font-bold text-slate-800 block mb-1 flex items-center gap-1.5">
-                  <Video size={13} className="text-blue-900" />
+                <label className="text-xs font-semibold text-slate-700 block mb-1 flex items-center gap-1.5">
+                  <Video size={13} className="text-[#001847]" />
                   <span>Tautan Rekaman Video / Zoom / YouTube / Drive</span>
                 </label>
                 <input
@@ -697,141 +710,97 @@ export default function CurriculumBuilderClient({
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=... atau link rekaman cloud Zoom"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus-ring"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001847]/20 focus:border-[#001847]"
                 />
               </div>
 
-              {/* Handout PDF */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-800 block mb-1 flex items-center gap-1.5">
-                    <FileText size={13} className="text-rose-600" />
-                    <span>Slide Presentasi Materi (PDF)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={pdfSlideUrl}
-                    onChange={(e) => setPdfSlideUrl(e.target.value)}
-                    placeholder="/uploads/modules/slide-sesi-1.pdf"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus-ring"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-800 block mb-1 flex items-center gap-1.5">
-                    <FileSpreadsheet size={13} className="text-emerald-700" />
-                    <span>Dataset Latihan / Template (Excel/Word)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={datasetUrl}
-                    onChange={(e) => setDatasetUrl(e.target.value)}
-                    placeholder="/uploads/modules/dataset-smartpls.xlsx"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus-ring"
-                  />
-                </div>
+              {/* PDF Slide Handout URL */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1 flex items-center gap-1.5">
+                  <FileText size={13} className="text-slate-600" />
+                  <span>Tautan Slide Presentasi (Handout PDF)</span>
+                </label>
+                <input
+                  type="url"
+                  value={pdfSlideUrl}
+                  onChange={(e) => setPdfSlideUrl(e.target.value)}
+                  placeholder="https://drive.google.com/... atau URL dokumen PDF handout"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001847]/20 focus:border-[#001847]"
+                />
               </div>
 
-              {/* Dynamic Multi-Attachments Repeater */}
-              <div className="space-y-3 pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Paperclip size={13} className="text-purple-700" />
-                    <span>Berkas Lampiran Tambahan ({attachments.length})</span>
-                  </label>
+              {/* Exercise Dataset URL */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1 flex items-center gap-1.5">
+                  <FileSpreadsheet size={13} className="text-slate-600" />
+                  <span>Tautan Dataset Latihan (Excel / SmartPLS / SPSS file)</span>
+                </label>
+                <input
+                  type="url"
+                  value={datasetUrl}
+                  onChange={(e) => setDatasetUrl(e.target.value)}
+                  placeholder="https://drive.google.com/... atau URL file dataset latihan"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001847]/20 focus:border-[#001847]"
+                />
+              </div>
 
+              {/* Multi-Attachment Dynamic Section */}
+              <div className="pt-2 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                    <Paperclip size={13} className="text-[#001847]" />
+                    <span>Lampiran Berkas Pendukung Tambahan ({attachments.length})</span>
+                  </label>
                   <button
                     type="button"
                     onClick={handleAddAttachmentRow}
-                    className="px-2.5 py-1 rounded-lg text-3xs font-bold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 flex items-center gap-1"
+                    className="text-xs font-semibold text-[#001847] hover:underline flex items-center gap-1"
                   >
-                    <Plus size={11} />
+                    <Plus size={13} />
                     <span>Tambah Berkas</span>
                   </button>
                 </div>
 
                 {attachments.map((att, attIdx) => (
-                  <div
-                    key={attIdx}
-                    className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center"
-                  >
-                    <div className="sm:col-span-5">
-                      <input
-                        type="text"
-                        required
-                        placeholder="Nama Berkas (misal: Script R Syntax)"
-                        value={att.title}
-                        onChange={(e) => handleUpdateAttachmentRow(attIdx, "title", e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-white focus-ring"
-                      />
-                    </div>
-                    <div className="sm:col-span-4">
-                      <input
-                        type="text"
-                        required
-                        placeholder="URL Berkas / Link Drive"
-                        value={att.url}
-                        onChange={(e) => handleUpdateAttachmentRow(attIdx, "url", e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-white focus-ring"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <select
-                        value={att.type}
-                        onChange={(e: any) => handleUpdateAttachmentRow(attIdx, "type", e.target.value)}
-                        className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-3xs bg-white font-bold"
-                      >
-                        <option value="EXCEL">EXCEL</option>
-                        <option value="DATASET">DATASET</option>
-                        <option value="SMARTPLS">SMARTPLS</option>
-                        <option value="SPSS">SPSS</option>
-                        <option value="DOCX">DOCX</option>
-                        <option value="PDF">PDF</option>
-                        <option value="ZIP">ZIP</option>
-                        <option value="LINK">LINK</option>
-                      </select>
-                    </div>
-                    <div className="sm:col-span-1 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveAttachmentRow(attIdx)}
-                        className="p-1 rounded text-rose-500 hover:text-rose-700 hover:bg-rose-50"
-                        title="Hapus Lampiran"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
+                  <div key={attIdx} className="p-3 rounded-lg border border-slate-200 bg-slate-50/60 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={att.title}
+                      onChange={(e) => handleUpdateAttachmentRow(attIdx, "title", e.target.value)}
+                      placeholder="Nama Berkas"
+                      className="w-1/3 px-2.5 py-1.5 rounded border border-slate-200 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#001847]"
+                    />
+                    <input
+                      type="url"
+                      value={att.url}
+                      onChange={(e) => handleUpdateAttachmentRow(attIdx, "url", e.target.value)}
+                      placeholder="URL Tautan Unduh"
+                      className="flex-1 px-2.5 py-1.5 rounded border border-slate-200 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#001847]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAttachmentRow(attIdx)}
+                      className="p-1 text-slate-400 hover:text-rose-600 transition"
+                      title="Hapus Baris"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 ))}
               </div>
 
-              {/* Description */}
-              <div>
-                <label className="text-xs font-bold text-slate-800 block mb-1">
-                  Deskripsi / Panduan Belajar Sesi
-                </label>
-                <textarea
-                  rows={3}
-                  value={lessonDesc}
-                  onChange={(e) => setLessonDesc(e.target.value)}
-                  placeholder="Instruksi belajar atau poin-poin yang harus diperhatikan oleh peserta..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus-ring leading-relaxed"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setLessonModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving || !lessonTitle.trim()}
-                  className="px-5 py-2 rounded-xl text-xs font-bold text-white shadow-xs"
-                  style={{ background: "var(--color-primary)" }}
+                  className="px-5 py-2 rounded-lg text-xs font-semibold text-white bg-[#001847] hover:bg-[#0b2c6b] shadow-sm transition disabled:opacity-50"
                 >
                   {isSaving ? "Menyimpan..." : "Simpan Sesi Materi"}
                 </button>

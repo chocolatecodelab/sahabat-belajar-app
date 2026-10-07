@@ -22,11 +22,11 @@ import {
   Users,
   Check,
   Calendar,
-  Sparkles,
   ArrowUpRight,
   School,
   User,
   Copy,
+  TrendingUp,
 } from "lucide-react";
 import {
   updateRegistrationStatus,
@@ -320,7 +320,7 @@ export default function RegistrationManagerClient({ initialData }: RegistrationM
               Total Omset
             </span>
             <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-              <Sparkles size={18} />
+              <TrendingUp size={18} />
             </div>
           </div>
           <div>

@@ -89,6 +89,7 @@ export async function claimCertificate(enrollmentId: string): Promise<ActionResp
 
     if (insertErr) {
       console.error("claimCertificate insert error:", insertErr);
+      return { success: false, message: `Gagal menerbitkan E-Sertifikat: ${insertErr.message}` };
     }
 
     // Update enrollment status to COMPLETED
@@ -128,9 +129,8 @@ export async function claimCertificate(enrollmentId: string): Promise<ActionResp
   } catch (err: any) {
     console.error("claimCertificate error:", err);
     return {
-      success: true,
-      message: "E-Sertifikat 32 JP berhasil diterbitkan",
-      data: { certificateCode: "BIAS-2026-SCP-0189" },
+      success: false,
+      message: err?.message || "Terjadi kesalahan sistem saat menerbitkan E-Sertifikat",
     };
   }
 }
@@ -147,17 +147,14 @@ export async function getCertificateByCode(certificateCode: string): Promise<Cer
       .maybeSingle();
 
     if (error || !data) {
-      if (certificateCode.toUpperCase().startsWith("BIAS-")) {
-        return {
-          ...DEMO_CERTIFICATE,
-          certificateCode: certificateCode.toUpperCase(),
-        };
+      if (certificateCode.toUpperCase() === DEMO_CERTIFICATE.certificateCode) {
+        return DEMO_CERTIFICATE;
       }
       return null;
     }
 
     return data as CertificateDetail;
   } catch {
-    return DEMO_CERTIFICATE;
+    return null;
   }
 }

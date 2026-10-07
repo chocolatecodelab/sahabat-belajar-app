@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, Plus, Edit, Trash2, X, CheckCircle2, Sparkles, Clock, Users, BookOpen, Award } from "lucide-react";
+import { Shield, Plus, Edit, Trash2, X, CheckCircle2, GraduationCap, Clock, Users, BookOpen, Award } from "lucide-react";
 import { getAdvantages, createAdvantage, updateAdvantage, deleteAdvantage } from "@/actions/tampilan";
 
 type AdvantageItem = {
@@ -14,7 +14,7 @@ type AdvantageItem = {
   isActive: boolean;
 };
 
-const AVAILABLE_ICONS = ["CheckCircle2", "Sparkles", "Clock", "Users", "BookOpen", "Award", "Shield"];
+const AVAILABLE_ICONS = ["CheckCircle2", "GraduationCap", "Clock", "Users", "BookOpen", "Award", "Shield"];
 
 export default function KeunggulanClient({ advantages: initial }: { advantages: AdvantageItem[] }) {
   const router = useRouter();

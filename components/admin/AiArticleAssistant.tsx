@@ -16,6 +16,7 @@ import {
   Check,
   AlertCircle,
   Tag,
+  FileText,
 } from "lucide-react";
 
 interface AiArticleAssistantProps {
@@ -563,7 +564,9 @@ export default function AiArticleAssistant({
                       : "border-transparent text-gray-500 hover:text-gray-900"
                   }`}
                 >
-                  📝 Buat Outline Artikel
+                  <span className="inline-flex items-center gap-1.5">
+                    <FileText size={15} /> Buat Outline Artikel
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -574,7 +577,9 @@ export default function AiArticleAssistant({
                       : "border-transparent text-gray-500 hover:text-gray-900"
                   }`}
                 >
-                  ✨ Poles Bahasa Akademik
+                  <span className="inline-flex items-center gap-1.5">
+                    <Sparkles size={15} /> Poles Bahasa Akademik
+                  </span>
                 </button>
               </div>
 

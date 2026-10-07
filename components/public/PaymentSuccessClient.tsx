@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -19,6 +19,7 @@ import {
   Calendar,
   School,
   FileCheck,
+  GraduationCap,
 } from "lucide-react";
 import type { RegistrationItem } from "@/actions/pendaftaran";
 import { uploadPaymentProof } from "@/actions/pendaftaran";
@@ -34,8 +35,31 @@ export default function PaymentSuccessClient({ registration }: PaymentSuccessCli
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState("");
   const [copiedInvoice, setCopiedInvoice] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<string>(registration.status);
+  const [classroomSlug, setClassroomSlug] = useState<string | null>(registration.course?.slug || null);
+  const status = currentStatus;
 
-  const status = registration.status;
+  // Real-time polling for automated gateway settlement
+  useEffect(() => {
+    if (currentStatus === "VERIFIED") return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/pembayaran/status?inv=${encodeURIComponent(registration.invoiceNumber)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.isVerified || data.status === "VERIFIED") {
+            setCurrentStatus("VERIFIED");
+            if (data.courseSlug) setClassroomSlug(data.courseSlug);
+          }
+        }
+      } catch {
+        // silent fail during polling
+      }
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [currentStatus, registration.invoiceNumber]);
 
   const handleProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -214,6 +238,29 @@ export default function PaymentSuccessClient({ registration }: PaymentSuccessCli
             </div>
           </div>
         </div>
+
+        {/* LMS Entrance Card (When Verified) */}
+        {status === "VERIFIED" && (
+          <div className="elevation-1 rounded-2xl p-6 bg-emerald-50 border border-emerald-200 text-center space-y-3">
+            <div className="inline-flex items-center gap-2 text-emerald-800 font-bold text-headline-sm">
+              <GraduationCap size={22} className="text-emerald-700" />
+              <span>Akses Materi Belajar Telah Terbuka</span>
+            </div>
+            <p className="text-body-sm text-emerald-700 max-w-md mx-auto">
+              Akun Anda telah diaktifkan otomatis. Anda dapat langsung mengakses silabus, modul bimbingan, dan mengunggah draf naskah riset.
+            </p>
+            <div className="pt-2">
+              <Link
+                href={classroomSlug ? `/belajar/${classroomSlug}` : "/belajar"}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-label-lg font-bold text-white shadow-md transition-all hover:scale-[1.02]"
+                style={{ background: "var(--color-primary)" }}
+              >
+                <span>Masuk ke Ruang Belajar Siswa</span>
+                <ArrowRight size={18} />
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Upload Proof Box (If not yet verified) */}
         {status !== "VERIFIED" && !uploadSuccess && (

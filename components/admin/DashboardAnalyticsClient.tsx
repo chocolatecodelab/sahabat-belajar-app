@@ -9,9 +9,9 @@ import {
   FolderOpen,
   Plus,
   ArrowRight,
-  Sparkles,
   Calendar,
   Layers,
+  BarChart3,
   Image as ImageIcon,
   CheckCircle2,
   Clock,
@@ -96,7 +96,7 @@ export default function DashboardAnalyticsClient({ initialData }: DashboardAnaly
                   color: "var(--color-on-secondary-container)",
                 }}
               >
-                <Sparkles size={13} />
+                <BarChart3 size={13} />
                 Executive Analytics Center
               </span>
               <span className="text-body-sm text-blue-200">

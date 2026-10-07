@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X, ChevronDown, ExternalLink } from "lucide-react";
+import { Menu, X, ChevronDown, ExternalLink, GraduationCap } from "lucide-react";
 
 type NavItem = {
   id: string;
@@ -65,14 +65,21 @@ export default function Navbar({ siteName, navigations }: NavbarProps) {
                     onMouseLeave={() => setOpenDropdown(null)}
                   >
                     <button
-                      className="flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-blue-900 hover:bg-gray-50 transition-colors"
+                      className="flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-blue-900 hover:bg-gray-50 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-600"
+                      aria-haspopup="true"
+                      aria-expanded={openDropdown === item.id}
+                      aria-controls={`nav-dropdown-${item.id}`}
                     >
                       {item.label}
                       <ChevronDown size={14} className="transition-transform group-hover:rotate-180" />
                     </button>
 
                     {openDropdown === item.id && (
-                      <div className="absolute left-0 mt-1 w-56 rounded-xl bg-white shadow-xl border border-gray-100 py-2 animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div
+                        id={`nav-dropdown-${item.id}`}
+                        role="menu"
+                        className="absolute left-0 mt-1 w-56 rounded-xl bg-white shadow-xl border border-gray-100 py-2 animate-in fade-in slide-in-from-top-2 duration-150"
+                      >
                         {item.children?.map((child) => (
                           <Link
                             key={child.id}
@@ -141,6 +148,8 @@ export default function Navbar({ siteName, navigations }: NavbarProps) {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
               aria-label="Toggle menu"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu-drawer"
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -150,7 +159,7 @@ export default function Navbar({ siteName, navigations }: NavbarProps) {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-gray-100 bg-white px-4 pt-3 pb-6 space-y-1 shadow-lg">
+        <div id="mobile-menu-drawer" className="lg:hidden border-t border-gray-100 bg-white px-4 pt-3 pb-6 space-y-1 shadow-lg">
           <Link
             href="/"
             onClick={() => setMobileMenuOpen(false)}
@@ -170,9 +179,10 @@ export default function Navbar({ siteName, navigations }: NavbarProps) {
           <Link
             href="/belajar"
             onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-semibold text-blue-950 bg-amber-50 hover:bg-amber-100"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-base font-semibold text-blue-950 bg-amber-50 hover:bg-amber-100"
           >
-            🎓 Ruang Belajar Siswa
+            <GraduationCap size={18} className="text-amber-600" />
+            <span>Ruang Belajar Siswa</span>
           </Link>
 
           {navigations.map((item) => (

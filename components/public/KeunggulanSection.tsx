@@ -1,4 +1,4 @@
-import { CheckCircle2, Sparkles, Clock, Users, BookOpen, Award, Shield } from "lucide-react";
+import { CheckCircle2, Clock, Users, BookOpen, Award, Shield, GraduationCap } from "lucide-react";
 
 type Advantage = {
   id: string;
@@ -9,12 +9,12 @@ type Advantage = {
 
 const ICON_MAP: Record<string, any> = {
   CheckCircle2,
-  Sparkles,
   Clock,
   Users,
   BookOpen,
   Award,
   Shield,
+  GraduationCap,
 };
 
 export default function KeunggulanSection({ advantages }: { advantages: Advantage[] }) {
@@ -26,20 +26,20 @@ export default function KeunggulanSection({ advantages }: { advantages: Advantag
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Column: Heading & Highlight */}
           <div className="lg:col-span-5">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-900 mb-4">
-              <Sparkles size={14} className="text-amber-600" /> Nilai Unggulan
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#fef9c3] text-[#7a5900] border border-[#fef08a] mb-4">
+              <Award size={14} className="text-[#7a5900]" /> Nilai Unggulan
             </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 tracking-tight font-[var(--font-heading)] leading-tight">
-              Mengapa Belajar Riset di <span className="text-blue-900">BIAS RISTEK?</span>
+              Mengapa Belajar Riset di <span className="text-[#001847]">BIAS RISTEK?</span>
             </h2>
             <p className="mt-5 text-base sm:text-lg text-gray-600 leading-relaxed">
               Kami menggabungkan kurikulum praktis, bimbingan intensif 1-on-1, dan mentor bereputasi Scopus untuk memastikan setiap peserta mampu menghasilkan riset berkualitas tinggi.
             </p>
 
-            <div className="mt-8 p-6 rounded-2xl bg-blue-900 text-white shadow-lg relative overflow-hidden">
+            <div className="mt-8 p-6 rounded-2xl bg-[#001847] text-white shadow-lg relative overflow-hidden">
               <div className="absolute right-0 bottom-0 translate-x-4 translate-y-4 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
-              <div className="text-2xl font-black text-amber-400 font-mono mb-1">100% Mentored</div>
-              <p className="text-sm text-blue-100 leading-relaxed">
+              <div className="text-2xl font-bold text-[#fdbc13] font-display mb-1">100% Mentored</div>
+              <p className="text-sm text-blue-50/90 leading-relaxed">
                 Setiap draft tugas akhir atau manuskrip peserta diperiksa baris demi baris hingga siap submit ke jurnal target.
               </p>
             </div>

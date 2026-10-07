@@ -934,3 +934,138 @@ export async function notifyCertificateIssued(payload: {
     console.error("notifyCertificateIssued error:", err);
   }
 }
+
+/**
+ * 5. Event: TUTOR_BOOKING_PROPOSED (Fase #4 Human in the Loop)
+ */
+export async function notifyTutorBookingProposed(payload: {
+  tutorName: string;
+  tutorPhone: string;
+  tutorEmail?: string;
+  studentName: string;
+  studentInstitution: string;
+  studentEducationLevel: string;
+  researchTopic: string;
+  researchSoftware?: string;
+  scheduledDate: string;
+  timeSlot: string;
+  confirmationToken: string;
+  baseUrl?: string;
+}) {
+  try {
+    const siteUrl = payload.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const acceptUrl = `${siteUrl}/tutor/konfirmasi/${payload.confirmationToken}?action=ACCEPT`;
+    const declineUrl = `${siteUrl}/tutor/konfirmasi/${payload.confirmationToken}?action=DECLINE`;
+    const detailsUrl = `${siteUrl}/tutor/konfirmasi/${payload.confirmationToken}`;
+
+    const waText = `Yth. ${payload.tutorName},\n\nTerdapat usulan penugasan bimbingan privat 1-on-1 baru dari BIAS RISTEK:\n\n👤 Mahasiswa/Peneliti: ${payload.studentName} (${payload.studentInstitution}, ${payload.studentEducationLevel})\n🔬 Topik Riset: ${payload.researchTopic}\n🛠️ Metodologi / Software: ${payload.researchSoftware || "Standar Riset Akademik"}\n📅 Jadwal Diusulkan: ${payload.scheduledDate}, Pukul ${payload.timeSlot}\n\nMohon konfirmasi ketersediaan Anda melalui tautan 1-klik di bawah ini:\n👉 TERIMA JADWAL: ${acceptUrl}\n👉 BERHALANGAN / RESCHEDULE: ${declineUrl}\n\nDetail lengkap bimbingan: ${detailsUrl}\n\nTerima kasih atas dedikasi akademik Anda bersama BIAS RISTEK.`;
+
+    if (payload.tutorPhone) {
+      await sendWhatsApp(payload.tutorPhone, waText, "TUTOR_BOOKING_PROPOSED", payload.tutorName);
+    }
+
+    if (payload.tutorEmail) {
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="background-color: #001847; padding: 24px; text-align: center; color: #ffffff;">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">BIAS RISTEK</h2>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #fdbc13;">Konfirmasi Penugasan Bimbingan Riset</p>
+          </div>
+          <div style="padding: 24px;">
+            <p>Yth. <strong>${payload.tutorName}</strong>,</p>
+            <p>Koordinator akademik BIAS RISTEK mengusulkan penugasan bimbingan privat 1-on-1 baru yang sesuai dengan bidang keahlian Anda:</p>
+            <div style="background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;">
+              <p style="margin: 0 0 8px;"><strong>Nama Peneliti:</strong> ${payload.studentName}</p>
+              <p style="margin: 0 0 8px;"><strong>Instansi:</strong> ${payload.studentInstitution} (${payload.studentEducationLevel})</p>
+              <p style="margin: 0 0 8px;"><strong>Topik Riset:</strong> ${payload.researchTopic}</p>
+              <p style="margin: 0 0 8px;"><strong>Software / Metode:</strong> ${payload.researchSoftware || "Standar Riset"}</p>
+              <p style="margin: 0;"><strong>Jadwal Sesi:</strong> ${payload.scheduledDate}, Pukul ${payload.timeSlot}</p>
+            </div>
+            <p style="text-align: center; margin: 24px 0 12px;">
+              <a href="${acceptUrl}" style="background-color: #001847; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block; margin-right: 8px;">Terima Bimbingan</a>
+              <a href="${declineUrl}" style="background-color: #e2e8f0; color: #475569; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Berhalangan / Reschedule</a>
+            </p>
+          </div>
+        </div>
+      `;
+      await sendEmail(payload.tutorEmail, `[BIAS RISTEK] Usulan Bimbingan Riset: ${payload.studentName}`, emailHtml, "TUTOR_BOOKING_PROPOSED", payload.tutorName);
+    }
+  } catch (err) {
+    console.error("notifyTutorBookingProposed error:", err);
+  }
+}
+
+/**
+ * 6. Event: STUDENT_MENTORSHIP_CONFIRMED (Fase #4 Sesi Terjadwal)
+ */
+export async function notifyStudentMentorshipConfirmed(payload: {
+  studentName: string;
+  studentPhone: string;
+  studentEmail?: string;
+  tutorName: string;
+  tutorTitle: string;
+  tutorInstitution: string;
+  scheduledDate: string;
+  timeSlot: string;
+  zoomJoinUrl: string;
+  researchTopic: string;
+}) {
+  try {
+    const waText = `Halo ${payload.studentName}, kabar gembira!\n\nJadwal bimbingan privat riset Anda telah TERKONFIRMASI oleh Tim Pakar BIAS RISTEK:\n\n👨‍🏫 Tutor Pendamping: ${payload.tutorName} (${payload.tutorTitle})\n🏛️ Instansi: ${payload.tutorInstitution}\n🔬 Topik Bahasan: ${payload.researchTopic}\n📅 Waktu Sesi: ${payload.scheduledDate}, Pukul ${payload.timeSlot}\n\n🔗 Tautan Ruang Zoom Bimbingan:\n${payload.zoomJoinUrl}\n\nSilakan persiapkan draf naskah atau kendala olah data Anda sebelum sesi dimulai. Sampai jumpa di ruang bimbingan!`;
+
+    if (payload.studentPhone) {
+      await sendWhatsApp(payload.studentPhone, waText, "MENTORSHIP_CONFIRMED", payload.studentName);
+    }
+
+    if (payload.studentEmail) {
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="background-color: #001847; padding: 24px; text-align: center; color: #ffffff;">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">BIAS RISTEK</h2>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #fdbc13;">Jadwal Bimbingan Riset Terkonfirmasi</p>
+          </div>
+          <div style="padding: 24px;">
+            <p>Halo <strong>${payload.studentName}</strong>,</p>
+            <p>Sesi bimbingan riset privat 1-on-1 Anda telah disetujui dan dijadwalkan bersama mentor pakar kami:</p>
+            <div style="background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;">
+              <p style="margin: 0 0 8px;"><strong>Mentor:</strong> ${payload.tutorName} (${payload.tutorTitle})</p>
+              <p style="margin: 0 0 8px;"><strong>Afiliasi:</strong> ${payload.tutorInstitution}</p>
+              <p style="margin: 0 0 8px;"><strong>Topik:</strong> ${payload.researchTopic}</p>
+              <p style="margin: 0 0 8px;"><strong>Waktu Sesi:</strong> ${payload.scheduledDate}, Pukul ${payload.timeSlot}</p>
+            </div>
+            <p style="text-align: center; margin: 24px 0;">
+              <a href="${payload.zoomJoinUrl}" style="background-color: #001847; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Masuk Ruang Zoom Bimbingan</a>
+            </p>
+            <p style="font-size: 13px; color: #64748b;">Link Zoom: <a href="${payload.zoomJoinUrl}">${payload.zoomJoinUrl}</a></p>
+          </div>
+        </div>
+      `;
+      await sendEmail(payload.studentEmail, `[BIAS RISTEK] Jadwal Bimbingan Terkonfirmasi bersama ${payload.tutorName}`, emailHtml, "MENTORSHIP_CONFIRMED", payload.studentName);
+    }
+  } catch (err) {
+    console.error("notifyStudentMentorshipConfirmed error:", err);
+  }
+}
+
+/**
+ * 7. Event: TUTOR_MENTORSHIP_CONFIRMED (Konfirmasi Jadwal Masuk Kalender Tutor)
+ */
+export async function notifyTutorMentorshipConfirmed(payload: {
+  tutorName: string;
+  tutorPhone: string;
+  tutorEmail?: string;
+  studentName: string;
+  scheduledDate: string;
+  timeSlot: string;
+  zoomHostUrl?: string;
+}) {
+  try {
+    const waText = `Yth. ${payload.tutorName},\n\nTerima kasih! Jadwal bimbingan bersama ${payload.studentName} pada ${payload.scheduledDate} pukul ${payload.timeSlot} telah RESMI TERKUNCI di sistem.\n\nTautan Host Zoom Anda:\n${payload.zoomHostUrl || "Tersedia di dashboard"}\n\nPengingat sesi akan dikirimkan kembali pada H-1 jam sebelum bimbingan dimulai.`;
+
+    if (payload.tutorPhone) {
+      await sendWhatsApp(payload.tutorPhone, waText, "TUTOR_CONFIRMED", payload.tutorName);
+    }
+  } catch (err) {
+    console.error("notifyTutorMentorshipConfirmed error:", err);
+  }
+}

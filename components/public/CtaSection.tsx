@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageCircle, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
+import { MessageCircle, ArrowRight, CheckCircle2 } from "lucide-react";
 
 type CtaProps = {
   contactPhone?: string | null;
@@ -14,14 +14,14 @@ export default function CtaSection({ contactPhone, contactEmail }: { contactPhon
   return (
     <section className="py-16 lg:py-24 bg-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-3xl bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-950 p-8 sm:p-12 lg:p-16 text-white shadow-2xl overflow-hidden">
-          {/* Decorative Circles */}
-          <div className="absolute top-0 right-0 -translate-y-12 translate-x-12 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 translate-y-12 -translate-x-12 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl" />
+        <div className="relative rounded-3xl bg-[#001847] border border-[#0b2c6b] p-8 sm:p-12 lg:p-16 text-white shadow-2xl overflow-hidden">
+          {/* Subtle Ambient Light */}
+          <div className="absolute top-0 right-0 -translate-y-12 translate-x-12 w-96 h-96 bg-[#0b2c6b]/40 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 translate-y-12 -translate-x-12 w-96 h-96 bg-[#fdbc13]/5 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 max-w-3xl">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-400 text-blue-950 mb-6 shadow-sm">
-              <Sparkles size={14} /> Konsultasi Akademik Gratis
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#fdbc13]/15 text-[#fdbc13] border border-[#fdbc13]/30 mb-6">
+              <MessageCircle size={14} /> Konsultasi Akademik Gratis
             </span>
 
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight font-[var(--font-heading)] leading-tight mb-6">

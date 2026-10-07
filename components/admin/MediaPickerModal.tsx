@@ -207,7 +207,7 @@ export default function MediaPickerModal({
                 <option value="all">Semua Folder</option>
                 {folders.map((f) => (
                   <option key={f} value={f}>
-                    📁 {f}
+                    Folder: {f}
                   </option>
                 ))}
               </select>

@@ -43,8 +43,11 @@ export default function FaqSection({ faqs }: { faqs: FaqItem[] }) {
                 className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden transition-all duration-200 shadow-xs"
               >
                 <button
+                  id={`faq-btn-${faq.id}`}
                   onClick={() => toggle(faq.id)}
-                  className="w-full text-left p-6 flex items-center justify-between gap-4 font-bold text-gray-900 hover:text-blue-900 transition-colors"
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-answer-${faq.id}`}
+                  className="w-full text-left p-6 flex items-center justify-between gap-4 font-bold text-gray-900 hover:text-blue-900 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-600"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-base sm:text-lg">{faq.question}</span>
@@ -58,7 +61,12 @@ export default function FaqSection({ faqs }: { faqs: FaqItem[] }) {
                 </button>
 
                 {isOpen && (
-                  <div className="px-6 pb-6 pt-0 text-gray-600 text-sm sm:text-base leading-relaxed border-t border-gray-50 mt-1 animate-fade-in">
+                  <div
+                    id={`faq-answer-${faq.id}`}
+                    role="region"
+                    aria-labelledby={`faq-btn-${faq.id}`}
+                    className="px-6 pb-6 pt-0 text-gray-600 text-sm sm:text-base leading-relaxed border-t border-gray-50 mt-1 animate-fade-in"
+                  >
                     <p className="pt-3">{faq.answer}</p>
                     {faq.category && (
                       <div className="mt-3 flex items-center gap-1 text-2xs text-blue-800 font-semibold">

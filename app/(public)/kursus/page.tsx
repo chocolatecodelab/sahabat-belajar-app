@@ -4,7 +4,6 @@ import {
   BookOpen,
   Calendar,
   Clock,
-  Sparkles,
   ArrowRight,
   GraduationCap,
   Microscope,
@@ -204,12 +203,12 @@ export default async function CourseCatalogPage({ searchParams }: CourseCatalogP
 
                     {/* Mentor Badge */}
                     <div className="pt-3 border-t flex items-center gap-2.5" style={{ borderColor: "var(--color-outline-variant)" }}>
-                      <div className="w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-[#001847] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                         {course.mentorName.slice(0, 2)}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-3xs font-bold text-gray-900 truncate">{course.mentorName}</p>
-                        <p className="text-3xs text-gray-400 truncate">{course.mentorTitle}</p>
+                        <p className="text-xs font-semibold text-slate-900 truncate">{course.mentorName}</p>
+                        <p className="text-2xs text-slate-500 truncate">{course.mentorTitle}</p>
                       </div>
                     </div>
 

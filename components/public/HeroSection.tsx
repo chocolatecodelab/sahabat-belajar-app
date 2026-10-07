@@ -28,7 +28,7 @@ export default function HeroSection({ slides }: { slides: Slide[] }) {
   if (slides.length === 0) {
     // Default fallback banner
     return (
-      <section className="relative bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 text-white py-28 px-4">
+      <section className="relative bg-[#001847] border-b border-[#0b2c6b] text-white py-28 px-4">
         <div className="max-w-7xl mx-auto text-center space-y-6">
           <span
             className="inline-block text-xs font-semibold uppercase tracking-widest px-3.5 py-1.5 rounded-full"
@@ -79,8 +79,9 @@ export default function HeroSection({ slides }: { slides: Slide[] }) {
         <div
           key={slide.id}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            idx === current ? "opacity-100 z-10 pointer-events-auto" : "opacity-0 z-0 pointer-events-none"
+            idx === current ? "opacity-100 z-10 pointer-events-auto visible" : "opacity-0 z-0 pointer-events-none invisible"
           }`}
+          aria-hidden={idx !== current}
         >
           {/* Background Image */}
           <img
@@ -93,7 +94,7 @@ export default function HeroSection({ slides }: { slides: Slide[] }) {
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/30" />
 
           {/* Content Container */}
-          <div className="absolute inset-0 flex items-center">
+          <div className="absolute inset-0 flex items-center pt-8 sm:pt-0">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
               <div className="max-w-2xl text-white space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <span

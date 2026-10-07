@@ -49,15 +49,15 @@ export default function AlurBelajarSection({ steps }: { steps: LearningStep[] })
               >
                 <div>
                   <div className="flex items-center justify-between mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-900 text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                    <div className="w-14 h-14 rounded-2xl bg-[#001847] text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
                       <IconComp size={26} />
                     </div>
-                    <span className="text-3xl font-black text-blue-100 group-hover:text-blue-200 transition-colors font-mono">
+                    <span className="text-3xl font-black text-slate-200 group-hover:text-[#001847]/20 transition-colors font-display">
                       0{step.stepNumber}
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-900 transition-colors">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#001847] transition-colors">
                     {step.title}
                   </h3>
                   <p className="text-sm text-gray-600 leading-relaxed">

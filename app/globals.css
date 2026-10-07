@@ -69,8 +69,14 @@
   --color-foreground: #0d1c2e;
 
   /* Typography */
-  --font-heading: "Plus Jakarta Sans", sans-serif;
-  --font-body: "Inter", sans-serif;
+  --font-heading: var(--font-plus-jakarta), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-plus-jakarta), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Sizing Utilities */
+  --text-2xs: 11px;
+  --text-3xs: 10px;
 }
 
 /* ============================
@@ -83,11 +89,16 @@ html {
 
 body {
   background: #f8f9ff;
-  color: #0d1c2e;
-  font-family: var(--font-body, "Inter", sans-serif);
+  color: #0f172a;
+  font-family: var(--font-body);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6, .font-display, .font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: -0.025em;
 }
 
 /* ============================
@@ -166,6 +177,16 @@ body {
   font-size: 12px;
   font-weight: 500;
   line-height: 1.2;
+}
+
+.text-2xs {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.text-3xs {
+  font-size: 10px;
+  line-height: 1.3;
 }
 
 /* ============================

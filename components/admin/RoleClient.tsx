@@ -14,7 +14,7 @@ import {
   Users,
   CheckCircle2,
   Lock,
-  Sparkles,
+  ShieldCheck,
   BookOpen,
   GraduationCap,
   FileCheck,
@@ -345,8 +345,9 @@ export default function RoleClient({ roles: initialRoles, allPermissions }: Role
                   </span>
                   <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
                     {isSuper ? (
-                      <span className="text-xs px-2.5 py-1 rounded-lg bg-amber-50 text-[#001847] font-semibold border border-amber-200">
-                        🌟 Seluruh {allPermissions.length} Hak Akses Sistem Aktif
+                      <span className="text-xs px-2.5 py-1 rounded-lg bg-amber-50 text-[#001847] font-semibold border border-amber-200 inline-flex items-center gap-1.5">
+                        <ShieldCheck size={13} className="text-amber-600" />
+                        Seluruh {allPermissions.length} Hak Akses Sistem Aktif
                       </span>
                     ) : role.permissions.length > 0 ? (
                       role.permissions.slice(0, 8).map((p) => (

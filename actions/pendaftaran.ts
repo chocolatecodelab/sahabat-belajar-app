@@ -5,6 +5,8 @@ import { hash } from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase";
 import { requireAuth } from "@/lib/auth";
 import { notifyInvoiceCreated, notifyPaymentVerified } from "@/lib/notifications";
+import { createPaymentGatewayTransaction } from "@/lib/payment-gateway";
+import { triggerN8nWebhook } from "@/lib/n8n";
 
 function safeRevalidatePath(path: string) {
   try {
@@ -68,7 +70,7 @@ export async function createEnrollment(data: {
   researchTopic?: string;
   paymentMethod: string;
   bankName?: string;
-}): Promise<ActionResponse<{ id: string; invoiceNumber: string; totalAmount: number; uniqueCode: number }>> {
+}): Promise<ActionResponse<{ id: string; invoiceNumber: string; totalAmount: number; uniqueCode: number; snapToken?: string; redirectUrl?: string }>> {
   try {
     const { courseId, name, email, phone, institution, educationLevel, researchTopic, paymentMethod, bankName } = data;
 
@@ -76,10 +78,25 @@ export async function createEnrollment(data: {
       return { success: false, message: "Semua data pendaftaran wajib diisi lengkap" };
     }
 
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return { success: false, message: "Format alamat email tidak valid" };
+    }
+
+    const cleanPhone = phone.replace(/\D/g, "");
+    const formattedPhone = cleanPhone.startsWith("0")
+      ? "62" + cleanPhone.slice(1)
+      : cleanPhone.startsWith("62")
+      ? cleanPhone
+      : "62" + cleanPhone;
+
+    if (!/^628\d{8,12}$/.test(formattedPhone)) {
+      return { success: false, message: "Nomor WhatsApp wajib berupa nomor aktif Indonesia yang valid (contoh: 081234567890)" };
+    }
+
     // Fetch course info
     const { data: course, error: courseErr } = await supabaseAdmin
       .from("Course")
-      .select("id, title, price, salePrice, isFree, currentEnrolled, maxQuota, status")
+      .select("id, title, price, salePrice, isFree, currentEnrolled, maxQuota, status, category")
       .eq("id", courseId)
       .single();
 
@@ -105,8 +122,8 @@ export async function createEnrollment(data: {
       courseId,
       courseTitle: course.title,
       name,
-      email,
-      phone,
+      email: email.trim().toLowerCase(),
+      phone: formattedPhone,
       institution,
       educationLevel: educationLevel || "Umum",
       researchTopic: researchTopic || null,
@@ -132,13 +149,58 @@ export async function createEnrollment(data: {
     safeRevalidatePath("/dashboard/pendaftaran");
     safeRevalidatePath("/dashboard");
 
+    // Optional: Payment Gateway Snap/Transaction Generation
+    let pgData: { token?: string; redirectUrl?: string } = {};
+    if (!course.isFree && paymentMethod?.startsWith("PG_")) {
+      try {
+        const pgRes = await createPaymentGatewayTransaction({
+          invoiceNumber,
+          grossAmount: totalAmount,
+          studentName: name,
+          studentEmail: email,
+          studentPhone: formattedPhone,
+          courseTitle: course.title,
+          paymentType: paymentMethod === "PG_QRIS" ? "qris" : "bank_transfer",
+        });
+        if (pgRes.success) {
+          pgData = { token: pgRes.token, redirectUrl: pgRes.redirectUrl };
+        }
+      } catch (pgErr) {
+        console.error("Payment Gateway token generation warning:", pgErr);
+      }
+    }
+
+    // Async Dispatch Outbound n8n Egress Webhook
+    triggerN8nWebhook("REGISTRATION_CREATED", {
+      registrationId: id,
+      invoiceNumber,
+      course: {
+        id: courseId,
+        title: course.title,
+        category: course.category,
+      },
+      student: {
+        name,
+        email,
+        phone: formattedPhone,
+        institution,
+        educationLevel,
+        researchTopic,
+      },
+      billing: {
+        totalAmount,
+        uniqueCode,
+        paymentMethod: course.isFree ? "FREE" : paymentMethod || "QRIS",
+      },
+    }).catch((n8nErr) => console.error("n8n webhook error:", n8nErr));
+
     // Async Dispatch Omnichannel Notification
     notifyInvoiceCreated({
       registrationId: id,
       invoiceNumber,
       studentName: name,
       studentEmail: email,
-      studentPhone: phone,
+      studentPhone: formattedPhone,
       courseTitle: course.title,
       totalAmount,
       uniqueCode,
@@ -153,6 +215,8 @@ export async function createEnrollment(data: {
         invoiceNumber,
         totalAmount,
         uniqueCode,
+        snapToken: pgData.token,
+        redirectUrl: pgData.redirectUrl,
       },
     };
   } catch (err: any) {

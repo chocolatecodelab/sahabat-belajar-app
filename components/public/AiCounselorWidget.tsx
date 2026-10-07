@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Sparkles,
   MessageSquare,
   X,
   Send,
@@ -35,7 +34,7 @@ const INITIAL_GREETING: ChatMessage = {
   id: "msg_init_greeting",
   role: "assistant",
   content:
-    "Halo! Saya **Dr. Ristek AI**, konsultan akademik dari BIAS RISTEK. 🎓\n\nSedang mempersiapkan naskah jurnal Scopus, olah data statistik, atau butuh bimbingan tesis/disertasi? Ceritakan kendala riset Anda, dan saya siap memberikan rekomendasi solusi & program terbaik!",
+    "Halo! Saya **Dr. Ristek AI**, konsultan akademik dari BIAS RISTEK.\n\nSedang mempersiapkan naskah jurnal Scopus, olah data statistik, atau butuh bimbingan tesis/disertasi? Ceritakan kendala riset Anda, dan saya siap memberikan rekomendasi solusi & program terbaik!",
   suggestedQuestions: [
     "Saya mau publikasi artikel ke jurnal Scopus Q1-Q2",
     "Saya kesulitan analisis data mediasi di SmartPLS",
@@ -199,8 +198,8 @@ export default function AiCounselorWidget() {
         <div className="flex flex-col items-end gap-3">
           {hasPromptTooltip && (
             <div className="relative elevation-2 bg-white text-slate-800 p-3.5 rounded-2xl border border-slate-200/80 shadow-xl max-w-xs animate-bounce-subtle flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <Sparkles size={16} className="text-[#fdbc13]" />
+              <div className="w-8 h-8 rounded-full bg-[#001847] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <GraduationCap size={16} className="text-[#fdbc13]" />
               </div>
               <div className="text-xs">
                 <p className="font-bold text-slate-900 font-[var(--font-heading)]">Konsultan Riset AI</p>
@@ -329,8 +328,8 @@ export default function AiCounselorWidget() {
                     {/* Interactive Course Recommendation Cards */}
                     {!isUser && msg.recommendedCourses && msg.recommendedCourses.length > 0 && (
                       <div className="pt-2.5 mt-2.5 border-t border-slate-100 space-y-2.5">
-                        <span className="text-3xs font-bold uppercase tracking-wider text-blue-900 flex items-center gap-1">
-                          <Sparkles size={11} className="text-[#fdbc13]" />
+                        <span className="text-2xs font-bold uppercase tracking-wider text-[#001847] flex items-center gap-1.5">
+                          <BookOpen size={12} className="text-[#001847]" />
                           <span>Rekomendasi Program Terkait:</span>
                         </span>
 
@@ -350,11 +349,11 @@ export default function AiCounselorWidget() {
                               className="p-3 rounded-xl border border-blue-100 bg-blue-50/40 hover:bg-blue-50 transition-all space-y-2"
                             >
                               <div className="flex items-center justify-between gap-2">
-                                <span className="px-2 py-0.5 rounded-md text-3xs font-bold bg-blue-900 text-white uppercase">
+                                <span className="px-2 py-0.5 rounded-md text-2xs font-semibold bg-[#001847]/8 text-[#001847] border border-[#001847]/15">
                                   {course.category}
                                 </span>
                                 {course.batchNumber && (
-                                  <span className="text-3xs font-bold text-amber-800 bg-amber-100/80 px-1.5 py-0.2 rounded">
+                                  <span className="text-2xs font-semibold text-[#7a5900] bg-[#fef9c3] px-2 py-0.5 rounded border border-[#fef08a]">
                                     {course.batchNumber}
                                   </span>
                                 )}
@@ -403,7 +402,7 @@ export default function AiCounselorWidget() {
                           onClick={() => handleSendMessage(q)}
                           className="px-2.5 py-1.5 rounded-xl border border-blue-200/80 bg-white hover:bg-blue-50 text-blue-900 text-3xs font-semibold transition-all text-left shadow-2xs hover:border-blue-300 flex items-center gap-1"
                         >
-                          <span>💬</span>
+                          <MessageSquare size={12} className="text-blue-600 shrink-0" />
                           <span>{q}</span>
                         </button>
                       ))}
@@ -418,9 +417,9 @@ export default function AiCounselorWidget() {
               <div className="flex items-start gap-2 animate-fade-in">
                 <div className="p-3.5 rounded-2xl rounded-bl-xs bg-white border border-slate-200/80 shadow-xs flex items-center gap-2">
                   <div className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-900 animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-900 animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-900 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#001847] animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#001847] animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#001847] animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
                   <span className="text-3xs text-slate-500 font-medium">
                     Dr. Ristek sedang menganalisis...

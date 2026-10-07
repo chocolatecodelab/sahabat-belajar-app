@@ -647,7 +647,93 @@ ON CONFLICT ("id") DO UPDATE SET
   "sortOrder" = EXCLUDED."sortOrder",
   "isActive" = EXCLUDED."isActive";
 
+-- ==============================================================================
+-- 8. 200+ TUTOR DIRECTORY & MENTORSHIP DISPATCHING (PHASE #4)
+-- ==============================================================================
 
+DO $$ BEGIN
+    CREATE TYPE "BookingStatus" AS ENUM (
+      'DRAFT_MATCHING',
+      'PENDING_TUTOR_CONFIRMATION',
+      'CONFIRMED',
+      'DECLINED_BY_TUTOR',
+      'COMPLETED',
+      'RESCHEDULED'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
+-- TutorProfile (Direktori 200+ Tutor Pakar Riset)
+CREATE TABLE IF NOT EXISTS "TutorProfile" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT REFERENCES "User"("id") ON DELETE SET NULL,
+    "fullName" TEXT NOT NULL,
+    "whatsappNumber" TEXT NOT NULL,
+    "email" TEXT,
+    "academicTitle" TEXT NOT NULL,
+    "institution" TEXT NOT NULL,
+    "specializations" JSONB NOT NULL DEFAULT '[]'::jsonb,
+    "scopusId" TEXT,
+    "hIndex" INTEGER NOT NULL DEFAULT 0,
+    "maxActiveStudents" INTEGER NOT NULL DEFAULT 5,
+    "currentActive" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "rating" DOUBLE PRECISION NOT NULL DEFAULT 5.0,
+    "avatar" TEXT,
+    "bio" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "TutorProfile_whatsappNumber_idx" ON "TutorProfile"("whatsappNumber");
+CREATE INDEX IF NOT EXISTS "TutorProfile_isActive_idx" ON "TutorProfile"("isActive");
 
+-- TutorAvailability (Slot Ketersediaan Mingguan Tutor)
+CREATE TABLE IF NOT EXISTS "TutorAvailability" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "tutorId" TEXT NOT NULL REFERENCES "TutorProfile"("id") ON DELETE CASCADE,
+    "dayOfWeek" TEXT NOT NULL,
+    "timeStart" TEXT NOT NULL,
+    "timeEnd" TEXT NOT NULL,
+    "isBooked" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "TutorAvailability_tutorId_dayOfWeek_idx" ON "TutorAvailability"("tutorId", "dayOfWeek");
+
+-- MentorshipBooking (Transaksi Penjadwalan Bimbingan Privat 1-on-1)
+CREATE TABLE IF NOT EXISTS "MentorshipBooking" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "registrationId" TEXT REFERENCES "CourseRegistration"("id") ON DELETE SET NULL,
+    "studentName" TEXT NOT NULL,
+    "studentWhatsapp" TEXT NOT NULL,
+    "studentEmail" TEXT,
+    "tutorId" TEXT NOT NULL REFERENCES "TutorProfile"("id") ON DELETE CASCADE,
+    "researchTopic" TEXT NOT NULL,
+    "researchSoftware" TEXT,
+    "scheduledDate" TIMESTAMP(3) NOT NULL,
+    "timeSlot" TEXT NOT NULL,
+    "zoomJoinUrl" TEXT,
+    "zoomHostUrl" TEXT,
+    "status" "BookingStatus" NOT NULL DEFAULT 'PENDING_TUTOR_CONFIRMATION',
+    "confirmationToken" TEXT NOT NULL UNIQUE,
+    "tutorNotes" TEXT,
+    "confirmedAt" TIMESTAMP(3),
+    "completedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "MentorshipBooking_tutorId_idx" ON "MentorshipBooking"("tutorId");
+CREATE INDEX IF NOT EXISTS "MentorshipBooking_status_idx" ON "MentorshipBooking"("status");
+CREATE INDEX IF NOT EXISTS "MentorshipBooking_confirmationToken_idx" ON "MentorshipBooking"("confirmationToken");
+
+-- Menu Penjadwalan di Admin Menu
+INSERT INTO "AdminMenu" ("id", "label", "icon", "url", "parentId", "sortOrder", "isActive", "permission", "updatedAt")
+VALUES
+  ('menu_penjadwalan', 'Penjadwalan 200+ Tutor', 'Calendar', '/dashboard/penjadwalan', NULL, 4, true, 'registration.read', NOW())
+ON CONFLICT ("id") DO UPDATE SET
+  "label" = EXCLUDED."label",
+  "icon" = EXCLUDED."icon",
+  "url" = EXCLUDED."url",
+  "sortOrder" = EXCLUDED."sortOrder",
+  "isActive" = EXCLUDED."isActive";
 

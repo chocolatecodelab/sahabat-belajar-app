@@ -539,7 +539,7 @@ export async function deleteLearningStep(id: string): Promise<ActionResponse> {
 
 const INITIAL_ADVANTAGES = [
   { id: "adv_1", title: "Bimbingan Praktik Nyata (Hands-on)", description: "Bukan hanya sekadar teori, kami membedah langsung draft, olah data, dan manuskrip penelitian Anda.", icon: "CheckCircle2", sortOrder: 1, isActive: true },
-  { id: "adv_2", title: "Mentor Peneliti & Reviewer Scopus", description: "Diajar langsung oleh akademisi aktif dengan rekam jejak publikasi jurnal internasional bereputasi.", icon: "Sparkles", sortOrder: 2, isActive: true },
+  { id: "adv_2", title: "Mentor Peneliti & Reviewer Scopus", description: "Diajar langsung oleh akademisi aktif dengan rekam jejak publikasi jurnal internasional bereputasi.", icon: "GraduationCap", sortOrder: 2, isActive: true },
   { id: "adv_3", title: "Akses Rekaman & Modul Selamanya", description: "Belajar fleksibel kapan saja dengan rekaman kelas HD, template dokumen, dan dataset latihan.", icon: "Clock", sortOrder: 3, isActive: true },
   { id: "adv_4", title: "Jejaring Komunitas Peneliti", description: "Gabung ke forum kolaborasi riset, bertukar ide, sitasi, dan peluang publikasi bersama alumni se-Indonesia.", icon: "Users", sortOrder: 4, isActive: true },
 ];

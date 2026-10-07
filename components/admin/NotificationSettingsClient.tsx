@@ -532,7 +532,7 @@ export default function NotificationSettingsClient({
           <div className="space-y-6">
             <div className="bg-white elevation-1 rounded-2xl p-6 border border-gray-100 space-y-4">
               <div className="flex items-center gap-2 text-emerald-700">
-                <Zap size={20} />
+                <Send size={20} />
                 <h3 className="text-title-sm font-bold text-gray-900">Uji Coba Kirim WhatsApp</h3>
               </div>
               <p className="text-2xs text-gray-600">

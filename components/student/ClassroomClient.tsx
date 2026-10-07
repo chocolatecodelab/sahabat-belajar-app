@@ -11,7 +11,6 @@ import {
   FileText,
   FileSpreadsheet,
   Award,
-  Sparkles,
   Clock,
   Send,
   MessageSquare,
@@ -152,16 +151,16 @@ export default function ClassroomClient({
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded text-3xs font-bold uppercase bg-blue-900 text-white">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-[#001847]/6 text-[#001847] border border-[#001847]/12">
                   {course.category}
                 </span>
                 {course.batchNumber && (
-                  <span className="text-3xs font-bold bg-[#fdbc13] text-blue-950 px-1.5 py-0.5 rounded">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-[#fef9c3] text-[#7a5900] border border-[#fef08a]">
                     {course.batchNumber}
                   </span>
                 )}
               </div>
-              <h1 className="text-base sm:text-lg font-bold font-[var(--font-heading)] text-slate-900 truncate max-w-xl">
+              <h1 className="text-base sm:text-lg font-bold font-display text-[#001847] truncate max-w-xl mt-1">
                 {course.title}
               </h1>
             </div>
@@ -170,8 +169,8 @@ export default function ClassroomClient({
           {/* Progress Tracker & Claim Button */}
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
-              <span className="text-3xs font-bold uppercase text-slate-400 block">Progres Kelas</span>
-              <strong className="text-sm font-extrabold text-blue-900 tabular-nums">
+              <span className="text-xs font-medium text-slate-500 block">Progres Belajar</span>
+              <strong className="text-sm font-bold text-[#001847] tabular-nums">
                 {currentPercentage}% ({completedCount}/{totalLessonsCount} Selesai)
               </strong>
             </div>
@@ -181,7 +180,7 @@ export default function ClassroomClient({
                 type="button"
                 disabled={isClaiming}
                 onClick={handleClaimCertificate}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#fdbc13] text-blue-950 shadow-xs hover:opacity-90 transition-all flex items-center gap-1.5"
+                className="px-4 py-2 rounded-lg text-xs font-semibold bg-[#001847] hover:bg-[#0b2c6b] text-white shadow-sm transition flex items-center gap-1.5"
               >
                 <Award size={15} />
                 <span>{isClaiming ? "Menerbitkan..." : "Klaim Sertifikat 32 JP"}</span>
@@ -222,10 +221,10 @@ export default function ClassroomClient({
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <span className="text-3xs font-bold uppercase tracking-wider text-blue-900 bg-blue-50 px-2.5 py-1 rounded-md">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[#001847] bg-[#001847]/6 px-2.5 py-1 rounded-md border border-[#001847]/12">
                     Sesi Aktif
                   </span>
-                  <h2 className="text-xl font-extrabold font-[var(--font-heading)] text-slate-900 mt-1.5 leading-snug">
+                  <h2 className="text-xl font-bold font-display text-[#001847] mt-1.5 leading-snug">
                     {activeLesson.title}
                   </h2>
                   <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
@@ -516,11 +515,11 @@ export default function ClassroomClient({
               style={{ borderTop: "3px solid var(--color-primary)" }}
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="font-bold text-sm font-[var(--font-heading)] text-slate-900 flex items-center gap-2">
-                  <BookOpen size={16} className="text-blue-900" />
+                <h3 className="font-bold text-sm font-display text-[#001847] flex items-center gap-2">
+                  <BookOpen size={16} className="text-[#001847]" />
                   <span>Silabus & Modul Belajar</span>
                 </h3>
-                <span className="text-3xs font-extrabold text-blue-900 bg-blue-50 px-2 py-0.5 rounded">
+                <span className="text-xs font-semibold text-[#001847] bg-[#001847]/6 px-2.5 py-0.5 rounded-md border border-[#001847]/12">
                   {completedCount}/{totalLessonsCount} Sesi
                 </span>
               </div>
@@ -529,7 +528,7 @@ export default function ClassroomClient({
               <div className="space-y-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
                 {modules.map((mod, modIdx) => (
                   <div key={mod.id} className="space-y-2">
-                    <h4 className="text-3xs font-extrabold uppercase tracking-wider text-slate-400 px-1">
+                    <h4 className="text-xs font-bold font-display uppercase tracking-wider text-slate-500 px-1">
                       {mod.title}
                     </h4>
 
@@ -545,7 +544,7 @@ export default function ClassroomClient({
                             onClick={() => setActiveLesson(lesson)}
                             className={`w-full p-3 rounded-xl text-left text-xs transition-all flex items-start gap-2.5 ${
                               isCurrent
-                                ? "bg-blue-900 text-white shadow-xs"
+                                ? "bg-[#001847] text-white shadow-xs"
                                 : isDone
                                 ? "bg-emerald-50/50 text-slate-800 hover:bg-emerald-50 border border-emerald-100"
                                 : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/60"
