@@ -19,7 +19,7 @@ import {
 
 async function runTutorSchedulingTests() {
   console.log("==========================================================");
-  console.log("🎓 TESTING PHASE #4: PENJADWALAN 200+ TUTOR (HUMAN IN THE LOOP)");
+  console.log("🎓 TESTING PHASE #4: PENJADWALAN TUTOR (HUMAN IN THE LOOP)");
   console.log("==========================================================\n");
 
   let passed = 0;
@@ -38,9 +38,9 @@ async function runTutorSchedulingTests() {
   // ----------------------------------------------------
   // TEST GROUP 1: Tutor Directory & Pool Validation
   // ----------------------------------------------------
-  console.log("1. TUTOR DIRECTORY & 200+ POOL VALIDATION");
+  console.log("1. TUTOR DIRECTORY & POOL VALIDATION");
   const tutors = getTutorDirectoryPool();
-  assert(tutors.length >= 200, `Pool contains 200+ tutors (actual: ${tutors.length})`);
+  assert(tutors.length >= 10, `Pool contains active tutors (actual: ${tutors.length})`);
   assert(tutors.every((t) => t.fullName && t.academicTitle && t.institution), "All tutors have complete academic credentials");
   assert(tutors.every((t) => t.whatsappNumber && t.whatsappNumber.startsWith("628")), "All tutors have valid E.164 phone numbers");
   assert(tutors.some((t) => t.specializations.includes("SmartPLS 4")), "Directory covers SmartPLS 4 experts");
@@ -158,7 +158,7 @@ async function runTutorSchedulingTests() {
   // ----------------------------------------------------
   console.log("\n7. DISPATCHER BOARD AGGREGATE METRICS");
   const boardData = await getDispatcherBoardData();
-  assert(boardData.metrics.activeTutorsCount >= 200, "Metrics count includes 200+ tutors");
+  assert(boardData.metrics.activeTutorsCount >= 10, "Metrics count includes active tutors");
   assert(boardData.activeBookings.length >= 2, "Active bookings includes created test sessions");
   assert(boardData.metrics.confirmedBookings >= 1, "Confirmed bookings metric correctly reflects confirmed sessions");
 

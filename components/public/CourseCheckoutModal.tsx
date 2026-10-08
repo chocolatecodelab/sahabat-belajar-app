@@ -19,6 +19,7 @@ import {
   School,
   FileText,
   GraduationCap,
+  AlertCircle,
 } from "lucide-react";
 import Image from "next/image";
 import { createEnrollment, uploadPaymentProof } from "@/actions/pendaftaran";
@@ -90,10 +91,16 @@ export default function CourseCheckoutModal({
   const bankAccounts = paymentAccounts.filter((a) => a.type === "BANK");
 
   const basePrice = course.isFree ? 0 : (course.salePrice !== null && course.salePrice !== undefined ? course.salePrice : course.price);
+  const isFull = course.maxQuota > 0 && course.currentEnrolled >= course.maxQuota;
+  const isClosed = course.status === "CLOSED" || course.status === "FULL" || !course.isActive || isFull;
 
   // Handle Step 1 Submit: Create Enrollment
   const handleProceedToPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isClosed) {
+      setError("Pendaftaran kelas ini sedang ditutup atau kuota telah penuh");
+      return;
+    }
     if (!name || !email || !phone || !institution) {
       setError("Mohon lengkapi semua kolom biodata pendaftaran");
       return;
@@ -259,6 +266,18 @@ export default function CourseCheckoutModal({
           {/* STEP 1: FORM BIODATA */}
           {step === 1 && (
             <form onSubmit={handleProceedToPayment} className="space-y-4">
+              {/* Closed / Full Status Alert Banner */}
+              {isClosed && (
+                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-2xs font-semibold flex items-center gap-2.5">
+                  <AlertCircle size={16} className="text-amber-700 shrink-0" />
+                  <span>
+                    {isFull
+                      ? "Mohon maaf, kuota peserta untuk gelombang kelas ini telah penuh."
+                      : "Pendaftaran untuk program kelas ini sedang ditutup."}
+                  </span>
+                </div>
+              )}
+
               {/* Course Mini Summary */}
               <div className="p-3.5 rounded-xl bg-slate-50 border flex items-center justify-between" style={{ borderColor: "var(--color-outline-variant)" }}>
                 <div>
@@ -403,6 +422,15 @@ export default function CourseCheckoutModal({
                         <Building2 size={14} /> Transfer Bank
                       </button>
                     </div>
+
+                    {selectedMethod === "BANK_TRANSFER" && (
+                      <p className="text-3xs text-slate-600 mt-2 flex items-center gap-1.5 bg-blue-50/60 p-2 rounded-lg border border-blue-100">
+                        <ShieldCheck size={13} className="text-[#001847] shrink-0" />
+                        <span>
+                          Nomor rekening resmi & kode unik transfer akan ditampilkan di langkah berikutnya setelah Anda melanjutkan.
+                        </span>
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -430,13 +458,21 @@ export default function CourseCheckoutModal({
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="px-6 py-2.5 rounded-lg text-label-lg font-bold text-white shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
-                  style={{ background: "var(--color-primary)" }}
+                  disabled={loading || isClosed}
+                  className={`px-6 py-2.5 rounded-lg text-label-lg font-bold shadow-sm transition-all flex items-center gap-2 ${
+                    isClosed
+                      ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                      : "text-white disabled:opacity-50"
+                  }`}
+                  style={isClosed ? undefined : { background: "var(--color-primary)" }}
                 >
                   {loading ? (
                     <>
                       <RefreshCw size={16} className="animate-spin" /> Memproses...
+                    </>
+                  ) : isClosed ? (
+                    <>
+                      <AlertCircle size={16} /> {isFull ? "Kuota Penuh" : "Pendaftaran Ditutup"}
                     </>
                   ) : course.isFree ? (
                     <>

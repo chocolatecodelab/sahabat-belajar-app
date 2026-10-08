@@ -4,7 +4,7 @@ import { useState, Suspense } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, LogIn, AlertCircle, BookOpen } from "lucide-react";
+import { Eye, EyeOff, LogIn, AlertCircle, BookOpen, Info } from "lucide-react";
 
 function LoginFormInner() {
   const router = useRouter();
@@ -35,10 +35,32 @@ function LoginFormInner() {
         // Fetch session to determine role-based redirection
         const session = await getSession();
         const userRole = (session?.user as any)?.role || "Student";
+        const isStaff = [
+          "Super Admin",
+          "Admin",
+          "Editor",
+          "Tutor",
+          "Mentor",
+          "Reviewer",
+        ].includes(userRole);
 
-        if (callbackUrl && !callbackUrl.includes("/login")) {
-          router.push(callbackUrl);
-        } else if (userRole === "Super Admin" || userRole === "Admin" || userRole === "Mentor" || userRole === "Reviewer") {
+        // Security Hardening (QA-SEC-01): Sanitize callbackUrl to prevent Phishing Open Redirect
+        const isSafeCallback =
+          typeof callbackUrl === "string" &&
+          callbackUrl.startsWith("/") &&
+          !callbackUrl.startsWith("//") &&
+          !callbackUrl.startsWith("/\\") &&
+          !callbackUrl.includes("/login") &&
+          !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(callbackUrl);
+
+        if (isSafeCallback) {
+          // If a non-staff student attempts to access /dashboard, redirect to student LMS /belajar
+          if (!isStaff && callbackUrl.startsWith("/dashboard")) {
+            router.push("/belajar");
+          } else {
+            router.push(callbackUrl);
+          }
+        } else if (isStaff) {
           router.push("/dashboard");
         } else {
           router.push("/belajar");
@@ -160,6 +182,10 @@ function LoginFormInner() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              <p className="text-3xs text-slate-500 mt-1.5 flex items-center gap-1.5">
+                <Info size={12} className="text-slate-400 shrink-0" />
+                <span>Bagi peserta baru, kata sandi awal adalah nomor WhatsApp yang didaftarkan.</span>
+              </p>
             </div>
 
             <button

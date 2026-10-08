@@ -12,6 +12,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { getCourses } from "@/actions/kursus";
+import CourseCatalogToolbar from "@/components/public/CourseCatalogToolbar";
 
 export const dynamic = "force-dynamic";
 
@@ -83,39 +84,28 @@ export default async function CourseCatalogPage({ searchParams }: CourseCatalogP
 
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
-        {/* Filter Toolbar */}
-        <div className="elevation-1 rounded-2xl p-4 bg-white border flex flex-col md:flex-row items-center justify-between gap-4" style={{ borderColor: "var(--color-outline-variant)" }}>
-          {/* Category Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-            {CATEGORIES.map((cat) => {
-              const isActive = currentCategory === cat;
-              return (
-                <Link
-                  key={cat}
-                  href={cat === "Semua" ? "/kursus" : `/kursus?kategori=${encodeURIComponent(cat)}`}
-                  className={`px-3.5 py-2 rounded-xl text-2xs font-bold transition-all shrink-0 ${
-                    isActive
-                      ? "bg-[var(--color-primary)] text-white shadow-xs"
-                      : "bg-slate-50 text-gray-600 hover:bg-slate-100"
-                  }`}
-                >
-                  {cat}
-                </Link>
-              );
-            })}
-          </div>
-
-          <span className="text-2xs text-gray-500 font-semibold self-end md:self-center">
-            Menampilkan <strong>{courses.length}</strong> Program Kursus
-          </span>
-        </div>
+        {/* Interactive Search & Filter Toolbar (UX-IA-02) */}
+        <CourseCatalogToolbar
+          categories={CATEGORIES}
+          currentCategory={currentCategory}
+          initialQuery={searchQuery}
+          totalResults={courses.length}
+        />
 
         {/* Courses Grid */}
         {courses.length === 0 ? (
           <div className="elevation-1 rounded-2xl p-12 bg-white border text-center space-y-3" style={{ borderColor: "var(--color-outline-variant)" }}>
             <BookOpen size={48} className="mx-auto text-gray-300" />
-            <h3 className="text-headline-sm font-bold text-gray-800">Belum ada program kursus di kategori ini</h3>
-            <p className="text-2xs text-gray-500">Silakan pilih kategori lain atau periksa kembali nanti.</p>
+            <h3 className="text-headline-sm font-bold text-gray-800">
+              {searchQuery
+                ? `Tidak ditemukan program kursus untuk "${searchQuery}"`
+                : "Belum ada program kursus di kategori ini"}
+            </h3>
+            <p className="text-2xs text-gray-500">
+              {searchQuery
+                ? "Coba gunakan kata kunci lain seperti SmartPLS, Scopus, Tesis, atau reset pencarian."
+                : "Silakan pilih kategori lain atau periksa kembali nanti."}
+            </p>
             <Link href="/kursus" className="inline-block px-4 py-2 rounded-lg text-2xs font-bold text-white bg-[var(--color-primary)]">
               Lihat Semua Program
             </Link>

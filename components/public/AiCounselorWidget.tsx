@@ -50,6 +50,8 @@ export default function AiCounselorWidget() {
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_GREETING]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isHandoffActive, setIsHandoffActive] = useState(false);
+  const [activeTicketNumber, setActiveTicketNumber] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -63,6 +65,11 @@ export default function AiCounselorWidget() {
         if (Array.isArray(parsed) && parsed.length > 0) {
           setMessages(parsed);
         }
+      }
+      const savedHandoff = sessionStorage.getItem("bias_ai_handoff_active");
+      if (savedHandoff === "true") {
+        setIsHandoffActive(true);
+        setActiveTicketNumber(sessionStorage.getItem("bias_ai_ticket_number"));
       }
     } catch {
       // Ignore sessionStorage errors
@@ -126,10 +133,19 @@ export default function AiCounselorWidget() {
       const resData = await res.json();
 
       if (res.ok && resData.success) {
+        if (resData.data.handledBy === "ESCALATED_TO_HUMAN" || resData.data.handledBy === "HUMAN_WAITING") {
+          setIsHandoffActive(true);
+          const tNum = resData.data.ticketNumber || activeTicketNumber || "TIKET-CS";
+          setActiveTicketNumber(tNum);
+          sessionStorage.setItem("bias_ai_handoff_active", "true");
+          sessionStorage.setItem("bias_ai_ticket_number", tNum);
+        }
+
+        const botReply = resData.data.reply || "Pesan Anda telah diterima oleh tim admin konsultan kami.";
         const botMsg: ChatMessage = {
           id: `bot_${Date.now()}`,
           role: "assistant",
-          content: resData.data.reply,
+          content: botReply,
           recommendedCourses: resData.data.recommendedCourses || [],
           suggestedQuestions: resData.data.suggestedQuestions || [],
           createdAt: new Date().toISOString(),
@@ -160,10 +176,36 @@ export default function AiCounselorWidget() {
     }
   };
 
+  const handleResumeAi = () => {
+    setIsHandoffActive(false);
+    setActiveTicketNumber(null);
+    try {
+      sessionStorage.removeItem("bias_ai_handoff_active");
+      sessionStorage.removeItem("bias_ai_ticket_number");
+    } catch {}
+    const resumedMsg: ChatMessage = {
+      id: `bot_resume_${Date.now()}`,
+      role: "assistant",
+      content: "Bot asisten AI telah diaktifkan kembali. Silakan ajukan pertanyaan seputar program kelas, kurikulum, atau jadwal riset!",
+      suggestedQuestions: [
+        "Bagaimana cara daftar kelas?",
+        "Apakah ada e-Sertifikat 32 JP?",
+        "Jadwal kelas bimbingan terdekat",
+        "Bicara dengan Admin Staf"
+      ],
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, resumedMsg]);
+  };
+
   const handleResetChat = () => {
     setMessages([INITIAL_GREETING]);
+    setIsHandoffActive(false);
+    setActiveTicketNumber(null);
     try {
       sessionStorage.removeItem("bias_ai_counselor_history");
+      sessionStorage.removeItem("bias_ai_handoff_active");
+      sessionStorage.removeItem("bias_ai_ticket_number");
     } catch {
       // Ignore
     }
@@ -192,12 +234,12 @@ export default function AiCounselorWidget() {
   };
 
   return (
-    <aside aria-label="AI Course Counselor" className="fixed bottom-6 right-6 z-50 font-[var(--font-body)]">
+    <aside aria-label="AI Course Counselor" className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-45 font-[var(--font-body)]">
       {/* 1. Floating Launcher Button & Prompt Popover */}
       {!isOpen && (
         <div className="flex flex-col items-end gap-3">
           {hasPromptTooltip && (
-            <div className="relative elevation-2 bg-white text-slate-800 p-3.5 rounded-2xl border border-slate-200/80 shadow-xl max-w-xs animate-bounce-subtle flex items-start gap-3">
+            <div className="hidden sm:flex relative elevation-2 bg-white text-slate-800 p-3.5 rounded-2xl border border-slate-200/80 shadow-xl max-w-xs animate-bounce-subtle items-start gap-3">
               <div className="w-8 h-8 rounded-full bg-[#001847] text-white flex items-center justify-center shrink-0 shadow-xs">
                 <GraduationCap size={16} className="text-[#fdbc13]" />
               </div>
@@ -281,7 +323,16 @@ export default function AiCounselorWidget() {
               </div>
             </div>
 
-            <div className="flex items-center gap-1 text-white/80">
+            <div className="flex items-center gap-1.5 text-white/80">
+              <button
+                type="button"
+                onClick={() => handleSendMessage("Saya ingin berkonsultasi langsung dengan konsultan akademik manusia.")}
+                className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-3xs font-semibold text-white/90 flex items-center gap-1 transition"
+                title="Alihkan ke Konsultan Manusia"
+              >
+                <User size={12} className="text-[#fdbc13]" />
+                <span className="hidden sm:inline">Staf Ahli</span>
+              </button>
               <button
                 type="button"
                 onClick={handleResetChat}
@@ -300,6 +351,31 @@ export default function AiCounselorWidget() {
               </button>
             </div>
           </div>
+
+          {/* Human Handoff Active Banner */}
+          {isHandoffActive && (
+            <div className="bg-amber-50/90 border-b border-amber-200/90 p-2.5 px-4 flex items-center justify-between text-2xs text-amber-900 font-medium">
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                </span>
+                <span>Mode: Konsultan Manusia (Bot Dijeda)</span>
+                {activeTicketNumber && (
+                  <span className="font-mono text-3xs bg-amber-200/70 text-amber-900 px-1.5 py-0.5 rounded font-bold">
+                    {activeTicketNumber}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleResumeAi}
+                className="text-3xs font-bold text-[#001847] hover:underline"
+              >
+                Aktifkan Bot
+              </button>
+            </div>
+          )}
 
           {/* Messages Thread */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/60 text-xs">
@@ -322,6 +398,23 @@ export default function AiCounselorWidget() {
                     ) : (
                       <div className="space-y-1.5 text-slate-700">
                         {renderFormattedText(msg.content)}
+                      </div>
+                    )}
+
+                    {/* Direct WhatsApp Senior Consultant CTA */}
+                    {!isUser && (msg.content.includes("No. Tiket") || msg.content.includes("Konsultan Akademik Senior")) && (
+                      <div className="pt-2 border-t border-slate-100">
+                        <a
+                          href={`https://wa.me/6287777659482?text=${encodeURIComponent(
+                            `Halo Konsultan BIAS RISTEK, saya dengan Tiket ${activeTicketNumber || "KONSULTASI"} ingin melanjutkan sesi konsultasi riset.`
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-2xs shadow-xs transition"
+                        >
+                          <Phone size={13} />
+                          <span>Lanjutkan Chat di WhatsApp Admin</span>
+                        </a>
                       </div>
                     )}
 

@@ -281,9 +281,9 @@ export default function TestimoniClient({ testimonials: initial }: { testimonial
                     onChange={(e) => setRating(Number(e.target.value))}
                     className="w-full px-3 py-2.5 rounded-lg border text-sm focus-ring"
                   >
-                    <option value={5}>⭐⭐⭐⭐⭐ (5 Bintang)</option>
-                    <option value={4}>⭐⭐⭐⭐ (4 Bintang)</option>
-                    <option value={3}>⭐⭐⭐ (3 Bintang)</option>
+                    <option value={5}>5 Bintang (Sangat Memuaskan / Sempurna)</option>
+                    <option value={4}>4 Bintang (Sangat Baik)</option>
+                    <option value={3}>3 Bintang (Cukup Baik)</option>
                   </select>
                 </div>
                 <div>

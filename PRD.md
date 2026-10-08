@@ -9,7 +9,7 @@
 | **Nama Produk** | Platform Akademik & Otomasi Operasional BIAS RISTEK |
 | **Versi Dokumen** | 1.0.0 (Production Blueprint) |
 | **Status** | Approved & Ready for Phased Implementation |
-| **Target Pengguna** | Tim Pengembang, Product Owner, Tim Operasional & Admin, 200+ Tutor Riset |
+| **Target Pengguna** | Tim Pengembang, Product Owner, Tim Operasional & Admin, Tutor Riset |
 | **Arsitektur Dasar** | Next.js 16 (App Router), React 19, TypeScript, PostgreSQL (Supabase/Prisma), n8n Workflow Engine |
 | **Design System** | Academic Innovation (`DESIGN.md`: Deep Research Blue `#001847`, Scholastic Gold `#fdbc13`, Plus Jakarta Sans & Inter) |
 | **Terakhir Diperbarui** | Oktober 2026 |
@@ -21,9 +21,9 @@
 ### 1.1 Latar Belakang
 **BIAS RISTEK** adalah lembaga pengembangan talenta riset dan bimbingan akademik intensif (skripsi, tesis S2, disertasi S3, publikasi Scopus/SINTA, serta analisis data statistik seperti SmartPLS, SPSS, SEM, NVivo, dan bibliometrik). 
 
-Dengan pertumbuhan ekosistem yang menaungi lebih dari **200+ tutor pakar** dan model bimbingan privat 1-on-1 berkecepatan tinggi, operasi manual saat ini menghadapi *bottleneck* parah:
+Dengan pertumbuhan ekosistem yang menaungi **tutor pakar** dan model bimbingan privat 1-on-1 berkecepatan tinggi, operasi manual saat ini menghadapi *bottleneck* parah:
 1. **Verifikasi Pembayaran Manual**: Admin harus memeriksa mutasi rekening satu per satu dari bukti transfer yang diunggah peserta, memakan waktu 30–120 menit per transaksi dan rawan *human error* serta bukti manipulasi.
-2. **Kekacauan Penjadwalan Tutor (Matching Bottleneck)**: Mengatur sesi bimbingan antara peserta dan 200+ tutor melalui obrolan WhatsApp manual membebani 70% waktu kerja harian staf admin.
+2. **Kekacauan Penjadwalan Tutor (Matching Bottleneck)**: Mengatur sesi bimbingan antara peserta dan tutor melalui obrolan WhatsApp manual membebani 70% waktu kerja harian staf admin.
 3. **Pemberian Akses Materi & LMS Tercecer**: Pengiriman link Zoom, modul, slide materi, dan kredensial dilakukan manual melalui chat WhatsApp, menimbulkan risiko salah kirim atau peserta tertinggal.
 4. **Beban Administratif Rapor & Sertifikat**: Pembuatan rapor progres bulanan dan e-sertifikat 32 JP masih mengandalkan template Word/Canva manual yang repetitif.
 5. **Chat Customer Service Membludak**: Pertanyaan umum (FAQ harga, level materi, kualifikasi tutor) mendominasi kotak masuk CS sehingga konsultasi topik akademik bernilai tinggi sering terlambat ditanggapi.
@@ -54,7 +54,7 @@ flowchart TD
     Phase1 --> Phase3["#3. Otomasi Pasca-Pendaftaran\n(Notifikasi WhatsApp, Email Konfirmasi, Reminder)"]
     Phase2 --> Phase3
     
-    Phase1 --> Phase4["#4. Penjadwalan Siswa ke Tutor\n(Matching 200+ Tutor dengan Human Confirmation)"]
+    Phase1 --> Phase4["#4. Penjadwalan Siswa ke Tutor\n(Matching Tutor dengan Human Confirmation)"]
     Phase3 --> Phase4
     
     Phase2 --> Phase5["#5. Akses Materi LMS & Login Terpadu\n(Auto-Enrollment & Pembuatan Akun Otomatis)"]
@@ -77,7 +77,7 @@ flowchart TD
 | **1** | **Fondasi Data Terstruktur & n8n** | Seluruh otomasi membutuhkan data terstruktur yang rapi, bersih, dan dapat dibaca mesin. | #0 (Audit) | Fondasi seluruh efisiensi sistem |
 | **2** | **Pembayaran QRIS/PG + Webhook** | Langsung memangkas verifikasi manual bank & menjadi pemicu otomatis instan langkah berikutnya. | #1 | Menghemat 30–60 menit/transaksi |
 | **3** | **Otomasi Pasca-Pendaftaran & WhatsApp** | Menghilangkan kecemasan peserta, memberikan tanda terima instan, dan panduan langkah berikutnya. | #1, #2 | Menghemat 10–15 menit/pendaftar |
-| **4** | **Penjadwalan Siswa ke Tutor (Human in the Loop)** | Beban terberat admin karena melibatkan 200+ tutor privat; sistem mencocokkan & tutor menyetujui. | #1, #3 | Menghemat 45–90 menit/siswa |
+| **4** | **Penjadwalan Siswa ke Tutor (Human in the Loop)** | Beban terberat admin karena melibatkan tutor privat; sistem mencocokkan & tutor menyetujui. | #1, #3 | Menghemat 45–90 menit/siswa |
 | **5** | **Akses LMS & Login Terpadu** | Akses materi instan setelah bayar (video, slide, dataset) tanpa perlu admin mengirim manual. | #2 | Menghemat 15–20 menit/siswa |
 | **6** | **Rapor Bulanan & Sertifikat 32 JP** | Menggantikan pembuatan rapor Word dan sertifikat Canva manual satu per satu. | #1, #4 | Menghemat 40–60 menit/siswa/bulan |
 | **7** | **Bot AI CS & WhatsApp Human Handoff** | Menjawab 70% pertanyaan FAQ berulang; konsultasi karier/topik tesis tetap ke konsultan manusia. | #1, Data FAQ | Mengurangi chat masuk hingga 70% |
@@ -91,9 +91,9 @@ flowchart TD
 | Peran (Role) | Akses & Wewenang Utama | Kanal Interaksi |
 | :--- | :--- | :--- |
 | **Siswa / Peneliti** | Mendaftar kelas, memilih metode pembayaran (QRIS/VA), memilih jadwal ketersediaan, mengakses materi LMS, mengunggah draf revisi tugas riset, mengunduh e-sertifikat dan rapor bulanan. | Web Portal Peserta, WhatsApp Notifikasi |
-| **Tutor / Mentor Riset (200+)** | Menerima permintaan bimbingan via WhatsApp (Setuju / Tolak / Usul Jadwal), mengisi evaluasi sesi & draf kemajuan siswa, mengunggah bahan ajar privat, menyetujui kelulusan 32 JP. | WhatsApp Bot Respon Cepat, Dashboard Mentor |
+| **Tutor / Mentor Riset** | Menerima permintaan bimbingan via WhatsApp (Setuju / Tolak / Usul Jadwal), mengisi evaluasi sesi & draf kemajuan siswa, mengunggah bahan ajar privat, menyetujui kelulusan 32 JP. | WhatsApp Bot Respon Cepat, Dashboard Mentor |
 | **Admin Operasional / Dispatcher** | Memantau pendaftaran masuk, mereview kecocokan tutor (*human in the loop*), memverifikasi kasus pembayaran anomali, eskalasi handoff obrolan WhatsApp dari bot AI. | Admin Panel `/dashboard`, WhatsApp Admin Console |
-| **Finance / Kasir Akademik** | Rekonsiliasi transaksi payment gateway, penanganan *refund*, rekap honor bulanan 200+ tutor berdasarkan jumlah sesi bimbingan yang selesai diverifikasi. | Menu Keuangan & Transaksi |
+| **Finance / Kasir Akademik** | Rekonsiliasi transaksi payment gateway, penanganan *refund*, rekap honor bulanan tutor berdasarkan jumlah sesi bimbingan yang selesai diverifikasi. | Menu Keuangan & Transaksi |
 | **Super Admin / Direktur** | Manajemen penuh hak akses (RBAC), pengaturan API gateway (Midtrans, Fonnte, n8n, OpenAI/Gemini), konfigurasi harga dan kurikulum, akses dashboard analitik & forecasting. | Full Admin Panel `/dashboard` |
 
 ---
@@ -124,7 +124,7 @@ Melakukan evaluasi menyeluruh terhadap aset teknologi, skema basis data, arsitek
 #### C. Kesenjangan Teknis (Technical Gaps)
 1. Belum ada koneksi webhook dua arah (*outbound webhook*) untuk memicu alur kerja otomatis di **n8n**.
 2. Pembayaran masih mengandalkan unggah struk manual dan verifikasi klik tombol admin, belum terintegrasi *Payment Gateway API* (Midtrans/Xendit/Tripay).
-3. Modul direktori 200+ tutor dan sistem penugasan bimbingan (*tutor dispatching matrix*) belum memiliki skema penjadwalan slot ketersediaan (*availability calendar*).
+3. Modul direktori tutor dan sistem penugasan bimbingan (*tutor dispatching matrix*) belum memiliki skema penjadwalan slot ketersediaan (*availability calendar*).
 4. Evaluasi siswa belum teragregasi otomatis menjadi e-Rapor Bulanan format PDF.
 5. Bot AI customer service WhatsApp dengan protokol *human-handoff* belum terhubung ke gateway WhatsApp nomor resmi.
 6. Analitik dasbor baru menampilkan riwayat 7 & 30 hari; belum ada algoritma *forecast* kebutuhan kapasitas dan tutor.
@@ -325,7 +325,7 @@ FASE 4: PENJADWALAN SISWA KE TUTOR (HUMAN IN THE LOOP)
 ### 4.4 Fitur #4: Penjadwalan Siswa ke Tutor (Dengan Konfirmasi Manusia)
 
 #### A. Tujuan & Justifikasi
-Merupakan **beban operasional terbesar** bagi staf admin BIAS RISTEK karena mengelola lebih dari **200+ tutor privat** dengan berbagai disiplin ilmu (Kedokteran, Ekonomi/Manajemen, Teknik, Ilmu Sosial) dan format bimbingan 1-on-1 intensif. 
+Merupakan **beban operasional terbesar** bagi staf admin BIAS RISTEK karena mengelola **tutor privat** dengan berbagai disiplin ilmu (Kedokteran, Ekonomi/Manajemen, Teknik, Ilmu Sosial) dan format bimbingan 1-on-1 intensif. 
 
 Sistem dirancang mengusung prinsip **Human in the Loop**: algoritma merekomendasikan tutor yang paling sesuai, sistem mengirimkan penawaran instan ke WhatsApp tutor, dan tutor mengonfirmasi dengan 1 klik sebelum sesi dikunci.
 
@@ -337,7 +337,7 @@ sequenceDiagram
     actor S as Siswa
     participant Sys as Sistem BIAS RISTEK
     actor Adm as Admin Dispatcher
-    actor T as Tutor Riset (200+)
+    actor T as Tutor Riset
 
     S->>Sys: Bayar Lunas + Kirim Preferensi Jadwal & Topik
     Sys->>Adm: Tampilkan Rekomendasi Top 3 Tutor Sesuai Topik
@@ -357,7 +357,7 @@ sequenceDiagram
 
 #### C. Skema Basis Data Penjadwalan Tutor (Tabel Baru)
 ```prisma
-// Profil Direktori 200+ Tutor
+// Profil Direktori Tutor
 model TutorProfile {
   id               String   @id @default(cuid())
   userId           String   @unique
@@ -607,14 +607,14 @@ FASE 8: CMS DINAMIS (TUTOR, KELAS, TESTIMONI, DAN STATISTIK)
 ### 4.8 Fitur #8: CMS Dinamis: Tutor, Kelas, Testimoni, dan Statistik Jadi Data
 
 #### A. Tujuan & Justifikasi
-Menghilangkan ketergantungan pada *hardcoded text* di komponen landing page. Tim marketing dan akademik dapat mengelola kuota kelas, profil 200+ tutor baru, testimoni keberhasilan jurnal Scopus, dan statistik kelulusan langsung dari dashboard admin tanpa perlu campur tangan programmer.
+Menghilangkan ketergantungan pada *hardcoded text* di komponen landing page. Tim marketing dan akademik dapat mengelola kuota kelas, profil tutor baru, testimoni keberhasilan jurnal Scopus, dan statistik kelulusan langsung dari dashboard admin tanpa perlu campur tangan programmer.
 
 #### B. Spesifikasi Komponen Dinamis
 
 | Entitas CMS | Atribut yang Dikelola | Tampilan Frontend Sesuai `DESIGN.md` |
 | :--- | :--- | :--- |
 | **Katalog Kelas (`Course`)** | Judul, slug, harga promo, batch, tanggal mulai, kuota tersisa, silabus JSON, mentor penanggung jawab. | Kartu program dengan rasio 16:9, label status Scholastic Gold, tombol CTA Deep Research Blue. |
-| **Direktori 200+ Tutor** | Nama lengkap, gelar akademik, foto profil, keahlian metodologi, universitas asal, publikasi Scopus. | Kartu tutor dengan badge spesialisasi dan riwayat bimbingan sukses. |
+| **Direktori Tutor** | Nama lengkap, gelar akademik, foto profil, keahlian metodologi, universitas asal, publikasi Scopus. | Kartu tutor dengan badge spesialisasi dan riwayat bimbingan sukses. |
 | **Testimoni Alumni** | Nama alumni, instansi/kampus, capaian ("Tembus Scopus Q1", "Lulus Tesis Predikat A"), foto, rating bintang, kutipan ulasan. | Carousel testimoni dengan elevasi Level 1 dan aksen emas. |
 | **Statistik Capaian (`StatCounter`)** | Angka metrik ("2.500+", "180+", "98%"), label ("Alumni Peneliti", "Artikel Scopus/SINTA"), ikon Lucide. | Tipografi `display-md` Deep Research Blue dengan bar vertikal aksen Scholastic Gold. |
 | **Tanya Jawab (`Faq`)** | Pertanyaan, jawaban HTML, kategori FAQ (Pendaftaran, Pembayaran, Bimbingan, Sertifikat). | Accordion modern dengan border halus `#E2E8F0` dan transisi responsif. |
@@ -640,7 +640,7 @@ Diimplementasikan paling akhir karena membutuhkan **data historis nyata** yang t
 1. **Dasbor Eksekutif Real-time**:
    - Total Pendapatan Bulanan (Gross Revenue & Net Revenue).
    - Rasio Konversi Funnel: Kunjungan Landing Page -> Registrasi -> Lunas.
-   - Distribusi Beban Bimbingan 200+ Tutor (Tutor paling aktif vs tutor dengan kapasitas menganggur).
+   - Distribusi Beban Bimbingan Tutor (Tutor paling aktif vs tutor dengan kapasitas menganggur).
    - Program Bimbingan Terfavorit (misal: "SmartPLS Masterclass" vs "Klinik Tesis Cepat").
 2. **Modul Forecast Kebutuhan Kelas & Tutor (Prediktif)**:
    - Menggunakan model peramalan *Weighted Moving Average* & tren musiman semester akademik (lonjakan pendaftaran skripsi/tesis di bulan Februari-April dan Agustus-Oktober).
@@ -665,7 +665,7 @@ gantt
     #2 Payment Gateway & Webhook        :f2, after f1, 7d
     #3 Otomasi WhatsApp & Email         :f3, after f2, 5d
     section Fase 2 (Operasi Inti & Bimbingan)
-    #4 Penjadwalan 200+ Tutor (Human)   :f4, after f3, 10d
+    #4 Penjadwalan Tutor (Human)        :f4, after f3, 10d
     #5 Akses LMS & Login Terpadu        :f5, after f2, 5d
     section Fase 3 (Otomasi Evaluasi & CS)
     #6 Rapor Bulanan & Sertifikat 32 JP :f6, after f4, 7d
@@ -682,7 +682,7 @@ gantt
 * Mengintegrasikan API Payment Gateway (QRIS Dinamis & Virtual Account) menggantikan proses unggah bukti transfer manual.
 * Menghubungkan webhook lunas ke engine WhatsApp (`lib/notifications.ts`) untuk mengirim tanda terima instan.
 
-#### Fase 2: Orkestrasi 200+ Tutor & Pengalaman Belajar (Minggu 4 – 5)
+#### Fase 2: Orkestrasi Tutor & Pengalaman Belajar (Minggu 4 – 5)
 * Membangun skema profil tutor dan kalender ketersediaan slot.
 * Mengembangkan modul *Dispatcher Board* untuk admin dan alur persetujuan jadwal via WhatsApp satu klik untuk tutor.
 * Mematangkan *auto-provisioning* akun LMS (`/belajar`) dan *magic login*.

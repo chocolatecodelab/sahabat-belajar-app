@@ -3,7 +3,7 @@ import { getDispatcherBoardData } from "@/actions/penjadwalan";
 import DispatcherBoardClient from "./DispatcherBoardClient";
 
 export const metadata: Metadata = {
-  title: "Papan Penjadwalan 200+ Tutor | BIAS RISTEK",
+  title: "Papan Penjadwalan Tutor | BIAS RISTEK",
   description: "Dispatcher Board bimbingan privat riset dengan protokol Human in the Loop.",
 };
 

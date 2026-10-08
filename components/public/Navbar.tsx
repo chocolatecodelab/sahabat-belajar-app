@@ -138,7 +138,7 @@ export default function Navbar({ siteName, navigations }: NavbarProps) {
               className="ml-3 px-4 py-2 rounded-lg text-sm font-semibold text-white shadow-xs transition-all hover:opacity-90 hover:shadow-md"
               style={{ background: "var(--color-primary)" }}
             >
-              Portal Admin
+              Masuk
             </Link>
           </nav>
 
@@ -226,7 +226,7 @@ export default function Navbar({ siteName, navigations }: NavbarProps) {
               className="block w-full text-center py-2.5 rounded-lg text-sm font-semibold text-white shadow-xs"
               style={{ background: "var(--color-primary)" }}
             >
-              Portal Admin
+              Masuk
             </Link>
           </div>
         </div>

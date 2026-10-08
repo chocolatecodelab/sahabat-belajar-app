@@ -63,8 +63,8 @@ Setiap kode yang dibuat atau diubah WAJIB selaras dengan 10 tahap prioritas kete
 * **Tahap #3 (Otomasi Pasca-Pendaftaran & Notifikasi)**:
   - Seluruh pengiriman WhatsApp & Email WAJIB menggunakan modul terpusat di `lib/notifications.ts`.
   - Dilarang membuat fungsi kirim email/WA ad-hoc di komponen halaman.
-* **Tahap #4 (Penjadwalan 200+ Tutor — Human in the Loop)**:
-  - Format bimbingan privat BIAS RISTEK melibatkan 200+ tutor pakar.
+* **Tahap #4 (Penjadwalan Tutor — Human in the Loop)**:
+  - Format bimbingan privat BIAS RISTEK melibatkan tutor pakar.
   - **Prinsip Human in the Loop**: Sistem mencocokkan ketersediaan jadwal dan topik, namun jadwal HANYA sah jika tutor menyetujui via tautan konfirmasi WhatsApp (*Magic Confirmation Token*). Jangan pernah mengunci jadwal secara sepihak tanpa konfirmasi.
 * **Tahap #5 (Akses LMS & Login Terpadu)**:
   - Aktivasi akun siswa (`role: Student`) dan hak akses kelas `/belajar/[slug]` terjadi otomatis begitu transaksi berstatus `VERIFIED`.

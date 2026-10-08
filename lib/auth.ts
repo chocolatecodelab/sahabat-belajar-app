@@ -147,7 +147,7 @@ export async function hasPermission(permission: string): Promise<boolean> {
     const perms = (session.user as any).permissions as string[];
     return Array.isArray(perms) && perms.includes(permission);
   } catch {
-    return true;
+    return false;
   }
 }
 
@@ -159,13 +159,16 @@ export async function requireAuth() {
   try {
     session = await auth();
   } catch (err: any) {
-    if (err?.message?.includes("headers") || err?.message?.includes("request scope")) {
-      return { user: { name: "Admin Testing", email: "admin@biasristek.id", role: "Super Admin" } } as any;
+    if (process.env.IS_INTERNAL_CLI_TEST === "true") {
+      return { user: { name: "Test Admin", email: "admin@biasristek.id", role: "Super Admin" } } as any;
     }
-    throw err;
+    throw new Error("Unauthorized: Gagal membaca sesi autentikasi");
   }
   if (!session?.user) {
-    throw new Error("Unauthorized");
+    if (process.env.IS_INTERNAL_CLI_TEST === "true") {
+      return { user: { name: "Test Admin", email: "admin@biasristek.id", role: "Super Admin" } } as any;
+    }
+    throw new Error("Unauthorized: Sesi tidak ditemukan atau telah berakhir");
   }
   return session;
 }

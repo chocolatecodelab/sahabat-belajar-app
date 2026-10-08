@@ -611,7 +611,7 @@ model NotificationLog {
 }
 
 // ==========================================
-// 8. 200+ TUTOR DIRECTORY & MENTORSHIP DISPATCHING (PHASE #4)
+// 8. TUTOR DIRECTORY & MENTORSHIP DISPATCHING (PHASE #4)
 // ==========================================
 
 model TutorProfile {
@@ -636,6 +636,7 @@ model TutorProfile {
 
   availabilities    TutorAvailability[]
   bookings          MentorshipBooking[]
+  evaluations       SessionEvaluation[]
 
   @@index([whatsappNumber])
   @@index([isActive])
@@ -655,26 +656,28 @@ model TutorAvailability {
 }
 
 model MentorshipBooking {
-  id                String        @id @default(cuid())
+  id                String              @id @default(cuid())
   registrationId    String?
   studentName       String
   studentWhatsapp   String
   studentEmail      String?
   tutorId           String
-  tutor             TutorProfile  @relation(fields: [tutorId], references: [id], onDelete: Cascade)
-  researchTopic     String        @db.Text
+  tutor             TutorProfile        @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  researchTopic     String              @db.Text
   researchSoftware  String?
   scheduledDate     DateTime
-  timeSlot          String        // "19:30 - 21:00 WIB"
+  timeSlot          String              // "19:30 - 21:00 WIB"
   zoomJoinUrl       String?
   zoomHostUrl       String?
-  status            BookingStatus @default(PENDING_TUTOR_CONFIRMATION)
-  confirmationToken String        @unique // Magic Token for 1-Click WhatsApp Confirmation
-  tutorNotes        String?       @db.Text
+  status            BookingStatus       @default(PENDING_TUTOR_CONFIRMATION)
+  confirmationToken String              @unique // Magic Token for 1-Click WhatsApp Confirmation
+  tutorNotes        String?             @db.Text
   confirmedAt       DateTime?
   completedAt       DateTime?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  evaluations       SessionEvaluation[]
 
   @@index([tutorId])
   @@index([status])
@@ -688,4 +691,93 @@ enum BookingStatus {
   DECLINED_BY_TUTOR
   COMPLETED
   RESCHEDULED
+}
+
+// ==========================================
+// 9. EVALUASI SESI & RAPOR BULANAN (PHASE #6)
+// ==========================================
+
+model SessionEvaluation {
+  id                  String            @id @default(cuid())
+  bookingId           String
+  booking             MentorshipBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  tutorId             String
+  tutor               TutorProfile      @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  studentEmail        String
+  studentName         String
+  sessionNumber       Int               @default(1)
+  currentChapter      String            // e.g. "Bab 3: Metodologi Penelitian"
+  topicDiscussed      String            @db.Text
+  methodologyScore    Int               @default(80) // 0 - 100
+  writingScore        Int               @default(80) // 0 - 100
+  dataProcessingScore Int               @default(80) // 0 - 100
+  attendanceStatus    String            @default("ATTENDED") // "ATTENDED", "RESCHEDULED", "ABSENT"
+  actionItems         String            @db.Text
+  tutorFeedback       String            @db.Text
+  createdAt           DateTime          @default(now())
+
+  @@index([bookingId])
+  @@index([tutorId])
+  @@index([studentEmail])
+}
+
+model MonthlyProgressReport {
+  id                  String   @id @default(cuid())
+  reportNumber        String   @unique // "RAPOR-202610-0192"
+  enrollmentId        String?
+  bookingId           String?
+  studentName         String
+  studentEmail        String
+  courseTitle         String
+  tutorName           String
+  periodMonth         Int      // 1 - 12
+  periodYear          Int      // 2026
+  averageScore        Float
+  methodologyScore    Float
+  writingScore        Float
+  dataProcessingScore Float
+  progressStatus      String   @default("ON_TRACK") // "EXCELLENT", "ON_TRACK", "NEEDS_IMPROVEMENT"
+  summary             String   @db.Text
+  recommendations     String   @db.Text
+  totalSessions       Int      @default(1)
+  pdfReportUrl        String?
+  sentToStudent       Boolean  @default(false)
+  sentAt              DateTime?
+  createdAt           DateTime @default(now())
+
+  @@index([studentEmail])
+  @@index([reportNumber])
+  @@index([periodYear, periodMonth])
+}
+
+// ==========================================
+// FASE 7: SUPPORT TICKET & HUMAN HANDOFF
+// ==========================================
+
+model SupportTicket {
+  id                String    @id @default(cuid())
+  ticketNumber      String    @unique // "TIKET-YYYYMM-XXXX"
+  customerName      String
+  customerPhone     String    // E.164, e.g. "628xxx"
+  customerEmail     String?
+  source            String    @default("WHATSAPP") // "WHATSAPP", "WEB_CHAT"
+  category          String    @default("KONSULTASI_RISET") // "KONSULTASI_RISET", "PENDAFTARAN", "PEMBAYARAN", "KOMPLAIN", "LAINNYA"
+  triggerReason     String    // "KEYWORD_TRIGGER", "COMPLEX_RESEARCH_TOPIC", "NEGATIVE_SENTIMENT", "MANUAL_REQUEST"
+  summary           String    @db.Text
+  lastUserMessage   String    @db.Text
+  conversationLog   String?   @db.Text // JSON string array of conversation
+  status            String    @default("WAITING_ADMIN") // "WAITING_ADMIN", "IN_PROGRESS", "RESOLVED", "CLOSED"
+  aiHandled         Boolean   @default(true)
+  handoffActive     Boolean   @default(true) // When true, AI auto-reply is silenced for this contact
+  assignedAdminName String?
+  adminNotes        String?   @db.Text
+  resolvedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([customerPhone])
+  @@index([ticketNumber])
+  @@index([status])
+  @@index([handoffActive])
+  @@index([createdAt])
 }

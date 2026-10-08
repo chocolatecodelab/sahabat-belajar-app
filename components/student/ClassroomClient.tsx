@@ -542,7 +542,7 @@ export default function ClassroomClient({
                             key={lesson.id}
                             type="button"
                             onClick={() => setActiveLesson(lesson)}
-                            className={`w-full p-3 rounded-xl text-left text-xs transition-all flex items-start gap-2.5 ${
+                            className={`w-full p-3 rounded-xl text-left text-xs transition-all flex items-start gap-2.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#001847] focus-visible:ring-offset-2 ${
                               isCurrent
                                 ? "bg-[#001847] text-white shadow-xs"
                                 : isDone

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase";
-import { requireAuth } from "@/lib/auth";
+import { auth, requireAuth } from "@/lib/auth";
 import type { ActionResponse } from "@/types";
 
 function safeRevalidatePath(path: string) {
@@ -421,28 +421,58 @@ export async function getCourseClassroom(courseSlug: string, userEmail?: string)
       return null;
     }
 
-    // 2. If userEmail provided, strictly verify enrollment
+    // 2. Strict Access Gatekeeping (QA-FUNC-04): Resolve email from argument or authenticated session
+    let resolvedEmail = userEmail?.trim().toLowerCase();
+    let isStaff = false;
+
+    try {
+      const session = await auth();
+      if (!resolvedEmail && session?.user?.email) {
+        resolvedEmail = session.user.email.trim().toLowerCase();
+      }
+      const role = (session?.user as any)?.role;
+      if (["Super Admin", "Admin", "Editor", "Tutor", "Mentor", "Reviewer"].includes(role)) {
+        isStaff = true;
+      }
+    } catch {
+      // In case session lookup fails outside request scope
+    }
+
+    // If no authenticated identity exists and caller is not staff, refuse access to materials
+    if (!resolvedEmail && !isStaff) {
+      return {
+        course,
+        modules: [],
+        enrollment: null,
+        isEnrolled: false,
+      };
+    }
+
     let enrollmentRecord: any = null;
-    if (userEmail) {
+    if (resolvedEmail) {
       const { data: enrollData } = await supabaseAdmin
         .from("CourseEnrollment")
         .select("id, status, progressPercentage")
         .eq("courseId", course.id)
-        .eq("userEmail", userEmail.trim().toLowerCase())
+        .eq("userEmail", resolvedEmail)
         .maybeSingle();
 
       enrollmentRecord = enrollData;
-      if (!enrollmentRecord) {
-        return {
-          course,
-          modules: [],
-          enrollment: null,
-          isEnrolled: false,
-        };
-      }
-    } else {
-      // Fallback for CLI QA suite tests
-      enrollmentRecord = { id: "enroll_demo_scopus", status: "ACTIVE", progressPercentage: 0 };
+    }
+
+    // Deny access if user has no active enrollment record and is not staff
+    if (!enrollmentRecord && !isStaff) {
+      return {
+        course,
+        modules: [],
+        enrollment: null,
+        isEnrolled: false,
+      };
+    }
+
+    // Staff preview fallback if viewing without student enrollment
+    if (!enrollmentRecord && isStaff) {
+      enrollmentRecord = { id: "staff_preview", status: "ACTIVE", progressPercentage: 100 };
     }
 
     // 3. Fetch modules & lessons

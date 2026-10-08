@@ -648,7 +648,7 @@ ON CONFLICT ("id") DO UPDATE SET
   "isActive" = EXCLUDED."isActive";
 
 -- ==============================================================================
--- 8. 200+ TUTOR DIRECTORY & MENTORSHIP DISPATCHING (PHASE #4)
+-- 8. TUTOR DIRECTORY & MENTORSHIP DISPATCHING (PHASE #4)
 -- ==============================================================================
 
 DO $$ BEGIN
@@ -664,7 +664,7 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- TutorProfile (Direktori 200+ Tutor Pakar Riset)
+-- TutorProfile (Direktori Tutor Pakar Riset)
 CREATE TABLE IF NOT EXISTS "TutorProfile" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT REFERENCES "User"("id") ON DELETE SET NULL,
@@ -729,11 +729,98 @@ CREATE INDEX IF NOT EXISTS "MentorshipBooking_confirmationToken_idx" ON "Mentors
 -- Menu Penjadwalan di Admin Menu
 INSERT INTO "AdminMenu" ("id", "label", "icon", "url", "parentId", "sortOrder", "isActive", "permission", "updatedAt")
 VALUES
-  ('menu_penjadwalan', 'Penjadwalan 200+ Tutor', 'Calendar', '/dashboard/penjadwalan', NULL, 4, true, 'registration.read', NOW())
+  ('menu_penjadwalan', 'Penjadwalan Tutor', 'Calendar', '/dashboard/penjadwalan', NULL, 4, true, 'registration.read', NOW())
 ON CONFLICT ("id") DO UPDATE SET
   "label" = EXCLUDED."label",
   "icon" = EXCLUDED."icon",
   "url" = EXCLUDED."url",
   "sortOrder" = EXCLUDED."sortOrder",
   "isActive" = EXCLUDED."isActive";
+
+-- ==========================================
+-- 9. EVALUASI SESI & RAPOR BULANAN (PHASE #6)
+-- ==========================================
+
+-- SessionEvaluation (Catatan Evaluasi Mentor per Sesi Bimbingan)
+CREATE TABLE IF NOT EXISTS "SessionEvaluation" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "bookingId" TEXT NOT NULL REFERENCES "MentorshipBooking"("id") ON DELETE CASCADE,
+    "tutorId" TEXT NOT NULL REFERENCES "TutorProfile"("id") ON DELETE CASCADE,
+    "studentEmail" TEXT NOT NULL,
+    "studentName" TEXT NOT NULL,
+    "sessionNumber" INTEGER NOT NULL DEFAULT 1,
+    "currentChapter" TEXT NOT NULL,
+    "topicDiscussed" TEXT NOT NULL,
+    "methodologyScore" INTEGER NOT NULL DEFAULT 80,
+    "writingScore" INTEGER NOT NULL DEFAULT 80,
+    "dataProcessingScore" INTEGER NOT NULL DEFAULT 80,
+    "attendanceStatus" TEXT NOT NULL DEFAULT 'ATTENDED',
+    "actionItems" TEXT NOT NULL,
+    "tutorFeedback" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "SessionEvaluation_bookingId_idx" ON "SessionEvaluation"("bookingId");
+CREATE INDEX IF NOT EXISTS "SessionEvaluation_tutorId_idx" ON "SessionEvaluation"("tutorId");
+CREATE INDEX IF NOT EXISTS "SessionEvaluation_studentEmail_idx" ON "SessionEvaluation"("studentEmail");
+
+-- MonthlyProgressReport (Kompilasi e-Rapor Kemajuan Riset Resmi)
+CREATE TABLE IF NOT EXISTS "MonthlyProgressReport" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "reportNumber" TEXT NOT NULL UNIQUE,
+    "enrollmentId" TEXT REFERENCES "CourseEnrollment"("id") ON DELETE SET NULL,
+    "bookingId" TEXT REFERENCES "MentorshipBooking"("id") ON DELETE SET NULL,
+    "studentName" TEXT NOT NULL,
+    "studentEmail" TEXT NOT NULL,
+    "courseTitle" TEXT NOT NULL,
+    "tutorName" TEXT NOT NULL,
+    "periodMonth" INTEGER NOT NULL,
+    "periodYear" INTEGER NOT NULL,
+    "averageScore" DOUBLE PRECISION NOT NULL,
+    "methodologyScore" DOUBLE PRECISION NOT NULL,
+    "writingScore" DOUBLE PRECISION NOT NULL,
+    "dataProcessingScore" DOUBLE PRECISION NOT NULL,
+    "progressStatus" TEXT NOT NULL DEFAULT 'ON_TRACK',
+    "summary" TEXT NOT NULL,
+    "recommendations" TEXT NOT NULL,
+    "totalSessions" INTEGER NOT NULL DEFAULT 1,
+    "pdfReportUrl" TEXT,
+    "sentToStudent" BOOLEAN NOT NULL DEFAULT FALSE,
+    "sentAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "MonthlyProgressReport_studentEmail_idx" ON "MonthlyProgressReport"("studentEmail");
+CREATE INDEX IF NOT EXISTS "MonthlyProgressReport_reportNumber_idx" ON "MonthlyProgressReport"("reportNumber");
+CREATE INDEX IF NOT EXISTS "MonthlyProgressReport_period_idx" ON "MonthlyProgressReport"("periodYear", "periodMonth");
+
+-- =========================================================
+-- FASE 7: SUPPORT TICKET & HUMAN HANDOFF
+-- =========================================================
+CREATE TABLE IF NOT EXISTS "SupportTicket" (
+    "id" TEXT PRIMARY KEY,
+    "ticketNumber" TEXT UNIQUE NOT NULL,
+    "customerName" TEXT NOT NULL,
+    "customerPhone" TEXT NOT NULL,
+    "customerEmail" TEXT,
+    "source" TEXT NOT NULL DEFAULT 'WHATSAPP',
+    "category" TEXT NOT NULL DEFAULT 'KONSULTASI_RISET',
+    "triggerReason" TEXT NOT NULL,
+    "summary" TEXT NOT NULL,
+    "lastUserMessage" TEXT NOT NULL,
+    "conversationLog" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'WAITING_ADMIN',
+    "aiHandled" BOOLEAN NOT NULL DEFAULT true,
+    "handoffActive" BOOLEAN NOT NULL DEFAULT true,
+    "assignedAdminName" TEXT,
+    "adminNotes" TEXT,
+    "resolvedAt" TIMESTAMP WITH TIME ZONE,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS "SupportTicket_customerPhone_idx" ON "SupportTicket"("customerPhone");
+CREATE INDEX IF NOT EXISTS "SupportTicket_ticketNumber_idx" ON "SupportTicket"("ticketNumber");
+CREATE INDEX IF NOT EXISTS "SupportTicket_status_idx" ON "SupportTicket"("status");
+CREATE INDEX IF NOT EXISTS "SupportTicket_handoffActive_idx" ON "SupportTicket"("handoffActive");
+CREATE INDEX IF NOT EXISTS "SupportTicket_createdAt_idx" ON "SupportTicket"("createdAt");
+
 

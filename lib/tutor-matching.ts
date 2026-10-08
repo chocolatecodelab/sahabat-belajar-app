@@ -1,5 +1,5 @@
 /**
- * BIAS RISTEK - Smart Tutor Matching Engine & 200+ Expert Directory Pool
+ * BIAS RISTEK - Smart Tutor Matching Engine & Expert Directory Pool
  * Implements PRD Phase #4: "Penjadwalan Siswa ke Tutor (Human in the Loop)"
  * Computes multi-attribute compatibility scores between student research metadata and expert profiles.
  */
@@ -39,7 +39,7 @@ export interface MatchCandidate {
 }
 
 // ==============================================================================
-// 1. CURATED CORE TUTOR DIRECTORY (200+ POOL SEED)
+// 1. CURATED CORE TUTOR DIRECTORY (POOL SEED)
 // ==============================================================================
 
 const CORE_FEATURED_TUTORS: TutorProfileData[] = [
@@ -80,7 +80,7 @@ const CORE_FEATURED_TUTORS: TutorProfileData[] = [
     isActive: true,
     rating: 4.98,
     avatar: "/uploads/avatars/tutor_hendra.webp",
-    bio: "Spesialis metode structural equation modeling (PLS-SEM & CB-SEM). Telah menguji 200+ model mediasi, moderasi, dan higher-order constructs.",
+    bio: "Spesialis metode structural equation modeling (PLS-SEM & CB-SEM). Telah menguji model mediasi, moderasi, dan higher-order constructs.",
     availabilities: [
       { dayOfWeek: "SENIN", timeStart: "19:30", timeEnd: "21:00", isBooked: false },
       { dayOfWeek: "RABU", timeStart: "19:30", timeEnd: "21:00", isBooked: false },
@@ -266,9 +266,9 @@ const CORE_FEATURED_TUTORS: TutorProfileData[] = [
 ];
 
 /**
- * Generate full pool of 200+ specialized tutors across all Indonesian university faculties
+ * Generate full pool of specialized tutors across all Indonesian university faculties
  */
-export function generate200TutorPool(): TutorProfileData[] {
+export function generateTutorPool(): TutorProfileData[] {
   const tutors: TutorProfileData[] = [...CORE_FEATURED_TUTORS];
 
   const facultyNames = [
@@ -289,12 +289,12 @@ export function generate200TutorPool(): TutorProfileData[] {
     { start: "13:30", end: "15:00" },
   ];
 
-  // Synthesize up to 200 tutors
+  // Synthesize realistic faculty specialist pool
   let idCounter = 11;
   for (let i = 0; i < facultyNames.length; i++) {
     const f = facultyNames[i];
-    for (let j = 0; j < 32; j++) {
-      if (tutors.length >= 200) break;
+    for (let j = 0; j < 4; j++) {
+      if (tutors.length >= 34) break;
       const inst = f.insts[j % f.insts.length];
       const tool1 = f.tools[j % f.tools.length];
       const tool2 = f.tools[(j + 1) % f.tools.length];
@@ -338,7 +338,7 @@ let cachedTutorPool: TutorProfileData[] | null = null;
 
 export function getTutorDirectoryPool(): TutorProfileData[] {
   if (!cachedTutorPool) {
-    cachedTutorPool = generate200TutorPool();
+    cachedTutorPool = generateTutorPool();
   }
   return cachedTutorPool;
 }

@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Building2,
   SlidersHorizontal,
+  FileText,
 } from "lucide-react";
 import {
   getRecommendedTutors,
@@ -32,6 +33,10 @@ import {
   getDispatcherBoardData,
   type MentorshipBookingItem,
 } from "@/actions/penjadwalan";
+import {
+  submitSessionEvaluation,
+  compileMonthlyProgressReport,
+} from "@/actions/rapor";
 import type { TutorProfileData, MatchCandidate } from "@/lib/tutor-matching";
 
 interface Props {
@@ -71,6 +76,26 @@ export default function DispatcherBoardClient({ initialData }: Props) {
 
   // Copied token state
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  // Session Evaluation Modal State
+  const [evaluationModalOpen, setEvaluationModalOpen] = useState(false);
+  const [selectedBookingForEval, setSelectedBookingForEval] = useState<MentorshipBookingItem | null>(null);
+  const [evalSessionNumber, setEvalSessionNumber] = useState(1);
+  const [evalCurrentChapter, setEvalCurrentChapter] = useState("Bab 3: Metodologi & Instrumen Penelitian");
+  const [evalTopicDiscussed, setEvalTopicDiscussed] = useState("");
+  const [evalMethodologyScore, setEvalMethodologyScore] = useState(88);
+  const [evalWritingScore, setEvalWritingScore] = useState(85);
+  const [evalDataProcessingScore, setEvalDataProcessingScore] = useState(89);
+  const [evalAttendanceStatus, setEvalAttendanceStatus] = useState<"ATTENDED" | "RESCHEDULED" | "ABSENT">("ATTENDED");
+  const [evalActionItems, setEvalActionItems] = useState("");
+  const [evalTutorFeedback, setEvalTutorFeedback] = useState("");
+  const [evalIsFinalSession, setEvalIsFinalSession] = useState(false);
+  const [submittingEvaluation, setSubmittingEvaluation] = useState(false);
+  const [evalSuccessMessage, setEvalSuccessMessage] = useState<string | null>(null);
+
+  // Quick Monthly Report State
+  const [compilingReportId, setCompilingReportId] = useState<string | null>(null);
+  const [lastCompiledReport, setLastCompiledReport] = useState<{ number: string; url: string } | null>(null);
 
   const refreshData = async () => {
     try {
@@ -157,6 +182,95 @@ export default function DispatcherBoardClient({ initialData }: Props) {
     setTimeout(() => setCopiedToken(null), 2000);
   };
 
+  const handleOpenEvaluationModal = (booking: MentorshipBookingItem) => {
+    setSelectedBookingForEval(booking);
+    setEvalSessionNumber(1);
+    setEvalCurrentChapter("Bab 3: Metodologi & Instrumen Penelitian");
+    setEvalTopicDiscussed(booking.researchTopic || "Bimbingan Metodologi & Analisis Riset");
+    setEvalMethodologyScore(88);
+    setEvalWritingScore(85);
+    setEvalDataProcessingScore(89);
+    setEvalAttendanceStatus("ATTENDED");
+    setEvalActionItems("Perbaiki validitas konstruk variabel moderasi dan lengkapi sitasi Scopus Q1 5 tahun terakhir.");
+    setEvalTutorFeedback("Penguasaan materi riset sangat tajam. Pemodelan hipotesis di Bab 3 sudah kokoh, pertahankan gaya selingkung penulisan.");
+    setEvalIsFinalSession(false);
+    setEvalSuccessMessage(null);
+    setEvaluationModalOpen(true);
+  };
+
+  const handleSubmitEvaluation = async () => {
+    if (!selectedBookingForEval) return;
+    setSubmittingEvaluation(true);
+    setEvalSuccessMessage(null);
+
+    try {
+      const res = await submitSessionEvaluation({
+        bookingId: selectedBookingForEval.id,
+        tutorId: selectedBookingForEval.tutorId,
+        tutorName: selectedBookingForEval.tutorName,
+        studentEmail: selectedBookingForEval.studentEmail || "student@biasristek.com",
+        studentName: selectedBookingForEval.studentName,
+        studentPhone: selectedBookingForEval.studentWhatsapp,
+        sessionNumber: evalSessionNumber,
+        currentChapter: evalCurrentChapter,
+        topicDiscussed: evalTopicDiscussed,
+        methodologyScore: Number(evalMethodologyScore),
+        writingScore: Number(evalWritingScore),
+        dataProcessingScore: Number(evalDataProcessingScore),
+        attendanceStatus: evalAttendanceStatus,
+        actionItems: evalActionItems,
+        tutorFeedback: evalTutorFeedback,
+        isFinalSession: evalIsFinalSession,
+      });
+
+      if (res.success) {
+        setEvalSuccessMessage(res.message || "Evaluasi sesi berhasil disimpan dan dikirimkan.");
+        await refreshData();
+        setTimeout(() => {
+          setEvaluationModalOpen(false);
+        }, 1800);
+      } else {
+        alert(res.message);
+      }
+    } catch {
+      alert("Terjadi kesalahan sistem saat menyimpan evaluasi.");
+    } finally {
+      setSubmittingEvaluation(false);
+    }
+  };
+
+  const handleQuickCompileReport = async (booking: MentorshipBookingItem) => {
+    const studentEmail = booking.studentEmail || "student@biasristek.com";
+    setCompilingReportId(booking.id);
+    try {
+      const now = new Date();
+      const res = await compileMonthlyProgressReport({
+        studentEmail,
+        studentName: booking.studentName,
+        studentPhone: booking.studentWhatsapp,
+        periodMonth: now.getMonth() + 1,
+        periodYear: now.getFullYear(),
+        courseTitle: booking.researchTopic,
+        tutorName: booking.tutorName,
+      });
+
+      if (res.success && res.data) {
+        setLastCompiledReport({
+          number: res.data.reportNumber,
+          url: `/rapor/${res.data.reportNumber}`,
+        });
+        alert(`e-Rapor Bulanan resmi (${res.data.reportNumber}) berhasil diterbitkan dan notifikasi terkirim!`);
+        window.open(`/rapor/${res.data.reportNumber}`, "_blank");
+      } else {
+        alert(res.message || "Gagal menerbitkan e-Rapor bulanan.");
+      }
+    } catch (err: any) {
+      alert(err.message || "Terjadi kesalahan sistem.");
+    } finally {
+      setCompilingReportId(null);
+    }
+  };
+
   // Filter Bookings
   const filteredBookings = data.activeBookings.filter((b) => {
     if (bookingFilter === "ALL") return true;
@@ -185,14 +299,14 @@ export default function DispatcherBoardClient({ initialData }: Props) {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-[#001847] font-display">
-              Papan Penjadwalan 200+ Tutor
+              Papan Penjadwalan Tutor
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#fdbc13]/20 text-[#7a5900] border border-[#fdbc13]/40">
               Human in the Loop
             </span>
           </div>
           <p className="text-sm text-slate-500 mt-1">
-            Matching cerdas topik mahasiswa dengan 200+ tutor pakar & konfirmasi satu klik WhatsApp.
+            Matching cerdas topik mahasiswa dengan tutor pakar & konfirmasi satu klik WhatsApp.
           </p>
         </div>
 
@@ -256,11 +370,11 @@ export default function DispatcherBoardClient({ initialData }: Props) {
         <div className="bg-white p-5 rounded-xl border border-[#e2e8f0] shadow-sm relative overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#001847]" />
           <span className="text-xs font-medium text-slate-500 block uppercase tracking-wider">
-            Direktori 200+ Tutor Pakar
+            Direktori Tutor Pakar
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-3xl font-bold text-[#001847] font-display">
-              {data.metrics.activeTutorsCount}+
+              {data.metrics.activeTutorsCount}
             </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
               Aktif Siap Sesi
@@ -274,11 +388,10 @@ export default function DispatcherBoardClient({ initialData }: Props) {
         <button
           type="button"
           onClick={() => setActiveTab("queue")}
-          className={`pb-3 text-sm font-semibold transition relative flex items-center gap-2 ${
-            activeTab === "queue"
-              ? "text-[#001847] border-b-2 border-[#001847]"
-              : "text-slate-500 hover:text-slate-800"
-          }`}
+          className={`pb-3 text-sm font-semibold transition relative flex items-center gap-2 ${activeTab === "queue"
+            ? "text-[#001847] border-b-2 border-[#001847]"
+            : "text-slate-500 hover:text-slate-800"
+            }`}
         >
           <GraduationCap className="w-4 h-4" />
           Antrean Mahasiswa ({data.studentsNeedingMatch.length})
@@ -287,11 +400,10 @@ export default function DispatcherBoardClient({ initialData }: Props) {
         <button
           type="button"
           onClick={() => setActiveTab("bookings")}
-          className={`pb-3 text-sm font-semibold transition relative flex items-center gap-2 ${
-            activeTab === "bookings"
-              ? "text-[#001847] border-b-2 border-[#001847]"
-              : "text-slate-500 hover:text-slate-800"
-          }`}
+          className={`pb-3 text-sm font-semibold transition relative flex items-center gap-2 ${activeTab === "bookings"
+            ? "text-[#001847] border-b-2 border-[#001847]"
+            : "text-slate-500 hover:text-slate-800"
+            }`}
         >
           <Calendar className="w-4 h-4" />
           Papan Bimbingan Berjalan ({data.activeBookings.length})
@@ -300,14 +412,13 @@ export default function DispatcherBoardClient({ initialData }: Props) {
         <button
           type="button"
           onClick={() => setActiveTab("tutors")}
-          className={`pb-3 text-sm font-semibold transition relative flex items-center gap-2 ${
-            activeTab === "tutors"
-              ? "text-[#001847] border-b-2 border-[#001847]"
-              : "text-slate-500 hover:text-slate-800"
-          }`}
+          className={`pb-3 text-sm font-semibold transition relative flex items-center gap-2 ${activeTab === "tutors"
+            ? "text-[#001847] border-b-2 border-[#001847]"
+            : "text-slate-500 hover:text-slate-800"
+            }`}
         >
           <Users className="w-4 h-4" />
-          Direktori 200+ Tutor Pakar ({data.tutors.length}+)
+          Direktori Tutor Pakar ({data.tutors.length})
         </button>
       </div>
 
@@ -382,24 +493,25 @@ export default function DispatcherBoardClient({ initialData }: Props) {
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-slate-600">Filter Status:</span>
-              {(["ALL", "PENDING_TUTOR_CONFIRMATION", "CONFIRMED", "DECLINED_BY_TUTOR"] as const).map((st) => (
+              {(["ALL", "PENDING_TUTOR_CONFIRMATION", "CONFIRMED", "COMPLETED", "DECLINED_BY_TUTOR"] as const).map((st) => (
                 <button
                   key={st}
                   type="button"
                   onClick={() => setBookingFilter(st)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                    bookingFilter === st
-                      ? "bg-[#001847] text-white"
-                      : "bg-white text-slate-600 border border-[#e2e8f0] hover:bg-slate-50"
-                  }`}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${bookingFilter === st
+                    ? "bg-[#001847] text-white"
+                    : "bg-white text-slate-600 border border-[#e2e8f0] hover:bg-slate-50"
+                    }`}
                 >
                   {st === "ALL"
                     ? "Semua"
                     : st === "PENDING_TUTOR_CONFIRMATION"
-                    ? "Menunggu Konfirmasi"
-                    : st === "CONFIRMED"
-                    ? "Terkonfirmasi"
-                    : "Ditolak Tutor"}
+                      ? "Menunggu Konfirmasi"
+                      : st === "CONFIRMED"
+                        ? "Terkonfirmasi"
+                        : st === "COMPLETED"
+                          ? "Selesai"
+                          : "Ditolak Tutor"}
                 </button>
               ))}
             </div>
@@ -421,6 +533,12 @@ export default function DispatcherBoardClient({ initialData }: Props) {
                           <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                             Terkonfirmasi
+                          </span>
+                        )}
+                        {b.status === "COMPLETED" && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-[#001847] border border-blue-200 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-[#001847]" />
+                            Selesai Sesi
                           </span>
                         )}
                         {b.status === "PENDING_TUTOR_CONFIRMATION" && (
@@ -463,6 +581,29 @@ export default function DispatcherBoardClient({ initialData }: Props) {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                      {(b.status === "CONFIRMED" || b.status === "COMPLETED") && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEvaluationModal(b)}
+                            className="px-3 py-1.5 rounded-lg bg-[#001847] hover:bg-[#0b2c6b] text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-[#fdbc13]" />
+                            Isi Evaluasi Sesi
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleQuickCompileReport(b)}
+                            disabled={compilingReportId === b.id}
+                            className="px-3 py-1.5 rounded-lg border border-[#fdbc13] bg-[#fdbc13]/15 hover:bg-[#fdbc13]/30 text-[#7a5900] text-xs font-semibold flex items-center gap-1.5 transition disabled:opacity-50"
+                          >
+                            <BookOpen className="w-3.5 h-3.5" />
+                            {compilingReportId === b.id ? "Menerbitkan..." : "Terbitkan e-Rapor"}
+                          </button>
+                        </>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => copyMagicLink(b.confirmationToken)}
@@ -505,7 +646,7 @@ export default function DispatcherBoardClient({ initialData }: Props) {
         </div>
       )}
 
-      {/* TAB 3: Direktori 200+ Tutor Pakar */}
+      {/* TAB 3: Direktori Tutor Pakar */}
       {activeTab === "tutors" && (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
@@ -526,11 +667,10 @@ export default function DispatcherBoardClient({ initialData }: Props) {
                   key={sp}
                   type="button"
                   onClick={() => setSelectedSpecialization(sp)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                    selectedSpecialization === sp
-                      ? "bg-[#001847] text-white"
-                      : "bg-white text-slate-600 border border-[#e2e8f0] hover:bg-slate-50"
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${selectedSpecialization === sp
+                    ? "bg-[#001847] text-white"
+                    : "bg-white text-slate-600 border border-[#e2e8f0] hover:bg-slate-50"
+                    }`}
                 >
                   {sp}
                 </button>
@@ -653,11 +793,10 @@ export default function DispatcherBoardClient({ initialData }: Props) {
                               setProposalSlot(cand.recommendedSlots[0]);
                             }
                           }}
-                          className={`p-4 rounded-xl border cursor-pointer transition ${
-                            isSelected
-                              ? "border-[#001847] bg-blue-50/40 shadow-sm"
-                              : "border-[#e2e8f0] bg-white hover:border-slate-300"
-                          }`}
+                          className={`p-4 rounded-xl border cursor-pointer transition ${isSelected
+                            ? "border-[#001847] bg-blue-50/40 shadow-sm"
+                            : "border-[#e2e8f0] bg-white hover:border-slate-300"
+                            }`}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="space-y-1">
@@ -761,6 +900,234 @@ export default function DispatcherBoardClient({ initialData }: Props) {
               >
                 <Send className="w-3.5 h-3.5 text-[#fdbc13]" />
                 {submittingProposal ? "Mengirim Usulan..." : "Kirim Usulan Bimbingan ke WhatsApp Tutor"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SESSION EVALUATION MODAL */}
+      {evaluationModalOpen && selectedBookingForEval && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+            {/* Modal Header */}
+            <div className="bg-[#001847] p-5 text-white flex items-center justify-between rounded-t-2xl">
+              <div>
+                <span className="text-xs font-semibold text-[#fdbc13] uppercase tracking-wider">
+                  Evaluasi Sesi Bimbingan Riset
+                </span>
+                <h2 className="text-lg font-bold font-display text-white mt-0.5">
+                  Lembar Nilai: {selectedBookingForEval.studentName}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEvaluationModalOpen(false)}
+                className="text-white/70 hover:text-white p-1 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Context Snapshot */}
+              <div className="bg-[#f8f9ff] rounded-xl p-4 border border-[#d5e3fc] space-y-2 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <span className="font-bold text-[#001847] text-sm">{selectedBookingForEval.studentName}</span>
+                    <span className="text-slate-500 ml-2">({selectedBookingForEval.studentEmail})</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-blue-100 text-[#001847] font-semibold">
+                    Mentor: {selectedBookingForEval.tutorName}
+                  </span>
+                </div>
+                <p className="text-slate-700">
+                  <strong className="text-[#001847]">Topik Riset:</strong> {selectedBookingForEval.researchTopic}
+                </p>
+              </div>
+
+              {evalSuccessMessage && (
+                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  {evalSuccessMessage}
+                </div>
+              )}
+
+              {/* Form Grid */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Pertemuan Ke-
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={16}
+                      value={evalSessionNumber}
+                      onChange={(e) => setEvalSessionNumber(Number(e.target.value))}
+                      className="w-full p-2.5 bg-white border border-[#e2e8f0] rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001847]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Status Kehadiran
+                    </label>
+                    <select
+                      value={evalAttendanceStatus}
+                      onChange={(e) => setEvalAttendanceStatus(e.target.value as any)}
+                      className="w-full p-2.5 bg-white border border-[#e2e8f0] rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001847]"
+                    >
+                      <option value="ATTENDED">Hadir Penuh (Attended)</option>
+                      <option value="RESCHEDULED">Jadwal Ulang (Rescheduled)</option>
+                      <option value="ABSENT">Tidak Hadir (Absent)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Bab yang Dibahas
+                    </label>
+                    <input
+                      type="text"
+                      value={evalCurrentChapter}
+                      onChange={(e) => setEvalCurrentChapter(e.target.value)}
+                      placeholder="Contoh: Bab 3: Metodologi & SEM"
+                      className="w-full p-2.5 bg-white border border-[#e2e8f0] rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001847]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Fokus Pembahasan Sesi Ini
+                  </label>
+                  <input
+                    type="text"
+                    value={evalTopicDiscussed}
+                    onChange={(e) => setEvalTopicDiscussed(e.target.value)}
+                    placeholder="Contoh: Uji validitas konstruk diskriminan (HTMT & Fornell-Larcker)"
+                    className="w-full p-2.5 bg-white border border-[#e2e8f0] rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001847]"
+                  />
+                </div>
+
+                {/* Academic Competency Scores (0 - 100) */}
+                <div className="bg-[#f8f9ff] p-4 rounded-xl border border-[#d5e3fc] space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#001847] flex items-center justify-between">
+                    <span>Penilaian 3 Kompetensi Riset (Skala 0 - 100)</span>
+                    <span className="text-[#7a5900] font-mono text-[11px]">
+                      Rata-rata: {Math.round(((Number(evalMethodologyScore) + Number(evalWritingScore) + Number(evalDataProcessingScore)) / 3) * 10) / 10}
+                    </span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="bg-white p-3 rounded-lg border border-[#e2e8f0]">
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-[11px] font-semibold text-slate-700">Metodologi Riset</label>
+                        <span className="text-xs font-bold text-[#001847]">{evalMethodologyScore}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={50}
+                        max={100}
+                        value={evalMethodologyScore}
+                        onChange={(e) => setEvalMethodologyScore(Number(e.target.value))}
+                        className="w-full accent-[#001847]"
+                      />
+                    </div>
+
+                    <div className="bg-white p-3 rounded-lg border border-[#e2e8f0]">
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-[11px] font-semibold text-slate-700">Sistematika Naskah</label>
+                        <span className="text-xs font-bold text-[#001847]">{evalWritingScore}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={50}
+                        max={100}
+                        value={evalWritingScore}
+                        onChange={(e) => setEvalWritingScore(Number(e.target.value))}
+                        className="w-full accent-[#001847]"
+                      />
+                    </div>
+
+                    <div className="bg-white p-3 rounded-lg border border-[#e2e8f0]">
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-[11px] font-semibold text-slate-700">Analisis Olah Data</label>
+                        <span className="text-xs font-bold text-[#001847]">{evalDataProcessingScore}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={50}
+                        max={100}
+                        value={evalDataProcessingScore}
+                        onChange={(e) => setEvalDataProcessingScore(Number(e.target.value))}
+                        className="w-full accent-[#001847]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Tindakan Perbaikan Wajib (Action Items Sebelum Sesi Berikutnya)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={evalActionItems}
+                    onChange={(e) => setEvalActionItems(e.target.value)}
+                    placeholder="Tuliskan daftar revisi konkret yang harus dikerjakan siswa..."
+                    className="w-full p-2.5 bg-white border border-[#e2e8f0] rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001847]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Catatan Kualitatif & Evaluasi Mentor
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={evalTutorFeedback}
+                    onChange={(e) => setEvalTutorFeedback(e.target.value)}
+                    placeholder="Ulasan komprehensif perkembangan pemikiran dan argumentasi ilmiah siswa..."
+                    className="w-full p-2.5 bg-white border border-[#e2e8f0] rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#001847]"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="finalSessionCheck"
+                    checked={evalIsFinalSession}
+                    onChange={(e) => setEvalIsFinalSession(e.target.checked)}
+                    className="rounded text-[#001847] focus:ring-[#001847] w-4 h-4"
+                  />
+                  <label htmlFor="finalSessionCheck" className="text-xs text-slate-700 select-none">
+                    Tandai sesi ini sebagai <strong>Pertemuan Terakhir</strong> (Selesaikan status bimbingan menjadi COMPLETED)
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-slate-50 p-4 px-6 border-t border-[#e2e8f0] rounded-b-2xl flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setEvaluationModalOpen(false)}
+                className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-200"
+              >
+                Tutup
+              </button>
+
+              <button
+                type="button"
+                disabled={submittingEvaluation}
+                onClick={handleSubmitEvaluation}
+                className="px-5 py-2.5 rounded-lg bg-[#001847] hover:bg-[#0b2c6b] text-white text-xs font-semibold shadow-md transition flex items-center gap-2 disabled:opacity-50"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#fdbc13]" />
+                {submittingEvaluation ? "Menyimpan Evaluasi..." : "Simpan & Kirim Evaluasi ke Siswa"}
               </button>
             </div>
           </div>

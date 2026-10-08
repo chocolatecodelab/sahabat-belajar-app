@@ -63,13 +63,29 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
     benefitsList = course.benefits ? course.benefits.split("\n").filter(Boolean) : [];
   }
 
+  const isFull = course.maxQuota > 0 && course.currentEnrolled >= course.maxQuota;
+  const isClosed = course.status === "CLOSED" || course.status === "FULL" || !course.isActive || isFull;
+
+  let statusBadgeText = "Pendaftaran Terbuka";
+  let statusBadgeClass = "bg-emerald-500 text-white";
+  if (!course.isActive || course.status === "CLOSED") {
+    statusBadgeText = "Pendaftaran Ditutup";
+    statusBadgeClass = "bg-rose-600 text-white";
+  } else if (course.status === "FULL" || isFull) {
+    statusBadgeText = "Kuota Kelas Penuh";
+    statusBadgeClass = "bg-amber-500 text-slate-950 font-bold";
+  } else if (course.status === "UPCOMING") {
+    statusBadgeText = "Segera Dibuka";
+    statusBadgeClass = "bg-blue-600 text-white";
+  }
+
   const quotaPercent = Math.min(
     100,
     Math.round((course.currentEnrolled / (course.maxQuota || 30)) * 100)
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 font-[var(--font-body)]">
+    <div className="min-h-screen bg-slate-50 font-[var(--font-body)] pb-20 lg:pb-0">
       {/* Breadcrumb Navigation */}
       <div className="bg-white border-b py-3 px-4 sm:px-6 lg:px-8" style={{ borderColor: "var(--color-outline-variant)" }}>
         <div className="max-w-7xl mx-auto flex items-center gap-2 text-2xs text-gray-500 font-medium">
@@ -100,8 +116,8 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
                   {course.batchNumber}
                 </span>
               )}
-              <span className="px-3 py-1 rounded-md text-3xs font-bold bg-emerald-500 text-white">
-                {course.status === "OPEN" ? "Pendaftaran Terbuka" : course.status}
+              <span className={`px-3 py-1 rounded-md text-3xs font-bold ${statusBadgeClass}`}>
+                {statusBadgeText}
               </span>
             </div>
 
@@ -291,25 +307,42 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
                 </div>
                 <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-500"
+                    className="h-full rounded-full bg-gradient-to-r from-[#001847] to-[#0b2c6b] transition-all duration-500"
                     style={{ width: `${quotaPercent}%` }}
                   />
                 </div>
-                <span className="text-3xs text-emerald-700 font-semibold block">
-                  Sisa {(course.maxQuota || 30) - course.currentEnrolled} slot tersisa untuk gelombang ini
+                <span className={`text-3xs font-semibold block ${isClosed ? "text-rose-600 font-bold" : "text-emerald-700"}`}>
+                  {isClosed
+                    ? isFull
+                      ? "Kuota pendaftaran untuk gelombang ini telah terpenuhi"
+                      : "Pendaftaran untuk gelombang ini sedang ditutup"
+                    : `Sisa ${Math.max(0, (course.maxQuota || 30) - course.currentEnrolled)} slot tersisa untuk gelombang ini`}
                 </span>
               </div>
 
-              {/* Main CTA Button */}
+              {/* Main CTA Button (QA-UX-01) */}
               <button
                 type="button"
-                onClick={() => setIsCheckoutOpen(true)}
-                className="w-full py-3.5 px-4 rounded-xl text-label-lg font-bold text-white shadow-md transition-all hover:bg-[#0b2c6b] flex items-center justify-center gap-2 group cursor-pointer"
-                style={{ background: "var(--color-primary)" }}
+                disabled={isClosed}
+                onClick={() => !isClosed && setIsCheckoutOpen(true)}
+                className={`w-full py-3.5 px-4 rounded-xl text-label-lg font-bold shadow-md transition-all flex items-center justify-center gap-2 group ${
+                  isClosed
+                    ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                    : "text-white hover:bg-[#0b2c6b] cursor-pointer"
+                }`}
+                style={isClosed ? undefined : { background: "var(--color-primary)" }}
               >
                 <GraduationCap size={18} />
-                <span>{course.isFree ? "Daftar Sekarang (Gratis)" : "Daftar & Amankan Slot"}</span>
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                <span>
+                  {isClosed
+                    ? isFull
+                      ? "Kuota Kelas Penuh"
+                      : "Pendaftaran Ditutup"
+                    : course.isFree
+                    ? "Daftar Sekarang (Gratis)"
+                    : "Daftar & Amankan Slot"}
+                </span>
+                {!isClosed && <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />}
               </button>
 
               {/* Highlights Checklist */}
@@ -334,6 +367,48 @@ export default function CourseDetailClient({ course }: CourseDetailClientProps) 
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Mobile Sticky Bottom CTA Bar (QA-RESP-01) */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 z-40 shadow-lg flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <span className="text-3xs text-slate-500 font-bold uppercase tracking-wider block truncate">
+            {isClosed ? "Status Kelas" : "Investasi Pelatihan"}
+          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-sm sm:text-base font-extrabold text-[#001847] leading-tight truncate">
+              {course.isFree ? "GRATIS" : `Rp ${basePrice.toLocaleString("id-ID")}`}
+            </span>
+            {hasDiscount && (
+              <span className="text-3xs text-slate-400 line-through">
+                Rp {course.price.toLocaleString("id-ID")}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          disabled={isClosed}
+          onClick={() => !isClosed && setIsCheckoutOpen(true)}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-sm ${
+            isClosed
+              ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+              : "bg-[#001847] text-white hover:bg-[#0b2c6b] active:scale-95"
+          }`}
+        >
+          <GraduationCap size={15} />
+          <span>
+            {isClosed
+              ? isFull
+                ? "Kuota Penuh"
+                : "Ditutup"
+              : course.isFree
+              ? "Daftar Gratis"
+              : "Daftar & Slot"}
+          </span>
+          {!isClosed && <ArrowRight size={14} />}
+        </button>
       </div>
 
       {/* Checkout Modal */}

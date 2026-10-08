@@ -102,9 +102,12 @@ export default function CertificateVerificationClient({ cert }: CertificateVerif
               <h1 className="text-2xl sm:text-4xl font-extrabold font-[var(--font-heading)] tracking-tight text-slate-900">
                 SERTIFIKAT KELULUSAN
               </h1>
-              <p className="text-3xs font-mono font-bold uppercase tracking-widest text-[#fdbc13]">
-                NOMOR SERI: {cert.certificateCode}
-              </p>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#001847]/5 border border-[#001847]/15 text-[#001847]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#fdbc13]" />
+                <span className="text-3xs font-mono font-bold uppercase tracking-widest">
+                  NOMOR SERI: {cert.certificateCode}
+                </span>
+              </div>
             </div>
 
             <p className="text-xs text-slate-600 italic">Sertifikat ini dengan bangga diberikan kepada:</p>

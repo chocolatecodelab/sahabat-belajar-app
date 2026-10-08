@@ -12,6 +12,23 @@ import { getDashboardAnalyticsData } from "../actions/analytics.ts";
 import { getMediaFiles } from "../actions/media.ts";
 import { getAdminMenus } from "../actions/menu.ts";
 import { callGeminiCounselor } from "../lib/ai.ts";
+import {
+  submitSessionEvaluation,
+  getSessionEvaluations,
+  compileMonthlyProgressReport,
+  getStudentMonthlyReports,
+  getMonthlyReportByNumber,
+} from "../actions/rapor.ts";
+import {
+  createSupportTicket,
+  getSupportTickets,
+  getSupportMetrics,
+  updateTicketStatus,
+  reactivateAiBot,
+  isContactHandoffActive,
+  processOmnichannelMessage,
+} from "../actions/support.ts";
+import { evaluateHandoffIntent } from "../lib/handoff.ts";
 
 import { supabaseAdmin } from "../lib/supabase.ts";
 
@@ -232,6 +249,108 @@ async function runQASuite() {
       sortOrder: 1,
     });
     assert(newLessonRes.success === true && !!newLessonRes.data?.id, "TC-38: Mentor create/update lesson with dynamic multi-attachments");
+
+    // ---------------------------------------------------------
+    // TEST SUITE 9: Rapor Bulanan & Evaluasi Sesi Mentor (Fase #6)
+    // ---------------------------------------------------------
+    console.log("\n🧪 [TEST GROUP 9] Rapor Bulanan & Evaluasi Sesi Mentor (Fase #6)");
+    const testEvalStudentEmail = "ahmad.riset.qa@example.com";
+    const testEvalBookingId = `booking_qa_${Date.now()}`;
+
+    const evalRes = await submitSessionEvaluation({
+      bookingId: testEvalBookingId,
+      tutorId: "tutor_hendra_scopus",
+      tutorName: "Dr. Ir. Hendra Gunawan, M.Sc.",
+      studentEmail: testEvalStudentEmail,
+      studentName: "Ahmad Mahasiswa Riset QA, S.Kom.",
+      sessionNumber: 1,
+      currentChapter: "Bab 3: Metodologi & SEM Moderasi",
+      topicDiscussed: "Pengujian Outer Model & Discriminant Validity HTMT SmartPLS 4",
+      methodologyScore: 92,
+      writingScore: 88,
+      dataProcessingScore: 94,
+      attendanceStatus: "ATTENDED",
+      actionItems: "Perbaiki matriks operasionalisasi variabel pada tabel 3.2.",
+      tutorFeedback: "Pemahaman metodologis sangat tajam. Naskah siap dilanjutkan ke Bab 4.",
+      isFinalSession: false,
+    });
+    assert(evalRes.success === true && !!evalRes.data?.id, "TC-39: Submit session evaluation with 3 core academic competencies", `Eval ID: ${evalRes.data?.id}`);
+
+    const retrievedEvals = await getSessionEvaluations({ studentEmail: testEvalStudentEmail });
+    assert(Array.isArray(retrievedEvals) && retrievedEvals.length > 0, "TC-40: Mentor & Student query session evaluation history", `Found ${retrievedEvals.length} evaluations`);
+
+    const now = new Date();
+    const compileRes = await compileMonthlyProgressReport({
+      studentEmail: testEvalStudentEmail,
+      studentName: "Ahmad Mahasiswa Riset QA, S.Kom.",
+      periodMonth: now.getMonth() + 1,
+      periodYear: now.getFullYear(),
+      courseTitle: "Mentorship Scopus & SINTA 1-2",
+      tutorName: "Dr. Ir. Hendra Gunawan, M.Sc.",
+    });
+    assert(compileRes.success === true && !!compileRes.data?.reportNumber, "TC-41: Engine compile official Monthly Academic Progress Report", `Report No: ${compileRes.data?.reportNumber}`);
+
+    if (compileRes.data?.reportNumber) {
+      const repNum = compileRes.data.reportNumber;
+      assert(repNum.startsWith("RAPOR-"), "TC-42: Standardized Report Number format compliance (RAPOR-YYYYMM-XXXX)", `Got ${repNum}`);
+
+      const studentReports = await getStudentMonthlyReports(testEvalStudentEmail);
+      assert(Array.isArray(studentReports) && studentReports.some((r) => r.reportNumber === repNum), "TC-43: Student portal retrieve monthly reports catalog");
+
+      const publicReport = await getMonthlyReportByNumber(repNum);
+      assert(publicReport !== null && publicReport.averageScore >= 80, "TC-44: Public validation and printable A4 report retrieval by register number", `Score: ${publicReport?.averageScore}`);
+    }
+
+    // ---------------------------------------------------------
+    // TEST SUITE 10: Bot AI CS & WhatsApp Human Handoff (Fase #7)
+    // ---------------------------------------------------------
+    console.log("\n🧪 [TEST GROUP 10] Bot AI CS & WhatsApp Human Handoff (Fase #7)");
+    
+    // TC-45: Evaluate Human Handoff trigger
+    const evalHandoff = await evaluateHandoffIntent("Tolong hubungkan saya dengan staf admin manusia, mau tanya proposal tesis.");
+    assert(evalHandoff.shouldHandoff === true && evalHandoff.triggerReason === "KEYWORD_TRIGGER", "TC-45: Detect explicit human handoff keyword triggers", `Reason: ${evalHandoff.triggerReason}`);
+
+    // TC-46: Evaluate standard FAQ (should NOT handoff)
+    const evalFaq = await evaluateHandoffIntent("Berapa biaya kursus SmartPLS dan apakah dapat rekaman Zoom?");
+    assert(evalFaq.shouldHandoff === false, "TC-46: Accurately allow standard FAQ queries to stay on AI auto-reply", `Should handoff: ${evalFaq.shouldHandoff}`);
+
+    // TC-47: Create Support Ticket and test format
+    const testHandoffPhone = "6289988776655";
+    const ticketRes = await createSupportTicket({
+      customerName: "Prof. Dr. Ir. Budi Santoso",
+      customerPhone: testHandoffPhone,
+      customerEmail: "budi.santoso@univ.ac.id",
+      source: "WHATSAPP",
+      category: "KONSULTASI_RISET",
+      triggerReason: "COMPLEX_RESEARCH_TOPIC",
+      summary: "Permintaan MOU pendampingan publikasi Scopus untuk 15 dosen fakultas.",
+      lastUserMessage: "Kami dari dekanat ingin paket khusus pendampingan 15 naskah dosen tembus Scopus Q1.",
+    });
+    assert(ticketRes.success === true && !!ticketRes.data?.ticketNumber, "TC-47: Create Support Ticket & generate unique ticket number", `No: ${ticketRes.data?.ticketNumber}`);
+
+    if (ticketRes.data?.ticketNumber) {
+      const tNum = ticketRes.data.ticketNumber;
+      assert(tNum.startsWith("TIKET-"), "TC-48: Standardized Ticket Number compliance (TIKET-YYYYMM-XXXX)", `Got ${tNum}`);
+
+      // TC-49: Verify Handoff Silence Protection (Bot stays silent so admin can reply directly)
+      const isSilenced = await isContactHandoffActive(testHandoffPhone);
+      assert(isSilenced === true, "TC-49: Silence bot auto-reply when contact has active human handoff");
+
+      const silentMsgRes = await processOmnichannelMessage({
+        source: "WHATSAPP",
+        senderName: "Prof. Budi",
+        senderPhone: testHandoffPhone,
+        message: "Selamat siang admin, apakah pesan saya sudah dibaca?",
+      });
+      assert(silentMsgRes.handledBy === "HUMAN_WAITING" && silentMsgRes.reply === null, "TC-50: Omnichannel message processor stays silent during human handoff");
+
+      // TC-51: Admin resolve ticket and reactivate AI Bot
+      const reactivateRes = await reactivateAiBot(ticketRes.data.id);
+      assert(reactivateRes.success === true && reactivateRes.data?.handoffActive === false, "TC-51: Admin CS mark ticket resolved and reactivate AI Bot auto-reply");
+      
+      const isSilencedAfter = await isContactHandoffActive(testHandoffPhone);
+      assert(isSilencedAfter === false, "TC-52: Verify bot silence lifted after admin marks ticket resolved");
+    }
 
   } catch (err) {
     console.error("FATAL QA SUITE ERROR:", err);

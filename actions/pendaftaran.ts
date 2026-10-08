@@ -104,8 +104,9 @@ export async function createEnrollment(data: {
       return { success: false, message: "Program kursus tidak ditemukan" };
     }
 
-    if (course.status === "CLOSED" || course.status === "FULL") {
-      return { success: false, message: "Pendaftaran untuk program kelas ini sudah ditutup atau penuh" };
+    const isFull = (course.maxQuota || 0) > 0 && (course.currentEnrolled || 0) >= course.maxQuota;
+    if (course.status === "CLOSED" || course.status === "FULL" || isFull) {
+      return { success: false, message: "Pendaftaran untuk program kelas ini sudah ditutup atau kuota telah penuh" };
     }
 
     const basePrice = course.isFree ? 0 : (course.salePrice !== null && course.salePrice !== undefined ? course.salePrice : course.price);
@@ -476,6 +477,41 @@ export async function updateRegistrationStatus(
         );
       } catch (enrollErr) {
         console.error("Auto-provision Student User / Enrollment error:", enrollErr);
+      }
+    }
+
+    // Reversal / Revocation (QA-FUNC-06): When status changes from VERIFIED to CANCELLED or REJECTED
+    if (current.status === "VERIFIED" && (newStatus === "CANCELLED" || newStatus === "REJECTED")) {
+      // 1. Decrement enrolled count on Course (minimum 0)
+      const { data: course } = await supabaseAdmin
+        .from("Course")
+        .select("currentEnrolled")
+        .eq("id", current.courseId)
+        .single();
+
+      if (course) {
+        const decremented = Math.max(0, (course.currentEnrolled || 0) - 1);
+        await supabaseAdmin
+          .from("Course")
+          .update({ currentEnrolled: decremented })
+          .eq("id", current.courseId);
+      }
+
+      // 2. Revoke / Suspend LMS CourseEnrollment
+      try {
+        const studentEmail = (current.email || "").trim().toLowerCase();
+        if (studentEmail) {
+          await supabaseAdmin
+            .from("CourseEnrollment")
+            .update({
+              status: "CANCELLED",
+              updatedAt: new Date().toISOString(),
+            })
+            .eq("courseId", current.courseId)
+            .eq("userEmail", studentEmail);
+        }
+      } catch (revokeErr) {
+        console.error("Revoke LMS CourseEnrollment error:", revokeErr);
       }
     }
 

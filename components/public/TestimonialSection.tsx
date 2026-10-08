@@ -62,7 +62,7 @@ export default function TestimonialSection({ testimonials }: { testimonials: Tes
               </div>
 
               <div className="pt-4 border-t border-slate-700 flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-700 text-white flex items-center justify-center font-bold text-sm shadow-md">
+                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#0b2c6b] to-[#001847] text-white flex items-center justify-center font-bold text-sm shadow-md border border-blue-400/20">
                   {item.name.charAt(0)}
                 </div>
                 <div>

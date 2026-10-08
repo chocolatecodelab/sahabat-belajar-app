@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase";
+import { auth } from "@/lib/auth";
 import type { ActionResponse } from "@/types";
 import { notifyCertificateIssued } from "@/lib/notifications";
 
@@ -43,7 +44,27 @@ export async function claimCertificate(enrollmentId: string): Promise<ActionResp
       return { success: false, message: "ID pendaftaran tidak valid" };
     }
 
-    // Check if certificate already exists
+    // 1. Strict Session Verification (QA-FUNC-05)
+    let session: any = null;
+    try {
+      session = await auth();
+    } catch {
+      // Handles unauthenticated or outside request scope execution
+      session = null;
+    }
+
+    if (!session?.user?.email) {
+      return {
+        success: false,
+        message: "Silakan masuk ke akun Anda terlebih dahulu untuk mengklaim E-Sertifikat.",
+      };
+    }
+
+    const sessionEmail = session.user.email.trim().toLowerCase();
+    const sessionRole = (session.user as any)?.role || "Student";
+    const isAdmin = ["Super Admin", "Admin"].includes(sessionRole);
+
+    // 2. Check if certificate already exists
     const { data: existing } = await supabaseAdmin
       .from("Certificate")
       .select("certificateCode")
@@ -58,15 +79,41 @@ export async function claimCertificate(enrollmentId: string): Promise<ActionResp
       };
     }
 
-    // Fetch enrollment info
-    const { data: enrollment } = await supabaseAdmin
+    // 3. Fetch enrollment info & progress
+    const { data: enrollment, error: enrollErr } = await supabaseAdmin
       .from("CourseEnrollment")
       .select(`
+        id,
         userName,
+        userEmail,
+        progressPercentage,
+        status,
         course:Course(title)
       `)
       .eq("id", enrollmentId)
       .maybeSingle();
+
+    if (enrollErr || !enrollment) {
+      return { success: false, message: "Data pendaftaran kelas tidak ditemukan" };
+    }
+
+    // 4. Verify Ownership: Student must own this enrollment (unless Admin)
+    const enrollmentEmail = (enrollment.userEmail || "").trim().toLowerCase();
+    if (!isAdmin && enrollmentEmail !== sessionEmail) {
+      return {
+        success: false,
+        message: "Akses ditolak: Anda tidak memiliki otorisasi untuk mengklaim sertifikat pendaftaran ini.",
+      };
+    }
+
+    // 5. Strict 100% Completion Gatekeeping
+    const currentProgress = Number(enrollment.progressPercentage || 0);
+    if (currentProgress < 100) {
+      return {
+        success: false,
+        message: `E-Sertifikat 32 JP hanya dapat diklaim setelah menyelesaikan 100% materi pembelajaran (Progres Anda saat ini: ${currentProgress}%).`,
+      };
+    }
 
     const recipientName = enrollment?.userName || "Peserta Riset BIAS RISTEK";
     const rawCourse: any = (enrollment as any)?.course;

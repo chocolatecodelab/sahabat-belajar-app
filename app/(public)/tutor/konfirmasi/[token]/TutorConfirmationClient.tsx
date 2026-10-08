@@ -223,7 +223,7 @@ export default function TutorConfirmationClient({ booking, initialAction }: Prop
 
           {/* Confirmed Zoom Links */}
           {status === "CONFIRMED" && currentBooking.zoomJoinUrl && (
-            <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 space-y-3">
+            <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-amber-50/40 border border-blue-200 space-y-3">
               <div className="flex items-center gap-2 text-blue-900 font-semibold text-sm">
                 <Video className="w-4 h-4 text-blue-600" />
                 Ruang Virtual Zoom Bimbingan Telah Dibuat

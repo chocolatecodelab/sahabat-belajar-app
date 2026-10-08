@@ -14,6 +14,7 @@ import {
   ExternalLink,
   ShieldCheck,
   FileCheck,
+  FileText,
   User,
   Inbox,
 } from "lucide-react";
@@ -96,13 +97,23 @@ export default function MyCoursesClient({ initialCourses, user }: MyCoursesClien
           </div>
         </div>
 
-        <Link
-          href="/kursus"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 shadow-2xs self-start md:self-center transition-all hover:border-slate-300 shrink-0"
-        >
-          <BookOpen size={15} className="text-blue-900" />
-          <span>Eksplor Program Lainnya</span>
-        </Link>
+        <div className="flex items-center gap-2.5 flex-wrap self-start md:self-center shrink-0">
+          <Link
+            href="/belajar/rapor"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-2xs transition hover:border-slate-300"
+          >
+            <FileText size={15} className="text-[#001847]" />
+            <span>e-Rapor Kemajuan</span>
+          </Link>
+
+          <Link
+            href="/kursus"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-2xs transition hover:border-slate-300"
+          >
+            <BookOpen size={15} className="text-[#001847]" />
+            <span>Eksplor Program</span>
+          </Link>
+        </div>
       </div>
 
       {/* Active User Information Banner */}

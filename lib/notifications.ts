@@ -1069,3 +1069,193 @@ export async function notifyTutorMentorshipConfirmed(payload: {
     console.error("notifyTutorMentorshipConfirmed error:", err);
   }
 }
+
+/**
+ * 8. Event: SESSION_EVALUATION_SUBMITTED (Evaluasi Sesi Bimbingan Selesai)
+ */
+export async function notifySessionEvaluationSubmitted(payload: {
+  studentName: string;
+  studentPhone?: string;
+  studentEmail?: string;
+  tutorName: string;
+  sessionNumber: number;
+  currentChapter: string;
+  methodologyScore: number;
+  writingScore: number;
+  dataProcessingScore: number;
+  actionItems: string;
+  tutorFeedback: string;
+  classroomUrl?: string;
+}) {
+  try {
+    const avg = Math.round((payload.methodologyScore + payload.writingScore + payload.dataProcessingScore) / 3);
+    const classroomUrl = payload.classroomUrl || "http://localhost:3000/belajar";
+
+    const waText = `Halo *${payload.studentName}*,\n\nMentor *${payload.tutorName}* telah menerbitkan lembar evaluasi untuk *Sesi Bimbingan Ke-${payload.sessionNumber}* Anda di BIAS RISTEK 🔬\n\n📌 *Progres Naskah:* ${payload.currentChapter}\n📊 *Rerata Skor Sesi:* ${avg}/100\n- Metodologi: ${payload.methodologyScore}/100\n- Penulisan Ilmiah: ${payload.writingScore}/100\n- Olah Data: ${payload.dataProcessingScore}/100\n\n📝 *Tindakan Perbaikan (Action Items):*\n${payload.actionItems}\n\n💬 *Catatan Mentor:*\n"${payload.tutorFeedback}"\n\nLihat log progres lengkap Anda di Ruang Belajar:\n🔗 ${classroomUrl}\n\nSemangat melanjutkan riset Anda!\n*Tim Akademik BIAS RISTEK*`;
+
+    if (payload.studentPhone) {
+      await sendWhatsApp(payload.studentPhone, waText, "SESSION_EVALUATION", payload.studentName);
+    }
+
+    if (payload.studentEmail) {
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="background-color: #001847; padding: 24px; text-align: center; color: #ffffff;">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">BIAS RISTEK</h2>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #fdbc13;">Evaluasi Sesi Bimbingan Ke-${payload.sessionNumber}</p>
+          </div>
+          <div style="padding: 24px;">
+            <p>Halo <strong>${payload.studentName}</strong>,</p>
+            <p>Mentor <strong>${payload.tutorName}</strong> baru saja menerbitkan lembar evaluasi untuk sesi bimbingan riset privat Anda:</p>
+            
+            <div style="background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;">
+              <p style="margin: 0 0 6px;"><strong>Status Naskah:</strong> ${payload.currentChapter}</p>
+              <p style="margin: 0 0 6px;"><strong>Rerata Skor Sesi:</strong> <span style="font-size: 16px; font-weight: 700; color: #001847;">${avg}/100</span></p>
+              <ul style="margin: 4px 0 10px; padding-left: 20px; font-size: 13px; color: #475569;">
+                <li>Skor Metodologi Penelitian: ${payload.methodologyScore}/100</li>
+                <li>Skor Sistematika Penulisan: ${payload.writingScore}/100</li>
+                <li>Skor Pengolahan Data: ${payload.dataProcessingScore}/100</li>
+              </ul>
+              <p style="margin: 0 0 6px;"><strong>Tindakan Perbaikan (Action Items):</strong></p>
+              <div style="background-color: #ffffff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px;">${payload.actionItems}</div>
+              <p style="margin: 12px 0 6px;"><strong>Catatan Mentor:</strong></p>
+              <blockquote style="margin: 0; padding: 10px; background-color: #ffffff; border-left: 3px solid #fdbc13; font-style: italic; font-size: 13px;">"${payload.tutorFeedback}"</blockquote>
+            </div>
+
+            <p style="text-align: center; margin: 24px 0;">
+              <a href="${classroomUrl}" style="background-color: #001847; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Buka Ruang Belajar</a>
+            </p>
+          </div>
+        </div>
+      `;
+      await sendEmail(payload.studentEmail, `[BIAS RISTEK] Lembar Evaluasi Sesi Ke-${payload.sessionNumber} oleh ${payload.tutorName}`, emailHtml, "SESSION_EVALUATION", payload.studentName);
+    }
+  } catch (err) {
+    console.error("notifySessionEvaluationSubmitted error:", err);
+  }
+}
+
+/**
+ * 9. Event: MONTHLY_REPORT_GENERATED (e-Rapor Bulanan Kemajuan Riset)
+ */
+export async function notifyMonthlyReportGenerated(payload: {
+  studentName: string;
+  studentPhone?: string;
+  studentEmail?: string;
+  reportNumber: string;
+  courseTitle: string;
+  tutorName: string;
+  periodMonth: number;
+  periodYear: number;
+  averageScore: number;
+  progressStatus: string;
+  reportUrl: string;
+}) {
+  try {
+    const monthNames = [
+      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+    const monthName = monthNames[payload.periodMonth - 1] || "Bulan";
+
+    const waText = `Halo *${payload.studentName}*,\n\nKabar gembira! Dokumen *e-Rapor Kemajuan Riset Bulanan* Anda untuk periode *${monthName} ${payload.periodYear}* telah resmi diterbitkan oleh Tim Akademik BIAS RISTEK 🎓\n\n📋 *No. Register Rapor:* ${payload.reportNumber}\n📌 *Program:* ${payload.courseTitle}\n👨‍🏫 *Tutor Pendamping:* ${payload.tutorName}\n⭐ *Rata-rata Capaian:* ${payload.averageScore}/100 (${payload.progressStatus})\n\nDokumen e-Rapor resmi berstempel dan bertanda tangan digital dapat dilihat dan diunduh melalui tautan berikut:\n🔗 ${payload.reportUrl}\n\nSalam hangat,\n*Direktorat Akademik BIAS RISTEK*`;
+
+    if (payload.studentPhone) {
+      await sendWhatsApp(payload.studentPhone, waText, "MONTHLY_REPORT", payload.studentName);
+    }
+
+    if (payload.studentEmail) {
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="background-color: #001847; padding: 24px; text-align: center; color: #ffffff;">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">BIAS RISTEK</h2>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #fdbc13;">e-Rapor Kemajuan Riset Bulanan</p>
+          </div>
+          <div style="padding: 24px;">
+            <p>Halo <strong>${payload.studentName}</strong>,</p>
+            <p>Dokumen resmi e-Rapor Kemajuan Riset Anda periode <strong>${monthName} ${payload.periodYear}</strong> telah terbit:</p>
+            
+            <div style="background-color: #f8f9ff; border: 1px solid #d5e3fc; padding: 18px; border-radius: 8px; margin: 16px 0;">
+              <p style="margin: 0 0 8px;"><strong>Nomor Rapor:</strong> <span style="font-family: monospace; font-weight: 700; color: #001847;">${payload.reportNumber}</span></p>
+              <p style="margin: 0 0 8px;"><strong>Program Kursus:</strong> ${payload.courseTitle}</p>
+              <p style="margin: 0 0 8px;"><strong>Tutor Pembimbing:</strong> ${payload.tutorName}</p>
+              <p style="margin: 0 0 8px;"><strong>Skor Evaluasi:</strong> <span style="font-size: 16px; font-weight: 700; color: #7a5900;">${payload.averageScore} / 100</span></p>
+              <p style="margin: 0;"><strong>Status Capaian:</strong> <span style="background-color: #fef9c3; color: #7a5900; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">${payload.progressStatus}</span></p>
+            </div>
+
+            <p style="text-align: center; margin: 24px 0;">
+              <a href="${payload.reportUrl}" style="background-color: #001847; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 700; display: inline-block;">Lihat & Unduh e-Rapor Resmi</a>
+            </p>
+            <p style="font-size: 12px; color: #64748b; text-align: center;">Tautan dokumen resmi: <a href="${payload.reportUrl}">${payload.reportUrl}</a></p>
+          </div>
+        </div>
+      `;
+      await sendEmail(payload.studentEmail, `[BIAS RISTEK] e-Rapor Kemajuan Riset Bulan ${monthName} ${payload.periodYear} Telah Terbit - ${payload.reportNumber}`, emailHtml, "MONTHLY_REPORT", payload.studentName);
+    }
+  } catch (err) {
+    console.error("notifyMonthlyReportGenerated error:", err);
+  }
+}
+
+/**
+ * 10. Human Handoff Escalation Notification (WhatsApp & Email)
+ * Notifies Admin CS immediately and confirms escalation to customer
+ */
+export async function notifyHumanHandoffEscalated(payload: {
+  ticketNumber: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  source: string;
+  category: string;
+  triggerReason: string;
+  summary: string;
+  lastUserMessage: string;
+}) {
+  try {
+    const settings = await readNotificationSettings();
+    const adminPhone = settings.whatsappAdminNumber || "6287777659482";
+
+    // 1. Alert Admin CS
+    const waAdminAlert = `🚨 *ESKALASI HUMAN HANDOFF CS!* 🚨\n\n📌 *Tiket:* ${payload.ticketNumber}\n👤 *Pengguna:* ${payload.customerName}\n📱 *Nomor WA:* +${payload.customerPhone}\n📁 *Kategori:* ${payload.category}\n⚡ *Pemicu:* ${payload.triggerReason}\n\n📝 *Ringkasan Kendala:*\n"${payload.summary}"\n\n💬 *Pesan Terakhir:*\n"${payload.lastUserMessage}"\n\n👉 Buka Dashboard CS: http://localhost:3000/dashboard/support\n👉 Chat Pelanggan: https://wa.me/${payload.customerPhone}`;
+    await sendWhatsApp(adminPhone, waAdminAlert, "HUMAN_HANDOFF_ADMIN", "Admin CS BIAS RISTEK");
+
+    // 2. Confirmation to Customer
+    const waCustomerMsg = `Halo *${payload.customerName}*,\n\nPertanyaan Anda telah kami teruskan ke *Konsultan Akademik Senior BIAS RISTEK* 🧑‍🏫\n\n📋 *No. Tiket Bantuan:* ${payload.ticketNumber}\n⏳ *Status:* Menunggu Konsultan Manusia\n🤖 *Catatan:* Bot auto-reply sementara dinonaktifkan agar percakapan ditangani langsung oleh staf kami.\n\nStaf kami akan segera membalas di chat ini dalam beberapa saat, atau Anda dapat langsung menghubungi layanan prioritas:\n👉 https://wa.me/${adminPhone}?text=${encodeURIComponent(`Halo Admin, saya dengan Tiket ${payload.ticketNumber} (${payload.customerName}) ingin melanjutkan konsultasi.`)}\n\nTerima kasih atas kesabaran Anda,\n*Tim Konsultan BIAS RISTEK*`;
+    await sendWhatsApp(payload.customerPhone, waCustomerMsg, "HUMAN_HANDOFF_STUDENT", payload.customerName);
+
+    // 3. Email Confirmation to Customer if email provided
+    if (payload.customerEmail) {
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="background-color: #001847; padding: 24px; text-align: center; color: #ffffff;">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">BIAS RISTEK</h2>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #fdbc13;">Pemberitahuan Eskalasi Konsultan Akademik</p>
+          </div>
+          <div style="padding: 24px;">
+            <p>Halo <strong>${payload.customerName}</strong>,</p>
+            <p>Permintaan konsultasi Anda telah diteruskan ke Konsultan Akademik Senior kami:</p>
+            
+            <div style="background-color: #f8f9ff; border: 1px solid #d5e3fc; padding: 18px; border-radius: 8px; margin: 16px 0;">
+              <p style="margin: 0 0 8px;"><strong>Nomor Tiket:</strong> <span style="font-family: monospace; font-weight: 700; color: #001847;">${payload.ticketNumber}</span></p>
+              <p style="margin: 0 0 8px;"><strong>Kategori:</strong> ${payload.category}</p>
+              <p style="margin: 0 0 8px;"><strong>Pemicu Alih Kendali:</strong> ${payload.triggerReason}</p>
+              <p style="margin: 0 0 8px;"><strong>Status:</strong> <span style="background-color: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">Menunggu Admin Manusia</span></p>
+              <p style="margin: 0;"><strong>Ringkasan:</strong> ${payload.summary}</p>
+            </div>
+
+            <p>Bot AI otomatis dijeda pada kontak Anda untuk memastikan jawaban yang Anda terima berasal langsung dari staf ahli kami.</p>
+            
+            <p style="text-align: center; margin: 24px 0;">
+              <a href="https://wa.me/${adminPhone}?text=${encodeURIComponent(`Halo Admin, saya dengan Tiket ${payload.ticketNumber} (${payload.customerName}) ingin melanjutkan konsultasi.`)}" style="background-color: #001847; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 700; display: inline-block;">Hubungi WhatsApp Konsultan Senior</a>
+            </p>
+          </div>
+        </div>
+      `;
+      await sendEmail(payload.customerEmail, `[BIAS RISTEK] Tiket Konsultasi #${payload.ticketNumber} Telah Diteruskan ke Konsultan Senior`, emailHtml, "HUMAN_HANDOFF_STUDENT", payload.customerName);
+    }
+  } catch (err) {
+    console.error("notifyHumanHandoffEscalated error:", err);
+  }
+}
+

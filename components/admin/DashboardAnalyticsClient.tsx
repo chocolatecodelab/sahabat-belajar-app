@@ -660,7 +660,7 @@ export default function DashboardAnalyticsClient({ initialData }: DashboardAnaly
                       {/* Visual View Bar */}
                       <div className="w-full h-1.5 rounded-full bg-gray-100 mt-2 overflow-hidden max-w-md">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-blue-900 to-indigo-600 transition-all duration-500"
+                          className="h-full rounded-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-container)] transition-all duration-500"
                           style={{ width: `${barWidth}%` }}
                         />
                       </div>

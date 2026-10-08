@@ -17,6 +17,13 @@ export default async function AdminLayout({
     redirect("/login");
   }
 
+  // Role Gatekeeping (QA-FUNC-02): Prevent Students from accessing Admin Dashboard
+  const userRole = (session.user as any)?.role || "Student";
+  const staffRoles = ["Super Admin", "Admin", "Editor", "Tutor", "Mentor", "Reviewer"];
+  if (!staffRoles.includes(userRole)) {
+    redirect("/belajar");
+  }
+
   const menus = await getAdminMenus();
 
   return (
