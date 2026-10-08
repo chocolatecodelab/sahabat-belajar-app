@@ -6,6 +6,14 @@ import { requireAuth } from "@/lib/auth";
 import type { ActionResponse } from "@/types";
 import slugify from "slugify";
 
+function safeRevalidatePath(path: string) {
+  try {
+    revalidatePath(path);
+  } catch {
+    // Non-HTTP context fallback
+  }
+}
+
 export type CourseItem = {
   id: string;
   title: string;
@@ -193,9 +201,9 @@ export async function createCourse(formData: FormData): Promise<ActionResponse<C
 
     if (error) throw error;
 
-    revalidatePath("/kursus");
-    revalidatePath(`/kursus/${slug}`);
-    revalidatePath("/dashboard/kursus");
+    safeRevalidatePath("/kursus");
+    safeRevalidatePath(`/kursus/${slug}`);
+    safeRevalidatePath("/dashboard/kursus");
 
     return { success: true, message: "Program kursus berhasil dibuat", data: data as CourseItem };
   } catch (err: any) {
@@ -270,22 +278,14 @@ export async function updateCourse(id: string, formData: FormData): Promise<Acti
 
     if (error) throw error;
 
-    revalidatePath("/kursus");
-    revalidatePath(`/kursus/${slug}`);
-    revalidatePath("/dashboard/kursus");
+    safeRevalidatePath("/kursus");
+    safeRevalidatePath(`/kursus/${slug}`);
+    safeRevalidatePath("/dashboard/kursus");
 
     return { success: true, message: "Program kursus berhasil diperbarui", data: data as CourseItem };
   } catch (err: any) {
     console.error("updateCourse error:", err);
     return { success: false, message: err?.message || "Gagal memperbarui program kursus" };
-  }
-}
-
-function safeRevalidatePath(path: string) {
-  try {
-    revalidatePath(path);
-  } catch {
-    // Non-HTTP context fallback
   }
 }
 

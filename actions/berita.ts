@@ -7,6 +7,14 @@ import { z } from "zod";
 import slugify from "slugify";
 import type { ActionResponse } from "@/types";
 
+function safeRevalidatePath(path: string) {
+  try {
+    revalidatePath(path);
+  } catch {
+    // Non-HTTP context fallback
+  }
+}
+
 const articleSchema = z.object({
   title: z.string().min(1, "Judul wajib diisi").max(255),
   slug: z.string().optional(),
@@ -186,7 +194,7 @@ export async function createArticle(
     return { success: false, message: error.message };
   }
 
-  revalidatePath("/dashboard/berita");
+  safeRevalidatePath("/dashboard/berita");
   return { success: true, message: "Berita berhasil dibuat" };
 }
 
@@ -250,7 +258,7 @@ export async function updateArticle(
     return { success: false, message: error.message };
   }
 
-  revalidatePath("/dashboard/berita");
+  safeRevalidatePath("/dashboard/berita");
   return { success: true, message: "Berita berhasil diperbarui" };
 }
 
@@ -262,6 +270,6 @@ export async function deleteArticle(id: string): Promise<ActionResponse> {
     return { success: false, message: error.message };
   }
 
-  revalidatePath("/dashboard/berita");
+  safeRevalidatePath("/dashboard/berita");
   return { success: true, message: "Berita berhasil dihapus" };
 }
