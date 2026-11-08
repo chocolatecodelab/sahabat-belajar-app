@@ -1,4 +1,4 @@
-import { getExamById } from "@/actions/ujian";
+import { getExamById, getExamSessionResult } from "@/actions/ujian";
 import ExamResultClient from "@/components/portal/ExamResultClient";
 import { notFound } from "next/navigation";
 
@@ -16,11 +16,20 @@ export default async function ExamResultPage({
   const { id } = await params;
   const { sessionId = "sess_demo" } = await searchParams;
 
-  const exam = await getExamById(id);
+  const [exam, sessionData] = await Promise.all([
+    getExamById(id),
+    getExamSessionResult(sessionId),
+  ]);
 
   if (!exam) {
     notFound();
   }
 
-  return <ExamResultClient exam={exam} sessionId={sessionId} />;
+  return (
+    <ExamResultClient
+      exam={exam}
+      sessionId={sessionId}
+      initialSession={sessionData}
+    />
+  );
 }

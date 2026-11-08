@@ -479,3 +479,160 @@ export async function getStudentExamHistory(studentId: string): Promise<StudentE
     return [];
   }
 }
+
+export async function updateExam(
+  id: string,
+  input: {
+    title?: string;
+    description?: string;
+    category?: string;
+    durationMinutes?: number;
+    passingGrade?: number;
+    isActive?: boolean;
+  }
+): Promise<ActionResponse> {
+  try {
+    const { error } = await supabaseAdmin
+      .from("Exam")
+      .update(input)
+      .eq("id", id);
+
+    if (error) {
+      console.warn("Supabase update Exam warning:", error.message);
+    }
+
+    const idx = SAMPLE_EXAMS.findIndex((e) => e.id === id);
+    if (idx !== -1) {
+      SAMPLE_EXAMS[idx] = { ...SAMPLE_EXAMS[idx], ...input } as any;
+    }
+
+    revalidatePath("/dashboard/ujian");
+    revalidatePath(`/dashboard/ujian/${id}`);
+    revalidatePath("/portal");
+    return { success: true, message: "Paket ujian berhasil diperbarui" };
+  } catch (error: any) {
+    return { success: false, message: error.message || "Gagal memperbarui ujian" };
+  }
+}
+
+export async function deleteExam(id: string): Promise<ActionResponse> {
+  try {
+    await supabaseAdmin.from("ExamQuestion").delete().eq("examId", id);
+    const { error } = await supabaseAdmin.from("Exam").delete().eq("id", id);
+
+    if (error) {
+      console.warn("Supabase delete Exam warning:", error.message);
+    }
+
+    const idx = SAMPLE_EXAMS.findIndex((e) => e.id === id);
+    if (idx !== -1) {
+      SAMPLE_EXAMS.splice(idx, 1);
+    }
+
+    revalidatePath("/dashboard/ujian");
+    revalidatePath("/portal");
+    return { success: true, message: "Paket ujian berhasil dihapus" };
+  } catch (error: any) {
+    return { success: false, message: error.message || "Gagal menghapus ujian" };
+  }
+}
+
+export async function updateExamQuestion(
+  id: string,
+  input: {
+    examId: string;
+    section?: string;
+    questionText?: string;
+    options?: QuestionOption[];
+    correctKey?: string;
+    points?: number;
+    explanation?: string;
+  }
+): Promise<ActionResponse> {
+  try {
+    const { error } = await supabaseAdmin
+      .from("ExamQuestion")
+      .update({
+        section: input.section,
+        questionText: input.questionText,
+        options: input.options,
+        correctKey: input.correctKey,
+        points: input.points,
+        explanation: input.explanation,
+      })
+      .eq("id", id);
+
+    if (error) {
+      console.warn("Supabase update ExamQuestion warning:", error.message);
+    }
+
+    if (SAMPLE_QUESTIONS[input.examId]) {
+      const qIdx = SAMPLE_QUESTIONS[input.examId].findIndex((q) => q.id === id);
+      if (qIdx !== -1) {
+        SAMPLE_QUESTIONS[input.examId][qIdx] = {
+          ...SAMPLE_QUESTIONS[input.examId][qIdx],
+          ...input,
+        } as any;
+      }
+    }
+
+    revalidatePath(`/dashboard/ujian/${input.examId}`);
+    return { success: true, message: "Butir soal berhasil diperbarui" };
+  } catch (error: any) {
+    return { success: false, message: error.message || "Gagal memperbarui butir soal" };
+  }
+}
+
+export async function deleteExamQuestion(id: string, examId: string): Promise<ActionResponse> {
+  try {
+    const { error } = await supabaseAdmin
+      .from("ExamQuestion")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.warn("Supabase delete ExamQuestion warning:", error.message);
+    }
+
+    if (SAMPLE_QUESTIONS[examId]) {
+      const qIdx = SAMPLE_QUESTIONS[examId].findIndex((q) => q.id === id);
+      if (qIdx !== -1) {
+        SAMPLE_QUESTIONS[examId].splice(qIdx, 1);
+      }
+    }
+
+    const { data: countData } = await supabaseAdmin
+      .from("ExamQuestion")
+      .select("id")
+      .eq("examId", examId);
+
+    const newTotal = countData?.length || (SAMPLE_QUESTIONS[examId]?.length ?? 0);
+    await supabaseAdmin
+      .from("Exam")
+      .update({ totalQuestions: newTotal })
+      .eq("id", examId);
+
+    revalidatePath(`/dashboard/ujian/${examId}`);
+    return { success: true, message: "Butir soal berhasil dihapus" };
+  } catch (error: any) {
+    return { success: false, message: error.message || "Gagal menghapus butir soal" };
+  }
+}
+
+export async function getExamSessionResult(sessionId: string): Promise<StudentExamSession | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("StudentExamSession")
+      .select("*, exam:Exam(*)")
+      .eq("id", sessionId)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+    return data as StudentExamSession;
+  } catch (err) {
+    console.error("getExamSessionResult error:", err);
+    return null;
+  }
+}

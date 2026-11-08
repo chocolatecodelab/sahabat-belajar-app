@@ -14,6 +14,10 @@ import {
   Sparkles,
   LayoutGrid,
   X,
+  Keyboard,
+  RotateCcw,
+  Type,
+  Check,
 } from "lucide-react";
 import type { ExamItem, ExamQuestion } from "@/actions/ujian";
 import { submitExamSession } from "@/actions/ujian";
@@ -44,8 +48,11 @@ export default function ExamSimulationClient({
     exam.durationMinutes * 60
   );
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [isKeyboardModalOpen, setIsKeyboardModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // Mobile question sheet
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [fontSize, setFontSize] = useState<"normal" | "medium" | "large">("normal");
+  const [activeSectionFilter, setActiveSectionFilter] = useState("ALL");
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -113,6 +120,13 @@ export default function ExamSimulationClient({
     });
   };
 
+  const handleClearChoice = () => {
+    if (!currentQ) return;
+    const next = { ...answers };
+    delete next[currentQ.id];
+    saveAnswers(next);
+  };
+
   const handleToggleDoubtful = () => {
     if (!currentQ) return;
     const existing = answers[currentQ.id] || { selectedKey: "" };
@@ -124,6 +138,58 @@ export default function ExamSimulationClient({
       },
     });
   };
+
+  // Keyboard navigation shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        isSubmitModalOpen ||
+        isKeyboardModalOpen ||
+        ["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement)?.tagName)
+      ) {
+        return;
+      }
+
+      const key = e.key.toUpperCase();
+      if (["A", "B", "C", "D", "E"].includes(key)) {
+        if (currentQ?.options?.some((o) => o.key === key)) {
+          handleSelectOption(key);
+        }
+      } else if (key === "R") {
+        handleToggleDoubtful();
+      } else if (e.key === "ArrowLeft") {
+        setCurrentIndex((prev) => Math.max(0, prev - 1));
+      } else if (e.key === "ArrowRight") {
+        setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1));
+      } else if (key === "H" || e.key === "Backspace") {
+        handleClearChoice();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentIndex, currentQ, answers, isSubmitModalOpen, isKeyboardModalOpen, questions.length]);
+
+  // Section list
+  const uniqueSections = useMemo(() => {
+    const list: string[] = [];
+    questions.forEach((q) => {
+      if (q.section && !list.includes(q.section)) {
+        list.push(q.section);
+      }
+    });
+    return list;
+  }, [questions]);
+
+  // Filtered question palette
+  const displayedQuestionIndices = useMemo(() => {
+    return questions
+      .map((q, idx) => ({ q, idx }))
+      .filter(({ q }) => {
+        if (activeSectionFilter === "ALL") return true;
+        return q.section === activeSectionFilter;
+      });
+  }, [questions, activeSectionFilter]);
 
   // Stats calculation
   const stats = useMemo(() => {
@@ -162,12 +228,10 @@ export default function ExamSimulationClient({
     setIsSubmitting(false);
 
     if (res.success && res.data) {
-      // Clear localStorage
       try {
         localStorage.removeItem(`sb_exam_${exam.id}_answers`);
       } catch (e) {}
 
-      // Save latest session result to session storage for instant preview
       try {
         sessionStorage.setItem(
           `sb_exam_res_${res.data.sessionId}`,
@@ -212,11 +276,25 @@ export default function ExamSimulationClient({
 
   const isDoubtfulCurrent = !!answers[currentQ.id]?.isDoubtful;
   const selectedKeyCurrent = answers[currentQ.id]?.selectedKey;
+  const isTimeCritical = secondsRemaining < 300;
 
-  const isTimeCritical = secondsRemaining < 300; // Under 5 minutes
+  const fontStyles = {
+    normal: {
+      question: "text-sm sm:text-base leading-relaxed",
+      option: "text-xs sm:text-sm leading-relaxed",
+    },
+    medium: {
+      question: "text-base sm:text-lg leading-relaxed",
+      option: "text-sm sm:text-base leading-relaxed",
+    },
+    large: {
+      question: "text-lg sm:text-xl leading-relaxed",
+      option: "text-base sm:text-lg leading-relaxed",
+    },
+  }[fontSize];
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB] text-[#1B2A41] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#F4F7FB] text-[#1B2A41] flex flex-col font-sans select-none">
       {/* Top Bar - Distraction Free Exam Header */}
       <header className="sticky top-0 z-40 bg-white border-b border-[#D5DDEB] shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
@@ -226,20 +304,72 @@ export default function ExamSimulationClient({
               SB
             </div>
             <div className="min-w-0">
-              <span className="text-[10px] font-bold text-[#09408C] uppercase tracking-wider block">
-                Simulasi CAT Digital Sahabat Belajar
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-[#09408C] uppercase tracking-wider block">
+                  Simulasi CAT Digital Sahabat Belajar
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-[#1F6F4A] bg-[#E3F4EC] px-1.5 py-0.2 rounded-full font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1F6F4A]"></span>
+                  Tersimpan Otomatis
+                </span>
+              </div>
               <h1 className="text-xs sm:text-sm font-bold text-[#1B2A41] truncate font-display">
                 {exam.title}
               </h1>
             </div>
           </div>
 
-          {/* Center / Right: Timer & Mobile Drawer Toggle */}
-          <div className="flex items-center gap-3 shrink-0">
+          {/* Right Controls: Font Adjuster, Keyboard Help, Timer & Submit */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Font Size Adjuster (BKN CAT standard) */}
+            <div className="hidden sm:flex items-center bg-[#F4F7FB] rounded-xl p-0.5 border border-[#D5DDEB]">
+              <button
+                onClick={() => setFontSize("normal")}
+                className={`px-2 py-1 text-xs rounded-lg font-bold transition-all ${
+                  fontSize === "normal"
+                    ? "bg-[#09408C] text-white shadow-2xs"
+                    : "text-[#5B6882] hover:text-[#09408C]"
+                }`}
+                title="Ukuran Font Normal"
+              >
+                A
+              </button>
+              <button
+                onClick={() => setFontSize("medium")}
+                className={`px-2 py-1 text-xs rounded-lg font-bold transition-all ${
+                  fontSize === "medium"
+                    ? "bg-[#09408C] text-white shadow-2xs"
+                    : "text-[#5B6882] hover:text-[#09408C]"
+                }`}
+                title="Ukuran Font Sedang"
+              >
+                A+
+              </button>
+              <button
+                onClick={() => setFontSize("large")}
+                className={`px-2 py-1 text-xs rounded-lg font-bold transition-all ${
+                  fontSize === "large"
+                    ? "bg-[#09408C] text-white shadow-2xs"
+                    : "text-[#5B6882] hover:text-[#09408C]"
+                }`}
+                title="Ukuran Font Besar"
+              >
+                A++
+              </button>
+            </div>
+
+            {/* Keyboard Shortcuts Trigger */}
+            <button
+              onClick={() => setIsKeyboardModalOpen(true)}
+              className="hidden md:flex p-2 rounded-xl border border-[#D5DDEB] text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+              title="Shortcut Keyboard"
+            >
+              <Keyboard size={16} />
+            </button>
+
             {/* Timer Badge */}
             <div
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-bold tabular-nums transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-bold tabular-nums transition-colors shadow-2xs ${
                 isTimeCritical
                   ? "bg-[#FBE9E5] text-[#B4381F] border-[#B4381F] animate-pulse"
                   : "bg-[#EAF1FA] text-[#09408C] border-[#9AC1E2]"
@@ -288,6 +418,9 @@ export default function ExamSimulationClient({
                       {currentQ.section}
                     </span>
                   )}
+                  <span className="text-[11px] font-semibold text-[#1F6F4A] bg-[#E3F4EC] px-2 py-0.5 rounded-md">
+                    Bobot: {currentQ.points || 5} Poin
+                  </span>
                 </div>
 
                 <div className="text-xs text-[#5B6882]">
@@ -297,7 +430,7 @@ export default function ExamSimulationClient({
               </div>
 
               {/* Question Text */}
-              <div className="text-sm sm:text-base text-[#1B2A41] font-medium leading-relaxed mb-6 whitespace-pre-line">
+              <div className={`${fontStyles.question} text-[#1B2A41] font-medium mb-6 whitespace-pre-line`}>
                 {currentQ.questionText}
               </div>
 
@@ -324,7 +457,7 @@ export default function ExamSimulationClient({
                       >
                         {opt.key}
                       </span>
-                      <span className="text-xs sm:text-sm leading-relaxed pt-0.5 flex-1">
+                      <span className={`${fontStyles.option} pt-0.5 flex-1`}>
                         {opt.text}
                       </span>
                     </button>
@@ -333,9 +466,9 @@ export default function ExamSimulationClient({
               </div>
             </div>
 
-            {/* Navigation & Doubtful Controls */}
+            {/* Navigation & Controls */}
             <div className="mt-8 pt-5 border-t border-[#D5DDEB] flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
                   disabled={currentIndex === 0}
@@ -361,6 +494,18 @@ export default function ExamSimulationClient({
                     {isDoubtfulCurrent ? "Ragu-ragu (Aktif)" : "Ragu-ragu"}
                   </span>
                 </button>
+
+                {/* Clear Answer Button */}
+                {selectedKeyCurrent && (
+                  <button
+                    onClick={handleClearChoice}
+                    className="px-3 py-2.5 rounded-xl border border-red-200 bg-red-50/50 text-[#B4381F] text-xs font-semibold hover:bg-red-100 transition-colors flex items-center gap-1"
+                    title="Kosongkan jawaban untuk soal ini"
+                  >
+                    <RotateCcw size={13} />
+                    <span className="hidden sm:inline">Hapus Pilihan</span>
+                  </button>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -390,16 +535,50 @@ export default function ExamSimulationClient({
           </div>
         </section>
 
-        {/* Right Column: Question Navigator Palette (Span 4 or 3) - Desktop */}
+        {/* Right Column: Question Navigator Palette (Desktop) */}
         <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 space-y-5">
           <div className="bg-white rounded-3xl border border-[#D5DDEB] p-5 sm:p-6 shadow-xs sticky top-24">
-            <h3 className="font-bold text-sm text-[#09408C] font-display mb-3">
-              Nomor Soal
-            </h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-sm text-[#09408C] font-display">
+                Nomor Soal
+              </h3>
+              <span className="text-[11px] font-semibold text-[#5B6882]">
+                Total {questions.length} Butir
+              </span>
+            </div>
+
+            {/* Sub-test Filter Tabs */}
+            {uniqueSections.length > 1 && (
+              <div className="flex flex-wrap gap-1 mb-4 pb-3 border-b border-[#D5DDEB]">
+                <button
+                  onClick={() => setActiveSectionFilter("ALL")}
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all ${
+                    activeSectionFilter === "ALL"
+                      ? "bg-[#09408C] text-white"
+                      : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA]"
+                  }`}
+                >
+                  Semua
+                </button>
+                {uniqueSections.map((sec) => (
+                  <button
+                    key={sec}
+                    onClick={() => setActiveSectionFilter(sec)}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all truncate max-w-28 ${
+                      activeSectionFilter === sec
+                        ? "bg-[#09408C] text-white"
+                        : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA]"
+                    }`}
+                  >
+                    {sec.split(" ")[0].replace("(", "")}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Grid Palette */}
-            <div className="grid grid-cols-5 gap-2">
-              {questions.map((q, idx) => {
+            <div className="grid grid-cols-5 gap-2 max-h-72 overflow-y-auto pr-1">
+              {displayedQuestionIndices.map(({ q, idx }) => {
                 const ans = answers[q.id];
                 const isCurrent = idx === currentIndex;
                 const isAnswered = !!ans?.selectedKey;
@@ -432,7 +611,7 @@ export default function ExamSimulationClient({
             </div>
 
             {/* Status Legend */}
-            <div className="mt-6 pt-5 border-t border-[#D5DDEB] space-y-2 text-xs">
+            <div className="mt-5 pt-4 border-t border-[#D5DDEB] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[#5B6882]">
                   <span className="w-3.5 h-3.5 rounded-md bg-[#09408C]"></span>
@@ -467,7 +646,7 @@ export default function ExamSimulationClient({
             {/* Submit Action */}
             <button
               onClick={() => setIsSubmitModalOpen(true)}
-              className="mt-6 w-full py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-bold hover:bg-[#0E3571] transition-colors shadow-xs flex items-center justify-center gap-1.5"
+              className="mt-5 w-full py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-bold hover:bg-[#0E3571] transition-colors shadow-xs flex items-center justify-center gap-1.5"
             >
               <Send size={14} />
               <span>Kumpulkan Jawaban</span>
@@ -481,12 +660,17 @@ export default function ExamSimulationClient({
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end justify-center lg:hidden">
           <div className="bg-white rounded-t-3xl w-full p-6 max-h-[80vh] overflow-y-auto space-y-4 animate-in slide-in-from-bottom duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-[#D5DDEB]">
-              <h3 className="font-bold text-sm text-[#09408C] font-display">
-                Daftar Nomor Soal
-              </h3>
+              <div>
+                <h3 className="font-bold text-sm text-[#09408C] font-display">
+                  Daftar Nomor Soal
+                </h3>
+                <span className="text-[11px] text-[#5B6882]">
+                  {stats.answered} dari {questions.length} terjawab
+                </span>
+              </div>
               <button
                 onClick={() => setIsDrawerOpen(false)}
-                className="p-1 rounded-lg text-[#5B6882] hover:bg-[#F4F7FB]"
+                className="p-1.5 rounded-lg text-[#5B6882] hover:bg-[#F4F7FB]"
               >
                 <X size={18} />
               </button>
@@ -527,6 +711,70 @@ export default function ExamSimulationClient({
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Keyboard Shortcuts Cheat Sheet Modal */}
+      {isKeyboardModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-xl border border-[#D5DDEB] space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between pb-2 border-b border-[#D5DDEB]">
+              <div className="flex items-center gap-2">
+                <Keyboard size={18} className="text-[#09408C]" />
+                <h3 className="text-sm font-bold text-[#09408C] font-display">
+                  Shortcut Keyboard CAT
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsKeyboardModalOpen(false)}
+                className="p-1 rounded-lg text-[#5B6882] hover:bg-[#F4F7FB]"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center justify-between p-2 rounded-xl bg-[#F4F7FB]">
+                <span className="text-[#5B6882]">Pilih Jawaban A - E</span>
+                <kbd className="px-2 py-1 rounded-md bg-white border border-[#D5DDEB] font-bold text-[#09408C] shadow-2xs">
+                  A / B / C / D / E
+                </kbd>
+              </div>
+
+              <div className="flex items-center justify-between p-2 rounded-xl bg-[#F4F7FB]">
+                <span className="text-[#5B6882]">Tandai Ragu-ragu</span>
+                <kbd className="px-2 py-1 rounded-md bg-white border border-[#D5DDEB] font-bold text-[#F5B82E] shadow-2xs">
+                  R
+                </kbd>
+              </div>
+
+              <div className="flex items-center justify-between p-2 rounded-xl bg-[#F4F7FB]">
+                <span className="text-[#5B6882]">Soal Sebelumnya / Berikutnya</span>
+                <div className="flex gap-1">
+                  <kbd className="px-2 py-1 rounded-md bg-white border border-[#D5DDEB] font-bold text-[#1B2A41] shadow-2xs">
+                    ←
+                  </kbd>
+                  <kbd className="px-2 py-1 rounded-md bg-white border border-[#D5DDEB] font-bold text-[#1B2A41] shadow-2xs">
+                    →
+                  </kbd>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-2 rounded-xl bg-[#F4F7FB]">
+                <span className="text-[#5B6882]">Hapus Pilihan Jawaban</span>
+                <kbd className="px-2 py-1 rounded-md bg-white border border-[#D5DDEB] font-bold text-[#B4381F] shadow-2xs">
+                  H / Backspace
+                </kbd>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsKeyboardModalOpen(false)}
+              className="w-full py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571]"
+            >
+              Tutup Petunjuk
+            </button>
           </div>
         </div>
       )}

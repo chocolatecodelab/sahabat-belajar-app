@@ -16,32 +16,40 @@ import {
   Printer,
   ChevronDown,
   Filter,
+  Check,
+  GraduationCap,
 } from "lucide-react";
-import type { ExamItem, ExamQuestion } from "@/actions/ujian";
-
-interface ExamResultClientProps {
-  exam: ExamItem;
-  sessionId: string;
-}
+import type { ExamItem, ExamQuestion, StudentExamSession } from "@/actions/ujian";
 
 export default function ExamResultClient({
   exam,
   sessionId,
+  initialSession = null,
 }: {
   exam: ExamItem;
   sessionId: string;
+  initialSession?: StudentExamSession | null;
 }) {
   const [filterMode, setFilterMode] = useState<"ALL" | "WRONG" | "CORRECT">("ALL");
+  const [sectionFilter, setSectionFilter] = useState("ALL");
+  const [copied, setCopied] = useState(false);
   const [sessionData, setSessionData] = useState<{
     score: number;
     isPassed: boolean;
     answers: Record<string, { selectedKey: string; isDoubtful?: boolean }>;
     durationSecondsUsed: number;
     submittedAt: string;
-  } | null>(null);
+  } | null>(initialSession ? {
+    score: initialSession.score,
+    isPassed: initialSession.isPassed,
+    answers: initialSession.answers as any,
+    durationSecondsUsed: initialSession.durationSecondsUsed,
+    submittedAt: initialSession.submittedAt || new Date().toISOString(),
+  } : null);
 
   useEffect(() => {
-    // Try to load cached session result from sessionStorage
+    if (initialSession) return;
+
     const cached = sessionStorage.getItem(`sb_exam_res_${sessionId}`);
     if (cached) {
       try {
@@ -50,7 +58,6 @@ export default function ExamResultClient({
         console.error("Failed to parse cached session data", e);
       }
     } else {
-      // Fallback demo simulation data
       setSessionData({
         score: exam.category === "CPNS_BUMN" ? 405 : 620,
         isPassed: true,
@@ -59,7 +66,7 @@ export default function ExamResultClient({
         submittedAt: new Date().toISOString(),
       });
     }
-  }, [sessionId, exam.category]);
+  }, [sessionId, exam.category, initialSession]);
 
   const questions = exam.questions || [];
 
@@ -79,8 +86,14 @@ export default function ExamResultClient({
 
   // Calculate section scores
   const sectionBreakdown: Record<string, { total: number; correct: number; maxPoints: number; earnedPoints: number }> = {};
+  const sectionsList: string[] = [];
+
   questions.forEach((q) => {
     const sec = q.section || "Umum";
+    if (!sectionsList.includes(sec)) {
+      sectionsList.push(sec);
+    }
+
     if (!sectionBreakdown[sec]) {
       sectionBreakdown[sec] = { total: 0, correct: 0, maxPoints: 0, earnedPoints: 0 };
     }
@@ -101,9 +114,16 @@ export default function ExamResultClient({
   const filteredQuestions = questions.filter((q) => {
     const userAns = sessionData?.answers?.[q.id]?.selectedKey;
     const isCorrect = userAns === q.correctKey;
-    if (filterMode === "CORRECT") return isCorrect;
-    if (filterMode === "WRONG") return !isCorrect;
-    return true;
+
+    const matchStatus =
+      filterMode === "ALL" ||
+      (filterMode === "CORRECT" && isCorrect) ||
+      (filterMode === "WRONG" && !isCorrect);
+
+    const matchSection =
+      sectionFilter === "ALL" || q.section === sectionFilter;
+
+    return matchStatus && matchSection;
   });
 
   const formatDuration = (sec: number) => {
@@ -112,11 +132,18 @@ export default function ExamResultClient({
     return `${m} Menit ${s} Detik`;
   };
 
+  const handleShare = () => {
+    const text = `Alhamdulillah! Saya telah menyelesaikan ${exam.title} di Sahabat Belajar dengan perolehan skor ${sessionData?.score} (Passing Grade: ${exam.passingGrade}) - Status: ${isPassed ? "LULUS" : "EVALUASI"}. #BersamaSahabat #SahabatBelajar`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
   return (
     <div className="min-h-screen bg-[#F4F7FB] text-[#1B2A41] py-8 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Navigation & Action Bar */}
-        <div className="flex items-center justify-between gap-4">
+        {/* Navigation & Action Bar (Hidden on Print) */}
+        <div className="flex items-center justify-between gap-4 print:hidden">
           <Link
             href="/portal"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5B6882] hover:text-[#09408C] transition-colors"
@@ -127,12 +154,21 @@ export default function ExamResultClient({
 
           <div className="flex items-center gap-2">
             <button
+              onClick={handleShare}
+              className="px-3.5 py-2 rounded-xl bg-white border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors flex items-center gap-1.5 shadow-2xs"
+            >
+              {copied ? <Check size={14} className="text-[#1F6F4A]" /> : <Share2 size={14} />}
+              <span>{copied ? "Teks Disalin!" : "Bagikan Hasil"}</span>
+            </button>
+
+            <button
               onClick={() => window.print()}
               className="px-3.5 py-2 rounded-xl bg-white border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors flex items-center gap-1.5 shadow-2xs"
             >
               <Printer size={14} />
               <span>Cetak Rapor Nilai</span>
             </button>
+
             <Link
               href={`/portal/ujian/${exam.id}`}
               className="px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
@@ -140,6 +176,24 @@ export default function ExamResultClient({
               <RotateCcw size={14} />
               <span>Ulangi Tryout</span>
             </Link>
+          </div>
+        </div>
+
+        {/* Print-Only Official Report Header */}
+        <div className="hidden print:block border-b-2 border-[#09408C] pb-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-[#09408C] font-display">
+                SAHABAT BELAJAR
+              </h1>
+              <p className="text-xs text-[#5B6882]">
+                Comprehensive Academic Solution • Bimbel Privat & Semi-Privat
+              </p>
+            </div>
+            <div className="text-right text-xs">
+              <div className="font-bold text-[#09408C]">LEMBAR HASIL SIMULASI CAT</div>
+              <div className="text-[#5B6882]">No. Sesi: {sessionId}</div>
+            </div>
           </div>
         </div>
 
@@ -323,37 +377,56 @@ export default function ExamResultClient({
             </div>
 
             {/* Filter Buttons */}
-            <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-[#D5DDEB] self-start sm:self-center">
-              <button
-                onClick={() => setFilterMode("ALL")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  filterMode === "ALL"
-                    ? "bg-[#09408C] text-white shadow-2xs"
-                    : "text-[#5B6882] hover:text-[#09408C]"
-                }`}
-              >
-                Semua ({questions.length})
-              </button>
-              <button
-                onClick={() => setFilterMode("CORRECT")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  filterMode === "CORRECT"
-                    ? "bg-[#1F6F4A] text-white shadow-2xs"
-                    : "text-[#5B6882] hover:text-[#1F6F4A]"
-                }`}
-              >
-                Benar ({totalCorrect})
-              </button>
-              <button
-                onClick={() => setFilterMode("WRONG")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  filterMode === "WRONG"
-                    ? "bg-[#B4381F] text-white shadow-2xs"
-                    : "text-[#5B6882] hover:text-[#B4381F]"
-                }`}
-              >
-                Salah ({questions.length - totalCorrect})
-              </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Status Filter */}
+              <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#D5DDEB]">
+                <button
+                  onClick={() => setFilterMode("ALL")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    filterMode === "ALL"
+                      ? "bg-[#09408C] text-white shadow-2xs"
+                      : "text-[#5B6882] hover:text-[#09408C]"
+                  }`}
+                >
+                  Semua ({questions.length})
+                </button>
+                <button
+                  onClick={() => setFilterMode("CORRECT")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    filterMode === "CORRECT"
+                      ? "bg-[#1F6F4A] text-white shadow-2xs"
+                      : "text-[#5B6882] hover:text-[#1F6F4A]"
+                  }`}
+                >
+                  Benar ({totalCorrect})
+                </button>
+                <button
+                  onClick={() => setFilterMode("WRONG")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    filterMode === "WRONG"
+                      ? "bg-[#B4381F] text-white shadow-2xs"
+                      : "text-[#5B6882] hover:text-[#B4381F]"
+                  }`}
+                >
+                  Salah ({questions.length - totalCorrect})
+                </button>
+              </div>
+
+              {/* Sub-Section Filter Dropdown */}
+              {sectionsList.length > 1 && (
+                <select
+                  value={sectionFilter}
+                  onChange={(e) => setSectionFilter(e.target.value)}
+                  className="px-3 py-1.5 rounded-xl border border-[#D5DDEB] bg-white text-xs font-semibold text-[#09408C] focus-ring"
+                >
+                  <option value="ALL">Semua Sub-Materi</option>
+                  {sectionsList.map((sec) => (
+                    <option key={sec} value={sec}>
+                      {sec}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
@@ -465,8 +538,22 @@ export default function ExamResultClient({
           </div>
         </div>
 
-        {/* Next Step Banner */}
-        <div className="bg-[#09408C] text-white rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md">
+        {/* Print Signature Footer (Only in Print) */}
+        <div className="hidden print:flex justify-between pt-12 text-xs">
+          <div>
+            <p className="text-[#5B6882]">Siswa Peserta Tryout,</p>
+            <div className="h-16"></div>
+            <p className="font-bold text-[#1B2A41] underline">Ahmad Fauzi</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[#5B6882]">Kepala Akademik Sahabat Belajar,</p>
+            <div className="h-16"></div>
+            <p className="font-bold text-[#09408C] underline">Dr. Hendra Wijaya, M.Pd.</p>
+          </div>
+        </div>
+
+        {/* Next Step Banner (Hidden on Print) */}
+        <div className="bg-[#09408C] text-white rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md print:hidden">
           <div className="space-y-1 text-center sm:text-left">
             <h3 className="text-xl font-bold font-display">
               Ingin Memperdalam Materi Bersama Tutor Ahli?

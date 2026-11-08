@@ -14,9 +14,13 @@ import {
   Sparkles,
   FileQuestion,
   AlertCircle,
+  Edit3,
+  Trash2,
+  Layers,
+  TrendingUp,
 } from "lucide-react";
 import type { ExamItem } from "@/actions/ujian";
-import { createExam } from "@/actions/ujian";
+import { createExam, updateExam, deleteExam } from "@/actions/ujian";
 
 export default function ExamManagerClient({
   initialExams = [],
@@ -27,6 +31,7 @@ export default function ExamManagerClient({
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingExam, setEditingExam] = useState<ExamItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
@@ -45,6 +50,12 @@ export default function ExamManagerClient({
     { key: "KEDINASAN", label: "Sekolah Kedinasan" },
   ];
 
+  // Quick Stats
+  const totalQuestionsAll = exams.reduce((acc, e) => acc + (e.totalQuestions || 0), 0);
+  const avgPassingGrade = exams.length > 0
+    ? Math.round(exams.reduce((acc, e) => acc + (e.passingGrade || 0), 0) / exams.length)
+    : 0;
+
   const filteredExams = exams.filter((e) => {
     const matchCategory =
       selectedCategory === "ALL" || e.category === selectedCategory;
@@ -54,36 +65,99 @@ export default function ExamManagerClient({
     return matchCategory && matchSearch;
   });
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const openCreateModal = () => {
+    setEditingExam(null);
+    setTitle("");
+    setDescription("");
+    setCategory("CPNS_BUMN");
+    setDurationMinutes("90");
+    setPassingGrade("300");
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (exam: ExamItem) => {
+    setEditingExam(exam);
+    setTitle(exam.title);
+    setDescription(exam.description || "");
+    setCategory(exam.category);
+    setDurationMinutes(String(exam.durationMinutes));
+    setPassingGrade(String(exam.passingGrade));
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
     setIsSubmitting(true);
-    const res = await createExam({
-      title,
-      description,
-      category,
-      durationMinutes: Number(durationMinutes) || 90,
-      passingGrade: Number(passingGrade) || 300,
-    });
-    setIsSubmitting(false);
 
-    if (res.success && res.data) {
-      const newExam: ExamItem = {
-        id: res.data.id,
+    if (editingExam) {
+      const res = await updateExam(editingExam.id, {
         title,
         description,
-        category: category as any,
+        category,
         durationMinutes: Number(durationMinutes) || 90,
         passingGrade: Number(passingGrade) || 300,
-        totalQuestions: 0,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      };
-      setExams([newExam, ...exams]);
-      setIsModalOpen(false);
-      setTitle("");
-      setDescription("");
+      });
+      setIsSubmitting(false);
+
+      if (res.success) {
+        setExams(
+          exams.map((ex) =>
+            ex.id === editingExam.id
+              ? {
+                  ...ex,
+                  title,
+                  description,
+                  category: category as any,
+                  durationMinutes: Number(durationMinutes) || 90,
+                  passingGrade: Number(passingGrade) || 300,
+                }
+              : ex
+          )
+        );
+        setIsModalOpen(false);
+      } else {
+        alert(res.message);
+      }
+    } else {
+      const res = await createExam({
+        title,
+        description,
+        category,
+        durationMinutes: Number(durationMinutes) || 90,
+        passingGrade: Number(passingGrade) || 300,
+      });
+      setIsSubmitting(false);
+
+      if (res.success && res.data) {
+        const newExam: ExamItem = {
+          id: res.data.id,
+          title,
+          description,
+          category: category as any,
+          durationMinutes: Number(durationMinutes) || 90,
+          passingGrade: Number(passingGrade) || 300,
+          totalQuestions: 0,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        };
+        setExams([newExam, ...exams]);
+        setIsModalOpen(false);
+      } else {
+        alert(res.message);
+      }
+    }
+  };
+
+  const handleDelete = async (id: string, examTitle: string) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus paket "${examTitle}"? Semua butir soal di dalamnya juga akan terhapus.`)) {
+      return;
+    }
+
+    const res = await deleteExam(id);
+    if (res.success) {
+      setExams(exams.filter((e) => e.id !== id));
     } else {
       alert(res.message);
     }
@@ -107,12 +181,60 @@ export default function ExamManagerClient({
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={openCreateModal}
           className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs shrink-0"
         >
           <Plus size={16} />
           <span>Buat Paket Ujian Baru</span>
         </button>
+      </div>
+
+      {/* Top Stats Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-2xs flex items-center justify-between">
+          <div>
+            <div className="text-xs text-[#5B6882] font-semibold">Total Paket Ujian</div>
+            <div className="text-2xl font-bold text-[#09408C] font-display mt-0.5">
+              {exams.length} Paket
+            </div>
+            <div className="text-[11px] text-[#1F6F4A] mt-1 font-medium">
+              Semua aktif & dapat disimulasikan
+            </div>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center">
+            <Award size={22} />
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-2xs flex items-center justify-between">
+          <div>
+            <div className="text-xs text-[#5B6882] font-semibold">Total Butir Soal</div>
+            <div className="text-2xl font-bold text-[#09408C] font-display mt-0.5">
+              {totalQuestionsAll} Soal
+            </div>
+            <div className="text-[11px] text-[#295897] mt-1 font-medium">
+              Tersedia pembahasan konseptual
+            </div>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-[#EAF1FA] text-[#295897] flex items-center justify-center">
+            <BookOpen size={22} />
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-2xs flex items-center justify-between">
+          <div>
+            <div className="text-xs text-[#5B6882] font-semibold">Rata-rata Passing Grade</div>
+            <div className="text-2xl font-bold text-[#1F6F4A] font-display mt-0.5">
+              {avgPassingGrade}
+            </div>
+            <div className="text-[11px] text-[#5B6882] mt-1">
+              Batas ambang standar kelulusan
+            </div>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-[#E3F4EC] text-[#1F6F4A] flex items-center justify-center">
+            <TrendingUp size={22} />
+          </div>
+        </div>
       </div>
 
       {/* Filter & Search Bar */}
@@ -163,18 +285,31 @@ export default function ExamManagerClient({
           {filteredExams.map((exam) => (
             <div
               key={exam.id}
-              className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs hover:border-[#09408C] hover:shadow-md transition-all flex flex-col justify-between"
+              className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs hover:border-[#09408C] hover:shadow-md transition-all flex flex-col justify-between group"
             >
               <div>
-                {/* Badge Category & Status */}
+                {/* Badge Category, Edit & Delete */}
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <span className="px-2.5 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]/60">
                     {exam.category.replace("_", " ")}
                   </span>
-                  <span className="flex items-center gap-1 text-[11px] text-[#1F6F4A] font-semibold bg-[#E3F4EC] px-2 py-0.5 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#1F6F4A]"></span>
-                    Aktif
-                  </span>
+                  
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEditModal(exam)}
+                      className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                      title="Edit Pengaturan Paket"
+                    >
+                      <Edit3 size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(exam.id, exam.title)}
+                      className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
+                      title="Hapus Paket Ujian"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
 
                 <h3 className="font-bold text-base text-[#1B2A41] font-display leading-snug">
@@ -217,7 +352,7 @@ export default function ExamManagerClient({
                   className="px-3 py-2 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors flex items-center gap-1"
                 >
                   <BookOpen size={14} />
-                  <span>Kelola Soal</span>
+                  <span>Kelola Butir Soal</span>
                 </Link>
 
                 <Link
@@ -225,7 +360,7 @@ export default function ExamManagerClient({
                   target="_blank"
                   className="px-3 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1 shadow-xs"
                 >
-                  <span>Simulasi Ujian</span>
+                  <span>Simulasi CAT</span>
                   <ArrowRight size={14} />
                 </Link>
               </div>
@@ -234,20 +369,20 @@ export default function ExamManagerClient({
         </div>
       )}
 
-      {/* Modal Buat Paket Ujian */}
+      {/* Modal Buat / Edit Paket Ujian */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-xl border border-[#D5DDEB] space-y-5 animate-in fade-in duration-200">
             <div>
               <h3 className="text-xl font-bold text-[#09408C] font-display">
-                Buat Paket Ujian Baru
+                {editingExam ? "Edit Paket Ujian" : "Buat Paket Ujian Baru"}
               </h3>
               <p className="text-xs text-[#5B6882] mt-0.5">
                 Konfigurasi durasi, passing grade, dan kategori bimbingan.
               </p>
             </div>
 
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Judul Paket Ujian *
@@ -335,7 +470,7 @@ export default function ExamManagerClient({
                   disabled={isSubmitting}
                   className="px-5 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] disabled:opacity-50"
                 >
-                  {isSubmitting ? "Menyimpan..." : "Simpan Paket Ujian"}
+                  {isSubmitting ? "Menyimpan..." : editingExam ? "Perbarui Paket Ujian" : "Simpan Paket Ujian"}
                 </button>
               </div>
             </form>

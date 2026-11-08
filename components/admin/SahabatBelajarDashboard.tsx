@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Phone,
   Sparkles,
+  Award,
 } from "lucide-react";
 import { formatTime, formatDate } from "@/lib/date";
 import type { SahabatBelajarDashboardData } from "@/actions/dashboard";
@@ -329,6 +330,42 @@ export default function SahabatBelajarDashboard({
                     Semua operasional rapi! Tidak ada kuota kritis atau lead tertunda saat ini.
                   </div>
                 )}
+            </div>
+          </div>
+
+          {/* Tahap 2: Ruang Ujian & Bank Soal CAT Widget */}
+          <div className="bg-gradient-to-br from-[#EAF1FA] to-white rounded-2xl p-5 border border-[#9AC1E2] shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Award size={18} className="text-[#09408C]" />
+                <h3 className="font-bold text-sm text-[#09408C] font-display">
+                  Ruang Ujian & CAT Digital
+                </h3>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-[#09408C] text-white text-[10px] font-bold">
+                Tahap 2
+              </span>
+            </div>
+
+            <p className="text-xs text-[#5B6882] leading-relaxed">
+              Paket tryout CPNS SKD, UTBK-SNBT, dan TOEFL ITP siap digunakan siswa untuk simulasi ujian digital dengan timer otomatis.
+            </p>
+
+            <div className="pt-1 flex items-center justify-between gap-2">
+              <Link
+                href="/dashboard/ujian"
+                className="text-xs font-bold text-[#09408C] hover:underline flex items-center gap-1"
+              >
+                <span>Kelola Bank Soal</span>
+                <ArrowRight size={12} />
+              </Link>
+              <Link
+                href="/portal/ujian/exam_cpns_01"
+                target="_blank"
+                className="px-3 py-1.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-2xs"
+              >
+                Coba Simulasi
+              </Link>
             </div>
           </div>
 

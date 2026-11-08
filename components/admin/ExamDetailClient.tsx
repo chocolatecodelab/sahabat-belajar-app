@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -15,9 +15,10 @@ import {
   ExternalLink,
   Layers,
   Sparkles,
+  Filter,
 } from "lucide-react";
 import type { ExamItem, ExamQuestion, QuestionOption } from "@/actions/ujian";
-import { createExamQuestion } from "@/actions/ujian";
+import { createExamQuestion, updateExamQuestion, deleteExamQuestion } from "@/actions/ujian";
 
 export default function ExamDetailClient({
   exam,
@@ -28,9 +29,11 @@ export default function ExamDetailClient({
     exam.questions || []
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<ExamQuestion | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeSectionFilter, setActiveSectionFilter] = useState("ALL");
 
-  // New question form state
+  // Form state
   const [questionText, setQuestionText] = useState("");
   const [section, setSection] = useState("TWK (Nasionalisme)");
   const [correctKey, setCorrectKey] = useState("A");
@@ -42,13 +45,54 @@ export default function ExamDetailClient({
   const [optD, setOptD] = useState("");
   const [optE, setOptE] = useState("");
 
-  const sectionsCount = questions.reduce((acc, q) => {
-    const sec = q.section || "Umum";
-    acc[sec] = (acc[sec] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const sectionsCount = useMemo(() => {
+    return questions.reduce((acc, q) => {
+      const sec = q.section || "Umum";
+      acc[sec] = (acc[sec] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [questions]);
 
-  const handleAddQuestion = async (e: React.FormEvent) => {
+  const uniqueSections = Object.keys(sectionsCount);
+
+  const filteredQuestions = useMemo(() => {
+    if (activeSectionFilter === "ALL") return questions;
+    return questions.filter((q) => q.section === activeSectionFilter);
+  }, [questions, activeSectionFilter]);
+
+  const openCreateModal = () => {
+    setEditingQuestion(null);
+    setQuestionText("");
+    setSection(uniqueSections[0] || "TWK (Nasionalisme)");
+    setCorrectKey("A");
+    setPoints("5");
+    setExplanation("");
+    setOptA("");
+    setOptB("");
+    setOptC("");
+    setOptD("");
+    setOptE("");
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (q: ExamQuestion) => {
+    setEditingQuestion(q);
+    setQuestionText(q.questionText);
+    setSection(q.section || "Umum");
+    setCorrectKey(q.correctKey);
+    setPoints(String(q.points || 5));
+    setExplanation(q.explanation || "");
+
+    const getOpt = (key: string) => q.options.find((o) => o.key === key)?.text || "";
+    setOptA(getOpt("A"));
+    setOptB(getOpt("B"));
+    setOptC(getOpt("C"));
+    setOptD(getOpt("D"));
+    setOptE(getOpt("E"));
+    setIsModalOpen(true);
+  };
+
+  const handleSaveQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!questionText.trim()) return;
 
@@ -66,41 +110,78 @@ export default function ExamDetailClient({
     }
 
     setIsSubmitting(true);
-    const nextNumber = questions.length + 1;
 
-    const res = await createExamQuestion({
-      examId: exam.id,
-      section,
-      questionText,
-      options,
-      correctKey,
-      points: Number(points) || 5,
-      explanation,
-    });
-    setIsSubmitting(false);
-
-    if (res.success && res.data) {
-      const newQ: ExamQuestion = {
-        id: res.data.id,
+    if (editingQuestion) {
+      const res = await updateExamQuestion(editingQuestion.id, {
         examId: exam.id,
-        questionNumber: nextNumber,
         section,
         questionText,
         options,
         correctKey,
         points: Number(points) || 5,
         explanation,
-      };
-      setQuestions([...questions, newQ]);
-      setIsModalOpen(false);
-      // Reset form
-      setQuestionText("");
-      setExplanation("");
-      setOptA("");
-      setOptB("");
-      setOptC("");
-      setOptD("");
-      setOptE("");
+      });
+      setIsSubmitting(false);
+
+      if (res.success) {
+        setQuestions(
+          questions.map((q) =>
+            q.id === editingQuestion.id
+              ? {
+                  ...q,
+                  section,
+                  questionText,
+                  options,
+                  correctKey,
+                  points: Number(points) || 5,
+                  explanation,
+                }
+              : q
+          )
+        );
+        setIsModalOpen(false);
+      } else {
+        alert(res.message);
+      }
+    } else {
+      const nextNumber = questions.length + 1;
+      const res = await createExamQuestion({
+        examId: exam.id,
+        section,
+        questionText,
+        options,
+        correctKey,
+        points: Number(points) || 5,
+        explanation,
+      });
+      setIsSubmitting(false);
+
+      if (res.success && res.data) {
+        const newQ: ExamQuestion = {
+          id: res.data.id,
+          examId: exam.id,
+          questionNumber: nextNumber,
+          section,
+          questionText,
+          options,
+          correctKey,
+          points: Number(points) || 5,
+          explanation,
+        };
+        setQuestions([...questions, newQ]);
+        setIsModalOpen(false);
+      } else {
+        alert(res.message);
+      }
+    }
+  };
+
+  const handleDeleteQuestion = async (qId: string, qNum: number) => {
+    if (!confirm(`Hapus butir soal nomor ${qNum}?`)) return;
+
+    const res = await deleteExamQuestion(qId, exam.id);
+    if (res.success) {
+      setQuestions(questions.filter((q) => q.id !== qId));
     } else {
       alert(res.message);
     }
@@ -147,7 +228,7 @@ export default function ExamDetailClient({
           </Link>
 
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={openCreateModal}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs"
           >
             <Plus size={16} />
@@ -212,26 +293,55 @@ export default function ExamDetailClient({
 
       {/* Question Bank List */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 className="text-base font-bold text-[#09408C] font-display flex items-center gap-2">
             <span>Daftar Butir Soal & Kunci Jawaban</span>
             <span className="px-2 py-0.5 rounded-full bg-[#EAF1FA] text-xs font-bold text-[#09408C]">
-              {questions.length} Soal
+              {filteredQuestions.length} dari {questions.length} Soal
             </span>
           </h2>
+
+          {/* Section Filter Pills */}
+          {uniqueSections.length > 1 && (
+            <div className="flex flex-wrap items-center gap-1">
+              <button
+                onClick={() => setActiveSectionFilter("ALL")}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  activeSectionFilter === "ALL"
+                    ? "bg-[#09408C] text-white"
+                    : "bg-white border border-[#D5DDEB] text-[#5B6882] hover:bg-[#F4F7FB]"
+                }`}
+              >
+                Semua ({questions.length})
+              </button>
+              {uniqueSections.map((sec) => (
+                <button
+                  key={sec}
+                  onClick={() => setActiveSectionFilter(sec)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                    activeSectionFilter === sec
+                      ? "bg-[#09408C] text-white"
+                      : "bg-white border border-[#D5DDEB] text-[#5B6882] hover:bg-[#F4F7FB]"
+                  }`}
+                >
+                  {sec} ({sectionsCount[sec]})
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {questions.length === 0 ? (
+        {filteredQuestions.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-[#D5DDEB]">
             <HelpCircle size={40} className="mx-auto text-[#9AC1E2] mb-3" />
             <h3 className="text-base font-bold text-[#1B2A41]">
-              Belum ada soal di paket ini
+              Belum ada soal pada kategori ini
             </h3>
             <p className="text-xs text-[#5B6882] mt-1 max-w-md mx-auto">
               Mulai masukkan butir soal pilihan ganda A-E beserta kunci jawaban dan pembahasan konsep dasar.
             </p>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={openCreateModal}
               className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571]"
             >
               <Plus size={16} />
@@ -240,10 +350,10 @@ export default function ExamDetailClient({
           </div>
         ) : (
           <div className="space-y-4">
-            {questions.map((q, idx) => (
+            {filteredQuestions.map((q, idx) => (
               <div
                 key={q.id || idx}
-                className="bg-white rounded-2xl border border-[#D5DDEB] p-5 shadow-xs hover:border-[#9AC1E2] transition-colors"
+                className="bg-white rounded-2xl border border-[#D5DDEB] p-5 shadow-xs hover:border-[#9AC1E2] transition-colors group"
               >
                 {/* Header Soal */}
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -257,14 +367,30 @@ export default function ExamDetailClient({
                       </span>
                     )}
                     <span className="text-[11px] font-semibold text-[#1F6F4A] bg-[#E3F4EC] px-2 py-0.5 rounded-md">
-                      Bobot: {q.points} Poin
+                      Bobot: {q.points || 5} Poin
+                    </span>
+                    <span className="text-xs font-bold text-[#1F6F4A] flex items-center gap-1 ml-1">
+                      <CheckCircle2 size={13} />
+                      <span>Kunci: {q.correctKey}</span>
                     </span>
                   </div>
 
-                  <span className="text-xs font-bold text-[#1F6F4A] flex items-center gap-1">
-                    <CheckCircle2 size={14} />
-                    <span>Kunci: {q.correctKey}</span>
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEditModal(q)}
+                      className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                      title="Edit Butir Soal"
+                    >
+                      <Edit3 size={15} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteQuestion(q.id, q.questionNumber || idx + 1)}
+                      className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
+                      title="Hapus Butir Soal"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Question Text */}
@@ -323,20 +449,20 @@ export default function ExamDetailClient({
         )}
       </div>
 
-      {/* Modal Tambah Soal */}
+      {/* Modal Tambah / Edit Soal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-xl border border-[#D5DDEB] max-h-[90vh] overflow-y-auto space-y-5 animate-in fade-in duration-200">
             <div>
               <h3 className="text-xl font-bold text-[#09408C] font-display">
-                Tambah Butir Soal Baru
+                {editingQuestion ? "Edit Butir Soal" : "Tambah Butir Soal Baru"}
               </h3>
               <p className="text-xs text-[#5B6882] mt-0.5">
                 Masukkan teks soal, pilihan A s.d E, tentukan kunci jawaban, serta penjelasan konsep dasar.
               </p>
             </div>
 
-            <form onSubmit={handleAddQuestion} className="space-y-4">
+            <form onSubmit={handleSaveQuestion} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-[#1B2A41] mb-1">
@@ -497,7 +623,7 @@ export default function ExamDetailClient({
                   disabled={isSubmitting}
                   className="px-5 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] disabled:opacity-50"
                 >
-                  {isSubmitting ? "Menyimpan..." : "Simpan Soal"}
+                  {isSubmitting ? "Menyimpan..." : editingQuestion ? "Perbarui Soal" : "Simpan Soal"}
                 </button>
               </div>
             </form>
