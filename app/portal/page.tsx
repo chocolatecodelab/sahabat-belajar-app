@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getStudentPortalData } from "@/actions/portal";
+import { getExams, getStudentExamHistory } from "@/actions/ujian";
 import StudentPortalClient from "@/components/portal/StudentPortalClient";
 
 export const metadata = {
@@ -15,7 +16,19 @@ export default async function StudentPortalPage() {
     redirect("/login");
   }
 
-  const res = await getStudentPortalData();
+  const [portalRes, exams] = await Promise.all([
+    getStudentPortalData(),
+    getExams(),
+  ]);
 
-  return <StudentPortalClient initialData={res.success && res.data ? res.data : null} />;
+  const studentId = portalRes.data?.student?.id || "std_demo_01";
+  const examHistory = await getStudentExamHistory(studentId);
+
+  return (
+    <StudentPortalClient
+      initialData={portalRes.success && portalRes.data ? portalRes.data : null}
+      availableExams={exams}
+      examHistory={examHistory}
+    />
+  );
 }

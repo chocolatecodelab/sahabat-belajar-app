@@ -25,8 +25,9 @@ const INITIAL_MENUS = [
   { id: "menu_paket", label: "Paket & Kuota", icon: "FileCheck", url: "/dashboard/paket", parentId: null, sortOrder: 6, isActive: true, permission: "package.read" },
   { id: "menu_pembayaran", label: "Pembayaran", icon: "CreditCard", url: "/dashboard/pembayaran", parentId: null, sortOrder: 7, isActive: true, permission: "payment.read" },
   { id: "menu_honor", label: "Rekap Honor Tutor", icon: "Trophy", url: "/dashboard/honor", parentId: null, sortOrder: 8, isActive: true, permission: "payout.read" },
-  { id: "menu_media", label: "Pustaka Media", icon: "Image", url: "/dashboard/media", parentId: null, sortOrder: 9, isActive: true, permission: "media.read" },
-  { id: "menu_pengaturan", label: "Pengaturan", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 10, isActive: true, permission: "settings.read" },
+  { id: "menu_ujian", label: "Ruang Ujian & CAT", icon: "Award", url: "/dashboard/ujian", parentId: null, sortOrder: 9, isActive: true, permission: "exam.read" },
+  { id: "menu_media", label: "Pustaka Media", icon: "Image", url: "/dashboard/media", parentId: null, sortOrder: 10, isActive: true, permission: "media.read" },
+  { id: "menu_pengaturan", label: "Pengaturan", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 11, isActive: true, permission: "settings.read" },
 ];
 
 function groupMenus(menus: AdminMenuItem[]): AdminMenuItem[] {

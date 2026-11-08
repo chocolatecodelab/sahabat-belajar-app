@@ -183,10 +183,10 @@ export default function TestimoniSiswaSection({
             </div>
 
             {/* Profile Info & Mode Badge */}
-            <div className="pt-4 border-t border-[#D5DDEB] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
+            <div className="pt-4 border-t border-[#D5DDEB] space-y-3">
+              <div className="flex items-center gap-3">
                 {/* Avatar Bulat dengan Border Navy */}
-                <div className="w-11 h-11 rounded-full border-2 border-[#09408C] p-0.5 bg-white shrink-0">
+                <div className="w-11 h-11 rounded-full border-2 border-[#09408C] p-0.5 bg-white shrink-0 shadow-2xs">
                   <div
                     className={`w-full h-full rounded-full ${testi.avatarColor} text-white flex items-center justify-center font-bold text-xs font-display`}
                   >
@@ -207,13 +207,16 @@ export default function TestimoniSiswaSection({
                 </div>
               </div>
 
-              {/* Class Mode Icon / Chip */}
-              <div className="self-start sm:self-center shrink-0">
+              {/* Class Mode Icon / Chip - Stacks cleanly under profile */}
+              <div className="flex items-center justify-between pt-1">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F4F7FB] border border-[#D5DDEB] text-[11px] font-medium text-[#5B6882]">
                   {testi.modeIcon === "video" && <Video size={12} className="text-[#09408C]" />}
                   {testi.modeIcon === "home" && <Home size={12} className="text-[#1F6F4A]" />}
                   {testi.modeIcon === "users" && <Users size={12} className="text-[#295897]" />}
                   <span>{testi.classMode}</span>
+                </span>
+                <span className="text-[10px] font-semibold text-[#09408C]/60 tracking-wide uppercase">
+                  #BersamaSahabat
                 </span>
               </div>
             </div>

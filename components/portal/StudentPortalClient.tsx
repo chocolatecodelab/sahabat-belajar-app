@@ -17,17 +17,27 @@ import {
   Sparkles,
   ChevronRight,
   User,
+  Award,
+  Play,
+  RotateCcw,
+  FileText,
+  ArrowRight,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import type { StudentPortalData } from "@/actions/portal";
+import type { ExamItem, StudentExamSession } from "@/actions/ujian";
 import { formatDayDate, formatTime } from "@/lib/date";
 
 export default function StudentPortalClient({
   initialData,
+  availableExams = [],
+  examHistory = [],
 }: {
   initialData: StudentPortalData | null;
+  availableExams?: ExamItem[];
+  examHistory?: StudentExamSession[];
 }) {
-  const [activeTab, setActiveTab] = useState<"overview" | "history">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "history" | "ujian">("overview");
 
   if (!initialData) {
     return (
@@ -253,6 +263,17 @@ export default function StudentPortalClient({
             <CheckCircle2 size={16} />
             Riwayat Sesi & Catatan Guru ({pastSessions.length})
           </button>
+          <button
+            onClick={() => setActiveTab("ujian")}
+            className={`pb-3 px-3 text-sm font-heading font-semibold transition-colors border-b-2 flex items-center gap-2 ${
+              activeTab === "ujian"
+                ? "border-[#09408C] text-[#09408C]"
+                : "border-transparent text-[#5B6882] hover:text-[#1B2A41]"
+            }`}
+          >
+            <Award size={16} />
+            Ruang Ujian & CAT ({availableExams.length})
+          </button>
         </div>
 
         {/* Tab 1: Jadwal Sesi Mendatang */}
@@ -432,6 +453,167 @@ export default function StudentPortalClient({
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab 3: Ruang Ujian Online & Rapor Digital (Tahap 2 Jalur B) */}
+        {activeTab === "ujian" && (
+          <div className="space-y-6">
+            {/* Header Ruang Ujian */}
+            <div className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
+                  <Sparkles size={14} />
+                  <span>Simulasi CAT Berstandar Resmi</span>
+                </div>
+                <h3 className="text-xl font-bold text-[#09408C] font-heading">
+                  Pilih Paket Ujian & Simulasi CAT
+                </h3>
+                <p className="text-xs sm:text-sm text-[#5B6882] mt-0.5">
+                  Latih kecepatan, akurasi penalaran, dan pemahaman konsep dasar dengan timer dan passing grade otomatis.
+                </p>
+              </div>
+            </div>
+
+            {/* Grid of Available Exams */}
+            {availableExams.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-[#D5DDEB] p-8 text-center text-[#5B6882]">
+                <Award size={32} className="mx-auto mb-2 text-[#9AC1E2]" />
+                <h3 className="font-heading font-bold text-[#1B2A41] mb-1">
+                  Belum Ada Paket Ujian Aktif
+                </h3>
+                <p className="text-sm">
+                  Paket ujian tryout akan dijadwalkan oleh admin dan tutor Sahabat Belajar.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {availableExams.map((exam) => (
+                  <div
+                    key={exam.id}
+                    className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs hover:border-[#09408C] hover:shadow-md transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="px-2.5 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]/60">
+                          {exam.category.replace("_", " ")}
+                        </span>
+                        <span className="flex items-center gap-1 text-[11px] text-[#1F6F4A] font-semibold bg-[#E3F4EC] px-2 py-0.5 rounded-full">
+                          Tersedia
+                        </span>
+                      </div>
+
+                      <h4 className="font-bold text-base text-[#1B2A41] font-heading leading-snug">
+                        {exam.title}
+                      </h4>
+                      <p className="text-xs text-[#5B6882] mt-2 line-clamp-2 leading-relaxed">
+                        {exam.description || "Simulasi tryout dengan sistem penilaian otomatis."}
+                      </p>
+
+                      <div className="mt-4 pt-4 border-t border-[#D5DDEB] grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="bg-[#F4F7FB] p-2 rounded-xl">
+                          <div className="text-[10px] text-[#5B6882]">Waktu</div>
+                          <div className="font-bold text-[#09408C] mt-0.5 flex items-center justify-center gap-1">
+                            <Clock size={12} />
+                            <span>{exam.durationMinutes}m</span>
+                          </div>
+                        </div>
+
+                        <div className="bg-[#F4F7FB] p-2 rounded-xl">
+                          <div className="text-[10px] text-[#5B6882]">Passing Grade</div>
+                          <div className="font-bold text-[#1F6F4A] mt-0.5">
+                            {exam.passingGrade}
+                          </div>
+                        </div>
+
+                        <div className="bg-[#F4F7FB] p-2 rounded-xl">
+                          <div className="text-[10px] text-[#5B6882]">Soal</div>
+                          <div className="font-bold text-[#1B2A41] mt-0.5">
+                            {exam.totalQuestions} Butir
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 pt-4 border-t border-[#D5DDEB]">
+                      <Link
+                        href={`/portal/ujian/${exam.id}`}
+                        className="w-full py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-bold hover:bg-[#0E3571] transition-colors flex items-center justify-center gap-2 shadow-xs"
+                      >
+                        <Play size={14} className="fill-white" />
+                        <span>Mulai Simulasi CAT</span>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Riwayat Nilai & Rapor Digital */}
+            {examHistory.length > 0 && (
+              <div className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-base font-bold text-[#09408C] font-heading">
+                      Riwayat Tryout & Rapor Nilai Digital
+                    </h4>
+                    <p className="text-xs text-[#5B6882] mt-0.5">
+                      Hasil evaluasi pengerjaan simulasi ujian sebelumnya beserta pembahasan soal.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {examHistory.map((sess) => (
+                    <div
+                      key={sess.id}
+                      className="p-4 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#9AC1E2] transition-colors"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                              sess.isPassed
+                                ? "bg-[#E3F4EC] text-[#1F6F4A] border-[#1F6F4A]/30"
+                                : "bg-[#FBE9E5] text-[#B4381F] border-[#B4381F]/30"
+                            }`}
+                          >
+                            {sess.isPassed ? "LULUS PASSING GRADE" : "BELUM LULUS"}
+                          </span>
+                          <span className="text-xs text-[#5B6882]">
+                            {new Date(sess.submittedAt || sess.startedAt).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </div>
+                        <h5 className="font-bold text-sm text-[#1B2A41]">
+                          {sess.exam?.title || "Simulasi Ujian Digital"}
+                        </h5>
+                      </div>
+
+                      <div className="flex items-center gap-4 shrink-0">
+                        <div className="text-right">
+                          <div className="text-[10px] text-[#5B6882]">Perolehan Skor</div>
+                          <div className="text-xl font-extrabold text-[#09408C] font-heading">
+                            {sess.score}
+                          </div>
+                        </div>
+
+                        <Link
+                          href={`/portal/ujian/${sess.examId}/hasil?sessionId=${sess.id}`}
+                          className="px-3.5 py-2 rounded-xl bg-white border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors flex items-center gap-1.5 shadow-2xs"
+                        >
+                          <FileText size={14} />
+                          <span>Lihat Pembahasan</span>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
