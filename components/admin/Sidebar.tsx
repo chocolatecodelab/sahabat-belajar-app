@@ -150,12 +150,14 @@ export default function Sidebar({
             onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2.5"
           >
-            <div className="bg-white px-2.5 py-1 rounded-xl shadow-xs flex items-center justify-center">
-              <img
-                src="/uploads/images/bias_ristek-logo.png"
-                alt="BIAS RISTEK"
-                className="h-10 w-auto object-contain"
-              />
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#09408c] font-bold text-base shadow-sm">
+                SB
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-white tracking-tight leading-tight text-base font-display">Sahabat Belajar</span>
+                <span className="text-[10px] text-[#9ac1e2] tracking-wider uppercase font-semibold">Bimbingan Belajar</span>
+              </div>
             </div>
           </Link>
         ) : (
@@ -163,12 +165,8 @@ export default function Sidebar({
             href="/dashboard"
             className="flex items-center justify-center w-full"
           >
-            <div className="bg-white p-1 rounded-lg shadow-xs flex items-center justify-center">
-              <img
-                src="/uploads/images/bias_ristek-logo.png"
-                alt="BIAS RISTEK"
-                className="h-6 w-6 object-cover object-left"
-              />
+            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#09408c] font-bold text-base shadow-sm">
+              SB
             </div>
           </Link>
         )}

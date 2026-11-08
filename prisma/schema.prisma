@@ -8,7 +8,7 @@ datasource db {
 }
 
 // ============================
-// AUTHENTICATION & AUTHORIZATION
+// AUTHENTICATION & RBAC
 // ============================
 
 model User {
@@ -19,11 +19,14 @@ model User {
   avatar    String?
   roleId    String
   role      Role     @relation(fields: [roleId], references: [id])
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  articles   Article[]   @relation("ArticleAuthor")
-  pages      Page[]      @relation("PageAuthor")
+  tutor     Tutor?
+  student   Student?
+  articles  Article[]   @relation("ArticleAuthor")
+  pages     Page[]      @relation("PageAuthor")
   mediaFiles MediaFile[]
 
   @@index([roleId])
@@ -31,7 +34,7 @@ model User {
 
 model Role {
   id          String       @id @default(cuid())
-  name        String       @unique // "Super Admin", "Admin", "Editor", "Viewer"
+  name        String       @unique // "Admin", "Staf", "Tutor", "Siswa", "Orang Tua"
   description String?
   permissions Permission[]
   users       User[]
@@ -41,8 +44,8 @@ model Role {
 
 model Permission {
   id     String @id @default(cuid())
-  name   String @unique // e.g., "page.create", "article.delete"
-  module String // e.g., "page", "article", "category"
+  name   String @unique // e.g., "lead.manage", "session.create"
+  module String // e.g., "lead", "student", "tutor", "schedule"
   action String // e.g., "create", "read", "update", "delete"
   roles  Role[]
 
@@ -50,184 +53,308 @@ model Permission {
 }
 
 // ============================
-// CONTENT MANAGEMENT
+// SAHABAT BELAJAR: LEADS & STUDENTS (MODUL A & B)
 // ============================
 
-model Page {
+model Lead {
   id              String     @id @default(cuid())
-  title           String
-  slug            String     @unique
-  content         String     @db.Text // HTML content from TinyMCE
-  excerpt         String?    @db.Text
-  featuredImage   String?
-  status          PageStatus @default(DRAFT)
-  sortOrder       Int        @default(0)
-  authorId        String
-  author          User       @relation("PageAuthor", fields: [authorId], references: [id])
-  metaTitle       String?
-  metaDescription String?    @db.Text
-  navigations     Navigation[]
+  name            String
+  phone           String     // Format internasional E.164 atau lokal
+  email           String?
+  programInterest String?    // K12, CPNS_BUMN, S2_S3_BEASISWA, TOEFL_IELTS, PENULISAN_ILMIAH
+  level           String?    // SD, SMP, SMA, Kuliah, Umum
+  classModel      String?    // PRIVAT, SEMI_PRIVAT
+  learningMode    String?    // ONLINE, HOME_VISIT
+  source          String     @default("WEBSITE") // WEBSITE, WHATSAPP, INSTAGRAM
+  status          LeadStatus @default(BARU)
+  notes           String?    @db.Text
+  assignedTo      String?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
-  @@index([authorId])
+  students        Student[]
+
   @@index([status])
+  @@index([phone])
+  @@index([createdAt])
 }
 
-enum PageStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
+enum LeadStatus {
+  BARU
+  DIHUBUNGI
+  IKUT_PLACEMENT
+  DAFTAR
+  BATAL
 }
 
-model Article {
-  id              String        @id @default(cuid())
-  title           String
-  slug            String        @unique
-  content         String        @db.Text // HTML content from TinyMCE
-  excerpt         String?       @db.Text
-  featuredImage   String?       // Cover image / Gambar sampul
-  status          ArticleStatus @default(DRAFT)
-  publishedAt     DateTime?
-  authorId        String
-  author          User          @relation("ArticleAuthor", fields: [authorId], references: [id])
-  categoryId      String?
-  category        Category?     @relation(fields: [categoryId], references: [id])
-  tags            Tag[]
-  viewCount       Int           @default(0)
-  metaTitle       String?
-  metaDescription String?       @db.Text
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+model Student {
+  id              String          @id @default(cuid())
+  userId          String?         @unique
+  user            User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  leadId          String?
+  lead            Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  name            String
+  level           String          // SD, SMP, SMA, Kuliah, Umum
+  school          String?         // Sekolah / Universitas / Instansi
+  parentName      String?
+  parentPhone     String?         // Nomor kontak orang tua
+  parentConsentAt DateTime?       // BR-8: Persetujuan orang tua untuk siswa anak
+  status          StudentStatus   @default(AKTIF)
+  notes           String?         @db.Text
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
-  @@index([authorId])
-  @@index([categoryId])
+  packages        StudentPackage[]
+  participations  SessionParticipant[]
+
   @@index([status])
-  @@index([publishedAt])
+  @@index([name])
 }
 
-enum ArticleStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
-}
-
-model Category {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  slug        String    @unique
-  description String?   @db.Text
-  color       String?   // Hex color for category badge
-  articles    Article[]
-  navigations Navigation[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
-
-model Tag {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  slug     String    @unique
-  articles Article[]
+enum StudentStatus {
+  AKTIF
+  NONAKTIF
+  LULUS
+  CUTI
 }
 
 // ============================
-// NAVIGATION
+// SAHABAT BELAJAR: TUTORS (MODUL B & E)
 // ============================
 
-model Navigation {
-  id           String       @id @default(cuid())
-  label        String
-  type         NavType      // LINK, PAGE, CATEGORY, EXTERNAL
-  url          String?      // for EXTERNAL type
-  pageId       String?
-  page         Page?        @relation(fields: [pageId], references: [id], onDelete: SetNull)
-  categoryId   String?
-  category     Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  parentId     String?
-  parent       Navigation?  @relation("NavigationTree", fields: [parentId], references: [id], onDelete: SetNull)
-  children     Navigation[] @relation("NavigationTree")
-  sortOrder    Int          @default(0)
-  location     NavLocation  @default(HEADER)
-  isActive     Boolean      @default(true)
-  openInNewTab Boolean      @default(false)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+model Tutor {
+  id             String        @id @default(cuid())
+  userId         String?       @unique
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name           String
+  phone          String        // WhatsApp
+  email          String?
+  expertise      String[]      // Keahlian ["Matematika", "Bahasa Inggris", "TKP/TIU"]
+  ratePerSession Int           @default(100000) // BR-7: Rahasia honor per sesi
+  status         TutorStatus   @default(AKTIF)
+  bio            String?       @db.Text
+  avatar         String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
-  @@index([parentId])
-  @@index([location])
+  sessions       Session[]
+  payouts        TutorPayout[]
+
+  @@index([status])
+  @@index([phone])
 }
 
-enum NavType {
-  LINK
-  PAGE
-  CATEGORY
-  EXTERNAL
-}
-
-enum NavLocation {
-  HEADER
-  FOOTER
+enum TutorStatus {
+  AKTIF
+  NONAKTIF
+  CUTI
 }
 
 // ============================
-// LANDING PAGE APPEARANCE
+// SAHABAT BELAJAR: PROGRAMS & PACKAGES (MODUL B & D)
 // ============================
 
-model HeroSlide {
-  id              String   @id @default(cuid())
-  title           String
-  subtitle        String?  @db.Text
-  backgroundImage String
-  ctaText         String?
-  ctaLink         String?
-  sortOrder       Int      @default(0)
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-model Service {
+model Program {
   id          String   @id @default(cuid())
-  title       String
-  description String   @db.Text
-  icon        String   // Lucide icon name
-  link        String?
+  name        String   // e.g. "Bimbel K-12", "Persiapan CPNS/BUMN", "TOEFL Prep"
+  category    String   // K12, CPNS_BUMN, S2_S3_BEASISWA, TOEFL_IELTS, PENULISAN_ILMIAH
+  description String?  @db.Text
   sortOrder   Int      @default(0)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  packages    Package[]
+  sessions    Session[]
+
+  @@index([category])
+  @@index([isActive])
 }
 
-model SocialMedia {
+model Package {
+  id             String      @id @default(cuid())
+  programId      String?
+  program        Program?    @relation(fields: [programId], references: [id], onDelete: SetNull)
+  name           String      // "Paket 10 Pertemuan Privat", "Paket Semester 6 Bulan"
+  type           PackageType @default(QUOTA)
+  durationMonths Int?        // Jika paket berbasis waktu
+  quotaSessions  Int?        // Jika paket berbasis kuota
+  sessionMinutes Int         @default(90) // BR-5: Durasi default 90 menit per sesi
+  price          Int         @default(0)
+  isActive       Boolean     @default(true)
+  sortOrder      Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  studentPackages StudentPackage[]
+
+  @@index([type])
+  @@index([isActive])
+}
+
+enum PackageType {
+  CUSTOM
+  TIME
+  QUOTA
+}
+
+model StudentPackage {
+  id             String               @id @default(cuid())
+  studentId      String
+  student        Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  packageId      String
+  package        Package              @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  quotaTotal     Int                  @default(0)
+  quotaUsed      Int                  @default(0)
+  startDate      DateTime             @default(now())
+  endDate        DateTime?
+  status         StudentPackageStatus @default(AKTIF)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  payments       Payment[]
+  participations SessionParticipant[]
+
+  @@index([studentId])
+  @@index([packageId])
+  @@index([status])
+}
+
+enum StudentPackageStatus {
+  AKTIF
+  HAMPIR_HABIS
+  HABIS
+  KEDALUWARSA
+}
+
+model Payment {
+  id               String         @id @default(cuid())
+  studentPackageId String
+  studentPackage   StudentPackage @relation(fields: [studentPackageId], references: [id], onDelete: Cascade)
+  amount           Int
+  paidAt           DateTime       @default(now())
+  method           String         @default("TRANSFER_BANK") // TRANSFER_BANK, QRIS, CASH
+  proofFile        String?        // Bukti transfer
+  status           PaymentStatus  @default(LUNAS)
+  notes            String?        @db.Text
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([studentPackageId])
+  @@index([status])
+  @@index([paidAt])
+}
+
+enum PaymentStatus {
+  LUNAS
+  SEBAGIAN
+  BELUM
+}
+
+// ============================
+// SAHABAT BELAJAR: SESSIONS & SCHEDULING (MODUL C)
+// ============================
+
+model Session {
+  id           String        @id @default(cuid())
+  tutorId      String
+  tutor        Tutor         @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  programId    String
+  program      Program       @relation(fields: [programId], references: [id], onDelete: Cascade)
+  classType    String        @default("PRIVAT") // PRIVAT, SEMI_PRIVAT
+  mode         String        @default("ONLINE") // ONLINE, HOME_VISIT
+  startAt      DateTime
+  endAt        DateTime
+  meetingLink  String?       // Zoom / Google Meet
+  address      String?       @db.Text // Alamat jika Home Visit
+  status       SessionStatus @default(TERJADWAL)
+  recurrenceId String?       // ID grup jadwal mingguan berulang
+  cancelReason String?       @db.Text
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  participants SessionParticipant[]
+  journal      SessionJournal?
+
+  @@index([tutorId])
+  @@index([programId])
+  @@index([startAt])
+  @@index([status])
+}
+
+enum SessionStatus {
+  TERJADWAL
+  TERLAKSANA
+  DIJADWAL_ULANG
+  DIBATALKAN
+}
+
+model SessionParticipant {
+  id               String           @id @default(cuid())
+  sessionId        String
+  session          Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId        String
+  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentPackageId String?
+  studentPackage   StudentPackage?  @relation(fields: [studentPackageId], references: [id], onDelete: SetNull)
+  attendance       AttendanceStatus @default(HADIR)
+  quotaDeducted    Boolean          @default(false) // BR-1: Dihitung saat TERLAKSANA
+  createdAt        DateTime         @default(now())
+
+  @@unique([sessionId, studentId])
+  @@index([sessionId])
+  @@index([studentId])
+}
+
+enum AttendanceStatus {
+  HADIR
+  IZIN
+  ALPA
+}
+
+model SessionJournal {
   id        String   @id @default(cuid())
-  platform  String   // "instagram", "facebook", "twitter", "youtube"
-  username  String
-  url       String
-  embedCode String?  @db.Text // For Instagram embed
-  isActive  Boolean  @default(true)
-  sortOrder Int      @default(0)
+  sessionId String   @unique
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  topic     String   // Materi yang dipelajari
+  notes     String?  @db.Text // Catatan perkembangan siswa
+  homework  String?  @db.Text // Tugas rumah
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model SiteSettings {
-  id              String   @id @default(cuid())
-  siteName        String   @default("BIAS RISTEK")
-  siteDescription String?  @db.Text
-  logo            String?
-  favicon         String?
-  contactEmail    String?
-  contactPhone    String?
-  address         String?  @db.Text
-  newsPerPage     Int      @default(6)
-  heroEnabled     Boolean  @default(true)
-  serviceEnabled  Boolean  @default(true)
-  newsEnabled     Boolean  @default(true)
-  socialEnabled   Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+// ============================
+// SAHABAT BELAJAR: TUTOR PAYOUTS (MODUL E)
+// ============================
+
+model TutorPayout {
+  id            String       @id @default(cuid())
+  tutorId       String
+  tutor         Tutor        @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  periodStart   DateTime
+  periodEnd     DateTime
+  totalSessions Int          @default(0)
+  totalAmount   Int          @default(0) // BR-6: Sesi terlaksana * tarif tutor
+  status        PayoutStatus @default(DRAFT)
+  paidAt        DateTime?
+  notes         String?      @db.Text
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([tutorId])
+  @@index([status])
+  @@index([periodStart, periodEnd])
 }
+
+enum PayoutStatus {
+  DRAFT
+  DISETUJUI
+  DIBAYAR
+}
+
+// ============================
+// TEMPLATE: CMS & ADMIN SHELL
+// ============================
 
 model AdminMenu {
   id         String      @id @default(cuid())
@@ -239,545 +366,84 @@ model AdminMenu {
   children   AdminMenu[] @relation("AdminMenuTree")
   sortOrder  Int         @default(0)
   isActive   Boolean     @default(true)
-  permission String?     // Required permission to see this menu
+  permission String?
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
   @@index([parentId])
 }
 
-model StatCounter {
-  id        String   @id @default(cuid())
-  value     String   // e.g. "2.500+", "180+", "98%"
-  label     String   // e.g. "Alumni Peneliti", "Artikel Scopus & SINTA"
-  icon      String?  // Lucide icon name
-  sortOrder Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model LearningStep {
-  id          String   @id @default(cuid())
-  stepNumber  Int      // 1, 2, 3, 4
-  title       String
-  description String   @db.Text
-  icon        String?  // Lucide icon name
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Advantage {
-  id          String   @id @default(cuid())
-  title       String
-  description String   @db.Text
-  icon        String   // Lucide icon name
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Testimonial {
-  id          String   @id @default(cuid())
-  name        String
-  role        String   // e.g. "Mahasiswa S2 / Peneliti", "Dosen Universitas X"
-  institution String?  // e.g. "Universitas Lambung Mangkurat"
-  content     String   @db.Text
-  avatar      String?  // Image URL
-  rating      Int      @default(5)
-  achievement String?  // e.g. "Tembus Scopus Q2", "Lulus Tesis Nilai A"
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Faq {
-  id        String   @id @default(cuid())
-  question  String
-  answer    String   @db.Text
-  category  String?  // e.g. "Pendaftaran", "Bimbingan", "Sertifikat"
-  sortOrder Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// ============================
-// MEDIA & ASSET MANAGEMENT
-// ============================
-
 model MediaFile {
   id           String   @id @default(cuid())
-  filename     String   // Sanitized filename on disk
-  originalName String   // Original upload name
-  url          String   // Public URL e.g. "/uploads/covers/xxx.webp"
-  mimeType     String   // e.g. "image/webp", "image/png", "application/pdf"
-  size         Int      // Size in bytes
-  folder       String   @default("general") // "covers", "pages", "general", "avatars", "documents"
+  filename     String
+  originalName String
+  url          String
+  mimeType     String
+  size         Int
+  folder       String   @default("general")
   uploadedById String?
   uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@index([folder])
-  @@index([mimeType])
   @@index([uploadedById])
-  @@index([createdAt])
 }
 
-// ============================
-// ACADEMIC COURSE & ENROLLMENT
-// ============================
+model SiteSettings {
+  id              String   @id @default(cuid())
+  siteName        String   @default("Sahabat Belajar")
+  siteDescription String?  @db.Text
+  logo            String?
+  favicon         String?
+  contactEmail    String?
+  contactPhone    String?
+  address         String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
 
-model Course {
-  id              String         @id @default(cuid())
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String   @db.Text
+  category  String?  // "Pendaftaran", "Program & Paket", "Jadwal & Tutor"
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Page {
+  id              String     @id @default(cuid())
   title           String
-  slug            String         @unique
-  tagline         String?        // e.g. "Panduan Tembus Scopus Q1/Q2 Dari Nol"
-  description     String         @db.Text // Full overview HTML
-  category        String         // "Scopus & SINTA", "SmartPLS & SEM", "SPSS & Statistik", "Bimbingan Tesis", "Metodologi"
-  price           Int            @default(0) // Normal price in IDR
-  salePrice       Int?           // Discounted promo price
-  isFree          Boolean        @default(false)
-  level           String         @default("Semua Jenjang") // "Pemula", "Menengah", "Lanjutan", "Semua Jenjang"
-  deliveryMode    String         @default("Live Zoom & Mentorship") // "Live Zoom", "1-on-1 Mentorship", "Video On-Demand"
-  batchNumber     String?        // e.g. "Batch 14"
-  startDate       String?        // e.g. "15 September 2026"
-  duration        String?        // e.g. "4 Minggu (8 Sesi Bimbingan)"
-  maxQuota        Int            @default(30)
-  currentEnrolled Int            @default(0)
-  featuredImage   String?        // Cover image URL
-  mentorName      String         @default("Dr. Ir. Tim Pakar Riset")
-  mentorTitle     String         @default("Senior Researcher & Reviewer Scopus Q1")
-  mentorAvatar    String?
-  curriculum      String?        @db.Text // JSON or bullet points of syllabus
-  benefits        String?        @db.Text // JSON or bullet points of features (E-Sertifikat, Rekaman, Template Olah Data)
-  status          CourseStatus   @default(OPEN)
-  sortOrder       Int            @default(0)
-  isActive        Boolean        @default(true)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  slug            String     @unique
+  content         String     @db.Text
+  excerpt         String?    @db.Text
+  featuredImage   String?
+  status          String     @default("PUBLISHED")
+  authorId        String
+  author          User       @relation("PageAuthor", fields: [authorId], references: [id])
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
-  registrations   CourseRegistration[]
-  modules         CourseModule[]
-  enrollments     CourseEnrollment[]
-
-  @@index([category])
-  @@index([status])
-  @@index([isActive])
+  @@index([authorId])
+  @@index([slug])
 }
 
-enum CourseStatus {
-  OPEN
-  UPCOMING
-  FULL
-  CLOSED
-}
+model Article {
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  content         String    @db.Text
+  excerpt         String?   @db.Text
+  featuredImage   String?
+  status          String    @default("PUBLISHED")
+  authorId        String
+  author          User      @relation("ArticleAuthor", fields: [authorId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-model CourseRegistration {
-  id             String             @id @default(cuid())
-  invoiceNumber  String             @unique // e.g. "INV-202608-001"
-  courseId       String
-  course         Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseTitle    String
-  name           String             // Full name for Certificate
-  email          String
-  phone          String             // WhatsApp number
-  institution    String             // University / Research Institution
-  educationLevel String             // "S1 (Skripsi)", "S2 (Tesis)", "S3 (Disertasi)", "Dosen / Peneliti", "Umum"
-  researchTopic  String?            @db.Text // Topic / research obstacles
-  totalAmount    Int                @default(0)
-  uniqueCode     Int                @default(0) // 3-digit verification code (e.g. 347)
-  paymentMethod  String             @default("QRIS") // "QRIS", "BANK_TRANSFER", "FREE"
-  bankName       String?            // "BCA", "Mandiri", "BSI", etc.
-  paymentProof   String?            // Image receipt URL
-  status         EnrollmentStatus   @default(PENDING_PAYMENT)
-  adminNotes     String?            @db.Text // Internal follow-up notes
-  verifiedAt     DateTime?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-
-  @@index([courseId])
-  @@index([status])
-  @@index([createdAt])
-}
-
-enum EnrollmentStatus {
-  PENDING_PAYMENT    // Belum Melakukan Pembayaran
-  PAYMENT_UPLOADED   // Bukti Transfer Diunggah (Menunggu Verifikasi)
-  VERIFIED           // Lunas & Resmi Terdaftar
-  REJECTED           // Bukti Tidak Valid / Ditolak
-  CANCELLED          // Dibatalkan
-}
-
-model PaymentAccount {
-  id            String   @id @default(cuid())
-  type          String   @default("BANK") // "BANK" or "QRIS"
-  bankName      String   // "BCA", "Bank Mandiri", "BSI", "QRIS Official"
-  accountNumber String?  // "1234567890" (or null if QRIS)
-  accountHolder String?  // "BIAS RISTEK AKADEMIK"
-  qrisImage     String?  // Image barcode URL
-  instructions  String?  @db.Text // Transfer instructions
-  isActive      Boolean  @default(true)
-  sortOrder     Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-// ==========================================
-// 6. STUDENT LMS & RESEARCH WORKSPACE MODELS
-// ==========================================
-
-model CourseModule {
-  id          String         @id @default(cuid())
-  courseId    String
-  course      Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  title       String
-  description String?        @db.Text
-  sortOrder   Int            @default(0)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  lessons     CourseLesson[]
-
-  @@index([courseId])
-  @@index([sortOrder])
-}
-
-model CourseLesson {
-  id            String         @id @default(cuid())
-  moduleId      String
-  module        CourseModule   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  title         String
-  description   String?        @db.Text
-  videoUrl      String?        // Zoom recording / YouTube / Drive link
-  pdfSlideUrl   String?        // Presentation handout URL
-  datasetUrl    String?        // Exercise files (Excel, SmartPLS project)
-  attachments   Json?          // Dynamic multi-file attachments [{ title, url, type, size }]
-  durationMin   Int            @default(90) // Estimated duration in minutes
-  isFreePreview Boolean        @default(false)
-  sortOrder     Int            @default(0)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-
-  progress      LessonProgress[]
-  submissions   StudentSubmission[]
-
-  @@index([moduleId])
-  @@index([sortOrder])
-}
-
-model CourseEnrollment {
-  id                 String              @id @default(cuid())
-  userId             String?             // Linked User if authenticated
-  userEmail          String              // Linked student email
-  userName           String              // Student full name
-  courseId           String
-  course             Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  registrationId     String?             // Linked transaction
-  status             String              @default("ACTIVE") // ACTIVE, COMPLETED, EXPIRED
-  progressPercentage Int                 @default(0)
-  enrolledAt         DateTime            @default(now())
-  completedAt        DateTime?
-  updatedAt          DateTime            @updatedAt
-
-  progress           LessonProgress[]
-  submissions        StudentSubmission[]
-  certificates       Certificate[]
-
-  @@index([userEmail])
-  @@index([courseId])
-  @@index([status])
-}
-
-model LessonProgress {
-  id           String           @id @default(cuid())
-  enrollmentId String
-  enrollment   CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  lessonId     String
-  lesson       CourseLesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  isCompleted  Boolean          @default(true)
-  completedAt  DateTime         @default(now())
-
-  @@unique([enrollmentId, lessonId])
-  @@index([enrollmentId])
-  @@index([lessonId])
-}
-
-model StudentSubmission {
-  id             String           @id @default(cuid())
-  enrollmentId   String
-  enrollment     CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  lessonId       String?
-  lesson         CourseLesson?    @relation(fields: [lessonId], references: [id], onDelete: SetNull)
-  title          String           // "Draf Bab 1-3 Skripsi" or "Naskah Artikel Scopus"
-  fileUrl        String           // PDF or DOCX file link
-  studentNotes   String?          @db.Text
-  mentorFeedback String?          @db.Text
-  score          Int?             // 0 - 100
-  status         String           @default("SUBMITTED") // SUBMITTED, REVIEWED, REVISION_NEEDED, APPROVED
-  submittedAt    DateTime         @default(now())
-  reviewedAt     DateTime?
-  updatedAt      DateTime         @updatedAt
-
-  @@index([enrollmentId])
-  @@index([status])
-}
-
-model Certificate {
-  id              String           @id @default(cuid())
-  certificateCode String           @unique // "BIAS-2026-SCP-0192"
-  enrollmentId    String
-  enrollment      CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  recipientName   String
-  courseTitle     String
-  totalHours      String           @default("32 JP")
-  credentialUrl   String?
-  issuedAt        DateTime         @default(now())
-
-  @@index([certificateCode])
-  @@index([enrollmentId])
-}
-
-// ==========================================
-// 7. OMNICHANNEL NOTIFICATIONS (WHATSAPP & EMAIL)
-// ==========================================
-
-model NotificationSettings {
-  id                            String   @id @default("global_notification_settings")
-  // WhatsApp Gateway
-  whatsappProvider              String   @default("SIMULATED") // "FONNTE", "WABLAS", "CUSTOM", "SIMULATED"
-  whatsappApiToken              String?  @db.Text
-  whatsappEndpointUrl           String?  // Custom gateway / self-hosted endpoint
-  whatsappSenderNumber          String?  // e.g. "08123456789"
-  whatsappAdminNumber           String?  // Admin WhatsApp to receive new order/submission alerts
-
-  // Email Gateway
-  emailProvider                 String   @default("SIMULATED") // "SMTP", "RESEND", "SIMULATED", "DISABLED"
-  emailSmtpHost                 String?
-  emailSmtpPort                 Int      @default(587)
-  emailSmtpSecure               Boolean  @default(false)
-  emailSmtpUser                 String?
-  emailSmtpPass                 String?
-  emailResendApiKey             String?  @db.Text
-  emailSenderName               String   @default("BIAS RISTEK Akademik")
-  emailSenderAddress            String   @default("no-reply@biasristek.id")
-
-  // Event Toggles
-  waEnabled_invoiceCreated      Boolean  @default(true)
-  waEnabled_paymentVerified     Boolean  @default(true)
-  waEnabled_submissionReviewed  Boolean  @default(true)
-  waEnabled_certificateIssued   Boolean  @default(true)
-
-  emailEnabled_invoiceCreated     Boolean  @default(true)
-  emailEnabled_paymentVerified    Boolean  @default(true)
-  emailEnabled_submissionReviewed Boolean  @default(true)
-  emailEnabled_certificateIssued  Boolean  @default(true)
-
-  // Customizable Message Templates
-  template_wa_invoiceCreated      String?  @db.Text
-  template_wa_paymentVerified     String?  @db.Text
-  template_wa_submissionReviewed  String?  @db.Text
-  template_wa_certificateIssued   String?  @db.Text
-
-  template_email_invoiceCreated      String?  @db.Text
-  template_email_paymentVerified     String?  @db.Text
-  template_email_submissionReviewed  String?  @db.Text
-  template_email_certificateIssued   String?  @db.Text
-
-  updatedAt                     DateTime @default(now()) @updatedAt
-}
-
-model NotificationLog {
-  id            String   @id @default(cuid())
-  channel       String   // "WHATSAPP" | "EMAIL"
-  recipient     String   // Phone or Email address
-  recipientName String?  // Student / recipient name
-  event         String   // "INVOICE_CREATED", "PAYMENT_VERIFIED", "SUBMISSION_REVIEWED", "CERTIFICATE_ISSUED", "TEST_MESSAGE"
-  subject       String?  // Subject title
-  message       String   @db.Text // Full message content sent
-  status        String   @default("SENT") // "SENT", "FAILED", "SIMULATED"
-  errorMessage  String?  @db.Text
-  sentAt        DateTime @default(now())
-
-  @@index([channel])
-  @@index([event])
-  @@index([status])
-  @@index([sentAt])
-}
-
-// ==========================================
-// 8. TUTOR DIRECTORY & MENTORSHIP DISPATCHING (PHASE #4)
-// ==========================================
-
-model TutorProfile {
-  id                String   @id @default(cuid())
-  userId            String?  @unique
-  fullName          String
-  whatsappNumber    String
-  email             String?
-  academicTitle     String   // e.g. "Dr. techn. Ir., S.T., M.T.", "Prof. Dr., M.Sc."
-  institution       String   // e.g. "Institut Teknologi Bandung"
-  specializations   String[] // ["SmartPLS", "Bibliometrik", "Scopus Teknik Mesin"]
-  scopusId          String?
-  hIndex            Int      @default(0)
-  maxActiveStudents Int      @default(5)
-  currentActive     Int      @default(0)
-  isActive          Boolean  @default(true)
-  rating            Float    @default(5.0)
-  avatar            String?
-  bio               String?  @db.Text
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  availabilities    TutorAvailability[]
-  bookings          MentorshipBooking[]
-  evaluations       SessionEvaluation[]
-
-  @@index([whatsappNumber])
-  @@index([isActive])
-}
-
-model TutorAvailability {
-  id        String       @id @default(cuid())
-  tutorId   String
-  tutor     TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
-  dayOfWeek String       // "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU", "MINGGU"
-  timeStart String       // "19:30"
-  timeEnd   String       // "21:00"
-  isBooked  Boolean      @default(false)
-  createdAt DateTime     @default(now())
-
-  @@index([tutorId, dayOfWeek])
-}
-
-model MentorshipBooking {
-  id                String              @id @default(cuid())
-  registrationId    String?
-  studentName       String
-  studentWhatsapp   String
-  studentEmail      String?
-  tutorId           String
-  tutor             TutorProfile        @relation(fields: [tutorId], references: [id], onDelete: Cascade)
-  researchTopic     String              @db.Text
-  researchSoftware  String?
-  scheduledDate     DateTime
-  timeSlot          String              // "19:30 - 21:00 WIB"
-  zoomJoinUrl       String?
-  zoomHostUrl       String?
-  status            BookingStatus       @default(PENDING_TUTOR_CONFIRMATION)
-  confirmationToken String              @unique // Magic Token for 1-Click WhatsApp Confirmation
-  tutorNotes        String?             @db.Text
-  confirmedAt       DateTime?
-  completedAt       DateTime?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-
-  evaluations       SessionEvaluation[]
-
-  @@index([tutorId])
-  @@index([status])
-  @@index([confirmationToken])
-}
-
-enum BookingStatus {
-  DRAFT_MATCHING
-  PENDING_TUTOR_CONFIRMATION
-  CONFIRMED
-  DECLINED_BY_TUTOR
-  COMPLETED
-  RESCHEDULED
-}
-
-// ==========================================
-// 9. EVALUASI SESI & RAPOR BULANAN (PHASE #6)
-// ==========================================
-
-model SessionEvaluation {
-  id                  String            @id @default(cuid())
-  bookingId           String
-  booking             MentorshipBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  tutorId             String
-  tutor               TutorProfile      @relation(fields: [tutorId], references: [id], onDelete: Cascade)
-  studentEmail        String
-  studentName         String
-  sessionNumber       Int               @default(1)
-  currentChapter      String            // e.g. "Bab 3: Metodologi Penelitian"
-  topicDiscussed      String            @db.Text
-  methodologyScore    Int               @default(80) // 0 - 100
-  writingScore        Int               @default(80) // 0 - 100
-  dataProcessingScore Int               @default(80) // 0 - 100
-  attendanceStatus    String            @default("ATTENDED") // "ATTENDED", "RESCHEDULED", "ABSENT"
-  actionItems         String            @db.Text
-  tutorFeedback       String            @db.Text
-  createdAt           DateTime          @default(now())
-
-  @@index([bookingId])
-  @@index([tutorId])
-  @@index([studentEmail])
-}
-
-model MonthlyProgressReport {
-  id                  String   @id @default(cuid())
-  reportNumber        String   @unique // "RAPOR-202610-0192"
-  enrollmentId        String?
-  bookingId           String?
-  studentName         String
-  studentEmail        String
-  courseTitle         String
-  tutorName           String
-  periodMonth         Int      // 1 - 12
-  periodYear          Int      // 2026
-  averageScore        Float
-  methodologyScore    Float
-  writingScore        Float
-  dataProcessingScore Float
-  progressStatus      String   @default("ON_TRACK") // "EXCELLENT", "ON_TRACK", "NEEDS_IMPROVEMENT"
-  summary             String   @db.Text
-  recommendations     String   @db.Text
-  totalSessions       Int      @default(1)
-  pdfReportUrl        String?
-  sentToStudent       Boolean  @default(false)
-  sentAt              DateTime?
-  createdAt           DateTime @default(now())
-
-  @@index([studentEmail])
-  @@index([reportNumber])
-  @@index([periodYear, periodMonth])
-}
-
-// ==========================================
-// FASE 7: SUPPORT TICKET & HUMAN HANDOFF
-// ==========================================
-
-model SupportTicket {
-  id                String    @id @default(cuid())
-  ticketNumber      String    @unique // "TIKET-YYYYMM-XXXX"
-  customerName      String
-  customerPhone     String    // E.164, e.g. "628xxx"
-  customerEmail     String?
-  source            String    @default("WHATSAPP") // "WHATSAPP", "WEB_CHAT"
-  category          String    @default("KONSULTASI_RISET") // "KONSULTASI_RISET", "PENDAFTARAN", "PEMBAYARAN", "KOMPLAIN", "LAINNYA"
-  triggerReason     String    // "KEYWORD_TRIGGER", "COMPLEX_RESEARCH_TOPIC", "NEGATIVE_SENTIMENT", "MANUAL_REQUEST"
-  summary           String    @db.Text
-  lastUserMessage   String    @db.Text
-  conversationLog   String?   @db.Text // JSON string array of conversation
-  status            String    @default("WAITING_ADMIN") // "WAITING_ADMIN", "IN_PROGRESS", "RESOLVED", "CLOSED"
-  aiHandled         Boolean   @default(true)
-  handoffActive     Boolean   @default(true) // When true, AI auto-reply is silenced for this contact
-  assignedAdminName String?
-  adminNotes        String?   @db.Text
-  resolvedAt        DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-
-  @@index([customerPhone])
-  @@index([ticketNumber])
-  @@index([status])
-  @@index([handoffActive])
-  @@index([createdAt])
+  @@index([authorId])
+  @@index([slug])
 }

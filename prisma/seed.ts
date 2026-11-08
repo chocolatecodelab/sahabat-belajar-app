@@ -4,27 +4,31 @@ import { hash } from "bcryptjs";
 const prisma = new PrismaClient();
 
 const PERMISSION_MODULES = [
+  "dashboard",
+  "lead",
+  "student",
+  "tutor",
+  "schedule",
+  "package",
+  "payment",
+  "payout",
+  "media",
   "page",
-  "article",
-  "category",
-  "navigation",
-  "appearance",
   "user",
   "role",
+  "menu",
   "settings",
 ];
-const PERMISSION_ACTIONS = ["create", "read", "update", "delete"];
+const PERMISSION_ACTIONS = ["create", "read", "update", "delete", "manage"];
 
 async function main() {
-  console.log("🌱 Seeding database...");
+  console.log("🌱 Seeding Sahabat Belajar database...");
 
-  // 1. Create all permissions
+  // 1. Create permissions
   console.log("  Creating permissions...");
   const permissions: { id: string; name: string }[] = [];
   for (const mod of PERMISSION_MODULES) {
-    const actions =
-      mod === "settings" ? ["read", "update"] : PERMISSION_ACTIONS;
-    for (const action of actions) {
+    for (const action of PERMISSION_ACTIONS) {
       const perm = await prisma.permission.upsert({
         where: { name: `${mod}.${action}` },
         update: {},
@@ -41,110 +45,166 @@ async function main() {
 
   // 2. Create roles
   console.log("  Creating roles...");
-
   const allPerms = permissions.map((p) => ({ id: p.id }));
-  const adminPerms = permissions
-    .filter((p) => !p.name.startsWith("role."))
-    .map((p) => ({ id: p.id }));
-  const editorPerms = permissions
-    .filter((p) =>
-      ["page", "article", "category"].some((m) => p.name.startsWith(`${m}.`))
-    )
-    .map((p) => ({ id: p.id }));
-  const viewerPerms = permissions
-    .filter((p) => p.name.endsWith(".read"))
+  const staffPerms = permissions
+    .filter((p) => !p.name.startsWith("payout.") && !p.name.startsWith("role."))
     .map((p) => ({ id: p.id }));
 
-  const superAdmin = await prisma.role.upsert({
-    where: { name: "Super Admin" },
+  const adminRole = await prisma.role.upsert({
+    where: { name: "Admin" },
     update: { permissions: { set: allPerms } },
     create: {
-      name: "Super Admin",
-      description: "Akses penuh ke semua fitur",
+      name: "Admin",
+      description: "Akses penuh operasional, penjadwalan, kuota, dan laporan keuangan",
       permissions: { connect: allPerms },
     },
   });
 
   await prisma.role.upsert({
-    where: { name: "Admin" },
-    update: { permissions: { set: adminPerms } },
+    where: { name: "Staf" },
+    update: { permissions: { set: staffPerms } },
     create: {
-      name: "Admin",
-      description: "Akses semua fitur kecuali kelola role & permission",
-      permissions: { connect: adminPerms },
+      name: "Staf",
+      description: "Mengelola pendaftaran, siswa, jadwal, dan pembayaran (tanpa tarif honor)",
+      permissions: { connect: staffPerms },
     },
   });
 
   await prisma.role.upsert({
-    where: { name: "Editor" },
-    update: { permissions: { set: editorPerms } },
+    where: { name: "Tutor" },
+    update: {},
     create: {
-      name: "Editor",
-      description: "Hanya CRUD konten (halaman, berita, kategori)",
-      permissions: { connect: editorPerms },
+      name: "Tutor",
+      description: "Melihat jadwal bimbingan, mengisi absensi dan jurnal, melihat honor pribadi",
     },
   });
 
   await prisma.role.upsert({
-    where: { name: "Viewer" },
-    update: { permissions: { set: viewerPerms } },
+    where: { name: "Siswa" },
+    update: {},
     create: {
-      name: "Viewer",
-      description: "Hanya baca semua konten",
-      permissions: { connect: viewerPerms },
+      name: "Siswa",
+      description: "Melihat jadwal belajar, sisa kuota, dan hasil evaluasi",
     },
   });
-  console.log("  ✅ 4 roles created");
+
+  await prisma.role.upsert({
+    where: { name: "Orang Tua" },
+    update: {},
+    create: {
+      name: "Orang Tua",
+      description: "Memantau perkembangan belajar, kehadiran, dan sisa kuota anak",
+    },
+  });
+  console.log("  ✅ Roles created");
 
   // 3. Create default admin user
   console.log("  Creating admin user...");
   const hashedPassword = await hash("password123", 12);
 
   await prisma.user.upsert({
-    where: { email: "admin@biasristek.id" },
+    where: { email: "admin@sahabatbelajar.id" },
     update: {},
     create: {
-      name: "Super Admin",
-      email: "admin@biasristek.id",
+      name: "Admin Sahabat Belajar",
+      email: "admin@sahabatbelajar.id",
       password: hashedPassword,
-      roleId: superAdmin.id,
+      roleId: adminRole.id,
     },
   });
-  console.log("  ✅ Admin user created (admin@biasristek.id / password123)");
+  console.log("  ✅ Admin user created (admin@sahabatbelajar.id / password123)");
 
-  // 4. Create default site settings
+  // 4. Create site settings
   console.log("  Creating site settings...");
   const existingSettings = await prisma.siteSettings.findFirst();
   if (!existingSettings) {
     await prisma.siteSettings.create({
       data: {
-        siteName: "BIAS RISTEK",
+        siteName: "Sahabat Belajar",
         siteDescription:
-          "Badan Inovasi Akademik & Sains - Program Pengembangan Riset dan Teknologi",
+          "Lembaga Bimbingan Belajar Privat & Semi-Privat - Comprehensive Academic Solution",
+        contactEmail: "halo@sahabatbelajar.id",
+        contactPhone: "+62 812-3456-789",
+        address: "Layanan Home Visit & Online Seluruh Indonesia",
       },
     });
   }
   console.log("  ✅ Site settings created");
 
-  // 5. Create sample categories
-  console.log("  Creating sample categories...");
-  const categories = [
-    { name: "Pengumuman", slug: "pengumuman", color: "#3B82F6", description: "Pengumuman resmi" },
-    { name: "Kegiatan", slug: "kegiatan", color: "#10B981", description: "Informasi kegiatan" },
-    { name: "Penelitian", slug: "penelitian", color: "#8B5CF6", description: "Riset dan penelitian" },
+  // 5. Create core programs and packages
+  console.log("  Creating core programs & packages...");
+  const programsData = [
+    {
+      name: "Bimbel K-12 (SD, SMP, SMA)",
+      category: "K12",
+      description: "Pendampingan mapel sekolah, PR, dan persiapan ujian akhir.",
+      packages: [
+        { name: "Paket 5 Sesi Privat K-12", quotaSessions: 5, price: 750000 },
+        { name: "Paket 10 Sesi Privat K-12", quotaSessions: 10, price: 1400000 },
+        { name: "Paket 10 Sesi Semi-Privat K-12", quotaSessions: 10, price: 850000 },
+      ],
+    },
+    {
+      name: "Persiapan CPNS, BUMN & PPPK",
+      category: "CPNS_BUMN",
+      description: "Intensif materi SKD (TWK, TIU, TKP) dan tes bidang.",
+      packages: [
+        { name: "Paket 10 Sesi SKD Intensif", quotaSessions: 10, price: 1800000 },
+        { name: "Paket 20 Sesi SKD Master", quotaSessions: 20, price: 3200000 },
+      ],
+    },
+    {
+      name: "Persiapan S2/S3 & Beasiswa",
+      category: "S2_S3_BEASISWA",
+      description: "Bimbingan TPA, wawancara beasiswa LPDP, dan kesiapan akademik.",
+      packages: [
+        { name: "Paket 8 Sesi Mentoring Beasiswa", quotaSessions: 8, price: 2000000 },
+      ],
+    },
+    {
+      name: "TOEFL & IELTS Preparation",
+      category: "TOEFL_IELTS",
+      description: "Strategi praktis menaikkan skor Listening, Structure, and Reading.",
+      packages: [
+        { name: "Paket 10 Sesi TOEFL Prep", quotaSessions: 10, price: 1600000 },
+      ],
+    },
+    {
+      name: "Kepenulisan Ilmiah & Skripsi",
+      category: "PENULISAN_ILMIAH",
+      description: "Bimbingan metodologi riset, olah data statistik, dan review naskah.",
+      packages: [
+        { name: "Paket 8 Sesi Skripsi / Tesis", quotaSessions: 8, price: 1800000 },
+      ],
+    },
   ];
-  for (const cat of categories) {
-    await prisma.category.upsert({
-      where: { slug: cat.slug },
-      update: {},
-      create: cat,
+
+  for (const prog of programsData) {
+    const createdProg = await prisma.program.create({
+      data: {
+        name: prog.name,
+        category: prog.category,
+        description: prog.description,
+      },
     });
+
+    for (const pkg of prog.packages) {
+      await prisma.package.create({
+        data: {
+          programId: createdProg.id,
+          name: pkg.name,
+          type: "QUOTA",
+          quotaSessions: pkg.quotaSessions,
+          sessionMinutes: 90, // BR-5 default 90 menit
+          price: pkg.price,
+        },
+      });
+    }
   }
-  console.log("  ✅ Sample categories created");
+  console.log("  ✅ Programs and packages created");
 
   console.log("\n🎉 Seeding completed successfully!");
-  console.log("\n📋 Login credentials:");
-  console.log("   Email: admin@biasristek.id");
+  console.log("   Admin Email: admin@sahabatbelajar.id");
   console.log("   Password: password123");
 }
 

@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabaseAdmin } from "@/lib/supabase";
-import { requirePermission } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import type { ActionResponse } from "@/types";
 
 export type AdminMenuItem = {
@@ -19,212 +18,147 @@ export type AdminMenuItem = {
 
 const INITIAL_MENUS = [
   { id: "menu_dashboard", label: "Dashboard", icon: "LayoutDashboard", url: "/dashboard", parentId: null, sortOrder: 1, isActive: true, permission: "dashboard.read" },
-  { id: "menu_kursus", label: "Program Kursus", icon: "BookOpen", url: "/dashboard/kursus", parentId: null, sortOrder: 2, isActive: true, permission: "course.read" },
-  { id: "menu_pendaftaran", label: "Pendaftaran & Transaksi", icon: "GraduationCap", url: "/dashboard/pendaftaran", parentId: null, sortOrder: 3, isActive: true, permission: "registration.read" },
-  { id: "menu_penjadwalan", label: "Penjadwalan Tutor", icon: "Calendar", url: "/dashboard/penjadwalan", parentId: null, sortOrder: 4, isActive: true, permission: "registration.read" },
-  { id: "menu_support", label: "Layanan CS & Tiket", icon: "Headphones", url: "/dashboard/support", parentId: null, sortOrder: 5, isActive: true, permission: "registration.read" },
-  { id: "menu_tugas", label: "Review Draf Naskah", icon: "FileCheck", url: "/dashboard/tugas", parentId: null, sortOrder: 6, isActive: true, permission: "submission.read" },
-  { id: "menu_berita", label: "Berita & Publikasi", icon: "Newspaper", url: "/dashboard/berita", parentId: null, sortOrder: 5, isActive: true, permission: "article.read" },
-  { id: "menu_media", label: "Pustaka Media", icon: "Image", url: "/dashboard/media", parentId: null, sortOrder: 6, isActive: true, permission: "media.read" },
-  { id: "menu_halaman", label: "Halaman Statis", icon: "FileText", url: "/dashboard/halaman", parentId: null, sortOrder: 7, isActive: true, permission: "page.read" },
-  { id: "menu_kategori", label: "Kategori", icon: "FolderOpen", url: "/dashboard/kategori", parentId: null, sortOrder: 8, isActive: true, permission: "category.read" },
-  { id: "menu_navigasi", label: "Navigasi", icon: "Navigation", url: "/dashboard/navigasi", parentId: null, sortOrder: 9, isActive: true, permission: "navigation.read" },
-  { id: "menu_tampilan", label: "Tampilan", icon: "Palette", url: "#", parentId: null, sortOrder: 10, isActive: true, permission: "appearance.read" },
-  { id: "menu_hero", label: "Hero Section", icon: "Image", url: "/dashboard/tampilan/hero", parentId: "menu_tampilan", sortOrder: 1, isActive: true, permission: "appearance.read" },
-  { id: "menu_stat", label: "Statistik Alumni", icon: "Users", url: "/dashboard/tampilan/statistik", parentId: "menu_tampilan", sortOrder: 2, isActive: true, permission: "appearance.read" },
-  { id: "menu_alur", label: "Alur Belajar", icon: "Link", url: "/dashboard/tampilan/alur-belajar", parentId: "menu_tampilan", sortOrder: 3, isActive: true, permission: "appearance.read" },
-  { id: "menu_keunggulan", label: "Keunggulan", icon: "Shield", url: "/dashboard/tampilan/keunggulan", parentId: "menu_tampilan", sortOrder: 4, isActive: true, permission: "appearance.read" },
-  { id: "menu_testimoni", label: "Testimoni Alumni", icon: "Users", url: "/dashboard/tampilan/testimoni", parentId: "menu_tampilan", sortOrder: 5, isActive: true, permission: "appearance.read" },
-  { id: "menu_faq", label: "FAQ", icon: "FileText", url: "/dashboard/tampilan/faq", parentId: "menu_tampilan", sortOrder: 6, isActive: true, permission: "appearance.read" },
-  { id: "menu_tampilan_berita", label: "Pengaturan Berita", icon: "Rss", url: "/dashboard/tampilan/berita", parentId: "menu_tampilan", sortOrder: 7, isActive: true, permission: "appearance.read" },
-  { id: "menu_sosmed", label: "Sosial Media", icon: "Share2", url: "/dashboard/tampilan/sosial-media", parentId: "menu_tampilan", sortOrder: 8, isActive: true, permission: "appearance.read" },
-  { id: "menu_pengguna", label: "Pengguna", icon: "Users", url: "/dashboard/pengguna", parentId: null, sortOrder: 11, isActive: true, permission: "user.read" },
-  { id: "menu_role", label: "Role & Akses", icon: "Shield", url: "/dashboard/pengguna/role", parentId: null, sortOrder: 12, isActive: true, permission: "role.read" },
-  { id: "menu_admin_menu", label: "Menu Admin", icon: "Menu", url: "/dashboard/pengguna/menu", parentId: null, sortOrder: 13, isActive: true, permission: "menu.read" },
-  { id: "menu_pengaturan_pembayaran", label: "Pengaturan Pembayaran", icon: "CreditCard", url: "/dashboard/pengaturan/pembayaran", parentId: null, sortOrder: 14, isActive: true, permission: "payment_account.read" },
-  { id: "menu_pengaturan_notifikasi", label: "Notifikasi & Gateway", icon: "Bell", url: "/dashboard/pengaturan/notifikasi", parentId: null, sortOrder: 15, isActive: true, permission: "settings.read" },
-  { id: "menu_pengaturan", label: "Pengaturan Umum", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 16, isActive: true, permission: "settings.read" },
+  { id: "menu_lead", label: "Prospek / Lead", icon: "Users", url: "/dashboard/lead", parentId: null, sortOrder: 2, isActive: true, permission: "lead.read" },
+  { id: "menu_siswa", label: "Data Siswa", icon: "GraduationCap", url: "/dashboard/siswa", parentId: null, sortOrder: 3, isActive: true, permission: "student.read" },
+  { id: "menu_tutor", label: "Direktori Tutor", icon: "BookOpen", url: "/dashboard/tutor", parentId: null, sortOrder: 4, isActive: true, permission: "tutor.read" },
+  { id: "menu_jadwal", label: "Jadwal & Sesi", icon: "Calendar", url: "/dashboard/jadwal", parentId: null, sortOrder: 5, isActive: true, permission: "schedule.read" },
+  { id: "menu_paket", label: "Paket & Kuota", icon: "FileCheck", url: "/dashboard/paket", parentId: null, sortOrder: 6, isActive: true, permission: "package.read" },
+  { id: "menu_pembayaran", label: "Pembayaran", icon: "CreditCard", url: "/dashboard/pembayaran", parentId: null, sortOrder: 7, isActive: true, permission: "payment.read" },
+  { id: "menu_honor", label: "Rekap Honor Tutor", icon: "Trophy", url: "/dashboard/honor", parentId: null, sortOrder: 8, isActive: true, permission: "payout.read" },
+  { id: "menu_media", label: "Pustaka Media", icon: "Image", url: "/dashboard/media", parentId: null, sortOrder: 9, isActive: true, permission: "media.read" },
+  { id: "menu_pengaturan", label: "Pengaturan", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 10, isActive: true, permission: "settings.read" },
 ];
+
+function groupMenus(menus: AdminMenuItem[]): AdminMenuItem[] {
+  const map = new Map<string, AdminMenuItem>();
+  const roots: AdminMenuItem[] = [];
+
+  for (const menu of menus) {
+    map.set(menu.id, { ...menu, children: [] });
+  }
+
+  for (const menu of menus) {
+    const node = map.get(menu.id)!;
+    if (menu.parentId && map.has(menu.parentId)) {
+      map.get(menu.parentId)!.children!.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+
+  roots.sort((a, b) => a.sortOrder - b.sortOrder);
+  for (const root of roots) {
+    if (root.children) {
+      root.children.sort((a, b) => a.sortOrder - b.sortOrder);
+    }
+  }
+
+  return roots;
+}
 
 export async function getAdminMenus(): Promise<AdminMenuItem[]> {
   try {
-    const { data: menus, error } = await supabaseAdmin
-      .from("AdminMenu")
-      .select("*")
-      .order("sortOrder", { ascending: true });
+    const menus = await prisma.adminMenu.findMany({
+      orderBy: { sortOrder: "asc" },
+    });
 
-    if (error || !menus || menus.length === 0) {
-      // Auto seed initial menus
-      try {
-        await supabaseAdmin.from("AdminMenu").upsert(
-          INITIAL_MENUS.map((m) => ({
-            id: m.id,
-            label: m.label,
-            icon: m.icon,
-            url: m.url,
-            parentId: m.parentId,
-            sortOrder: m.sortOrder,
-            isActive: m.isActive,
-            permission: m.permission,
-          }))
-        );
-      } catch (seedErr) {
-        console.error("Seed error:", seedErr);
+    if (!menus || menus.length === 0) {
+      for (const m of INITIAL_MENUS) {
+        await prisma.adminMenu.upsert({
+          where: { id: m.id },
+          create: m,
+          update: m,
+        });
       }
       return groupMenus(INITIAL_MENUS as AdminMenuItem[]);
     }
 
-    // Auto-sync permissions & missing menus from INITIAL_MENUS
-    const existingMap = new Map(menus.map((m: any) => [m.id, m]));
-    const needsUpdate: any[] = [];
-
-    for (const init of INITIAL_MENUS) {
-      const existing = existingMap.get(init.id);
-      if (!existing) {
-        needsUpdate.push(init);
-      } else if (existing.permission !== init.permission) {
-        needsUpdate.push({
-          ...existing,
-          permission: init.permission,
-        });
-      }
-    }
-
-    if (needsUpdate.length > 0) {
-      try {
-        await supabaseAdmin.from("AdminMenu").upsert(
-          needsUpdate.map((m) => ({
-            id: m.id,
-            label: m.label,
-            icon: m.icon,
-            url: m.url,
-            parentId: m.parentId,
-            sortOrder: m.sortOrder,
-            isActive: m.isActive,
-            permission: m.permission,
-          }))
-        );
-        const { data: refreshed } = await supabaseAdmin
-          .from("AdminMenu")
-          .select("*")
-          .order("sortOrder", { ascending: true });
-        if (refreshed && refreshed.length > 0) {
-          return groupMenus(refreshed as AdminMenuItem[]);
-        }
-      } catch (syncErr) {
-        console.error("Sync missing menus error:", syncErr);
-      }
-    }
-
     return groupMenus(menus as AdminMenuItem[]);
-  } catch (err) {
-    console.error("Error in getAdminMenus:", err);
+  } catch (error) {
+    console.error("getAdminMenus error:", error);
     return groupMenus(INITIAL_MENUS as AdminMenuItem[]);
   }
 }
 
-function groupMenus(all: AdminMenuItem[]): AdminMenuItem[] {
-  const topLevel = all.filter((m) => !m.parentId);
-  return topLevel.map((parent) => ({
-    ...parent,
-    children: all.filter((c) => c.parentId === parent.id),
-  }));
-}
+export async function createAdminMenu(data: FormData | any): Promise<ActionResponse<AdminMenuItem>> {
+  try {
+    const label = data instanceof FormData ? String(data.get("label") || "") : data.label;
+    const url = data instanceof FormData ? String(data.get("url") || "") : data.url;
+    const icon = data instanceof FormData ? (data.get("icon") ? String(data.get("icon")) : null) : data.icon;
+    const parentId = data instanceof FormData ? (data.get("parentId") ? String(data.get("parentId")) : null) : data.parentId;
+    const sortOrder = data instanceof FormData ? Number(data.get("sortOrder") || 0) : (data.sortOrder || 0);
+    const permission = data instanceof FormData ? (data.get("permission") ? String(data.get("permission")) : null) : data.permission;
 
-export async function toggleAdminMenuStatus(id: string, isActive: boolean): Promise<ActionResponse> {
-  await requirePermission("settings.update");
+    const menu = await prisma.adminMenu.create({
+      data: {
+        label: label.trim(),
+        icon,
+        url: url.trim(),
+        parentId,
+        sortOrder,
+        permission,
+        isActive: true,
+      },
+    });
 
-  const { error } = await supabaseAdmin
-    .from("AdminMenu")
-    .update({ isActive, updatedAt: new Date().toISOString() })
-    .eq("id", id);
-
-  if (error) return { success: false, message: error.message };
-
-  revalidatePath("/dashboard/pengguna/menu");
-  revalidatePath("/dashboard", "layout");
-  return { success: true, message: `Menu berhasil di${isActive ? "aktifkan" : "nonaktifkan"}` };
-}
-
-export async function createAdminMenu(formData: FormData): Promise<ActionResponse> {
-  await requirePermission("settings.update");
-
-  const label = formData.get("label") as string;
-  const icon = (formData.get("icon") as string) || "Link";
-  const url = formData.get("url") as string;
-  const parentId = (formData.get("parentId") as string) || null;
-  const permission = (formData.get("permission") as string) || null;
-  const isActive = formData.get("isActive") !== "false";
-  const sortOrder = parseInt((formData.get("sortOrder") as string) || "0") || 0;
-
-  if (!label || !url) {
-    return { success: false, message: "Label dan URL menu wajib diisi" };
+    revalidatePath("/dashboard");
+    return { success: true, message: "Menu berhasil dibuat.", data: menu };
+  } catch (error: any) {
+    return { success: false, message: "Gagal membuat menu." };
   }
-
-  const id = `menu_${Date.now()}`;
-  const { error } = await supabaseAdmin.from("AdminMenu").insert({
-    id,
-    label,
-    icon,
-    url,
-    parentId,
-    permission,
-    isActive,
-    sortOrder,
-  });
-
-  if (error) return { success: false, message: error.message };
-
-  revalidatePath("/dashboard/pengguna/menu");
-  revalidatePath("/dashboard", "layout");
-  return { success: true, message: "Menu admin berhasil ditambahkan" };
 }
 
-export async function updateAdminMenu(id: string, formData: FormData): Promise<ActionResponse> {
-  await requirePermission("settings.update");
+export async function updateAdminMenu(
+  id: string,
+  data: FormData | any
+): Promise<ActionResponse<AdminMenuItem>> {
+  try {
+    const updateData: any = {};
+    if (data instanceof FormData) {
+      if (data.has("label")) updateData.label = String(data.get("label"));
+      if (data.has("url")) updateData.url = String(data.get("url"));
+      if (data.has("icon")) updateData.icon = data.get("icon") ? String(data.get("icon")) : null;
+      if (data.has("parentId")) updateData.parentId = data.get("parentId") ? String(data.get("parentId")) : null;
+      if (data.has("sortOrder")) updateData.sortOrder = Number(data.get("sortOrder"));
+      if (data.has("permission")) updateData.permission = data.get("permission") ? String(data.get("permission")) : null;
+    } else {
+      Object.assign(updateData, data);
+    }
 
-  const label = formData.get("label") as string;
-  const icon = (formData.get("icon") as string) || "Link";
-  const url = formData.get("url") as string;
-  const parentId = (formData.get("parentId") as string) || null;
-  const permission = (formData.get("permission") as string) || null;
-  const isActive = formData.get("isActive") !== "false";
-  const sortOrder = parseInt((formData.get("sortOrder") as string) || "0") || 0;
+    const menu = await prisma.adminMenu.update({
+      where: { id },
+      data: updateData,
+    });
 
-  if (!label || !url) {
-    return { success: false, message: "Label dan URL menu wajib diisi" };
+    revalidatePath("/dashboard");
+    return { success: true, message: "Menu berhasil diperbarui.", data: menu };
+  } catch (error: any) {
+    return { success: false, message: "Gagal memperbarui menu." };
   }
-
-  const { error } = await supabaseAdmin
-    .from("AdminMenu")
-    .update({
-      label,
-      icon,
-      url,
-      parentId,
-      permission,
-      isActive,
-      sortOrder,
-      updatedAt: new Date().toISOString(),
-    })
-    .eq("id", id);
-
-  if (error) return { success: false, message: error.message };
-
-  revalidatePath("/dashboard/pengguna/menu");
-  revalidatePath("/dashboard", "layout");
-  return { success: true, message: "Menu admin berhasil diperbarui" };
 }
 
 export async function deleteAdminMenu(id: string): Promise<ActionResponse> {
-  await requirePermission("settings.update");
+  try {
+    await prisma.adminMenu.delete({ where: { id } });
+    revalidatePath("/dashboard");
+    return { success: true, message: "Menu berhasil dihapus." };
+  } catch (error: any) {
+    return { success: false, message: "Gagal menghapus menu." };
+  }
+}
 
-  // Also delete children if parent
-  await supabaseAdmin.from("AdminMenu").delete().eq("parentId", id);
-  const { error } = await supabaseAdmin.from("AdminMenu").delete().eq("id", id);
-  if (error) return { success: false, message: error.message };
-
-  revalidatePath("/dashboard/pengguna/menu");
-  revalidatePath("/dashboard", "layout");
-  return { success: true, message: "Menu admin berhasil dihapus" };
+export async function toggleAdminMenuStatus(
+  id: string,
+  isActive: boolean
+): Promise<ActionResponse> {
+  try {
+    await prisma.adminMenu.update({
+      where: { id },
+      data: { isActive },
+    });
+    revalidatePath("/dashboard");
+    return { success: true, message: "Status menu diperbarui." };
+  } catch (error: any) {
+    return { success: false, message: "Gagal memperbarui status menu." };
+  }
 }

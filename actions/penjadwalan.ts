@@ -1,620 +1,344 @@
 "use server";
 
+import { prisma } from "@/lib/prisma";
+import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
-import crypto from "crypto";
-import { promises as fs } from "fs";
-import path from "path";
-import { supabaseAdmin } from "@/lib/supabase";
-import { requireAuth } from "@/lib/auth";
-import type { ActionResponse } from "@/types";
-import {
-  getTutorDirectoryPool,
-  matchTutorsForStudent,
-  type TutorProfileData,
-  type MatchCandidate,
-} from "@/lib/tutor-matching";
-import {
-  notifyTutorBookingProposed,
-  notifyStudentMentorshipConfirmed,
-  notifyTutorMentorshipConfirmed,
-} from "@/lib/notifications";
-import { triggerN8nWebhook } from "@/lib/n8n";
+import { SessionStatus, AttendanceStatus } from "@prisma/client";
 
-function safeRevalidatePath(urlPath: string) {
+export type CreateSessionInput = {
+  tutorId: string;
+  programId: string;
+  classType: "PRIVAT" | "SEMI_PRIVAT";
+  mode: "ONLINE" | "HOME_VISIT";
+  startAt: string | Date; // ISO string or Date
+  endAt: string | Date;
+  studentIds: string[]; // 1 for PRIVAT, 2-5 for SEMI_PRIVAT
+  meetingLink?: string;
+  address?: string;
+  recurrenceWeeks?: number; // C3: Sesi berulang mingguan
+};
+
+export async function createSession(
+  input: CreateSessionInput
+): Promise<ActionResponse<{ sessionIds: string[] }>> {
   try {
-    revalidatePath(urlPath);
-  } catch {
-    // Non-HTTP context fallback
+    const startDate = new Date(input.startAt);
+    const endDate = new Date(input.endAt);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate >= endDate) {
+      return {
+        success: false,
+        message: "Waktu mulai dan selesai sesi tidak valid.",
+      };
+    }
+
+    // BR-3: Batasan semi-privat maksimal 5 peserta
+    if (input.studentIds.length === 0) {
+      return { success: false, message: "Pilih minimal 1 siswa untuk sesi bimbingan." };
+    }
+    if (input.classType === "PRIVAT" && input.studentIds.length > 1) {
+      return { success: false, message: "Kelas privat hanya untuk 1 siswa." };
+    }
+    if (input.studentIds.length > 5) {
+      return {
+        success: false,
+        message: "Kelas semi-privat maksimal 5 peserta. Peserta ke-6 ditolak (BR-3).",
+      };
+    }
+
+    const weeks = input.recurrenceWeeks && input.recurrenceWeeks > 1 ? input.recurrenceWeeks : 1;
+    const recurrenceId = weeks > 1 ? `rec_${Date.now()}` : null;
+    const createdSessionIds: string[] = [];
+
+    for (let w = 0; w < weeks; w++) {
+      const currentStart = new Date(startDate.getTime() + w * 7 * 24 * 60 * 60 * 1000);
+      const currentEnd = new Date(endDate.getTime() + w * 7 * 24 * 60 * 60 * 1000);
+
+      // BR-2: Deteksi Bentrok Jadwal Tutor
+      const tutorConflict = await prisma.session.findFirst({
+        where: {
+          tutorId: input.tutorId,
+          status: { not: SessionStatus.DIBATALKAN },
+          AND: [
+            { startAt: { lt: currentEnd } },
+            { endAt: { gt: currentStart } },
+          ],
+        },
+        include: { tutor: true },
+      });
+
+      if (tutorConflict) {
+        return {
+          success: false,
+          message: `Bentrok jadwal! Tutor ${tutorConflict.tutor.name} sudah memiliki sesi lain pada rentang waktu tersebut (BR-2).`,
+        };
+      }
+
+      // BR-2: Deteksi Bentrok Jadwal Siswa
+      for (const studentId of input.studentIds) {
+        const studentConflict = await prisma.sessionParticipant.findFirst({
+          where: {
+            studentId,
+            session: {
+              status: { not: SessionStatus.DIBATALKAN },
+              AND: [
+                { startAt: { lt: currentEnd } },
+                { endAt: { gt: currentStart } },
+              ],
+            },
+          },
+          include: { student: true },
+        });
+
+        if (studentConflict) {
+          return {
+            success: false,
+            message: `Bentrok jadwal! Siswa ${studentConflict.student.name} sudah memiliki sesi lain pada jam tersebut (BR-2).`,
+          };
+        }
+      }
+
+      // Cari paket aktif untuk masing-masing siswa
+      const participantData = await Promise.all(
+        input.studentIds.map(async (studentId) => {
+          const activePackage = await prisma.studentPackage.findFirst({
+            where: {
+              studentId,
+              status: { in: ["AKTIF", "HAMPIR_HABIS"] },
+            },
+            orderBy: { createdAt: "desc" },
+          });
+
+          return {
+            studentId,
+            studentPackageId: activePackage?.id || null,
+            attendance: AttendanceStatus.HADIR,
+            quotaDeducted: false,
+          };
+        })
+      );
+
+      const session = await prisma.session.create({
+        data: {
+          tutorId: input.tutorId,
+          programId: input.programId,
+          classType: input.classType,
+          mode: input.mode,
+          startAt: currentStart,
+          endAt: currentEnd,
+          meetingLink: input.meetingLink || null,
+          address: input.address || null,
+          status: SessionStatus.TERJADWAL,
+          recurrenceId,
+          participants: {
+            create: participantData,
+          },
+        },
+      });
+
+      createdSessionIds.push(session.id);
+    }
+
+    revalidatePath("/dashboard/jadwal");
+    revalidatePath("/dashboard");
+
+    return {
+      success: true,
+      message:
+        weeks > 1
+          ? `Berhasil membuat ${weeks} sesi berulang mingguan tanpa bentrok.`
+          : "Sesi bimbingan berhasil dijadwalkan.",
+      data: { sessionIds: createdSessionIds },
+    };
+  } catch (error: any) {
+    console.error("createSession error:", error);
+    return {
+      success: false,
+      message: "Gagal membuat sesi jadwal.",
+    };
   }
 }
 
-export type MentorshipBookingItem = {
-  id: string;
-  registrationId: string | null;
-  studentName: string;
-  studentWhatsapp: string;
-  studentEmail: string | null;
-  tutorId: string;
-  tutorName: string;
-  tutorTitle: string;
-  tutorInstitution: string;
-  tutorWhatsapp: string;
-  researchTopic: string;
-  researchSoftware: string | null;
-  scheduledDate: string;
-  timeSlot: string;
-  zoomJoinUrl: string | null;
-  zoomHostUrl: string | null;
-  status: "DRAFT_MATCHING" | "PENDING_TUTOR_CONFIRMATION" | "CONFIRMED" | "DECLINED_BY_TUTOR" | "COMPLETED" | "RESCHEDULED";
-  confirmationToken: string;
-  tutorNotes: string | null;
-  confirmedAt: string | null;
-  completedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-// Local storage fallback file
-const STORAGE_FILE = path.join(process.cwd(), "data", "mentorship_bookings.json");
-
-async function readBookingsStore(): Promise<MentorshipBookingItem[]> {
+export async function getSessions(params?: {
+  startDate?: Date | string;
+  endDate?: Date | string;
+  tutorId?: string;
+  studentId?: string;
+  status?: SessionStatus;
+}) {
   try {
-    const raw = await fs.readFile(STORAGE_FILE, "utf-8");
-    return JSON.parse(raw);
-  } catch {
+    const where: any = {};
+
+    if (params?.status) {
+      where.status = params.status;
+    }
+    if (params?.tutorId) {
+      where.tutorId = params.tutorId;
+    }
+    if (params?.startDate || params?.endDate) {
+      where.startAt = {};
+      if (params.startDate) where.startAt.gte = new Date(params.startDate);
+      if (params.endDate) where.startAt.lte = new Date(params.endDate);
+    }
+    if (params?.studentId) {
+      where.participants = {
+        some: { studentId: params.studentId },
+      };
+    }
+
+    return await prisma.session.findMany({
+      where,
+      orderBy: { startAt: "asc" },
+      include: {
+        tutor: { select: { id: true, name: true, phone: true } },
+        program: { select: { id: true, name: true, category: true } },
+        participants: {
+          include: {
+            student: { select: { id: true, name: true, parentPhone: true } },
+            studentPackage: true,
+          },
+        },
+        journal: true,
+      },
+    });
+  } catch (error) {
+    console.error("getSessions error:", error);
     return [];
   }
 }
 
-async function writeBookingsStore(bookings: MentorshipBookingItem[]) {
+// BR-1: Eksekusi pengurangan kuota saat sesi Terlaksana
+export async function updateSessionStatus(
+  sessionId: string,
+  newStatus: SessionStatus,
+  cancelReason?: string
+): Promise<ActionResponse> {
   try {
-    const dir = path.dirname(STORAGE_FILE);
-    await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(STORAGE_FILE, JSON.stringify(bookings, null, 2), "utf-8");
-  } catch (err) {
-    console.error("Failed to write mentorship_bookings.json:", err);
-  }
-}
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        participants: {
+          include: { studentPackage: true },
+        },
+      },
+    });
 
-// Generate unique Zoom Room URL
-function generateZoomRoom(): { joinUrl: string; hostUrl: string } {
-  const meetingId = Math.floor(8000000000 + Math.random() * 1999999999);
-  const passcode = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return {
-    joinUrl: `https://zoom.us/j/${meetingId}?pwd=BIAS${passcode}`,
-    hostUrl: `https://zoom.us/s/${meetingId}?pwd=BIAS${passcode}`,
-  };
-}
+    if (!session) {
+      return { success: false, message: "Sesi tidak ditemukan." };
+    }
 
-// ==============================================================================
-// 1. GET DISPATCHER BOARD DATA
-// ==============================================================================
+    await prisma.$transaction(async (tx) => {
+      // 1. Update status sesi
+      await tx.session.update({
+        where: { id: sessionId },
+        data: {
+          status: newStatus,
+          cancelReason: cancelReason || null,
+        },
+      });
 
-export async function getDispatcherBoardData(): Promise<{
-  studentsNeedingMatch: any[];
-  activeBookings: MentorshipBookingItem[];
-  tutors: TutorProfileData[];
-  metrics: {
-    pendingMatching: number;
-    awaitingTutorConfirm: number;
-    confirmedBookings: number;
-    activeTutorsCount: number;
-  };
-}> {
-  try {
-    // 1. Fetch registrations from Supabase
-    let registrations: any[] = [];
-    try {
-      const { data, error } = await supabaseAdmin
-        .from("CourseRegistration")
-        .select("*")
-        .order("createdAt", { ascending: false });
+      // 2. BR-1: Jika status diubah menjadi TERLAKSANA, potong kuota peserta hadir
+      if (newStatus === SessionStatus.TERLAKSANA) {
+        for (const p of session.participants) {
+          if (!p.quotaDeducted && p.studentPackageId && p.attendance === AttendanceStatus.HADIR) {
+            const currentPkg = await tx.studentPackage.findUnique({
+              where: { id: p.studentPackageId },
+            });
 
-      if (!error && data) {
-        registrations = data;
+            if (currentPkg) {
+              const newQuotaUsed = currentPkg.quotaUsed + 1;
+              let newPkgStatus = currentPkg.status;
+
+              if (newQuotaUsed >= currentPkg.quotaTotal) {
+                newPkgStatus = "HABIS";
+              } else if (currentPkg.quotaTotal - newQuotaUsed <= 2) {
+                newPkgStatus = "HAMPIR_HABIS";
+              }
+
+              await tx.studentPackage.update({
+                where: { id: p.studentPackageId },
+                data: {
+                  quotaUsed: newQuotaUsed,
+                  status: newPkgStatus,
+                },
+              });
+
+              await tx.sessionParticipant.update({
+                where: { id: p.id },
+                data: { quotaDeducted: true },
+              });
+            }
+          }
+        }
       }
-    } catch {
-      registrations = [];
-    }
+    });
 
-    // 2. Fetch bookings
-    let bookings: MentorshipBookingItem[] = [];
-    try {
-      const { data, error } = await supabaseAdmin
-        .from("MentorshipBooking")
-        .select("*")
-        .order("createdAt", { ascending: false });
-
-      if (!error && data && data.length > 0) {
-        bookings = data as MentorshipBookingItem[];
-      } else {
-        bookings = await readBookingsStore();
-      }
-    } catch {
-      bookings = await readBookingsStore();
-    }
-
-    const bookedRegIds = new Set(
-      bookings
-        .filter((b) => b.status === "PENDING_TUTOR_CONFIRMATION" || b.status === "CONFIRMED")
-        .map((b) => b.registrationId)
-        .filter(Boolean)
-    );
-
-    // Filter students needing match: verified or uploaded, but without active booking
-    const studentsNeedingMatch = registrations.filter(
-      (r) => (r.status === "VERIFIED" || r.status === "PAYMENT_UPLOADED") && !bookedRegIds.has(r.id)
-    );
-
-    const tutors = getTutorDirectoryPool();
-
-    const pendingMatching = studentsNeedingMatch.length;
-    const awaitingTutorConfirm = bookings.filter((b) => b.status === "PENDING_TUTOR_CONFIRMATION").length;
-    const confirmedBookings = bookings.filter((b) => b.status === "CONFIRMED").length;
-    const activeTutorsCount = tutors.filter((t) => t.isActive).length;
-
-    return {
-      studentsNeedingMatch,
-      activeBookings: bookings,
-      tutors,
-      metrics: {
-        pendingMatching,
-        awaitingTutorConfirm,
-        confirmedBookings,
-        activeTutorsCount,
-      },
-    };
-  } catch (err: any) {
-    console.error("getDispatcherBoardData error:", err);
-    return {
-      studentsNeedingMatch: [],
-      activeBookings: [],
-      tutors: getTutorDirectoryPool(),
-      metrics: {
-        pendingMatching: 0,
-        awaitingTutorConfirm: 0,
-        confirmedBookings: 0,
-        activeTutorsCount: 200,
-      },
-    };
-  }
-}
-
-// ==============================================================================
-// 2. GET RECOMMENDED TUTORS FOR REGISTRATION
-// ==============================================================================
-
-export async function getRecommendedTutors(registrationId: string): Promise<ActionResponse<{ candidates: MatchCandidate[]; registration: any }>> {
-  try {
-    let registration: any = null;
-    try {
-      const { data } = await supabaseAdmin
-        .from("CourseRegistration")
-        .select("*")
-        .eq("id", registrationId)
-        .maybeSingle();
-      registration = data;
-    } catch {
-      registration = null;
-    }
-
-    if (!registration) {
-      // Fallback demo student if tested with mock ID
-      registration = {
-        id: registrationId,
-        name: "Ahmad Fauzi, M.Kom.",
-        institution: "Universitas Indonesia",
-        educationLevel: "S3 (Disertasi)",
-        researchTopic: "Implementasi SmartPLS 4 dan PLS-SEM pada Model Kepuasan & Loyalitas Konsumen Digital",
-        researchSoftware: "SmartPLS 4",
-        phone: "6281234567890",
-        email: "ahmad.fauzi@ui.ac.id",
-      };
-    }
-
-    const candidates = matchTutorsForStudent(
-      {
-        researchTopic: registration.researchTopic,
-        researchSoftware: registration.researchSoftware || (registration.courseTitle?.includes("SmartPLS") ? "SmartPLS 4" : null),
-        educationLevel: registration.educationLevel,
-        institution: registration.institution,
-      },
-      getTutorDirectoryPool(),
-      5
-    );
+    revalidatePath("/dashboard/jadwal");
+    revalidatePath("/dashboard/paket");
+    revalidatePath("/dashboard");
 
     return {
       success: true,
-      message: `Ditemukan ${candidates.length} kandidat tutor pakar yang sesuai`,
-      data: {
-        candidates,
-        registration,
-      },
+      message: `Status sesi berhasil diubah menjadi ${newStatus}.`,
     };
-  } catch (err: any) {
-    console.error("getRecommendedTutors error:", err);
+  } catch (error: any) {
+    console.error("updateSessionStatus error:", error);
     return {
       success: false,
-      message: err?.message || "Gagal mencocokkan tutor",
+      message: "Gagal memperbarui status sesi.",
     };
   }
 }
 
-// ==============================================================================
-// 3. CREATE MENTORSHIP PROPOSAL (DISPATCH TO TUTOR VIA WHATSAPP MAGIC TOKEN)
-// ==============================================================================
-
-export async function createMentorshipProposal(params: {
-  registrationId?: string;
-  studentName: string;
-  studentWhatsapp: string;
-  studentEmail?: string;
-  studentInstitution?: string;
-  studentEducationLevel?: string;
-  tutorId: string;
-  researchTopic: string;
-  researchSoftware?: string;
-  scheduledDate: string; // ISO date string e.g. "2026-10-15"
-  timeSlot: string;      // e.g. "19:30 - 21:00 WIB"
-  tutorNotes?: string;
-  baseUrl?: string;
-}): Promise<ActionResponse<{ booking: MentorshipBookingItem; magicToken: string }>> {
+export async function saveSessionJournal(
+  sessionId: string,
+  data: {
+    topic: string;
+    notes?: string;
+    homework?: string;
+    attendances?: Array<{ participantId: string; attendance: AttendanceStatus }>;
+  }
+): Promise<ActionResponse> {
   try {
-    const {
-      registrationId,
-      studentName,
-      studentWhatsapp,
-      studentEmail,
-      studentInstitution,
-      studentEducationLevel,
-      tutorId,
-      researchTopic,
-      researchSoftware,
-      scheduledDate,
-      timeSlot,
-      tutorNotes,
-      baseUrl,
-    } = params;
-
-    if (!studentName || !tutorId || !researchTopic || !scheduledDate || !timeSlot) {
-      return { success: false, message: "Seluruh data penugasan bimbingan wajib diisi lengkap" };
-    }
-
-    const pool = getTutorDirectoryPool();
-    const tutor = pool.find((t) => t.id === tutorId);
-
-    if (!tutor) {
-      return { success: false, message: "Profil tutor tidak ditemukan dalam direktori pakar" };
-    }
-
-    // Generate cryptographic magic token (32 hex characters)
-    const magicToken = crypto.randomBytes(16).toString("hex");
-
-    const newBooking: MentorshipBookingItem = {
-      id: `book_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      registrationId: registrationId || null,
-      studentName,
-      studentWhatsapp,
-      studentEmail: studentEmail || null,
-      tutorId: tutor.id,
-      tutorName: tutor.fullName,
-      tutorTitle: tutor.academicTitle,
-      tutorInstitution: tutor.institution,
-      tutorWhatsapp: tutor.whatsappNumber,
-      researchTopic,
-      researchSoftware: researchSoftware || null,
-      scheduledDate,
-      timeSlot,
-      zoomJoinUrl: null,
-      zoomHostUrl: null,
-      status: "PENDING_TUTOR_CONFIRMATION",
-      confirmationToken: magicToken,
-      tutorNotes: tutorNotes || null,
-      confirmedAt: null,
-      completedAt: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    // 1. Try persisting to Supabase
-    try {
-      await supabaseAdmin.from("MentorshipBooking").insert({
-        id: newBooking.id,
-        registrationId: newBooking.registrationId,
-        studentName: newBooking.studentName,
-        studentWhatsapp: newBooking.studentWhatsapp,
-        studentEmail: newBooking.studentEmail,
-        tutorId: newBooking.tutorId,
-        researchTopic: newBooking.researchTopic,
-        researchSoftware: newBooking.researchSoftware,
-        scheduledDate: newBooking.scheduledDate,
-        timeSlot: newBooking.timeSlot,
-        status: newBooking.status,
-        confirmationToken: newBooking.confirmationToken,
-        tutorNotes: newBooking.tutorNotes,
-        createdAt: newBooking.createdAt,
-        updatedAt: newBooking.updatedAt,
+    await prisma.$transaction(async (tx) => {
+      // Upsert journal
+      await tx.sessionJournal.upsert({
+        where: { sessionId },
+        create: {
+          sessionId,
+          topic: data.topic.trim(),
+          notes: data.notes?.trim() || null,
+          homework: data.homework?.trim() || null,
+        },
+        update: {
+          topic: data.topic.trim(),
+          notes: data.notes?.trim() || null,
+          homework: data.homework?.trim() || null,
+        },
       });
-    } catch {
-      // In-memory / file fallback
-    }
 
-    // 2. Persist to local JSON file store
-    const currentBookings = await readBookingsStore();
-    currentBookings.unshift(newBooking);
-    await writeBookingsStore(currentBookings);
-
-    // 3. Dispatch WhatsApp & Email notification to Tutor with Magic Links
-    await notifyTutorBookingProposed({
-      tutorName: tutor.fullName,
-      tutorPhone: tutor.whatsappNumber,
-      tutorEmail: tutor.email,
-      studentName,
-      studentInstitution: studentInstitution || "Institusi Akademik",
-      studentEducationLevel: studentEducationLevel || "S2 / S3",
-      researchTopic,
-      researchSoftware,
-      scheduledDate,
-      timeSlot,
-      confirmationToken: magicToken,
-      baseUrl,
+      // Update attendances if provided
+      if (data.attendances && data.attendances.length > 0) {
+        for (const att of data.attendances) {
+          await tx.sessionParticipant.update({
+            where: { id: att.participantId },
+            data: { attendance: att.attendance },
+          });
+        }
+      }
     });
 
-    // 4. Dispatch outbound webhook event to n8n
-    await triggerN8nWebhook("MENTORSHIP_PROPOSED", {
-      bookingId: newBooking.id,
-      magicToken,
-      student: { name: studentName, phone: studentWhatsapp, email: studentEmail, topic: researchTopic },
-      tutor: { id: tutor.id, name: tutor.fullName, phone: tutor.whatsappNumber },
-      schedule: { date: scheduledDate, slot: timeSlot },
-    });
-
-    safeRevalidatePath("/dashboard/penjadwalan");
+    revalidatePath("/dashboard/jadwal");
 
     return {
       success: true,
-      message: `Usulan bimbingan berhasil dibuat & notifikasi WhatsApp dikirimkan ke ${tutor.fullName}`,
-      data: {
-        booking: newBooking,
-        magicToken,
-      },
+      message: "Jurnal pertemuan dan absensi berhasil disimpan.",
     };
-  } catch (err: any) {
-    console.error("createMentorshipProposal error:", err);
+  } catch (error: any) {
+    console.error("saveSessionJournal error:", error);
     return {
       success: false,
-      message: err?.message || "Gagal membuat usulan bimbingan",
+      message: "Gagal menyimpan jurnal sesi.",
     };
-  }
-}
-
-// ==============================================================================
-// 4. GET BOOKING BY MAGIC TOKEN (PUBLIC TUTOR CONFIRMATION)
-// ==============================================================================
-
-export async function getMentorshipBookingByToken(token: string): Promise<MentorshipBookingItem | null> {
-  try {
-    if (!token) return null;
-
-    // 1. Try Supabase
-    try {
-      const { data, error } = await supabaseAdmin
-        .from("MentorshipBooking")
-        .select("*")
-        .eq("confirmationToken", token)
-        .maybeSingle();
-
-      if (!error && data) {
-        return data as MentorshipBookingItem;
-      }
-    } catch {
-      // fall through
-    }
-
-    // 2. Try Local File Store
-    const bookings = await readBookingsStore();
-    const found = bookings.find((b) => b.confirmationToken === token);
-    return found || null;
-  } catch (err) {
-    console.error("getMentorshipBookingByToken error:", err);
-    return null;
-  }
-}
-
-// ==============================================================================
-// 5. CONFIRM OR DECLINE MENTORSHIP BY TOKEN (1-CLICK HUMAN IN THE LOOP)
-// ==============================================================================
-
-export async function confirmMentorshipByToken(
-  token: string,
-  action: "ACCEPT" | "DECLINE",
-  notes?: string
-): Promise<ActionResponse<{ booking: MentorshipBookingItem }>> {
-  try {
-    if (!token) {
-      return { success: false, message: "Token konfirmasi tidak sah atau sudah kedaluwarsa" };
-    }
-
-    const booking = await getMentorshipBookingByToken(token);
-    if (!booking) {
-      return { success: false, message: "Jadwal penugasan tidak ditemukan" };
-    }
-
-    if (booking.status === "CONFIRMED") {
-      return {
-        success: true,
-        message: "Jadwal bimbingan ini telah terkonfirmasi sebelumnya.",
-        data: { booking },
-      };
-    }
-
-    const nowIso = new Date().toISOString();
-    let updatedBooking: MentorshipBookingItem;
-
-    if (action === "ACCEPT") {
-      const zoom = generateZoomRoom();
-      updatedBooking = {
-        ...booking,
-        status: "CONFIRMED",
-        zoomJoinUrl: zoom.joinUrl,
-        zoomHostUrl: zoom.hostUrl,
-        confirmedAt: nowIso,
-        updatedAt: nowIso,
-        tutorNotes: notes || booking.tutorNotes,
-      };
-
-      // 1. Update Supabase
-      try {
-        await supabaseAdmin
-          .from("MentorshipBooking")
-          .update({
-            status: "CONFIRMED",
-            zoomJoinUrl: zoom.joinUrl,
-            zoomHostUrl: zoom.hostUrl,
-            confirmedAt: nowIso,
-            updatedAt: nowIso,
-            tutorNotes: updatedBooking.tutorNotes,
-          })
-          .eq("confirmationToken", token);
-      } catch {
-        // Fallback
-      }
-
-      // 2. Update Local Store
-      const currentBookings = await readBookingsStore();
-      const idx = currentBookings.findIndex((b) => b.confirmationToken === token);
-      if (idx !== -1) {
-        currentBookings[idx] = updatedBooking;
-      } else {
-        currentBookings.push(updatedBooking);
-      }
-      await writeBookingsStore(currentBookings);
-
-      // 3. Notify Student via WhatsApp & Email
-      await notifyStudentMentorshipConfirmed({
-        studentName: updatedBooking.studentName,
-        studentPhone: updatedBooking.studentWhatsapp,
-        studentEmail: updatedBooking.studentEmail || undefined,
-        tutorName: updatedBooking.tutorName,
-        tutorTitle: updatedBooking.tutorTitle,
-        tutorInstitution: updatedBooking.tutorInstitution,
-        scheduledDate: updatedBooking.scheduledDate,
-        timeSlot: updatedBooking.timeSlot,
-        zoomJoinUrl: zoom.joinUrl,
-        researchTopic: updatedBooking.researchTopic,
-      });
-
-      // 4. Notify Tutor
-      await notifyTutorMentorshipConfirmed({
-        tutorName: updatedBooking.tutorName,
-        tutorPhone: updatedBooking.tutorWhatsapp,
-        studentName: updatedBooking.studentName,
-        scheduledDate: updatedBooking.scheduledDate,
-        timeSlot: updatedBooking.timeSlot,
-        zoomHostUrl: zoom.hostUrl,
-      });
-
-      // 5. Trigger n8n Webhook
-      await triggerN8nWebhook("MENTORSHIP_CONFIRMED", {
-        bookingId: updatedBooking.id,
-        tutor: { id: updatedBooking.tutorId, name: updatedBooking.tutorName },
-        student: { name: updatedBooking.studentName, phone: updatedBooking.studentWhatsapp },
-        schedule: { date: updatedBooking.scheduledDate, slot: updatedBooking.timeSlot },
-        zoom: zoom,
-      });
-
-      safeRevalidatePath("/dashboard/penjadwalan");
-      safeRevalidatePath(`/tutor/konfirmasi/${token}`);
-
-      return {
-        success: true,
-        message: "Terima kasih! Sesi bimbingan resmi TERKONFIRMASI dan tautan Zoom telah dikirimkan ke siswa.",
-        data: { booking: updatedBooking },
-      };
-    } else {
-      // DECLINE
-      updatedBooking = {
-        ...booking,
-        status: "DECLINED_BY_TUTOR",
-        tutorNotes: notes || "Tutor berhalangan pada waktu yang diusulkan.",
-        updatedAt: nowIso,
-      };
-
-      // 1. Update Supabase
-      try {
-        await supabaseAdmin
-          .from("MentorshipBooking")
-          .update({
-            status: "DECLINED_BY_TUTOR",
-            tutorNotes: updatedBooking.tutorNotes,
-            updatedAt: nowIso,
-          })
-          .eq("confirmationToken", token);
-      } catch {
-        // Fallback
-      }
-
-      // 2. Update Local Store
-      const currentBookings = await readBookingsStore();
-      const idx = currentBookings.findIndex((b) => b.confirmationToken === token);
-      if (idx !== -1) {
-        currentBookings[idx] = updatedBooking;
-      }
-      await writeBookingsStore(currentBookings);
-
-      // 3. Trigger n8n Webhook
-      await triggerN8nWebhook("MENTORSHIP_DECLINED", {
-        bookingId: updatedBooking.id,
-        tutor: { id: updatedBooking.tutorId, name: updatedBooking.tutorName },
-        reason: updatedBooking.tutorNotes,
-      });
-
-      safeRevalidatePath("/dashboard/penjadwalan");
-      safeRevalidatePath(`/tutor/konfirmasi/${token}`);
-
-      return {
-        success: true,
-        message: "Catatan penolakan tersimpan. Koordinator akademik akan mengalihkan ke kandidat tutor berikutnya.",
-        data: { booking: updatedBooking },
-      };
-    }
-  } catch (err: any) {
-    console.error("confirmMentorshipByToken error:", err);
-    return {
-      success: false,
-      message: err?.message || "Gagal memproses konfirmasi bimbingan",
-    };
-  }
-}
-
-// ==============================================================================
-// 6. GET ALL TUTORS FOR DIRECTORY DISPLAY
-// ==============================================================================
-
-export async function getAllTutors(params?: {
-  search?: string;
-  specialization?: string;
-}): Promise<TutorProfileData[]> {
-  try {
-    let pool = getTutorDirectoryPool();
-
-    if (params?.search) {
-      const q = params.search.toLowerCase();
-      pool = pool.filter(
-        (t) =>
-          t.fullName.toLowerCase().includes(q) ||
-          t.institution.toLowerCase().includes(q) ||
-          t.specializations.some((s) => s.toLowerCase().includes(q))
-      );
-    }
-
-    if (params?.specialization && params.specialization !== "Semua") {
-      const spec = params.specialization.toLowerCase();
-      pool = pool.filter((t) => t.specializations.some((s) => s.toLowerCase().includes(spec)));
-    }
-
-    return pool;
-  } catch {
-    return getTutorDirectoryPool();
   }
 }

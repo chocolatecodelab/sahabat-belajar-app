@@ -72,24 +72,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
 
-        // 4. If Super Admin, guarantee all system permissions
-        if (roleName === "Super Admin" || user.roleId === "role_superadmin") {
+        // 4. If Admin or Super Admin, guarantee all system permissions
+        if (roleName === "Super Admin" || roleName === "Admin" || user.roleId === "role_superadmin") {
           permissions = [
             "dashboard.read", "analytics.read",
-            "course.read", "course.create", "course.update", "course.delete",
-            "registration.read", "registration.update", "registration.delete",
-            "submission.read", "submission.review",
-            "certificate.read", "certificate.create", "certificate.delete",
-            "article.read", "article.create", "article.update", "article.delete",
-            "category.read", "category.create", "category.update", "category.delete",
+            "lead.read", "lead.manage",
+            "student.read", "student.manage",
+            "tutor.read", "tutor.manage",
+            "schedule.read", "schedule.manage",
+            "package.read", "package.manage",
+            "payment.read", "payment.manage",
+            "payout.read", "payout.manage",
             "media.read", "media.create", "media.delete",
             "page.read", "page.create", "page.update", "page.delete",
-            "navigation.read", "navigation.create", "navigation.update", "navigation.delete",
-            "appearance.read", "appearance.update",
             "user.read", "user.create", "user.update", "user.delete",
             "role.read", "role.create", "role.update", "role.delete",
             "menu.read", "menu.update",
-            "payment_account.read", "payment_account.update",
             "settings.read", "settings.update"
           ];
         }

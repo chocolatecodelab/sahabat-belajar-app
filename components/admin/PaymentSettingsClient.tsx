@@ -62,22 +62,22 @@ export default function PaymentSettingsClient({ initialAccounts }: PaymentSettin
     setType("BANK");
     setBankName("");
     setAccountNumber("");
-    setAccountHolder("BIAS RISTEK INDONESIA");
+    setAccountHolder("Sahabat Belajar");
     setQrisImage(null);
-    setInstructions("Transfer tepat hingga 3 digit kode unik verifikasi.");
+    setInstructions("Transfer tepat hingga nominal verifikasi.");
     setIsActive(true);
   };
 
   const handleOpenEdit = (item: PaymentAccountItem) => {
     setIsNew(false);
     setEditingItem(item);
-    setType(item.type);
+    setType((item.type as "BANK" | "QRIS") || "BANK");
     setBankName(item.bankName);
     setAccountNumber(item.accountNumber || "");
     setAccountHolder(item.accountHolder || "");
-    setQrisImage(item.qrisImage);
+    setQrisImage(item.qrisImage || null);
     setInstructions(item.instructions || "");
-    setIsActive(item.isActive);
+    setIsActive(item.isActive ?? true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -249,7 +249,7 @@ export default function PaymentSettingsClient({ initialAccounts }: PaymentSettin
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(acc.id)}
+                  onClick={() => acc.id && handleDelete(acc.id)}
                   className="px-3 py-1.5 rounded-lg border text-2xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-1 transition-colors"
                 >
                   <Trash2 size={13} /> Hapus

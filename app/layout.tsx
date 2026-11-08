@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Inter } from "next/font/google";
+import { Poppins, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const plusJakarta = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["500", "600", "700", "800"],
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
@@ -18,10 +18,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "BIAS RISTEK",
-    template: "%s | BIAS RISTEK",
+    default: "Sahabat Belajar | Comprehensive Academic Solution",
+    template: "%s | Sahabat Belajar",
   },
-  description: "Platform Kursus & Mentorship Riset Online - Mempersiapkan Peneliti Andal",
+  description:
+    "Lembaga Bimbingan Belajar Privat & Semi-Privat (K-12 & Program Lanjutan: CPNS, BUMN, S2/S3, TOEFL, Penulisan Ilmiah) - Paham Konsep Dasar hingga Siap Berprestasi",
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -31,18 +32,7 @@ export const metadata: Metadata = {
     apple: [
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
-    other: [
-      {
-        rel: "android-chrome-192x192",
-        url: "/android-chrome-192x192.png",
-      },
-      {
-        rel: "android-chrome-512x512",
-        url: "/android-chrome-512x512.png",
-      },
-    ],
   },
-  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
@@ -53,10 +43,10 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${plusJakarta.variable} ${inter.variable}`}
+      className={`${poppins.variable} ${dmSans.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen antialiased" suppressHydrationWarning>
+      <body className="min-h-screen antialiased bg-[#F4F7FB] text-[#1B2A41]" suppressHydrationWarning>
         {children}
       </body>
     </html>

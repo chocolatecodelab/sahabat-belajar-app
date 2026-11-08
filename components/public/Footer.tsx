@@ -1,179 +1,100 @@
 import Link from "next/link";
-import { Mail, Phone, MapPin, ExternalLink } from "lucide-react";
-import { InstagramIcon, FacebookIcon, TwitterIcon, YoutubeIcon } from "@/components/ui/SocialIcons";
+import { Mail, Phone, MapPin, Heart, Sparkles } from "lucide-react";
 
-type NavItem = {
-  id: string;
-  label: string;
-  type: string;
-  url: string | null;
-  page?: { title: string; slug: string } | null;
-  category?: { name: string; slug: string } | null;
-  openInNewTab: boolean;
-};
-
-type SocialItem = {
-  id: string;
-  platform: string;
-  username: string;
-  url: string;
-};
-
-interface FooterProps {
-  siteSettings: {
-    siteName: string;
-    siteDescription: string | null;
-    contactEmail: string | null;
-    contactPhone: string | null;
-    address: string | null;
-  };
-  footerNavigations: NavItem[];
-  socialMedia: SocialItem[];
-}
-
-export default function Footer({
-  siteSettings,
-  footerNavigations,
-  socialMedia,
-}: FooterProps) {
-  const getHref = (item: NavItem) => {
-    if (item.type === "PAGE" && item.page) return `/${item.page.slug}`;
-    if (item.type === "CATEGORY" && item.category) return `/kategori/${item.category.slug}`;
-    return item.url || "#";
-  };
-
-  const renderSocialIcon = (platform: string) => {
-    switch (platform.toLowerCase()) {
-      case "instagram":
-        return <InstagramIcon size={18} />;
-      case "facebook":
-        return <FacebookIcon size={18} />;
-      case "twitter":
-        return <TwitterIcon size={18} />;
-      case "youtube":
-        return <YoutubeIcon size={18} />;
-      default:
-        return <ExternalLink size={18} />;
-    }
-  };
-
+export default function Footer() {
   return (
-    <footer
-      className="text-white pt-16 pb-12 border-t"
-      style={{
-        background: "var(--color-primary)",
-        borderColor: "rgba(255,255,255,0.08)",
-      }}
-    >
+    <footer className="bg-[#09408C] text-white pt-16 pb-12 border-t border-[#0E3571]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Brand Col */}
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-white px-3.5 py-1.5 rounded-xl shadow-xs inline-flex items-center">
-                <img
-                  src="/uploads/images/bias_ristek-logo.png"
-                  alt="BIAS RISTEK"
-                  className="h-9 w-auto object-contain"
-                />
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-white text-[#09408C] flex items-center justify-center font-bold text-lg shadow-sm">
+                SB
+              </div>
+              <div>
+                <span className="font-bold text-lg text-white font-display block">
+                  Sahabat Belajar
+                </span>
+                <span className="text-[11px] text-[#9AC1E2] uppercase font-semibold tracking-wider">
+                  Bimbingan Belajar
+                </span>
               </div>
             </div>
-            <p className="text-sm text-gray-300 leading-relaxed">
-              {siteSettings.siteDescription ||
-                "Pusat keunggulan riset, pengembangan teknologi, dan pengujian laboratorium terstandarisasi internasional."}
+
+            <p className="text-xs text-white/80 leading-relaxed">
+              Lembaga bimbingan belajar privat & semi-privat (2-5 siswa). Menemani siswa memahami konsep dasar hingga siap berprestasi.
             </p>
-            {/* Social Icons */}
-            {socialMedia.length > 0 && (
-              <div className="flex items-center gap-2 pt-2">
-                {socialMedia.map((soc) => (
-                  <a
-                    key={soc.id}
-                    href={soc.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white"
-                    aria-label={soc.platform}
-                  >
-                    {renderSocialIcon(soc.platform)}
-                  </a>
-                ))}
-              </div>
-            )}
+
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[#9AC1E2] text-xs font-semibold">
+              <Sparkles size={12} className="text-[#0CC0DF]" />
+              <span>#BersamaSahabat</span>
+            </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="text-label-lg font-semibold uppercase tracking-wider mb-4 text-white/90">
-              Tautan Cepat
+          {/* Program Bimbingan */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-sm text-[#9AC1E2] uppercase tracking-wider font-display">
+              Program Belajar
             </h4>
-            <ul className="space-y-2.5 text-sm text-gray-300">
-              <li>
-                <Link href="/" className="hover:text-white transition-colors">
-                  Beranda
-                </Link>
-              </li>
-              <li>
-                <Link href="/berita" className="hover:text-white transition-colors">
-                  Berita & Informasi
-                </Link>
-              </li>
-              {footerNavigations.map((nav) => (
-                <li key={nav.id}>
-                  <Link
-                    href={getHref(nav)}
-                    target={nav.openInNewTab ? "_blank" : undefined}
-                    rel={nav.openInNewTab ? "noopener noreferrer" : undefined}
-                    className="hover:text-white transition-colors"
-                  >
-                    {nav.label}
-                  </Link>
-                </li>
-              ))}
+            <ul className="space-y-2 text-xs text-white/80">
+              <li>• Bimbel K-12 (SD, SMP, SMA)</li>
+              <li>• Persiapan Tes CPNS, BUMN & PPPK</li>
+              <li>• Persiapan S2/S3 & Beasiswa</li>
+              <li>• TOEFL & IELTS Preparation</li>
+              <li>• Pendampingan Kepenulisan Ilmiah</li>
             </ul>
           </div>
 
-          {/* Alamat Kontak */}
-          <div className="lg:col-span-2 space-y-4">
-            <h4 className="text-label-lg font-semibold uppercase tracking-wider mb-4 text-white/90">
-              Kontak & Lokasi
+          {/* Model & Fasilitas */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-sm text-[#9AC1E2] uppercase tracking-wider font-display">
+              Model Kelas
             </h4>
-            <div className="space-y-3 text-sm text-gray-300">
-              {siteSettings.address && (
-                <div className="flex items-start gap-3">
-                  <MapPin size={18} className="text-[var(--color-secondary-container)] flex-shrink-0 mt-0.5" />
-                  <span>{siteSettings.address}</span>
-                </div>
-              )}
-              {siteSettings.contactEmail && (
-                <div className="flex items-center gap-3">
-                  <Mail size={18} className="text-[var(--color-secondary-container)] flex-shrink-0" />
-                  <a href={`mailto:${siteSettings.contactEmail}`} className="hover:text-white">
-                    {siteSettings.contactEmail}
-                  </a>
-                </div>
-              )}
-              {siteSettings.contactPhone && (
-                <div className="flex items-center gap-3">
-                  <Phone size={18} className="text-[var(--color-secondary-container)] flex-shrink-0" />
-                  <a href={`tel:${siteSettings.contactPhone}`} className="hover:text-white">
-                    {siteSettings.contactPhone}
-                  </a>
-                </div>
-              )}
-              <div className="pt-2 text-xs text-gray-400">
-                Jam Operasional: Senin – Jumat (08.00 – 16.00 WITA)
+            <ul className="space-y-2 text-xs text-white/80">
+              <li>• Kelas Privat 1-on-1 Intensif</li>
+              <li>• Kelas Semi-Privat (2-5 Siswa)</li>
+              <li>• Mode Online (Zoom / Google Meet)</li>
+              <li>• Mode Home Visit (Tutor Datang)</li>
+              <li>• Durasi Standar 90 Menit per Sesi</li>
+            </ul>
+          </div>
+
+          {/* Kontak & Alamat */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-sm text-[#9AC1E2] uppercase tracking-wider font-display">
+              Hubungi Kami
+            </h4>
+            <div className="space-y-2.5 text-xs text-white/80">
+              <a
+                href="https://wa.me/628123456789"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 hover:text-white transition-colors"
+              >
+                <Phone size={14} className="text-[#0CC0DF]" />
+                <span>+62 812-3456-789 (WhatsApp CS)</span>
+              </a>
+
+              <div className="flex items-center gap-2">
+                <Mail size={14} className="text-[#0CC0DF]" />
+                <span>halo@sahabatbelajar.id</span>
+              </div>
+
+              <div className="flex items-start gap-2">
+                <MapPin size={14} className="text-[#0CC0DF] shrink-0 mt-0.5" />
+                <span>Layanan Home Visit & Online Terpadu Seluruh Indonesia</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
-          <p>© {new Date().getFullYear()} {siteSettings.siteName}. Hak Cipta Dilindungi Undang-Undang.</p>
-          <div className="flex items-center gap-6">
-            <Link href="/login" className="hover:text-white">Login Admin</Link>
-            <span>ISO 17025:2017 & ISO 45001:2018 Standard</span>
-          </div>
+        <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/60">
+          <p>© {new Date().getFullYear()} Sahabat Belajar. All rights reserved.</p>
+          <p className="flex items-center gap-1">
+            Comprehensive Academic Solution • Paham Konsep Dasar hingga Siap Berprestasi
+          </p>
         </div>
       </div>
     </footer>
