@@ -91,7 +91,7 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/60">
-          <p>© {new Date().getFullYear()} Sahabat Belajar. All rights reserved.</p>
+          <p suppressHydrationWarning>© {new Date().getFullYear()} Sahabat Belajar. All rights reserved.</p>
           <p className="flex items-center gap-1">
             Comprehensive Academic Solution • Paham Konsep Dasar hingga Siap Berprestasi
           </p>

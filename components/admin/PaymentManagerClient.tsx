@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { recordManualPayment } from "@/actions/pembayaran";
 import { PaymentStatus } from "@prisma/client";
+import { formatDate } from "@/lib/date";
 
 export default function PaymentManagerClient({
   initialPayments,
@@ -143,11 +144,7 @@ export default function PaymentManagerClient({
                       <td className="py-3.5 px-4 text-[#5B6882]">
                         <div className="font-semibold text-[#1B2A41]">{p.method}</div>
                         <div className="text-[11px] tabular-nums">
-                          {new Date(p.paidAt).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                          {formatDate(p.paidAt)}
                         </div>
                       </td>
 
@@ -249,12 +246,7 @@ export default function PaymentManagerClient({
                 <div className="flex justify-between py-1 border-b border-dashed border-[#D5DDEB]">
                   <span className="text-[#5B6882]">Metode & Tanggal:</span>
                   <span className="text-[#1B2A41]">
-                    {selectedReceipt.method} •{" "}
-                    {new Date(selectedReceipt.paidAt).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
+                    {selectedReceipt.method} • {formatDate(selectedReceipt.paidAt, true)}
                   </span>
                 </div>
                 <div className="flex justify-between py-2 items-center bg-[#F4F7FB] px-3 rounded-xl mt-3">

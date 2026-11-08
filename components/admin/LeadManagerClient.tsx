@@ -20,6 +20,7 @@ import {
 import { updateLeadStatus, deleteLead } from "@/actions/lead";
 import { convertLeadToStudent } from "@/actions/siswa";
 import { LeadStatus } from "@prisma/client";
+import { formatDate } from "@/lib/date";
 
 const STATUS_CONFIG: Record<
   LeadStatus,
@@ -242,11 +243,7 @@ export default function LeadManagerClient({
                       </td>
 
                       <td className="py-3.5 px-4 text-[#5B6882] tabular-nums">
-                        {new Date(lead.createdAt).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {formatDate(lead.createdAt)}
                       </td>
 
                       <td className="py-3.5 px-4">

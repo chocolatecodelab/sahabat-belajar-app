@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { calculateTutorPayout, updatePayoutStatus } from "@/actions/honor";
 import { PayoutStatus } from "@prisma/client";
+import { formatDate } from "@/lib/date";
 
 export default function HonorManagerClient({
   initialPayouts,
@@ -76,9 +77,7 @@ export default function HonorManagerClient({
     const rows = payouts
       .map(
         (p) =>
-          `"${p.tutor.name}","${new Date(p.periodStart).toLocaleDateString("id-ID")}","${new Date(
-            p.periodEnd
-          ).toLocaleDateString("id-ID")}",${p.totalSessions},${p.totalAmount},"${p.status}"`
+          `"${p.tutor.name}","${formatDate(p.periodStart)}","${formatDate(p.periodEnd)}",${p.totalSessions},${p.totalAmount},"${p.status}"`
       )
       .join("\n");
 
@@ -157,16 +156,7 @@ export default function HonorManagerClient({
                       </td>
 
                       <td className="py-3.5 px-4 text-[#5B6882] tabular-nums">
-                        {new Date(p.periodStart).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                        })}{" "}
-                        -{" "}
-                        {new Date(p.periodEnd).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {formatDate(p.periodStart)} - {formatDate(p.periodEnd)}
                       </td>
 
                       <td className="py-3.5 px-4 font-bold text-[#09408C] tabular-nums">

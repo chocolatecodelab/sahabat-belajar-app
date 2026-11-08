@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import type { StudentPortalData } from "@/actions/portal";
+import { formatDayDate, formatTime } from "@/lib/date";
 
 export default function StudentPortalClient({
   initialData,
@@ -281,21 +282,8 @@ export default function StudentPortalClient({
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {upcomingSessions.map((session) => {
-                  const startDate = new Date(session.startAt);
-                  const endDate = new Date(session.endAt);
-                  const formattedDate = startDate.toLocaleDateString("id-ID", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  });
-                  const formattedTime = `${startDate.toLocaleTimeString("id-ID", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })} - ${endDate.toLocaleTimeString("id-ID", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })} WIB`;
+                  const formattedDate = formatDayDate(session.startAt);
+                  const formattedTime = `${formatTime(session.startAt)} - ${formatTime(session.endAt)} WIB`;
 
                   return (
                     <div
@@ -387,12 +375,7 @@ export default function StudentPortalClient({
             ) : (
               <div className="space-y-3">
                 {pastSessions.map((session) => {
-                  const dateStr = new Date(session.startAt).toLocaleDateString("id-ID", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  });
+                  const dateStr = formatDayDate(session.startAt);
 
                   return (
                     <div

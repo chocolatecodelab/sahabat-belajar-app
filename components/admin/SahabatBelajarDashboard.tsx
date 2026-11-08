@@ -17,6 +17,7 @@ import {
   Phone,
   Sparkles,
 } from "lucide-react";
+import { formatTime, formatDate } from "@/lib/date";
 import type { SahabatBelajarDashboardData } from "@/actions/dashboard";
 
 export default function SahabatBelajarDashboard({
@@ -185,14 +186,8 @@ export default function SahabatBelajarDashboard({
             ) : (
               <div className="space-y-3">
                 {data.todaySessions.map((session) => {
-                  const startTime = new Date(session.startAt).toLocaleTimeString("id-ID", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
-                  const endTime = new Date(session.endAt).toLocaleTimeString("id-ID", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
+                  const startTime = formatTime(session.startAt);
+                  const endTime = formatTime(session.endAt);
 
                   return (
                     <div

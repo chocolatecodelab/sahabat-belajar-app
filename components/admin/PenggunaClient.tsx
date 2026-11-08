@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Plus, Edit, Trash2, X, Search, ShieldCheck } from "lucide-react";
 import { getUsers, createUser, updateUser, deleteUser } from "@/actions/pengguna";
+import { formatDate } from "@/lib/date";
 
 type UserItem = {
   id: string;
@@ -293,11 +294,7 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
                       </td>
 
                       <td className="py-3 px-4 text-slate-500 text-3xs">
-                        {new Date(u.createdAt).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {formatDate(u.createdAt)}
                       </td>
 
                       <td className="py-3 px-4 text-right">

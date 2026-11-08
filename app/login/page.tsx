@@ -218,7 +218,7 @@ function LoginFormInner() {
           >
             <ArrowLeft size={14} /> Kembali ke Beranda
           </Link>
-          <p className="text-[11px] text-[#5B6882]">
+          <p className="text-[11px] text-[#5B6882]" suppressHydrationWarning>
             &copy; {new Date().getFullYear()} Sahabat Belajar. Hak Cipta Dilindungi.
           </p>
         </div>

@@ -21,6 +21,7 @@ import {
   saveSessionJournal,
 } from "@/actions/penjadwalan";
 import { SessionStatus, AttendanceStatus } from "@prisma/client";
+import { formatDayDate, formatDate, formatTime } from "@/lib/date";
 
 export default function ScheduleManagerClient({
   initialSessions,
@@ -201,21 +202,8 @@ export default function ScheduleManagerClient({
           </div>
         ) : (
           sessions.map((session) => {
-            const start = new Date(session.startAt);
-            const end = new Date(session.endAt);
-            const dateStr = start.toLocaleDateString("id-ID", {
-              weekday: "long",
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            });
-            const timeStr = `${start.toLocaleTimeString("id-ID", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })} - ${end.toLocaleTimeString("id-ID", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })} WIB`;
+            const dateStr = formatDayDate(session.startAt);
+            const timeStr = `${formatTime(session.startAt)} - ${formatTime(session.endAt)} WIB`;
 
             const isDone = session.status === "TERLAKSANA";
 
@@ -227,10 +215,10 @@ export default function ScheduleManagerClient({
                 <div className="flex items-start gap-3.5">
                   <div className="px-3 py-2 rounded-xl bg-[#EAF1FA] text-[#09408C] text-center min-w-[90px]">
                     <div className="text-xs font-bold tabular-nums">
-                      {start.toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                      {formatDate(session.startAt)}
                     </div>
                     <div className="text-[10px] text-[#5B6882] font-semibold mt-0.5">
-                      {start.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                      {formatTime(session.startAt)}
                     </div>
                   </div>
 

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { uploadMediaFile, deleteMediaFile, getMediaFiles, type MediaItem } from "@/actions/media";
+import { formatDate, formatDateTime } from "@/lib/date";
 
 interface MediaLibraryClientProps {
   initialData: {
@@ -365,7 +366,7 @@ export default function MediaLibraryClient({ initialData }: MediaLibraryClientPr
                         <p className="text-2xs font-semibold truncate leading-tight">{item.originalName}</p>
                         <div className="flex items-center justify-between text-3xs text-white/70 mt-1">
                           <span>{(item.size / 1024).toFixed(0)} KB</span>
-                          <span>{new Date(item.createdAt).toLocaleDateString("id-ID", { month: "short", day: "numeric" })}</span>
+                          <span>{formatDate(item.createdAt)}</span>
                         </div>
                       </div>
                     </div>
@@ -420,7 +421,7 @@ export default function MediaLibraryClient({ initialData }: MediaLibraryClientPr
                             {(item.size / 1024).toFixed(0)} KB
                           </td>
                           <td className="py-2.5 px-3 text-2xs text-gray-500">
-                            {new Date(item.createdAt).toLocaleDateString("id-ID")}
+                            {formatDate(item.createdAt)}
                           </td>
                           <td className="py-2.5 px-3 text-right">
                             <div className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
@@ -520,13 +521,7 @@ export default function MediaLibraryClient({ initialData }: MediaLibraryClientPr
                 <div>
                   <span className="text-gray-400 font-medium block">Tanggal Diunggah:</span>
                   <p className="font-semibold text-gray-700">
-                    {new Date(selectedMedia.createdAt).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatDateTime(selectedMedia.createdAt)}
                   </p>
                 </div>
               </div>
