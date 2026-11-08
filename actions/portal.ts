@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase";
 import { auth } from "@/lib/auth";
 import type { ActionResponse } from "@/types";
 
@@ -58,46 +58,44 @@ export async function getStudentPortalData(): Promise<ActionResponse<StudentPort
     }
 
     const userId = session.user.id;
-    const userEmail = session.user.email?.toLowerCase().trim();
 
-    // Find student by userId or email or take first student if in demo/admin preview
-    let student = await prisma.student.findFirst({
-      where: {
-        OR: [
-          { userId: userId },
-          { user: { email: userEmail } },
-        ],
-      },
-      include: {
-        packages: {
-          include: {
-            package: {
-              include: {
-                program: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-        },
-      },
-    });
+    // Find student by userId or take first student as demo/admin preview
+    let student: any = null;
+    const { data: userStudents } = await supabaseAdmin
+      .from("Student")
+      .select(`
+        *,
+        packages:StudentPackage(
+          *,
+          package:Package(
+            *,
+            program:Program(*)
+          )
+        )
+      `)
+      .eq("userId", userId)
+      .limit(1);
 
-    // Fallback: If logged in as admin/staff previewing portal or demo student
-    if (!student) {
-      student = await prisma.student.findFirst({
-        include: {
-          packages: {
-            include: {
-              package: {
-                include: {
-                  program: true,
-                },
-              },
-            },
-            orderBy: { createdAt: "desc" },
-          },
-        },
-      });
+    if (userStudents && userStudents.length > 0) {
+      student = userStudents[0];
+    } else {
+      const { data: firstStudents } = await supabaseAdmin
+        .from("Student")
+        .select(`
+          *,
+          packages:StudentPackage(
+            *,
+            package:Package(
+              *,
+              program:Program(*)
+            )
+          )
+        `)
+        .limit(1);
+
+      if (firstStudents && firstStudents.length > 0) {
+        student = firstStudents[0];
+      }
     }
 
     if (!student) {
@@ -109,63 +107,63 @@ export async function getStudentPortalData(): Promise<ActionResponse<StudentPort
 
     // Fetch upcoming sessions for this student
     const now = new Date();
-    const participants = await prisma.sessionParticipant.findMany({
-      where: { studentId: student.id },
-      include: {
-        session: {
-          include: {
-            program: true,
-            tutor: true,
-            journal: true,
-          },
-        },
-      },
-      orderBy: {
-        session: { startAt: "asc" },
-      },
-    });
+    const { data: rawParticipants } = await supabaseAdmin
+      .from("SessionParticipant")
+      .select(`
+        *,
+        session:Session(
+          *,
+          program:Program(*),
+          tutor:Tutor(*),
+          journal:SessionJournal(*)
+        )
+      `)
+      .eq("studentId", student.id);
+
+    const participants = rawParticipants || [];
 
     const upcomingSessions = participants
-      .filter((p) => p.session.status === "TERJADWAL" && new Date(p.session.startAt) >= now)
-      .map((p) => ({
+      .filter((p: any) => p.session?.status === "TERJADWAL" && new Date(p.session?.startAt) >= now)
+      .map((p: any) => ({
         id: p.session.id,
-        programName: p.session.program.name,
-        tutorName: p.session.tutor.name,
+        programName: p.session.program?.name || "Bimbel",
+        tutorName: p.session.tutor?.name || "Tutor",
         classType: p.session.classType,
         mode: p.session.mode,
-        startAt: p.session.startAt.toISOString(),
-        endAt: p.session.endAt.toISOString(),
+        startAt: new Date(p.session.startAt).toISOString(),
+        endAt: new Date(p.session.endAt).toISOString(),
         meetingLink: p.session.meetingLink,
         address: p.session.address,
       }));
 
     const pastSessions = participants
-      .filter((p) => p.session.status === "TERLAKSANA" || new Date(p.session.startAt) < now)
-      .sort((a, b) => new Date(b.session.startAt).getTime() - new Date(a.session.startAt).getTime())
-      .map((p) => ({
-        id: p.session.id,
-        programName: p.session.program.name,
-        tutorName: p.session.tutor.name,
-        startAt: p.session.startAt.toISOString(),
-        endAt: p.session.endAt.toISOString(),
-        status: p.session.status,
+      .filter((p: any) => p.session?.status === "TERLAKSANA" || new Date(p.session?.startAt) < now)
+      .sort((a: any, b: any) => new Date(b.session?.startAt).getTime() - new Date(a.session?.startAt).getTime())
+      .map((p: any) => ({
+        id: p.session?.id || p.id,
+        programName: p.session?.program?.name || "Bimbel",
+        tutorName: p.session?.tutor?.name || "Tutor",
+        startAt: new Date(p.session?.startAt).toISOString(),
+        endAt: new Date(p.session?.endAt).toISOString(),
+        status: p.session?.status || "TERLAKSANA",
         attendance: p.attendance,
-        topic: p.session.journal?.topic || null,
-        notes: p.session.journal?.notes || null,
-        homework: p.session.journal?.homework || null,
+        topic: p.session?.journal?.topic || null,
+        notes: p.session?.journal?.notes || null,
+        homework: p.session?.journal?.homework || null,
       }));
 
-    const packages = student.packages.map((sp) => {
-      const remaining = Math.max(0, sp.quotaTotal - sp.quotaUsed);
+    const rawPackages = student.packages || [];
+    const packages = rawPackages.map((sp: any) => {
+      const remaining = Math.max(0, (sp.quotaTotal || 0) - (sp.quotaUsed || 0));
       return {
         id: sp.id,
-        packageName: sp.package.name,
-        programName: sp.package.program?.name || "Bimbel Sahabat Belajar",
-        quotaTotal: sp.quotaTotal,
-        quotaUsed: sp.quotaUsed,
+        packageName: sp.package?.name || "Paket Bimbel",
+        programName: sp.package?.program?.name || "Sahabat Belajar",
+        quotaTotal: sp.quotaTotal || 0,
+        quotaUsed: sp.quotaUsed || 0,
         quotaRemaining: remaining,
-        startDate: sp.startDate.toISOString(),
-        endDate: sp.endDate ? sp.endDate.toISOString() : null,
+        startDate: new Date(sp.startDate).toISOString(),
+        endDate: sp.endDate ? new Date(sp.endDate).toISOString() : null,
         status: sp.status,
       };
     });

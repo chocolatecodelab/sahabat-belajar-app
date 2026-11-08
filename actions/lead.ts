@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase";
 import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { LeadStatus } from "@prisma/client";
@@ -27,7 +27,6 @@ export async function createPublicLead(
       };
     }
 
-    // Format phone: ensure clean numbers
     let cleanPhone = input.phone.trim().replace(/[^0-9+]/g, "");
     if (cleanPhone.startsWith("0")) {
       cleanPhone = "62" + cleanPhone.slice(1);
@@ -35,8 +34,9 @@ export async function createPublicLead(
       cleanPhone = cleanPhone.slice(1);
     }
 
-    const lead = await prisma.lead.create({
-      data: {
+    const { data: lead, error } = await supabaseAdmin
+      .from("Lead")
+      .insert({
         name: input.name.trim(),
         phone: cleanPhone,
         email: input.email ? input.email.trim().toLowerCase() : null,
@@ -47,8 +47,12 @@ export async function createPublicLead(
         source: "WEBSITE",
         status: LeadStatus.BARU,
         notes: input.notes || null,
-      },
-    });
+        updatedAt: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
 
     revalidatePath("/dashboard/lead");
 
@@ -75,35 +79,31 @@ export async function getLeads(params?: {
   try {
     const page = params?.page || 1;
     const perPage = params?.perPage || 15;
-    const skip = (page - 1) * perPage;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
 
-    const where: any = {};
-    if (params?.status) {
-      where.status = params.status;
+    let query = supabaseAdmin
+      .from("Lead")
+      .select("*, students:Student(id, name)", { count: "exact" })
+      .order("createdAt", { ascending: false })
+      .range(from, to);
+
+    if (params?.status && params.status !== ("ALL" as any)) {
+      query = query.eq("status", params.status);
     }
+
     if (params?.search) {
-      where.OR = [
-        { name: { contains: params.search, mode: "insensitive" } },
-        { phone: { contains: params.search } },
-        { email: { contains: params.search, mode: "insensitive" } },
-      ];
+      const s = params.search.trim();
+      query = query.or(`name.ilike.%${s}%,phone.ilike.%${s}%,email.ilike.%${s}%`);
     }
 
-    const [total, leads] = await Promise.all([
-      prisma.lead.count({ where }),
-      prisma.lead.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: perPage,
-        include: {
-          students: { select: { id: true, name: true } },
-        },
-      }),
-    ]);
+    const { data: leads, count, error } = await query;
+    if (error) throw error;
+
+    const total = count || 0;
 
     return {
-      data: leads,
+      data: leads || [],
       meta: {
         page,
         perPage,
@@ -123,13 +123,20 @@ export async function updateLeadStatus(
   notes?: string
 ): Promise<ActionResponse> {
   try {
-    await prisma.lead.update({
-      where: { id },
-      data: {
-        status,
-        ...(notes ? { notes } : {}),
-      },
-    });
+    const updateData: any = {
+      status,
+      updatedAt: new Date().toISOString(),
+    };
+    if (notes !== undefined) {
+      updateData.notes = notes;
+    }
+
+    const { error } = await supabaseAdmin
+      .from("Lead")
+      .update(updateData)
+      .eq("id", id);
+
+    if (error) throw error;
 
     revalidatePath("/dashboard/lead");
     revalidatePath("/dashboard");
@@ -149,9 +156,8 @@ export async function updateLeadStatus(
 
 export async function deleteLead(id: string): Promise<ActionResponse> {
   try {
-    await prisma.lead.delete({
-      where: { id },
-    });
+    const { error } = await supabaseAdmin.from("Lead").delete().eq("id", id);
+    if (error) throw error;
 
     revalidatePath("/dashboard/lead");
     return {

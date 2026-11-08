@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase";
 import type { ActionResponse } from "@/types";
 
 export type AdminMenuItem = {
@@ -58,18 +58,12 @@ function groupMenus(menus: AdminMenuItem[]): AdminMenuItem[] {
 
 export async function getAdminMenus(): Promise<AdminMenuItem[]> {
   try {
-    const menus = await prisma.adminMenu.findMany({
-      orderBy: { sortOrder: "asc" },
-    });
+    const { data: menus, error } = await supabaseAdmin
+      .from("AdminMenu")
+      .select("*")
+      .order("sortOrder", { ascending: true });
 
-    if (!menus || menus.length === 0) {
-      for (const m of INITIAL_MENUS) {
-        await prisma.adminMenu.upsert({
-          where: { id: m.id },
-          create: m,
-          update: m,
-        });
-      }
+    if (error || !menus || menus.length === 0) {
       return groupMenus(INITIAL_MENUS as AdminMenuItem[]);
     }
 
@@ -89,8 +83,9 @@ export async function createAdminMenu(data: FormData | any): Promise<ActionRespo
     const sortOrder = data instanceof FormData ? Number(data.get("sortOrder") || 0) : (data.sortOrder || 0);
     const permission = data instanceof FormData ? (data.get("permission") ? String(data.get("permission")) : null) : data.permission;
 
-    const menu = await prisma.adminMenu.create({
-      data: {
+    const { data: menu, error } = await supabaseAdmin
+      .from("AdminMenu")
+      .insert({
         label: label.trim(),
         icon,
         url: url.trim(),
@@ -98,8 +93,12 @@ export async function createAdminMenu(data: FormData | any): Promise<ActionRespo
         sortOrder,
         permission,
         isActive: true,
-      },
-    });
+        updatedAt: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
 
     revalidatePath("/dashboard");
     return { success: true, message: "Menu berhasil dibuat.", data: menu };
@@ -113,7 +112,7 @@ export async function updateAdminMenu(
   data: FormData | any
 ): Promise<ActionResponse<AdminMenuItem>> {
   try {
-    const updateData: any = {};
+    const updateData: any = { updatedAt: new Date().toISOString() };
     if (data instanceof FormData) {
       if (data.has("label")) updateData.label = String(data.get("label"));
       if (data.has("url")) updateData.url = String(data.get("url"));
@@ -125,10 +124,14 @@ export async function updateAdminMenu(
       Object.assign(updateData, data);
     }
 
-    const menu = await prisma.adminMenu.update({
-      where: { id },
-      data: updateData,
-    });
+    const { data: menu, error } = await supabaseAdmin
+      .from("AdminMenu")
+      .update(updateData)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
 
     revalidatePath("/dashboard");
     return { success: true, message: "Menu berhasil diperbarui.", data: menu };
@@ -139,7 +142,8 @@ export async function updateAdminMenu(
 
 export async function deleteAdminMenu(id: string): Promise<ActionResponse> {
   try {
-    await prisma.adminMenu.delete({ where: { id } });
+    const { error } = await supabaseAdmin.from("AdminMenu").delete().eq("id", id);
+    if (error) throw error;
     revalidatePath("/dashboard");
     return { success: true, message: "Menu berhasil dihapus." };
   } catch (error: any) {
@@ -152,10 +156,11 @@ export async function toggleAdminMenuStatus(
   isActive: boolean
 ): Promise<ActionResponse> {
   try {
-    await prisma.adminMenu.update({
-      where: { id },
-      data: { isActive },
-    });
+    const { error } = await supabaseAdmin
+      .from("AdminMenu")
+      .update({ isActive, updatedAt: new Date().toISOString() })
+      .eq("id", id);
+    if (error) throw error;
     revalidatePath("/dashboard");
     return { success: true, message: "Status menu diperbarui." };
   } catch (error: any) {

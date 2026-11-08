@@ -1,22 +1,20 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase";
 import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { PackageType } from "@prisma/client";
 
 export async function getPrograms() {
   try {
-    return await prisma.program.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-      include: {
-        packages: {
-          where: { isActive: true },
-          orderBy: { sortOrder: "asc" },
-        },
-      },
-    });
+    const { data: programs, error } = await supabaseAdmin
+      .from("Program")
+      .select("*, packages:Package(*)")
+      .eq("isActive", true)
+      .order("sortOrder", { ascending: true });
+
+    if (error) throw error;
+    return programs || [];
   } catch (error) {
     console.error("getPrograms error:", error);
     return [];
@@ -30,14 +28,19 @@ export async function createProgram(data: {
   sortOrder?: number;
 }): Promise<ActionResponse<{ id: string }>> {
   try {
-    const program = await prisma.program.create({
-      data: {
+    const { data: program, error } = await supabaseAdmin
+      .from("Program")
+      .insert({
         name: data.name.trim(),
         category: data.category,
         description: data.description || null,
         sortOrder: data.sortOrder || 0,
-      },
-    });
+        updatedAt: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
 
     revalidatePath("/dashboard/paket");
     return {
@@ -60,17 +63,22 @@ export async function createPackage(data: {
   price?: number;
 }): Promise<ActionResponse<{ id: string }>> {
   try {
-    const pkg = await prisma.package.create({
-      data: {
+    const { data: pkg, error } = await supabaseAdmin
+      .from("Package")
+      .insert({
         programId: data.programId || null,
         name: data.name.trim(),
-        type: data.type,
+        type: data.type || "QUOTA",
         durationMonths: data.durationMonths || null,
-        quotaSessions: data.quotaSessions || null,
+        quotaSessions: data.quotaSessions || 10,
         sessionMinutes: data.sessionMinutes || 90, // BR-5 default 90 menit
         price: data.price || 0,
-      },
-    });
+        updatedAt: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
 
     revalidatePath("/dashboard/paket");
     return {

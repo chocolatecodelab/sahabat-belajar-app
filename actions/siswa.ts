@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase";
 import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { StudentStatus } from "@prisma/client";
@@ -26,43 +26,40 @@ export async function getStudents(params?: {
   try {
     const page = params?.page || 1;
     const perPage = params?.perPage || 15;
-    const skip = (page - 1) * perPage;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
 
-    const where: any = {};
+    let query = supabaseAdmin
+      .from("Student")
+      .select(`
+        *,
+        packages:StudentPackage(
+          *,
+          package:Package(*)
+        ),
+        lead:Lead(id, phone, email)
+      `, { count: "exact" })
+      .order("createdAt", { ascending: false })
+      .range(from, to);
+
     if (params?.status) {
-      where.status = params.status;
+      query = query.eq("status", params.status);
     }
-    if (params?.level) {
-      where.level = params.level;
+    if (params?.level && params.level !== "ALL") {
+      query = query.eq("level", params.level);
     }
     if (params?.search) {
-      where.OR = [
-        { name: { contains: params.search, mode: "insensitive" } },
-        { school: { contains: params.search, mode: "insensitive" } },
-        { parentName: { contains: params.search, mode: "insensitive" } },
-        { parentPhone: { contains: params.search } },
-      ];
+      const s = params.search.trim();
+      query = query.or(`name.ilike.%${s}%,school.ilike.%${s}%,parentName.ilike.%${s}%,parentPhone.ilike.%${s}%`);
     }
 
-    const [total, students] = await Promise.all([
-      prisma.student.count({ where }),
-      prisma.student.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: perPage,
-        include: {
-          packages: {
-            include: { package: true },
-            orderBy: { createdAt: "desc" },
-          },
-          lead: { select: { id: true, phone: true, email: true } },
-        },
-      }),
-    ]);
+    const { data: students, count, error } = await query;
+    if (error) throw error;
+
+    const total = count || 0;
 
     return {
-      data: students,
+      data: students || [],
       meta: {
         page,
         perPage,
@@ -85,25 +82,30 @@ export async function createStudent(input: StudentInput): Promise<ActionResponse
       };
     }
 
-    const student = await prisma.student.create({
-      data: {
+    const { data: student, error } = await supabaseAdmin
+      .from("Student")
+      .insert({
         name: input.name.trim(),
         level: input.level,
         school: input.school?.trim() || null,
         parentName: input.parentName?.trim() || null,
         parentPhone: input.parentPhone?.trim() || null,
         leadId: input.leadId || null,
-        status: input.status || StudentStatus.AKTIF,
-        parentConsentAt: input.parentPhone ? new Date() : null,
+        status: input.status || "AKTIF",
+        parentConsentAt: input.parentPhone ? new Date().toISOString() : null,
         notes: input.notes || null,
-      },
-    });
+        updatedAt: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
 
     if (input.leadId) {
-      await prisma.lead.update({
-        where: { id: input.leadId },
-        data: { status: "DAFTAR" },
-      });
+      await supabaseAdmin
+        .from("Lead")
+        .update({ status: "DAFTAR", updatedAt: new Date().toISOString() })
+        .eq("id", input.leadId);
     }
 
     revalidatePath("/dashboard/siswa");
@@ -125,27 +127,37 @@ export async function createStudent(input: StudentInput): Promise<ActionResponse
 
 export async function convertLeadToStudent(leadId: string): Promise<ActionResponse<{ id: string }>> {
   try {
-    const lead = await prisma.lead.findUnique({ where: { id: leadId } });
-    if (!lead) {
+    const { data: lead, error: leadError } = await supabaseAdmin
+      .from("Lead")
+      .select("*")
+      .eq("id", leadId)
+      .single();
+
+    if (leadError || !lead) {
       return { success: false, message: "Prospek lead tidak ditemukan." };
     }
 
-    const student = await prisma.student.create({
-      data: {
+    const { data: student, error: studentError } = await supabaseAdmin
+      .from("Student")
+      .insert({
         name: lead.name,
         level: lead.level || "Umum",
         parentPhone: lead.phone,
         leadId: lead.id,
-        status: StudentStatus.AKTIF,
-        parentConsentAt: new Date(),
-        notes: `Dikonversi dari prospek: ${lead.programInterest} (${lead.classModel || "Privat"})`,
-      },
-    });
+        status: "AKTIF",
+        parentConsentAt: new Date().toISOString(),
+        notes: `Dikonversi dari prospek: ${lead.programInterest || "Umum"} (${lead.classModel || "Privat"})`,
+        updatedAt: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
 
-    await prisma.lead.update({
-      where: { id: leadId },
-      data: { status: "DAFTAR" },
-    });
+    if (studentError) throw studentError;
+
+    await supabaseAdmin
+      .from("Lead")
+      .update({ status: "DAFTAR", updatedAt: new Date().toISOString() })
+      .eq("id", leadId);
 
     revalidatePath("/dashboard/siswa");
     revalidatePath("/dashboard/lead");
@@ -169,18 +181,21 @@ export async function updateStudent(
   input: Partial<StudentInput>
 ): Promise<ActionResponse> {
   try {
-    await prisma.student.update({
-      where: { id },
-      data: {
-        ...(input.name ? { name: input.name.trim() } : {}),
-        ...(input.level ? { level: input.level } : {}),
-        ...(input.school !== undefined ? { school: input.school?.trim() || null } : {}),
-        ...(input.parentName !== undefined ? { parentName: input.parentName?.trim() || null } : {}),
-        ...(input.parentPhone !== undefined ? { parentPhone: input.parentPhone?.trim() || null } : {}),
-        ...(input.status ? { status: input.status } : {}),
-        ...(input.notes !== undefined ? { notes: input.notes } : {}),
-      },
-    });
+    const updateData: any = { updatedAt: new Date().toISOString() };
+    if (input.name) updateData.name = input.name.trim();
+    if (input.level) updateData.level = input.level;
+    if (input.school !== undefined) updateData.school = input.school?.trim() || null;
+    if (input.parentName !== undefined) updateData.parentName = input.parentName?.trim() || null;
+    if (input.parentPhone !== undefined) updateData.parentPhone = input.parentPhone?.trim() || null;
+    if (input.status) updateData.status = input.status;
+    if (input.notes !== undefined) updateData.notes = input.notes;
+
+    const { error } = await supabaseAdmin
+      .from("Student")
+      .update(updateData)
+      .eq("id", id);
+
+    if (error) throw error;
 
     revalidatePath("/dashboard/siswa");
 
@@ -198,9 +213,8 @@ export async function updateStudent(
 
 export async function deleteStudent(id: string): Promise<ActionResponse> {
   try {
-    await prisma.student.delete({
-      where: { id },
-    });
+    const { error } = await supabaseAdmin.from("Student").delete().eq("id", id);
+    if (error) throw error;
 
     revalidatePath("/dashboard/siswa");
     return {
@@ -226,21 +240,21 @@ export async function importStudentsFromCsv(
 ): Promise<ActionResponse<{ importedCount: number }>> {
   try {
     let importedCount = 0;
+    const now = new Date().toISOString();
     for (const row of rows) {
       if (!row.name || !row.level) continue;
 
-      await prisma.student.create({
-        data: {
-          name: row.name.trim(),
-          level: row.level.trim(),
-          school: row.school?.trim() || null,
-          parentName: row.parentName?.trim() || null,
-          parentPhone: row.parentPhone?.trim() || null,
-          parentConsentAt: row.parentPhone ? new Date() : null,
-          status: StudentStatus.AKTIF,
-        },
+      const { error } = await supabaseAdmin.from("Student").insert({
+        name: row.name.trim(),
+        level: row.level.trim(),
+        school: row.school?.trim() || null,
+        parentName: row.parentName?.trim() || null,
+        parentPhone: row.parentPhone?.trim() || null,
+        parentConsentAt: row.parentPhone ? now : null,
+        status: "AKTIF",
+        updatedAt: now,
       });
-      importedCount++;
+      if (!error) importedCount++;
     }
 
     revalidatePath("/dashboard/siswa");

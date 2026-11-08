@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase";
 import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { TutorStatus } from "@prisma/client";
@@ -22,38 +22,31 @@ export async function getTutors(params?: {
   isStaffViewer?: boolean; // BR-7: Staf tidak melihat tarif honor
 }) {
   try {
-    const where: any = {};
+    let query = supabaseAdmin
+      .from("Tutor")
+      .select("*, sessions:Session(id)")
+      .order("name", { ascending: true });
+
     if (params?.status) {
-      where.status = params.status;
+      query = query.eq("status", params.status);
     }
     if (params?.search) {
-      where.OR = [
-        { name: { contains: params.search, mode: "insensitive" } },
-        { phone: { contains: params.search } },
-      ];
+      const s = params.search.trim();
+      query = query.or(`name.ilike.%${s}%,phone.ilike.%${s}%`);
     }
 
-    const tutors = await prisma.tutor.findMany({
-      where,
-      orderBy: { name: "asc" },
-      include: {
-        _count: {
-          select: {
-            sessions: true,
-          },
-        },
+    const { data: tutors, error } = await query;
+    if (error) throw error;
+
+    const formattedTutors = (tutors || []).map((t: any) => ({
+      ...t,
+      _count: {
+        sessions: (t.sessions || []).length,
       },
-    });
+      ratePerSession: params?.isStaffViewer ? 0 : t.ratePerSession,
+    }));
 
-    // Mask ratePerSession if viewer is Staff
-    if (params?.isStaffViewer) {
-      return tutors.map((t) => ({
-        ...t,
-        ratePerSession: 0, // Hidden for staff
-      }));
-    }
-
-    return tutors;
+    return formattedTutors;
   } catch (error) {
     console.error("getTutors error:", error);
     return [];
@@ -69,18 +62,23 @@ export async function createTutor(input: TutorInput): Promise<ActionResponse<{ i
       };
     }
 
-    const tutor = await prisma.tutor.create({
-      data: {
+    const { data: tutor, error } = await supabaseAdmin
+      .from("Tutor")
+      .insert({
         name: input.name.trim(),
         phone: input.phone.trim(),
         email: input.email?.trim().toLowerCase() || null,
         expertise: input.expertise || [],
         ratePerSession: input.ratePerSession || 100000,
-        status: input.status || TutorStatus.AKTIF,
+        status: input.status || "AKTIF",
         bio: input.bio || null,
         avatar: input.avatar || null,
-      },
-    });
+        updatedAt: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
 
     revalidatePath("/dashboard/tutor");
 
@@ -103,19 +101,22 @@ export async function updateTutor(
   input: Partial<TutorInput>
 ): Promise<ActionResponse> {
   try {
-    await prisma.tutor.update({
-      where: { id },
-      data: {
-        ...(input.name ? { name: input.name.trim() } : {}),
-        ...(input.phone ? { phone: input.phone.trim() } : {}),
-        ...(input.email !== undefined ? { email: input.email?.trim().toLowerCase() || null } : {}),
-        ...(input.expertise ? { expertise: input.expertise } : {}),
-        ...(input.ratePerSession !== undefined ? { ratePerSession: input.ratePerSession } : {}),
-        ...(input.status ? { status: input.status } : {}),
-        ...(input.bio !== undefined ? { bio: input.bio } : {}),
-        ...(input.avatar !== undefined ? { avatar: input.avatar } : {}),
-      },
-    });
+    const updateData: any = { updatedAt: new Date().toISOString() };
+    if (input.name) updateData.name = input.name.trim();
+    if (input.phone) updateData.phone = input.phone.trim();
+    if (input.email !== undefined) updateData.email = input.email?.trim().toLowerCase() || null;
+    if (input.expertise) updateData.expertise = input.expertise;
+    if (input.ratePerSession !== undefined) updateData.ratePerSession = input.ratePerSession;
+    if (input.status) updateData.status = input.status;
+    if (input.bio !== undefined) updateData.bio = input.bio;
+    if (input.avatar !== undefined) updateData.avatar = input.avatar;
+
+    const { error } = await supabaseAdmin
+      .from("Tutor")
+      .update(updateData)
+      .eq("id", id);
+
+    if (error) throw error;
 
     revalidatePath("/dashboard/tutor");
 
@@ -133,9 +134,8 @@ export async function updateTutor(
 
 export async function deleteTutor(id: string): Promise<ActionResponse> {
   try {
-    await prisma.tutor.delete({
-      where: { id },
-    });
+    const { error } = await supabaseAdmin.from("Tutor").delete().eq("id", id);
+    if (error) throw error;
 
     revalidatePath("/dashboard/tutor");
     return {

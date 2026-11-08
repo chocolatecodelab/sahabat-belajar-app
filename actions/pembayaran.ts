@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase";
 import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { PaymentStatus, StudentPackageStatus } from "@prisma/client";
@@ -12,11 +12,13 @@ export async function assignPackageToStudent(input: {
   endDate?: Date | string;
 }): Promise<ActionResponse<{ studentPackageId: string }>> {
   try {
-    const pkg = await prisma.package.findUnique({
-      where: { id: input.packageId },
-    });
+    const { data: pkg, error: pkgErr } = await supabaseAdmin
+      .from("Package")
+      .select("*")
+      .eq("id", input.packageId)
+      .single();
 
-    if (!pkg) {
+    if (pkgErr || !pkg) {
       return { success: false, message: "Paket belajar tidak ditemukan." };
     }
 
@@ -28,17 +30,23 @@ export async function assignPackageToStudent(input: {
       endDate = new Date(startDate.getTime() + pkg.durationMonths * 30 * 24 * 60 * 60 * 1000);
     }
 
-    const studentPackage = await prisma.studentPackage.create({
-      data: {
+    const now = new Date().toISOString();
+    const { data: studentPackage, error: spErr } = await supabaseAdmin
+      .from("StudentPackage")
+      .insert({
         studentId: input.studentId,
         packageId: input.packageId,
         quotaTotal,
         quotaUsed: 0,
-        startDate,
-        endDate,
-        status: StudentPackageStatus.AKTIF,
-      },
-    });
+        startDate: startDate.toISOString(),
+        endDate: endDate ? endDate.toISOString() : null,
+        status: "AKTIF",
+        updatedAt: now,
+      })
+      .select("id")
+      .single();
+
+    if (spErr) throw spErr;
 
     revalidatePath("/dashboard/paket");
     revalidatePath("/dashboard/siswa");
@@ -68,17 +76,25 @@ export async function recordManualPayment(input: {
       return { success: false, message: "Nominal pembayaran harus lebih besar dari 0." };
     }
 
-    const payment = await prisma.payment.create({
-      data: {
+    const now = new Date().toISOString();
+    const paidAt = input.paidAt ? new Date(input.paidAt).toISOString() : now;
+
+    const { data: payment, error } = await supabaseAdmin
+      .from("Payment")
+      .insert({
         studentPackageId: input.studentPackageId,
         amount: input.amount,
-        paidAt: input.paidAt ? new Date(input.paidAt) : new Date(),
+        paidAt,
         method: input.method || "TRANSFER_BANK",
         proofFile: input.proofFile || null,
-        status: input.status || PaymentStatus.LUNAS,
+        status: input.status || "LUNAS",
         notes: input.notes || null,
-      },
-    });
+        updatedAt: now,
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
 
     revalidatePath("/dashboard/pembayaran");
     revalidatePath("/dashboard/paket");
@@ -99,19 +115,23 @@ export async function getStudentPackages(params?: {
   status?: StudentPackageStatus;
 }) {
   try {
-    const where: any = {};
-    if (params?.studentId) where.studentId = params.studentId;
-    if (params?.status) where.status = params.status;
+    let query = supabaseAdmin
+      .from("StudentPackage")
+      .select(`
+        *,
+        student:Student(id, name, level, parentPhone),
+        package:Package(*),
+        payments:Payment(*)
+      `)
+      .order("createdAt", { ascending: false });
 
-    return await prisma.studentPackage.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      include: {
-        student: { select: { id: true, name: true, level: true, parentPhone: true } },
-        package: true,
-        payments: true,
-      },
-    });
+    if (params?.studentId) query = query.eq("studentId", params.studentId);
+    if (params?.status) query = query.eq("status", params.status);
+
+    const { data: studentPackages, error } = await query;
+    if (error) throw error;
+
+    return studentPackages || [];
   } catch (error) {
     console.error("getStudentPackages error:", error);
     return [];
@@ -122,21 +142,24 @@ export async function getPayments(params?: {
   status?: PaymentStatus;
 }) {
   try {
-    const where: any = {};
-    if (params?.status) where.status = params.status;
+    let query = supabaseAdmin
+      .from("Payment")
+      .select(`
+        *,
+        studentPackage:StudentPackage(
+          *,
+          student:Student(id, name, parentPhone),
+          package:Package(id, name, price)
+        )
+      `)
+      .order("paidAt", { ascending: false });
 
-    return await prisma.payment.findMany({
-      where,
-      orderBy: { paidAt: "desc" },
-      include: {
-        studentPackage: {
-          include: {
-            student: { select: { id: true, name: true } },
-            package: { select: { id: true, name: true, price: true } },
-          },
-        },
-      },
-    });
+    if (params?.status) query = query.eq("status", params.status);
+
+    const { data: payments, error } = await query;
+    if (error) throw error;
+
+    return payments || [];
   } catch (error) {
     console.error("getPayments error:", error);
     return [];

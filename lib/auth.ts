@@ -165,24 +165,24 @@ export async function requireAuth() {
   } catch (err: any) {
     if (process.env.IS_INTERNAL_CLI_TEST === "true") {
       try {
-        const { data: u } = await supabaseAdmin.from("User").select("id, name, email").eq("email", "admin@biasristek.id").maybeSingle();
+        const { data: u } = await supabaseAdmin.from("User").select("id, name, email").eq("email", "admin@sahabatbelajar.id").maybeSingle();
         if (u) {
           return { user: { id: u.id, name: u.name, email: u.email, role: "Super Admin" } } as any;
         }
       } catch {}
-      return { user: { id: "user_super_admin", name: "Test Admin", email: "admin@biasristek.id", role: "Super Admin" } } as any;
+      return { user: { id: "user_super_admin", name: "Test Admin", email: "admin@sahabatbelajar.id", role: "Super Admin" } } as any;
     }
     throw new Error("Unauthorized: Gagal membaca sesi autentikasi");
   }
   if (!session?.user) {
     if (process.env.IS_INTERNAL_CLI_TEST === "true") {
       try {
-        const { data: u } = await supabaseAdmin.from("User").select("id, name, email").eq("email", "admin@biasristek.id").maybeSingle();
+        const { data: u } = await supabaseAdmin.from("User").select("id, name, email").eq("email", "admin@sahabatbelajar.id").maybeSingle();
         if (u) {
           return { user: { id: u.id, name: u.name, email: u.email, role: "Super Admin" } } as any;
         }
       } catch {}
-      return { user: { id: "user_super_admin", name: "Test Admin", email: "admin@biasristek.id", role: "Super Admin" } } as any;
+      return { user: { id: "user_super_admin", name: "Test Admin", email: "admin@sahabatbelajar.id", role: "Super Admin" } } as any;
     }
     throw new Error("Unauthorized: Sesi tidak ditemukan atau telah berakhir");
   }

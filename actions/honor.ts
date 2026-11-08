@@ -1,9 +1,9 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase";
 import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
-import { SessionStatus, PayoutStatus } from "@prisma/client";
+import { PayoutStatus } from "@prisma/client";
 
 export async function calculateTutorPayout(input: {
   tutorId: string;
@@ -15,37 +15,47 @@ export async function calculateTutorPayout(input: {
     const start = new Date(input.periodStart);
     const end = new Date(input.periodEnd);
 
-    const tutor = await prisma.tutor.findUnique({
-      where: { id: input.tutorId },
-    });
+    const { data: tutor, error: tutorErr } = await supabaseAdmin
+      .from("Tutor")
+      .select("id, name, ratePerSession")
+      .eq("id", input.tutorId)
+      .single();
 
-    if (!tutor) {
+    if (tutorErr || !tutor) {
       return { success: false, message: "Data tutor tidak ditemukan." };
     }
 
     // BR-6: Honor tutor dihitung dari sesi TERLAKSANA dalam periode
-    const completedSessions = await prisma.session.findMany({
-      where: {
-        tutorId: input.tutorId,
-        status: SessionStatus.TERLAKSANA,
-        startAt: { gte: start, lte: end },
-      },
-    });
+    const { data: completedSessions, error: sessErr } = await supabaseAdmin
+      .from("Session")
+      .select("id")
+      .eq("tutorId", input.tutorId)
+      .eq("status", "TERLAKSANA")
+      .gte("startAt", start.toISOString())
+      .lte("startAt", end.toISOString());
 
-    const totalSessions = completedSessions.length;
-    const totalAmount = totalSessions * tutor.ratePerSession;
+    if (sessErr) throw sessErr;
 
-    const payout = await prisma.tutorPayout.create({
-      data: {
+    const totalSessions = (completedSessions || []).length;
+    const totalAmount = totalSessions * (tutor.ratePerSession || 100000);
+
+    const now = new Date().toISOString();
+    const { data: payout, error: payErr } = await supabaseAdmin
+      .from("TutorPayout")
+      .insert({
         tutorId: input.tutorId,
-        periodStart: start,
-        periodEnd: end,
+        periodStart: start.toISOString(),
+        periodEnd: end.toISOString(),
         totalSessions,
         totalAmount,
-        status: PayoutStatus.DRAFT,
+        status: "DRAFT",
         notes: input.notes || null,
-      },
-    });
+        updatedAt: now,
+      })
+      .select("id")
+      .single();
+
+    if (payErr) throw payErr;
 
     revalidatePath("/dashboard/honor");
 
@@ -69,17 +79,21 @@ export async function getTutorPayouts(params?: {
   status?: PayoutStatus;
 }) {
   try {
-    const where: any = {};
-    if (params?.tutorId) where.tutorId = params.tutorId;
-    if (params?.status) where.status = params.status;
+    let query = supabaseAdmin
+      .from("TutorPayout")
+      .select(`
+        *,
+        tutor:Tutor(id, name, phone, ratePerSession)
+      `)
+      .order("periodStart", { ascending: false });
 
-    return await prisma.tutorPayout.findMany({
-      where,
-      orderBy: { periodStart: "desc" },
-      include: {
-        tutor: { select: { id: true, name: true, phone: true, ratePerSession: true } },
-      },
-    });
+    if (params?.tutorId) query = query.eq("tutorId", params.tutorId);
+    if (params?.status) query = query.eq("status", params.status);
+
+    const { data: payouts, error } = await query;
+    if (error) throw error;
+
+    return payouts || [];
   } catch (error) {
     console.error("getTutorPayouts error:", error);
     return [];
@@ -91,20 +105,32 @@ export async function updatePayoutStatus(
   status: PayoutStatus
 ): Promise<ActionResponse> {
   try {
-    await prisma.tutorPayout.update({
-      where: { id },
-      data: {
-        status,
-        ...(status === PayoutStatus.DIBAYAR ? { paidAt: new Date() } : {}),
-      },
-    });
+    const now = new Date().toISOString();
+    const updateData: any = {
+      status,
+      updatedAt: now,
+    };
+    if (status === ("DIBAYAR" as any)) {
+      updateData.paidAt = now;
+    }
+
+    const { error } = await supabaseAdmin
+      .from("TutorPayout")
+      .update(updateData)
+      .eq("id", id);
+
+    if (error) throw error;
 
     revalidatePath("/dashboard/honor");
+
     return {
       success: true,
-      message: `Status rekap honor diperbarui menjadi ${status}.`,
+      message: `Status rekap honor berhasil diubah menjadi ${status}.`,
     };
   } catch (error: any) {
-    return { success: false, message: "Gagal memperbarui status honor." };
+    return {
+      success: false,
+      message: "Gagal memperbarui status rekap honor.",
+    };
   }
 }
