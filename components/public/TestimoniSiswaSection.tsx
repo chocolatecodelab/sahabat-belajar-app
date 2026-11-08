@@ -172,12 +172,11 @@ export default function TestimoniSiswaSection({
               </div>
 
               {/* Kutipan Testimoni */}
-              <div className="relative mb-6">
-                <Quote
-                  size={28}
-                  className="text-[#9AC1E2]/40 absolute -top-2 -left-1 -z-0"
-                />
-                <p className="text-xs sm:text-[13px] text-[#1B2A41] leading-relaxed relative z-10 pt-2 italic">
+              <div className="mb-6 space-y-2">
+                <div className="text-[#9AC1E2]">
+                  <Quote size={22} className="fill-[#9AC1E2]/40" />
+                </div>
+                <p className="text-xs sm:text-[13px] text-[#1B2A41] leading-relaxed italic">
                   &ldquo;{testi.content}&rdquo;
                 </p>
               </div>
