@@ -18,6 +18,8 @@ import {
   HeartHandshake,
 } from "lucide-react";
 import PublicLeadForm from "@/components/public/PublicLeadForm";
+import TutorShowcaseSection from "@/components/public/TutorShowcaseSection";
+import TestimoniSiswaSection from "@/components/public/TestimoniSiswaSection";
 
 export const dynamic = "force-dynamic";
 
@@ -409,7 +411,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 6. PAKET BELAJAR (90 MENIT PER SESI) */}
+      {/* 6. TUTOR BERPENGALAMAN & TIM PENGAJAR PAKAR */}
+      <TutorShowcaseSection />
+
+      {/* 7. PAKET BELAJAR (90 MENIT PER SESI) */}
       <section id="paket" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <span className="text-xs font-bold text-[#09408C] uppercase tracking-wider bg-[#EAF1FA] px-3 py-1 rounded-full">
@@ -524,6 +529,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* 8. TESTIMONI SISWA & ORANG TUA */}
+      <TestimoniSiswaSection />
 
       {/* 7. FORMULIR PENDAFTARAN & LEAD CAPTURE (A2) */}
       <section id="daftar" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -33,33 +33,45 @@ export default function Navbar() {
           <nav className="hidden md:flex items-center gap-1.5">
             <Link
               href="/"
-              className="px-3.5 py-2 rounded-xl text-sm font-semibold text-[#1B2A41] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+              className="px-3 py-2 rounded-xl text-sm font-semibold text-[#1B2A41] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
             >
-              Home
+              Beranda
             </Link>
             <a
               href="#tentang"
-              className="px-3.5 py-2 rounded-xl text-sm font-semibold text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+              className="px-3 py-2 rounded-xl text-sm font-semibold text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
             >
-              About Us
+              Tentang Kami
             </a>
             <a
               href="#program"
-              className="px-3.5 py-2 rounded-xl text-sm font-semibold text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+              className="px-3 py-2 rounded-xl text-sm font-semibold text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
             >
-              Programs
+              Program
+            </a>
+            <a
+              href="#tutor"
+              className="px-3 py-2 rounded-xl text-sm font-semibold text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+            >
+              Tutor Pakar
             </a>
             <a
               href="#paket"
-              className="px-3.5 py-2 rounded-xl text-sm font-semibold text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+              className="px-3 py-2 rounded-xl text-sm font-semibold text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
             >
-              Paket Belajar
+              Pilihan Paket
             </a>
             <a
-              href="#kontak"
-              className="px-3.5 py-2 rounded-xl text-sm font-semibold text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+              href="#testimoni"
+              className="px-3 py-2 rounded-xl text-sm font-semibold text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
             >
-              Contact
+              Testimoni
+            </a>
+            <a
+              href="#daftar"
+              className="px-3 py-2 rounded-xl text-sm font-semibold text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+            >
+              Daftar
             </a>
           </nav>
 
@@ -97,41 +109,55 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-[#D5DDEB] bg-white p-4 space-y-3">
+        <div className="md:hidden border-t border-[#D5DDEB] bg-white p-4 space-y-2">
           <Link
             href="/"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-lg text-sm font-semibold text-[#1B2A41]"
           >
-            Home
+            Beranda
           </Link>
           <a
             href="#tentang"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-lg text-sm font-semibold text-[#5B6882]"
           >
-            About Us
+            Tentang Kami
           </a>
           <a
             href="#program"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-lg text-sm font-semibold text-[#5B6882]"
           >
-            Programs
+            Program Bimbingan
+          </a>
+          <a
+            href="#tutor"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm font-semibold text-[#5B6882]"
+          >
+            Tutor Pakar
           </a>
           <a
             href="#paket"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-lg text-sm font-semibold text-[#5B6882]"
           >
-            Paket Belajar
+            Pilihan Paket
           </a>
           <a
-            href="#kontak"
+            href="#testimoni"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-lg text-sm font-semibold text-[#5B6882]"
           >
-            Contact
+            Testimoni Siswa
+          </a>
+          <a
+            href="#daftar"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm font-semibold text-[#09408C] font-bold"
+          >
+            Daftar Sekarang
           </a>
 
           <div className="pt-2 border-t border-[#D5DDEB] flex flex-col gap-2">
