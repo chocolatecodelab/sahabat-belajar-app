@@ -44,7 +44,7 @@ const DEFAULT_TESTIMONIALS: StudentTestimonial[] = [
   {
     id: "testi-2",
     name: "Ibu Ratna Dewi",
-    role: "Orang Tua dari Kevin (Siswa SMP Kelas 8)",
+    role: "Orang Tua Siswa (SMP Kelas 8)",
     schoolOrInstitution: "SMP Negeri Unggulan",
     program: "Bimbel Reguler IPA & Matematika",
     classMode: "Privat Home Visit",
@@ -59,7 +59,7 @@ const DEFAULT_TESTIMONIALS: StudentTestimonial[] = [
   {
     id: "testi-3",
     name: "Bima Wicaksono",
-    role: "Peserta Seleksi CASN",
+    role: "Peserta Seleksi CASN/CPNS",
     schoolOrInstitution: "Kementerian BUMN / CPNS",
     program: "Persiapan Intensif SKD (TWK, TIU, TKP)",
     classMode: "Online Zoom Interaktif",
@@ -74,7 +74,7 @@ const DEFAULT_TESTIMONIALS: StudentTestimonial[] = [
   {
     id: "testi-4",
     name: "Dinda Kirana",
-    role: "Mahasiswi S1 / Calon Penerima Beasiswa",
+    role: "Mahasiswi S1 & Pejuang Beasiswa",
     schoolOrInstitution: "Universitas Negeri",
     program: "TOEFL ITP Preparation & Structure",
     classMode: "Semi-Privat Online (3 Peserta)",
@@ -89,7 +89,7 @@ const DEFAULT_TESTIMONIALS: StudentTestimonial[] = [
   {
     id: "testi-5",
     name: "Fathir & Sahabat",
-    role: "Kelompok Belajar Siswa SMA Kelas 11",
+    role: "Kelompok Siswa SMA Kelas 11",
     schoolOrInstitution: "SMA Swasta Favorit",
     program: "Semi-Privat Matematika & Kimia",
     classMode: "Semi-Privat Home Visit",
@@ -104,7 +104,7 @@ const DEFAULT_TESTIMONIALS: StudentTestimonial[] = [
   {
     id: "testi-6",
     name: "Drg. Maya Novitasari",
-    role: "Dokter Gigi / Pendaftar Program Spesialis",
+    role: "Dokter Gigi & Peserta S2 Spesialis",
     schoolOrInstitution: "Program Pendidikan Dokter Gigi Spesialis",
     program: "Persiapan TPA Bappenas & Penulisan Proposal",
     classMode: "Privat Online 1-on-1",
@@ -151,16 +151,16 @@ export default function TestimoniSiswaSection({
         {testimonials.map((testi) => (
           <div
             key={testi.id}
-            className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs hover:border-[#09408C] hover:shadow-md transition-all flex flex-col justify-between group"
+            className="bg-white rounded-3xl border border-[#D5DDEB] p-5 sm:p-6 shadow-xs hover:border-[#09408C] hover:shadow-md transition-all flex flex-col justify-between group"
           >
             <div>
               {/* Top Bar: Achievement Badge & Stars */}
-              <div className="flex items-start justify-between gap-3 mb-4">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E3F4EC] text-[#1F6F4A] text-xs font-bold border border-[#1F6F4A]/20 shadow-2xs">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E3F4EC] text-[#1F6F4A] text-[11px] sm:text-xs font-bold border border-[#1F6F4A]/20 shadow-2xs">
                   {testi.achievement}
                 </span>
 
-                <div className="flex items-center gap-0.5 shrink-0 pt-0.5">
+                <div className="flex items-center gap-0.5 shrink-0">
                   {Array.from({ length: testi.rating }).map((_, i) => (
                     <Star
                       key={i}
@@ -182,9 +182,9 @@ export default function TestimoniSiswaSection({
               </div>
             </div>
 
-            {/* Profile Info */}
-            <div className="pt-4 border-t border-[#D5DDEB] flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
+            {/* Profile Info & Mode Badge */}
+            <div className="pt-4 border-t border-[#D5DDEB] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 {/* Avatar Bulat dengan Border Navy */}
                 <div className="w-11 h-11 rounded-full border-2 border-[#09408C] p-0.5 bg-white shrink-0">
                   <div
@@ -194,25 +194,25 @@ export default function TestimoniSiswaSection({
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="font-bold text-xs sm:text-sm text-[#1B2A41] font-display">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-sm text-[#1B2A41] font-display leading-snug">
                     {testi.name}
                   </h3>
-                  <p className="text-[11px] text-[#5B6882]">
+                  <p className="text-xs text-[#5B6882] leading-tight mt-0.5">
                     {testi.role}
                   </p>
-                  <p className="text-[10px] font-semibold text-[#09408C]">
+                  <p className="text-[11px] font-semibold text-[#09408C] mt-0.5">
                     {testi.schoolOrInstitution}
                   </p>
                 </div>
               </div>
 
               {/* Class Mode Icon / Chip */}
-              <div className="text-right shrink-0">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F4F7FB] border border-[#D5DDEB] text-[10px] font-medium text-[#5B6882]">
-                  {testi.modeIcon === "video" && <Video size={10} className="text-[#09408C]" />}
-                  {testi.modeIcon === "home" && <Home size={10} className="text-[#1F6F4A]" />}
-                  {testi.modeIcon === "users" && <Users size={10} className="text-[#295897]" />}
+              <div className="self-start sm:self-center shrink-0">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F4F7FB] border border-[#D5DDEB] text-[11px] font-medium text-[#5B6882]">
+                  {testi.modeIcon === "video" && <Video size={12} className="text-[#09408C]" />}
+                  {testi.modeIcon === "home" && <Home size={12} className="text-[#1F6F4A]" />}
+                  {testi.modeIcon === "users" && <Users size={12} className="text-[#295897]" />}
                   <span>{testi.classMode}</span>
                 </span>
               </div>
@@ -222,41 +222,41 @@ export default function TestimoniSiswaSection({
       </div>
 
       {/* Trust & Satisfaction Metrics */}
-      <div className="mt-12 bg-white rounded-3xl border border-[#D5DDEB] p-6 sm:p-8 shadow-xs">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-[#D5DDEB]">
-          <div className="pt-3 md:pt-0">
+      <div className="mt-12 bg-white rounded-3xl border border-[#D5DDEB] p-5 sm:p-8 shadow-xs">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 text-center">
+          <div className="p-3 sm:p-4 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB]/80 flex flex-col justify-center">
             <div className="text-2xl sm:text-3xl font-extrabold text-[#09408C] font-display flex items-center justify-center gap-1">
               <span>4.9</span>
-              <Star size={20} className="fill-[#F5B82E] text-[#F5B82E]" />
+              <Star size={18} className="fill-[#F5B82E] text-[#F5B82E]" />
             </div>
             <div className="text-xs text-[#5B6882] mt-1 font-medium">
               Rata-rata Kepuasan Siswa
             </div>
           </div>
 
-          <div className="pt-3 md:pt-0">
+          <div className="p-3 sm:p-4 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB]/80 flex flex-col justify-center">
             <div className="text-2xl sm:text-3xl font-extrabold text-[#09408C] font-display flex items-center justify-center gap-1">
               <span>94%</span>
-              <TrendingUp size={20} className="text-[#1F6F4A]" />
+              <TrendingUp size={18} className="text-[#1F6F4A]" />
             </div>
             <div className="text-xs text-[#5B6882] mt-1 font-medium">
-              Kenaikan Nilai & Capaian Target
+              Kenaikan Nilai Target
             </div>
           </div>
 
-          <div className="pt-3 md:pt-0">
+          <div className="p-3 sm:p-4 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB]/80 flex flex-col justify-center">
             <div className="text-2xl sm:text-3xl font-extrabold text-[#09408C] font-display">
               1.200+
             </div>
             <div className="text-xs text-[#5B6882] mt-1 font-medium">
-              Jam Sesi 90 Menit Terlaksana
+              Jam Sesi Terlaksana
             </div>
           </div>
 
-          <div className="pt-3 md:pt-0">
+          <div className="p-3 sm:p-4 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB]/80 flex flex-col justify-center">
             <div className="text-2xl sm:text-3xl font-extrabold text-[#09408C] font-display flex items-center justify-center gap-1">
               <span>100%</span>
-              <CheckCircle2 size={20} className="text-[#1F6F4A]" />
+              <CheckCircle2 size={18} className="text-[#1F6F4A]" />
             </div>
             <div className="text-xs text-[#5B6882] mt-1 font-medium">
               Jurnal & Kuota Transparan

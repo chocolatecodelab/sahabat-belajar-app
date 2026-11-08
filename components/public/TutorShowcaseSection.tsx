@@ -123,7 +123,7 @@ export default function TutorShowcaseSection({
         {tutors.map((tutor) => (
           <div
             key={tutor.id}
-            className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs hover:border-[#09408C] hover:shadow-md transition-all flex flex-col justify-between group"
+            className="bg-white rounded-3xl border border-[#D5DDEB] p-5 sm:p-6 shadow-xs hover:border-[#09408C] hover:shadow-md transition-all flex flex-col justify-between group"
           >
             <div>
               {/* Badge Kategori */}

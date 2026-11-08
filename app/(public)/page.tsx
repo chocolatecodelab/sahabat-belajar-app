@@ -73,7 +73,7 @@ export default function HomePage() {
               </div>
 
               {/* Mini Highlights */}
-              <div className="pt-4 flex flex-wrap items-center gap-6 text-xs text-[#5B6882] border-t border-[#D5DDEB]/60">
+              <div className="pt-4 flex flex-wrap items-center gap-3 sm:gap-6 text-xs text-[#5B6882] border-t border-[#D5DDEB]/60">
                 <div className="flex items-center gap-2">
                   <Clock size={16} className="text-[#09408C]" />
                   <span>Standar <strong>90 Menit</strong> / Pertemuan</span>
@@ -90,10 +90,10 @@ export default function HomePage() {
             </div>
 
             {/* Right Graphic: Circular Navy Frame (Design 3) */}
-            <div className="lg:col-span-5 flex justify-center">
+            <div className="lg:col-span-5 flex justify-center py-4">
               <div className="relative">
                 {/* Navy thick circular border */}
-                <div className="w-72 h-72 sm:w-88 sm:h-88 rounded-full border-8 border-[#09408C] p-2 bg-white shadow-xl relative z-10 flex items-center justify-center overflow-hidden">
+                <div className="w-64 h-64 sm:w-80 sm:h-80 lg:w-88 lg:h-88 rounded-full border-8 border-[#09408C] p-2 bg-white shadow-xl relative z-10 flex items-center justify-center overflow-hidden">
                   <div className="w-full h-full rounded-full bg-linear-to-br from-[#EAF1FA] to-[#D5DDEB] flex flex-col items-center justify-center p-6 text-center">
                     <GraduationCap size={64} className="text-[#09408C] mb-2" />
                     <span className="font-extrabold text-[#09408C] text-lg font-display">
