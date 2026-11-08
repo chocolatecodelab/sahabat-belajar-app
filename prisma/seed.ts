@@ -21,6 +21,19 @@ const PERMISSION_MODULES = [
 ];
 const PERMISSION_ACTIONS = ["create", "read", "update", "delete", "manage"];
 
+const INITIAL_MENUS = [
+  { id: "menu_dashboard", label: "Dashboard", icon: "LayoutDashboard", url: "/dashboard", parentId: null, sortOrder: 1, isActive: true, permission: "dashboard.read" },
+  { id: "menu_lead", label: "Prospek / Lead", icon: "Users", url: "/dashboard/lead", parentId: null, sortOrder: 2, isActive: true, permission: "lead.read" },
+  { id: "menu_siswa", label: "Data Siswa", icon: "GraduationCap", url: "/dashboard/siswa", parentId: null, sortOrder: 3, isActive: true, permission: "student.read" },
+  { id: "menu_tutor", label: "Direktori Tutor", icon: "BookOpen", url: "/dashboard/tutor", parentId: null, sortOrder: 4, isActive: true, permission: "tutor.read" },
+  { id: "menu_jadwal", label: "Jadwal & Sesi", icon: "Calendar", url: "/dashboard/jadwal", parentId: null, sortOrder: 5, isActive: true, permission: "schedule.read" },
+  { id: "menu_paket", label: "Paket & Kuota", icon: "FileCheck", url: "/dashboard/paket", parentId: null, sortOrder: 6, isActive: true, permission: "package.read" },
+  { id: "menu_pembayaran", label: "Pembayaran", icon: "CreditCard", url: "/dashboard/pembayaran", parentId: null, sortOrder: 7, isActive: true, permission: "payment.read" },
+  { id: "menu_honor", label: "Rekap Honor Tutor", icon: "Trophy", url: "/dashboard/honor", parentId: null, sortOrder: 8, isActive: true, permission: "payout.read" },
+  { id: "menu_media", label: "Pustaka Media", icon: "Image", url: "/dashboard/media", parentId: null, sortOrder: 9, isActive: true, permission: "media.read" },
+  { id: "menu_pengaturan", label: "Pengaturan", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 10, isActive: true, permission: "settings.read" },
+];
+
 async function main() {
   console.log("🌱 Seeding Sahabat Belajar database...");
 
@@ -79,7 +92,7 @@ async function main() {
     },
   });
 
-  await prisma.role.upsert({
+  const siswaRole = await prisma.role.upsert({
     where: { name: "Siswa" },
     update: {},
     create: {
@@ -131,7 +144,18 @@ async function main() {
   }
   console.log("  ✅ Site settings created");
 
-  // 5. Create core programs and packages
+  // 5. Seed Admin Menus
+  console.log("  Creating admin menus...");
+  for (const m of INITIAL_MENUS) {
+    await prisma.adminMenu.upsert({
+      where: { id: m.id },
+      update: m,
+      create: m,
+    });
+  }
+  console.log("  ✅ Admin menus created");
+
+  // 6. Create core programs and packages
   console.log("  Creating core programs & packages...");
   const programsData = [
     {
@@ -179,33 +203,131 @@ async function main() {
     },
   ];
 
+  let firstPackageId = "";
+  let firstProgramId = "";
+
   for (const prog of programsData) {
-    const createdProg = await prisma.program.create({
-      data: {
-        name: prog.name,
-        category: prog.category,
-        description: prog.description,
-      },
+    let createdProg = await prisma.program.findFirst({
+      where: { name: prog.name },
     });
 
-    for (const pkg of prog.packages) {
-      await prisma.package.create({
+    if (!createdProg) {
+      createdProg = await prisma.program.create({
         data: {
-          programId: createdProg.id,
-          name: pkg.name,
-          type: "QUOTA",
-          quotaSessions: pkg.quotaSessions,
-          sessionMinutes: 90, // BR-5 default 90 menit
-          price: pkg.price,
+          name: prog.name,
+          category: prog.category,
+          description: prog.description,
         },
       });
+    }
+
+    if (!firstProgramId) firstProgramId = createdProg.id;
+
+    for (const pkg of prog.packages) {
+      let createdPkg = await prisma.package.findFirst({
+        where: { name: pkg.name },
+      });
+
+      if (!createdPkg) {
+        createdPkg = await prisma.package.create({
+          data: {
+            programId: createdProg.id,
+            name: pkg.name,
+            type: "QUOTA",
+            quotaSessions: pkg.quotaSessions,
+            sessionMinutes: 90, // BR-5 default 90 menit
+            price: pkg.price,
+          },
+        });
+      }
+
+      if (!firstPackageId) firstPackageId = createdPkg.id;
     }
   }
   console.log("  ✅ Programs and packages created");
 
+  // 7. Seed Sample Tutor
+  console.log("  Creating sample tutors...");
+  const tutorData = [
+    {
+      name: "Dr. Hendra Wijaya, M.Pd",
+      phone: "+62 813-1122-3344",
+      expertise: ["Matematika", "Fisika", "TPA"],
+      ratePerSession: 150000,
+    },
+    {
+      name: "Sarah Amelia, S.Si",
+      phone: "+62 813-5566-7788",
+      expertise: ["Biologi", "Kimia", "Sains K-12"],
+      ratePerSession: 125000,
+    },
+  ];
+
+  for (const td of tutorData) {
+    const existing = await prisma.tutor.findFirst({ where: { name: td.name } });
+    if (!existing) {
+      await prisma.tutor.create({
+        data: {
+          name: td.name,
+          phone: td.phone,
+          expertise: td.expertise,
+          ratePerSession: td.ratePerSession,
+          status: "AKTIF",
+        },
+      });
+    }
+  }
+  console.log("  ✅ Sample tutors created");
+
+  // 8. Seed Sample Student & Active Package
+  console.log("  Creating sample student...");
+  let sampleStudent = await prisma.student.findFirst({
+    where: { name: "Ahmad Fauzi" },
+  });
+
+  if (!sampleStudent) {
+    // Create student user account
+    const studentUser = await prisma.user.create({
+      data: {
+        name: "Ahmad Fauzi",
+        email: "siswa@sahabatbelajar.id",
+        password: hashedPassword,
+        roleId: siswaRole.id,
+      },
+    });
+
+    sampleStudent = await prisma.student.create({
+      data: {
+        userId: studentUser.id,
+        name: "Ahmad Fauzi",
+        level: "SMA Kelas 12",
+        school: "SMAN 1 Jakarta",
+        parentName: "Bapak Hendro",
+        parentPhone: "+62 812-9988-7766",
+        parentConsentAt: new Date(),
+        status: "AKTIF",
+      },
+    });
+
+    // Assign package to student
+    if (firstPackageId) {
+      await prisma.studentPackage.create({
+        data: {
+          studentId: sampleStudent.id,
+          packageId: firstPackageId,
+          quotaTotal: 10,
+          quotaUsed: 2, // 2 sessions completed
+          status: "AKTIF",
+          startDate: new Date(),
+        },
+      });
+    }
+  }
+  console.log("  ✅ Sample student created (siswa@sahabatbelajar.id / password123)");
+
   console.log("\n🎉 Seeding completed successfully!");
-  console.log("   Admin Email: admin@sahabatbelajar.id");
-  console.log("   Password: password123");
+  console.log("   Admin Email: admin@sahabatbelajar.id | Password: password123");
+  console.log("   Siswa Email: siswa@sahabatbelajar.id | Password: password123");
 }
 
 main()

@@ -123,6 +123,47 @@ export async function createStudent(input: StudentInput): Promise<ActionResponse
   }
 }
 
+export async function convertLeadToStudent(leadId: string): Promise<ActionResponse<{ id: string }>> {
+  try {
+    const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+    if (!lead) {
+      return { success: false, message: "Prospek lead tidak ditemukan." };
+    }
+
+    const student = await prisma.student.create({
+      data: {
+        name: lead.name,
+        level: lead.level || "Umum",
+        parentPhone: lead.phone,
+        leadId: lead.id,
+        status: StudentStatus.AKTIF,
+        parentConsentAt: new Date(),
+        notes: `Dikonversi dari prospek: ${lead.programInterest} (${lead.classModel || "Privat"})`,
+      },
+    });
+
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: { status: "DAFTAR" },
+    });
+
+    revalidatePath("/dashboard/siswa");
+    revalidatePath("/dashboard/lead");
+
+    return {
+      success: true,
+      message: `Berhasil mendaftarkan ${lead.name} sebagai siswa aktif Sahabat Belajar.`,
+      data: { id: student.id },
+    };
+  } catch (error: any) {
+    console.error("convertLeadToStudent error:", error);
+    return {
+      success: false,
+      message: "Gagal mengonversi lead menjadi siswa.",
+    };
+  }
+}
+
 export async function updateStudent(
   id: string,
   input: Partial<StudentInput>

@@ -15,8 +15,10 @@ import {
   MessageSquare,
   ArrowRight,
   Filter,
+  UserPlus,
 } from "lucide-react";
 import { updateLeadStatus, deleteLead } from "@/actions/lead";
+import { convertLeadToStudent } from "@/actions/siswa";
 import { LeadStatus } from "@prisma/client";
 
 const STATUS_CONFIG: Record<
@@ -72,6 +74,7 @@ export default function LeadManagerClient({
   const [newStatus, setNewStatus] = useState<LeadStatus>("DIHUBUNGI");
   const [notes, setNotes] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
 
   const filteredLeads = leads.filter((l) => {
     const matchStatus = selectedStatus === "ALL" || l.status === selectedStatus;
@@ -104,16 +107,33 @@ export default function LeadManagerClient({
     }
   };
 
+  const handleConvertToStudent = async (leadId: string) => {
+    if (!confirm("Konversi prospek ini menjadi Siswa Aktif Sahabat Belajar?")) return;
+    setIsConverting(true);
+    const res = await convertLeadToStudent(leadId);
+    setIsConverting(false);
+
+    if (res.success) {
+      alert(res.message);
+      setLeads((prev) =>
+        prev.map((l) => (l.id === leadId ? { ...l, status: "DAFTAR" } : l))
+      );
+      setSelectedLead(null);
+    } else {
+      alert(res.message);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#09408C] font-display">
+          <h1 className="text-2xl font-bold text-[#09408C] font-heading">
             Manajemen Prospek (Lead)
           </h1>
           <p className="text-sm text-[#5B6882] mt-0.5">
-            Daftar calon siswa dari formulir website publik dan pesan konsultasi WhatsApp.
+            Daftar calon siswa dari formulir website publik dan konsultasi WhatsApp.
           </p>
         </div>
       </div>
@@ -177,14 +197,16 @@ export default function LeadManagerClient({
                   <th className="py-3 px-4">Model & Mode</th>
                   <th className="py-3 px-4">Tanggal Masuk</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Aksi</th>
+                  <th className="py-3 px-4 text-right">Aksi Tindak Lanjut</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#D5DDEB]">
                 {filteredLeads.map((lead) => {
                   const conf = STATUS_CONFIG[lead.status as LeadStatus] || STATUS_CONFIG.BARU;
                   const Icon = conf.icon;
-                  const waUrl = `https://wa.me/${lead.phone}?text=Halo%20${encodeURIComponent(
+                  const cleanPhone = lead.phone.replace(/[^0-9]/g, "");
+                  const formattedPhone = cleanPhone.startsWith("0") ? `62${cleanPhone.slice(1)}` : cleanPhone;
+                  const waUrl = `https://wa.me/${formattedPhone}?text=Halo%20${encodeURIComponent(
                     lead.name
                   )}%2C%20terima%20kasih%20telah%20menghubungi%20Sahabat%20Belajar.%20Apakah%20ada%20yang%20bisa%20kami%20bantu%20mengenai%20bimbingan%20belajar%3F`;
 
@@ -245,7 +267,7 @@ export default function LeadManagerClient({
                           title="Hubungi via WhatsApp"
                         >
                           <Phone size={12} />
-                          <span>Chat WA</span>
+                          <span>WA</span>
                         </a>
 
                         <button
@@ -256,8 +278,20 @@ export default function LeadManagerClient({
                           }}
                           className="px-2.5 py-1.5 rounded-lg border border-[#D5DDEB] bg-white text-[#09408C] font-semibold hover:bg-[#EAF1FA] transition-colors"
                         >
-                          Ubah Status
+                          Status
                         </button>
+
+                        {lead.status !== "DAFTAR" && (
+                          <button
+                            onClick={() => handleConvertToStudent(lead.id)}
+                            disabled={isConverting}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#09408C] text-white font-semibold hover:bg-[#0E3571] transition-colors shadow-xs"
+                            title="Konversi langsung menjadi siswa aktif"
+                          >
+                            <UserPlus size={12} />
+                            <span>Jadi Siswa</span>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -272,7 +306,7 @@ export default function LeadManagerClient({
       {selectedLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full border border-[#D5DDEB] shadow-xl space-y-4">
-            <h3 className="text-lg font-bold text-[#09408C] font-display">
+            <h3 className="text-lg font-bold text-[#09408C] font-heading">
               Tindak Lanjut Prospek: {selectedLead.name}
             </h3>
 
@@ -306,20 +340,34 @@ export default function LeadManagerClient({
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                onClick={() => setSelectedLead(null)}
-                className="px-4 py-2 text-xs font-semibold text-[#5B6882] hover:bg-[#F4F7FB] rounded-xl transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleUpdateStatus}
-                disabled={isUpdating}
-                className="px-4 py-2 text-xs font-semibold bg-[#09408C] text-white hover:bg-[#0E3571] rounded-xl transition-colors disabled:opacity-50"
-              >
-                {isUpdating ? "Menyimpan..." : "Simpan Status"}
-              </button>
+            <div className="flex items-center justify-between pt-2 border-t border-[#D5DDEB]">
+              {selectedLead.status !== "DAFTAR" ? (
+                <button
+                  type="button"
+                  onClick={() => handleConvertToStudent(selectedLead.id)}
+                  className="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] rounded-xl transition-colors"
+                >
+                  <UserPlus size={14} /> + Jadi Siswa
+                </button>
+              ) : (
+                <div></div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedLead(null)}
+                  className="px-4 py-2 text-xs font-semibold text-[#5B6882] hover:bg-[#F4F7FB] rounded-xl transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleUpdateStatus}
+                  disabled={isUpdating}
+                  className="px-4 py-2 text-xs font-semibold bg-[#09408C] text-white hover:bg-[#0E3571] rounded-xl transition-colors disabled:opacity-50"
+                >
+                  {isUpdating ? "Menyimpan..." : "Simpan Status"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

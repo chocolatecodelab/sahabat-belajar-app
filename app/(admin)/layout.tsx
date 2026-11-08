@@ -17,11 +17,11 @@ export default async function AdminLayout({
     redirect("/login");
   }
 
-  // Role Gatekeeping (QA-FUNC-02): Prevent Students from accessing Admin Dashboard
-  const userRole = (session.user as any)?.role || "Student";
-  const staffRoles = ["Super Admin", "Admin", "Editor", "Tutor", "Mentor", "Reviewer"];
+  // Role Gatekeeping: Allow Admin, Staf, and Tutor to access Dashboard
+  const userRole = (session.user as any)?.role || "Siswa";
+  const staffRoles = ["Super Admin", "Admin", "Staf", "Tutor"];
   if (!staffRoles.includes(userRole)) {
-    redirect("/belajar");
+    redirect("/portal");
   }
 
   const menus = await getAdminMenus();

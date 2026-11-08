@@ -9,6 +9,10 @@ import {
   FileText,
   DollarSign,
   Calendar,
+  Printer,
+  Share2,
+  X,
+  ExternalLink,
 } from "lucide-react";
 import { recordManualPayment } from "@/actions/pembayaran";
 import { PaymentStatus } from "@prisma/client";
@@ -23,6 +27,7 @@ export default function PaymentManagerClient({
   const [payments, setPayments] = useState(initialPayments);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
 
   // Form states
   const [studentPackageId, setStudentPackageId] = useState(
@@ -58,15 +63,23 @@ export default function PaymentManagerClient({
     }
   };
 
+  const getWhatsAppConfirmationUrl = (p: any) => {
+    const phone = p.studentPackage.student.parentPhone || "";
+    const cleanPhone = phone.replace(/[^0-9]/g, "");
+    const formattedPhone = cleanPhone.startsWith("0") ? `62${cleanPhone.slice(1)}` : cleanPhone;
+    const msg = `Halo ${p.studentPackage.student.parentName || p.studentPackage.student.name}, pembayaran bimbingan Sahabat Belajar untuk paket *${p.studentPackage.package.name}* sebesar *Rp ${p.amount.toLocaleString("id-ID")}* telah kami terima dengan status *${p.status}*. Terima kasih! #BersamaSahabat`;
+    return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#09408C] font-display">
+          <h1 className="text-2xl font-bold text-[#09408C] font-heading">
             Pencatatan Pembayaran Siswa
           </h1>
           <p className="text-sm text-[#5B6882] mt-0.5">
-            Rekap transaksi pembayaran paket belajar manual (Transfer Bank, QRIS, Tunai).
+            Rekap transaksi pembayaran paket belajar manual (Transfer Bank, QRIS, Tunai) & kwitansi resmi.
           </p>
         </div>
 
@@ -95,9 +108,10 @@ export default function PaymentManagerClient({
                   <th className="py-3 px-4">Nominal</th>
                   <th className="py-3 px-4">Metode & Tanggal</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Catatan</th>
+                  <th className="py-3 px-4 text-center">Aksi Kwitansi</th>
                 </tr>
               </thead>
+
               <tbody className="divide-y divide-[#D5DDEB]">
                 {payments.map((p) => {
                   const isPaid = p.status === "LUNAS";
@@ -107,6 +121,11 @@ export default function PaymentManagerClient({
                         <div className="font-bold text-sm text-[#1B2A41]">
                           {p.studentPackage.student.name}
                         </div>
+                        {p.studentPackage.student.parentPhone && (
+                          <div className="text-[11px] text-[#5B6882]">
+                            Wali: {p.studentPackage.student.parentPhone}
+                          </div>
+                        )}
                       </td>
 
                       <td className="py-3.5 px-4">
@@ -144,8 +163,28 @@ export default function PaymentManagerClient({
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-4 text-[#5B6882]">
-                        {p.notes || "-"}
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => setSelectedReceipt(p)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                            title="Cetak Kwitansi Resmi"
+                          >
+                            <Printer size={13} />
+                            <span>Kwitansi</span>
+                          </button>
+                          {p.studentPackage.student.parentPhone && (
+                            <a
+                              href={getWhatsAppConfirmationUrl(p)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                              title="Kirim Konfirmasi via WhatsApp"
+                            >
+                              <Share2 size={13} />
+                            </a>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -156,6 +195,100 @@ export default function PaymentManagerClient({
         )}
       </div>
 
+      {/* Kwitansi Modal (Printable) */}
+      {selectedReceipt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-[#D5DDEB] shadow-2xl space-y-6 relative">
+            <button
+              onClick={() => setSelectedReceipt(null)}
+              className="absolute top-4 right-4 p-2 text-[#5B6882] hover:text-[#1B2A41] rounded-full hover:bg-slate-100"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Receipt Printable Card */}
+            <div id="kwitansi-print" className="border-2 border-[#09408C] rounded-2xl p-6 space-y-5 bg-white">
+              <div className="flex items-center justify-between border-b border-[#D5DDEB] pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-xl bg-[#09408C] flex items-center justify-center text-white font-heading font-bold text-lg">
+                    SB
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-bold text-base text-[#09408C] leading-tight">
+                      Sahabat Belajar
+                    </h3>
+                    <p className="text-[10px] text-[#5B6882]">
+                      Comprehensive Academic Solution • #BersamaSahabat
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-bold text-[#5B6882] block">
+                    Kwitansi Pembayaran
+                  </span>
+                  <span className="text-xs font-mono font-bold text-[#09408C]">
+                    SB-{selectedReceipt.id.slice(-6).toUpperCase()}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <div className="flex justify-between py-1 border-b border-dashed border-[#D5DDEB]">
+                  <span className="text-[#5B6882]">Telah Diterima Dari:</span>
+                  <strong className="text-[#1B2A41] font-heading">
+                    {selectedReceipt.studentPackage.student.name}
+                  </strong>
+                </div>
+                <div className="flex justify-between py-1 border-b border-dashed border-[#D5DDEB]">
+                  <span className="text-[#5B6882]">Untuk Pembayaran:</span>
+                  <span className="font-semibold text-[#09408C]">
+                    {selectedReceipt.studentPackage.package.name} (
+                    {selectedReceipt.studentPackage.quotaTotal} Pertemuan @ 90 Mnt)
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-dashed border-[#D5DDEB]">
+                  <span className="text-[#5B6882]">Metode & Tanggal:</span>
+                  <span className="text-[#1B2A41]">
+                    {selectedReceipt.method} •{" "}
+                    {new Date(selectedReceipt.paidAt).toLocaleDateString("id-ID", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+                <div className="flex justify-between py-2 items-center bg-[#F4F7FB] px-3 rounded-xl mt-3">
+                  <span className="font-bold text-[#5B6882]">Jumlah Bayar:</span>
+                  <span className="text-lg font-bold text-[#09408C] font-heading">
+                    Rp {selectedReceipt.amount.toLocaleString("id-ID")}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
+                  <CheckCircle2 size={14} /> STATUS {selectedReceipt.status}
+                </div>
+                <div className="text-right text-[11px] text-[#5B6882]">
+                  <p>Administrasi Sahabat Belajar</p>
+                  <p className="font-bold text-[#1B2A41] mt-4">Sahabat Belajar Official</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs"
+              >
+                <Printer size={14} /> Cetak Kwitansi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Catat Pembayaran */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
@@ -163,7 +296,7 @@ export default function PaymentManagerClient({
             onSubmit={handleRecordPayment}
             className="bg-white rounded-2xl p-6 max-w-md w-full border border-[#D5DDEB] shadow-xl space-y-4"
           >
-            <h3 className="text-lg font-bold text-[#09408C] font-display">
+            <h3 className="text-lg font-bold text-[#09408C] font-heading">
               Catat Pembayaran Manual
             </h3>
 
