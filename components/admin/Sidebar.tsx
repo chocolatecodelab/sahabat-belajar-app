@@ -173,6 +173,7 @@ export default function Sidebar({
 
         {/* Desktop Collapse Toggle */}
         <button
+          suppressHydrationWarning
           onClick={() => setCollapsed(!collapsed)}
           className="hidden lg:flex p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white"
           title={collapsed ? "Perluas Sidebar" : "Kecilkan Sidebar"}
@@ -185,6 +186,7 @@ export default function Sidebar({
 
         {/* Mobile Close Button */}
         <button
+          suppressHydrationWarning
           onClick={() => setMobileOpen(false)}
           className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 text-white/80 hover:text-white"
         >
@@ -206,6 +208,7 @@ export default function Sidebar({
             return (
               <div key={item.id || item.label}>
                 <button
+                  suppressHydrationWarning
                   onClick={() => (!collapsed || mobileOpen) && toggleExpand(item.label)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${hasActiveChild
                     ? "bg-white/15 text-white shadow-xs"
@@ -273,6 +276,7 @@ export default function Sidebar({
       {/* Footer / Logout */}
       <div className="border-t border-white/10 p-3">
         <button
+          suppressHydrationWarning
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/70 hover:bg-red-500/20 hover:text-red-200 transition-colors text-sm font-medium"
           title={collapsed && !mobileOpen ? "Logout" : undefined}

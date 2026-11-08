@@ -104,6 +104,7 @@ export default function TutorManagerClient({
         </div>
 
         <button
+          suppressHydrationWarning
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs"
         >
@@ -117,6 +118,7 @@ export default function TutorManagerClient({
         <div className="relative w-full max-w-sm">
           <Search size={16} className="absolute left-3 top-2.5 text-[#5B6882]" />
           <input
+            suppressHydrationWarning
             type="text"
             placeholder="Cari nama tutor atau bidang keahlian..."
             value={searchQuery}

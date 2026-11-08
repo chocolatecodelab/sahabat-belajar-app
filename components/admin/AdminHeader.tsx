@@ -56,6 +56,7 @@ export default function AdminHeader() {
       <div className="flex items-center gap-3">
         {/* Mobile Hamburger Button */}
         <button
+          suppressHydrationWarning
           onClick={() => setMobileOpen(true)}
           className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
           aria-label="Buka Menu"
