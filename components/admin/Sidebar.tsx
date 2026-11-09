@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -90,7 +90,15 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen, collapsed, setCollapsed } = useAdminSidebar();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(["Tampilan"]);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(["Pengaturan"]);
+
+  useEffect(() => {
+    visibleMenus.forEach((m) => {
+      if (m.children?.some((c) => c.url && isActiveRoute(c.url))) {
+        setExpandedMenus((prev) => (prev.includes(m.label) ? prev : [...prev, m.label]));
+      }
+    });
+  }, [pathname]);
 
   const toggleExpand = (label: string) => {
     setExpandedMenus((prev) =>

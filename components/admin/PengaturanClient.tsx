@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Settings, Save, CheckCircle2, AlertCircle } from "lucide-react";
 import { updateSiteSettings } from "@/actions/tampilan";
+import PengaturanTabs from "@/components/admin/PengaturanTabs";
 
 interface PengaturanClientProps {
   settings: {
@@ -66,14 +67,17 @@ export default function PengaturanClient({ settings }: PengaturanClientProps) {
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      {/* Shared Navigation Hub Tabs */}
+      <PengaturanTabs />
+
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-headline-lg flex items-center gap-3" style={{ color: "var(--color-on-surface)" }}>
+          <h1 className="text-2xl font-bold font-display flex items-center gap-3 text-[#09408C]">
             <Settings size={28} /> Pengaturan Umum Website
           </h1>
-          <p className="text-body-md mt-1" style={{ color: "var(--color-on-surface-variant)" }}>
-            Kelola nama situs, identitas instansi, dan kontak
+          <p className="text-sm mt-1 text-[#5B6882]">
+            Kelola nama situs, identitas instansi, dan kontak resmi Sahabat Belajar
           </p>
         </div>
       </div>

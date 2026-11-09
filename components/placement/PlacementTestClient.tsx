@@ -19,11 +19,11 @@ import {
   ChevronRight,
   ShieldCheck,
 } from "lucide-react";
+import { submitDiagnosticPlacement } from "@/actions/placement";
 import {
   DIAGNOSTIC_QUESTIONS,
-  submitDiagnosticPlacement,
   type DiagnosticResult,
-} from "@/actions/placement";
+} from "@/lib/diagnostic_questions";
 import { useToast } from "@/components/ui/Toast";
 
 export default function PlacementTestClient() {

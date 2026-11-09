@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Users, Plus, Edit, Trash2, X, Search, ShieldCheck } from "lucide-react";
 import { getUsers, createUser, updateUser, deleteUser } from "@/actions/pengguna";
 import { formatDate } from "@/lib/date";
+import PengaturanTabs from "@/components/admin/PengaturanTabs";
 
 type UserItem = {
   id: string;
@@ -144,6 +145,9 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
       className="space-y-6 font-[var(--font-body)] animate-fade-in"
       suppressHydrationWarning
     >
+      {/* Shared Navigation Hub Tabs */}
+      <PengaturanTabs />
+
       {/* Header Banner */}
       <div
         className="elevation-1 rounded-2xl p-6 bg-white border flex flex-col sm:flex-row sm:items-center justify-between gap-4"

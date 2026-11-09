@@ -14,6 +14,23 @@ import {
   Power,
   ChevronRight,
   FolderTree,
+  RotateCcw,
+  Sparkles,
+  LayoutDashboard,
+  Users,
+  GraduationCap,
+  BookOpen,
+  Calendar,
+  FileCheck,
+  CreditCard,
+  Trophy,
+  FolderOpen,
+  Award,
+  FileEdit,
+  Image as ImageIcon,
+  Settings,
+  Shield,
+  Compass,
 } from "lucide-react";
 import {
   getAdminMenus,
@@ -21,42 +38,38 @@ import {
   updateAdminMenu,
   deleteAdminMenu,
   toggleAdminMenuStatus,
-  AdminMenuItem,
+  resetDefaultAdminMenus,
 } from "@/actions/menu";
+import type { AdminMenuItem } from "@/actions/menu";
+import { ALL_SYSTEM_PERMISSIONS } from "@/lib/rbac_registry";
+import PengaturanTabs from "@/components/admin/PengaturanTabs";
 
 interface AdminMenuClientProps {
   menus: AdminMenuItem[];
 }
 
-const AVAILABLE_ICONS = [
-  "LayoutDashboard",
-  "FileText",
-  "Newspaper",
-  "FolderOpen",
-  "Navigation",
-  "Palette",
-  "Image",
-  "Heart",
-  "Rss",
-  "Share2",
-  "Users",
-  "Shield",
-  "Menu",
-  "Settings",
-  "Link",
-  "BookOpen",
-  "Award",
-  "GraduationCap",
-  "Compass",
-  "Video",
-  "FileEdit",
-  "Send",
-  "Sparkles",
-  "Clock",
-  "HelpCircle",
-  "MessageSquare",
-  "Trophy",
-];
+const ICON_COMPONENTS: Record<string, React.ReactNode> = {
+  LayoutDashboard: <LayoutDashboard size={18} />,
+  Users: <Users size={18} />,
+  GraduationCap: <GraduationCap size={18} />,
+  BookOpen: <BookOpen size={18} />,
+  Compass: <Compass size={18} />,
+  Calendar: <Calendar size={18} />,
+  FileCheck: <FileCheck size={18} />,
+  CreditCard: <CreditCard size={18} />,
+  Trophy: <Trophy size={18} />,
+  FolderOpen: <FolderOpen size={18} />,
+  Award: <Award size={18} />,
+  FileEdit: <FileEdit size={18} />,
+  Image: <ImageIcon size={18} />,
+  Settings: <Settings size={18} />,
+  Shield: <Shield size={18} />,
+  Menu: <MenuIcon size={18} />,
+  Sparkles: <Sparkles size={18} />,
+  Link: <LinkIcon size={18} />,
+};
+
+const AVAILABLE_ICONS = Object.keys(ICON_COMPONENTS);
 
 export default function AdminMenuClient({ menus: initial }: AdminMenuClientProps) {
   const router = useRouter();
@@ -66,6 +79,7 @@ export default function AdminMenuClient({ menus: initial }: AdminMenuClientProps
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     setMenus(initial);
@@ -74,7 +88,7 @@ export default function AdminMenuClient({ menus: initial }: AdminMenuClientProps
   // Form State
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");
-  const [icon, setIcon] = useState("Link");
+  const [icon, setIcon] = useState("LayoutDashboard");
   const [permission, setPermission] = useState("");
   const [parentId, setParentId] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
@@ -84,10 +98,10 @@ export default function AdminMenuClient({ menus: initial }: AdminMenuClientProps
     setEditing(null);
     setLabel("");
     setUrl("");
-    setIcon("Link");
+    setIcon("LayoutDashboard");
     setPermission("");
     setParentId(defaultParentId || "");
-    setSortOrder(0);
+    setSortOrder(menus.length + 1);
     setIsActive(true);
     setError("");
     setShowModal(true);
@@ -129,7 +143,7 @@ export default function AdminMenuClient({ menus: initial }: AdminMenuClientProps
       const updated = await getAdminMenus();
       setMenus(updated);
       setSuccess(result.message || "Berhasil");
-      setTimeout(() => setSuccess(""), 3000);
+      setTimeout(() => setSuccess(""), 3500);
       router.refresh();
     } else {
       setError(result.message || "Gagal menyimpan menu admin");
@@ -149,8 +163,8 @@ export default function AdminMenuClient({ menus: initial }: AdminMenuClientProps
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Hapus menu admin ini? Jika menu ini memiliki sub-menu, semuanya akan ikut terhapus.")) return;
+  const handleDelete = async (id: string, itemLabel: string) => {
+    if (!confirm(`Hapus menu "${itemLabel}"? Jika menu ini memiliki sub-menu, seluruh sub-menunya juga akan terhapus.`)) return;
     const result = await deleteAdminMenu(id);
     if (result.success) {
       const updated = await getAdminMenus();
@@ -161,232 +175,295 @@ export default function AdminMenuClient({ menus: initial }: AdminMenuClientProps
     }
   };
 
+  const handleResetDefaults = async () => {
+    if (!confirm("Pulihkan seluruh susunan menu standar resmi Sahabat Belajar (15 menu utama & sub-menu pengaturan)? Perubahan menu kustom Anda mungkin ditimpa.")) return;
+    setIsResetting(true);
+    const res = await resetDefaultAdminMenus();
+    setIsResetting(false);
+    if (res.success) {
+      const updated = await getAdminMenus();
+      setMenus(updated);
+      setSuccess(res.message || "Susunan menu standar Sahabat Belajar berhasil dipulihkan.");
+      setTimeout(() => setSuccess(""), 4000);
+      router.refresh();
+    } else {
+      alert(res.message);
+    }
+  };
+
+  // Get list of parent candidates (items without parentId)
+  const parentCandidates = menus.filter((m) => !m.parentId && m.id !== editing?.id);
+
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div className="space-y-6">
+      {/* Shared Navigation Hub Tabs */}
+      <PengaturanTabs />
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-headline-lg flex items-center gap-3" style={{ color: "var(--color-on-surface)" }}>
-            <MenuIcon size={28} /> Pengaturan Menu Admin
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
+            <MenuIcon size={14} />
+            <span>Navigasi Sidebar Dashboard</span>
+          </div>
+          <h1 className="text-2xl font-bold text-[#09408C] font-display">
+            Pengaturan Menu Navigasi
           </h1>
-          <p className="text-body-md mt-1" style={{ color: "var(--color-on-surface-variant)" }}>
-            Kelola visibilitas, urutan, dan izin menu sidebar secara dinamis
+          <p className="text-sm text-[#5B6882] mt-0.5">
+            Atur susunan, hierarki sub-menu, ikon, izin akses, dan visibilitas menu sidebar dashboard.
           </p>
         </div>
-        <button
-          onClick={() => openCreate()}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-label-lg font-semibold text-white transition-all shadow-sm hover:shadow-md"
-          style={{ background: "var(--color-primary)" }}
-        >
-          <Plus size={18} /> Tambah Menu Baru
-        </button>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleResetDefaults}
+            disabled={isResetting}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] bg-white text-[#5B6882] hover:text-[#09408C] hover:bg-[#F4F7FB] text-xs font-semibold transition-all disabled:opacity-50"
+            title="Kembalikan susunan menu standar Sahabat Belajar"
+          >
+            <RotateCcw size={14} />
+            <span>{isResetting ? "Memulihkan..." : "Reset Default"}</span>
+          </button>
+          <button
+            onClick={() => openCreate()}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#09408C] hover:bg-[#0E3571] transition-all shadow-xs"
+          >
+            <Plus size={16} />
+            <span>Tambah Menu Baru</span>
+          </button>
+        </div>
       </div>
 
       {success && (
-        <div className="flex items-center gap-2 p-4 rounded-xl mb-6 bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm font-medium">
-          <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
-          {success}
+        <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-[#E3F4EC] text-[#1F6F4A] border border-[#A3E635] text-xs font-medium animate-in fade-in">
+          <CheckCircle2 size={18} className="shrink-0" />
+          <span>{success}</span>
         </div>
       )}
 
-      <div className="bg-white elevation-1 rounded-2xl overflow-hidden border border-gray-100 shadow-xs">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-600 uppercase">
-            <tr>
-              <th className="px-6 py-4">Menu & Submenu</th>
-              <th className="px-6 py-4">URL / Path</th>
-              <th className="px-6 py-4">Permission Guard</th>
-              <th className="px-6 py-4 text-center">Urutan</th>
-              <th className="px-6 py-4 text-center">Status Sidebar</th>
-              <th className="px-6 py-4 text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {menus.map((item) => (
-              <Fragment key={item.id}>
-                {/* Parent Row */}
-                <tr className="hover:bg-gray-50/50 transition-colors bg-white">
-                  <td className="px-6 py-4 font-semibold text-gray-900 flex items-center gap-2.5">
-                    <FolderTree size={18} className="text-blue-900 shrink-0" />
-                    <span>{item.label}</span>
-                    {item.children && item.children.length > 0 && (
-                      <span className="text-2xs px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-normal">
-                        {item.children.length} sub-item
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-gray-600 font-mono text-xs">{item.url}</td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {item.permission ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-800">
-                        <ShieldCheck size={12} /> {item.permission}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400 text-xs font-normal">Semua Admin</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-center text-xs font-semibold text-gray-500">{item.sortOrder}</td>
-                  <td className="px-6 py-4 text-center">
-                    <button
-                      onClick={() => handleToggle(item)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                        item.isActive
-                          ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200"
-                          : "bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200"
-                      }`}
-                    >
-                      <Power size={12} />
-                      {item.isActive ? "Tampil" : "Sembunyi"}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-1">
-                    <button
-                      onClick={() => openCreate(item.id)}
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-blue-900 hover:bg-blue-50 transition-colors"
-                      title="Tambah Submenu"
-                    >
-                      <Plus size={16} />
-                    </button>
-                    <button
-                      onClick={() => openEdit(item)}
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-blue-900 hover:bg-blue-50 transition-colors"
-                      title="Edit"
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      title="Hapus"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-
-                {/* Submenu Children */}
-                {item.children?.map((child) => (
-                  <tr key={child.id} className="bg-slate-50/60 hover:bg-slate-100/60 transition-colors">
-                    <td className="px-6 py-3 pl-12 font-medium text-gray-700 flex items-center gap-2">
-                      <ChevronRight size={14} className="text-gray-400 shrink-0" />
-                      <span className="text-sm">{child.label}</span>
+      {/* Table of Menus */}
+      <div className="bg-white rounded-2xl border border-[#D5DDEB] shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[#5B6882] font-semibold uppercase tracking-wider">
+              <tr>
+                <th className="py-3 px-4">Menu & Submenu</th>
+                <th className="py-3 px-4">Path URL</th>
+                <th className="py-3 px-4">Hak Akses Guard</th>
+                <th className="py-3 px-4 text-center">Urutan</th>
+                <th className="py-3 px-4 text-center">Status Sidebar</th>
+                <th className="py-3 px-4 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#D5DDEB]">
+              {menus.map((item) => (
+                <Fragment key={item.id}>
+                  {/* Parent Menu Row */}
+                  <tr className="hover:bg-[#EAF1FA]/40 transition-colors bg-white">
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-2.5 font-bold text-sm text-[#1B2A41]">
+                        <span className="w-8 h-8 rounded-lg bg-[#EAF1FA] text-[#09408C] flex items-center justify-center shrink-0">
+                          {ICON_COMPONENTS[item.icon || ""] || <LinkIcon size={16} />}
+                        </span>
+                        <span>{item.label}</span>
+                        {item.children && item.children.length > 0 && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EAF1FA] text-[#09408C] font-semibold">
+                            {item.children.length} sub-item
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-6 py-3 text-gray-500 font-mono text-xs">{child.url}</td>
-                    <td className="px-6 py-3 text-gray-500">
-                      {child.permission ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-800">
-                          <ShieldCheck size={12} /> {child.permission}
+                    <td className="py-3.5 px-4 text-[#5B6882] font-mono text-[11px]">
+                      {item.url}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      {item.permission ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#EAF1FA] text-[#09408C] border border-[#9AC1E2]">
+                          <ShieldCheck size={12} />
+                          <span>{item.permission}</span>
                         </span>
                       ) : (
-                        <span className="text-gray-400 text-xs">Warisi Induk</span>
+                        <span className="text-[#5B6882] text-[11px] italic">Semua Role Login</span>
                       )}
                     </td>
-                    <td className="px-6 py-3 text-center text-xs font-semibold text-gray-400">{child.sortOrder}</td>
-                    <td className="px-6 py-3 text-center">
+                    <td className="py-3.5 px-4 text-center font-bold text-[#09408C] tabular-nums">
+                      {item.sortOrder}
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
                       <button
-                        onClick={() => handleToggle(child)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-2xs font-semibold transition-all ${
-                          child.isActive
-                            ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200"
-                            : "bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200"
+                        onClick={() => handleToggle(item)}
+                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                          item.isActive
+                            ? "bg-[#E3F4EC] text-[#1F6F4A] border border-[#A3E635] hover:bg-[#d5eedf]"
+                            : "bg-[#F4F7FB] text-[#5B6882] border border-[#D5DDEB] hover:bg-slate-200"
                         }`}
                       >
-                        <Power size={10} />
-                        {child.isActive ? "Tampil" : "Sembunyi"}
+                        <Power size={11} />
+                        <span>{item.isActive ? "Tampil" : "Sembunyi"}</span>
                       </button>
                     </td>
-                    <td className="px-6 py-3 text-right space-x-1">
+                    <td className="py-3.5 px-4 text-right space-x-1">
                       <button
-                        onClick={() => openEdit(child)}
-                        className="p-1.5 rounded-lg text-gray-500 hover:text-blue-900 hover:bg-blue-50 transition-colors"
-                        title="Edit"
+                        onClick={() => openCreate(item.id)}
+                        className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                        title="Tambah Sub-Menu di dalam menu ini"
                       >
-                        <Edit size={14} />
+                        <Plus size={15} />
                       </button>
                       <button
-                        onClick={() => handleDelete(child.id)}
-                        className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        title="Hapus"
+                        onClick={() => openEdit(item)}
+                        className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                        title="Edit Menu"
                       >
-                        <Trash2 size={14} />
+                        <Edit size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id, item.label)}
+                        className="p-1.5 rounded-lg text-[#5B6882] hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Hapus Menu"
+                      >
+                        <Trash2 size={15} />
                       </button>
                     </td>
                   </tr>
-                ))}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
+
+                  {/* Child Menus (Submenu) */}
+                  {item.children &&
+                    item.children.map((child) => (
+                      <tr key={child.id} className="bg-[#F4F7FB]/50 hover:bg-[#EAF1FA]/30 transition-colors">
+                        <td className="py-2.5 px-4 pl-12">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-[#1B2A41]">
+                            <ChevronRight size={14} className="text-[#9AC1E2] shrink-0" />
+                            <span className="w-6 h-6 rounded-md bg-white text-[#09408C] flex items-center justify-center shrink-0 border border-[#D5DDEB]">
+                              {ICON_COMPONENTS[child.icon || ""] || <LinkIcon size={12} />}
+                            </span>
+                            <span>{child.label}</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-4 text-[#5B6882] font-mono text-[11px]">
+                          {child.url}
+                        </td>
+                        <td className="py-2.5 px-4">
+                          {child.permission ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#EAF1FA] text-[#09408C]">
+                              <ShieldCheck size={11} />
+                              <span>{child.permission}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[#5B6882] text-[10px] italic">Mengikuti Parent</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-4 text-center font-medium text-[#5B6882] tabular-nums">
+                          {child.sortOrder}
+                        </td>
+                        <td className="py-2.5 px-4 text-center">
+                          <button
+                            onClick={() => handleToggle(child)}
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all ${
+                              child.isActive
+                                ? "bg-[#E3F4EC] text-[#1F6F4A] border border-[#A3E635]"
+                                : "bg-slate-100 text-slate-500 border border-slate-200"
+                            }`}
+                          >
+                            <Power size={10} />
+                            <span>{child.isActive ? "Tampil" : "Sembunyi"}</span>
+                          </button>
+                        </td>
+                        <td className="py-2.5 px-4 text-right space-x-1">
+                          <button
+                            onClick={() => openEdit(child)}
+                            className="p-1 rounded-md text-[#5B6882] hover:text-[#09408C] hover:bg-white transition-colors"
+                            title="Edit Submenu"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(child.id, child.label)}
+                            className="p-1 rounded-md text-[#5B6882] hover:text-red-600 hover:bg-red-50 transition-colors"
+                            title="Hapus Submenu"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Modal Form */}
+      {/* Add / Edit Menu Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-              <h2 className="text-title-lg font-bold text-gray-900">
-                {editing ? "Edit Menu Admin" : "Tambah Menu Admin"}
-              </h2>
-              <button onClick={() => setShowModal(false)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600">
-                <X size={20} />
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-[#D5DDEB] animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-[#D5DDEB] mb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-[#EAF1FA] text-[#09408C]">
+                  {editing ? <Edit size={18} /> : <Plus size={18} />}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#09408C] font-display">
+                    {editing ? "Edit Menu Navigasi" : "Tambah Menu Baru"}
+                  </h3>
+                  <p className="text-xs text-[#5B6882]">
+                    Konfigurasikan label, icon, URL, dan izin akses sidebar.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-1.5 rounded-lg text-[#5B6882] hover:bg-[#F4F7FB]"
+              >
+                <X size={18} />
               </button>
             </div>
 
             {error && (
-              <div className="p-3 rounded-lg mb-4 bg-red-50 text-red-800 text-sm font-medium">
+              <div className="p-3 rounded-xl bg-[#FBE9E5] text-[#B4381F] border border-[#FBE9E5] text-xs font-semibold mb-4">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="text-xs font-bold uppercase text-gray-600 block mb-1">Label Menu</label>
-                <input
-                  type="text"
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                  placeholder="Contoh: Laporan Riset"
-                  required
-                  className="w-full px-4 py-2.5 rounded-lg border text-sm focus-ring bg-gray-50 focus:bg-white"
-                />
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Label Menu *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Bank Soal & CAT"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
 
-              <div>
-                <label className="text-xs font-bold uppercase text-gray-600 block mb-1">URL / Target Path</label>
-                <input
-                  type="text"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="/dashboard/laporan atau #"
-                  required
-                  className="w-full px-4 py-2.5 rounded-lg border text-sm font-mono focus-ring bg-gray-50 focus:bg-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold uppercase text-gray-600 block mb-1">Menu Induk (Parent)</label>
-                  <select
-                    value={parentId}
-                    onChange={(e) => setParentId(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-lg border text-sm focus-ring bg-gray-50 focus:bg-white"
-                  >
-                    <option value="">-- Menu Utama (Top Level) --</option>
-                    {menus
-                      .filter((m) => !editing || m.id !== editing.id)
-                      .map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.label}
-                        </option>
-                      ))}
-                  </select>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Path / URL Navigasi *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: /dashboard/ujian"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] font-mono focus-ring"
+                  />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold uppercase text-gray-600 block mb-1">Ikon</label>
+                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Ikon Lucide
+                  </label>
                   <select
                     value={icon}
                     onChange={(e) => setIcon(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-lg border text-sm focus-ring bg-gray-50 focus:bg-white"
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
                   >
                     {AVAILABLE_ICONS.map((ic) => (
                       <option key={ic} value={ic}>
@@ -395,60 +472,83 @@ export default function AdminMenuClient({ menus: initial }: AdminMenuClientProps
                     ))}
                   </select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold uppercase text-gray-600 block mb-1">Permission Guard</label>
-                  <input
-                    type="text"
-                    value={permission}
-                    onChange={(e) => setPermission(e.target.value)}
-                    placeholder="misal: article.read"
-                    className="w-full px-4 py-2.5 rounded-lg border text-sm focus-ring bg-gray-50 focus:bg-white"
-                  />
-                </div>
 
                 <div>
-                  <label className="text-xs font-bold uppercase text-gray-600 block mb-1">Nomor Urutan</label>
+                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Urutan Tampil (Sort)
+                  </label>
                   <input
                     type="number"
                     value={sortOrder}
                     onChange={(e) => setSortOrder(Number(e.target.value))}
-                    min={0}
-                    className="w-full px-4 py-2.5 rounded-lg border text-sm focus-ring bg-gray-50 focus:bg-white"
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Menu Induk (Parent)
+                  </label>
+                  <select
+                    value={parentId}
+                    onChange={(e) => setParentId(e.target.value)}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+                  >
+                    <option value="">-- Menu Utama (Tanpa Induk) --</option>
+                    {parentCandidates.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Hak Akses Guard (RBAC)
+                  </label>
+                  <select
+                    value={permission}
+                    onChange={(e) => setPermission(e.target.value)}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+                  >
+                    <option value="">Bebas (Semua Role Login)</option>
+                    {ALL_SYSTEM_PERMISSIONS.map((p) => (
+                      <option key={p.id} value={p.name}>
+                        {p.name} — {p.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 pt-2">
                 <input
+                  id="menu-active-check"
                   type="checkbox"
-                  id="menuActive"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="w-4 h-4 rounded text-blue-900"
+                  className="rounded border-[#D5DDEB] text-[#09408C] focus:ring-[#09408C]"
                 />
-                <label htmlFor="menuActive" className="text-sm font-medium text-gray-700 cursor-pointer">
-                  Tampilkan di Sidebar (Status Aktif)
+                <label htmlFor="menu-active-check" className="text-xs font-medium text-[#1B2A41]">
+                  Aktifkan menu ini (langsung tampil di sidebar bagi yang berhak)
                 </label>
               </div>
 
-              <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#D5DDEB]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100"
+                  className="px-4 py-2 text-xs font-semibold text-[#5B6882] hover:bg-[#F4F7FB] rounded-xl transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-6 py-2 rounded-lg text-sm font-semibold text-white shadow-sm disabled:opacity-50"
-                  style={{ background: "var(--color-primary)" }}
+                  className="px-4 py-2 text-xs font-semibold bg-[#09408C] text-white hover:bg-[#0E3571] rounded-xl transition-colors disabled:opacity-50"
                 >
-                  {loading ? "Menyimpan..." : "Simpan Menu"}
+                  {loading ? "Menyimpan..." : editing ? "Perbarui Menu" : "Simpan Menu"}
                 </button>
               </div>
             </form>

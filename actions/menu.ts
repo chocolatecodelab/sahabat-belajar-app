@@ -27,11 +27,16 @@ const INITIAL_MENUS = [
   { id: "menu_paket", label: "Paket & Kuota", icon: "FileCheck", url: "/dashboard/paket", parentId: null, sortOrder: 8, isActive: true, permission: "package.read" },
   { id: "menu_pembayaran", label: "Pembayaran", icon: "CreditCard", url: "/dashboard/pembayaran", parentId: null, sortOrder: 9, isActive: true, permission: "payment.read" },
   { id: "menu_honor", label: "Rekap Honor Tutor", icon: "Trophy", url: "/dashboard/honor", parentId: null, sortOrder: 10, isActive: true, permission: "payout.read" },
-  { id: "menu_ujian", label: "Ruang Ujian & CAT", icon: "Award", url: "/dashboard/ujian", parentId: null, sortOrder: 11, isActive: true, permission: "exam.read" },
-  { id: "menu_dokumen", label: "Review Dokumen", icon: "FileEdit", url: "/dashboard/dokumen", parentId: null, sortOrder: 12, isActive: true, permission: "document.read" },
-  { id: "menu_materi", label: "Modul & Materi", icon: "FolderOpen", url: "/dashboard/materi", parentId: null, sortOrder: 13, isActive: true, permission: "material.read" },
+  { id: "menu_materi", label: "Modul & Materi", icon: "FolderOpen", url: "/dashboard/materi", parentId: null, sortOrder: 11, isActive: true, permission: "material.read" },
+  { id: "menu_ujian", label: "Ruang Ujian & CAT", icon: "Award", url: "/dashboard/ujian", parentId: null, sortOrder: 12, isActive: true, permission: "exam.read" },
+  { id: "menu_dokumen", label: "Review Dokumen", icon: "FileEdit", url: "/dashboard/dokumen", parentId: null, sortOrder: 13, isActive: true, permission: "document.read" },
   { id: "menu_media", label: "Pustaka Media", icon: "Image", url: "/dashboard/media", parentId: null, sortOrder: 14, isActive: true, permission: "media.read" },
   { id: "menu_pengaturan", label: "Pengaturan", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 15, isActive: true, permission: "settings.read" },
+  // Sub-menus under Pengaturan
+  { id: "menu_set_umum", label: "Pengaturan Umum", icon: "Settings", url: "/dashboard/pengaturan", parentId: "menu_pengaturan", sortOrder: 1, isActive: true, permission: "settings.read" },
+  { id: "menu_set_menu", label: "Kelola Menu Sidebar", icon: "Menu", url: "/dashboard/pengguna/menu", parentId: "menu_pengaturan", sortOrder: 2, isActive: true, permission: "menu.read" },
+  { id: "menu_set_role", label: "Role & Hak Akses", icon: "Shield", url: "/dashboard/pengguna/role", parentId: "menu_pengaturan", sortOrder: 3, isActive: true, permission: "role.read" },
+  { id: "menu_set_user", label: "Akun Pengguna & Staf", icon: "Users", url: "/dashboard/pengguna", parentId: "menu_pengaturan", sortOrder: 4, isActive: true, permission: "user.read" },
 ];
 
 function groupMenus(menus: AdminMenuItem[]): AdminMenuItem[] {
@@ -88,9 +93,11 @@ export async function createAdminMenu(data: FormData | any): Promise<ActionRespo
     const sortOrder = data instanceof FormData ? Number(data.get("sortOrder") || 0) : (data.sortOrder || 0);
     const permission = data instanceof FormData ? (data.get("permission") ? String(data.get("permission")) : null) : data.permission;
 
+    const id = `menu_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const { data: menu, error } = await supabaseAdmin
       .from("AdminMenu")
       .insert({
+        id,
         label: label.trim(),
         icon,
         url: url.trim(),
@@ -98,6 +105,7 @@ export async function createAdminMenu(data: FormData | any): Promise<ActionRespo
         sortOrder,
         permission,
         isActive: true,
+        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
       .select()
@@ -106,9 +114,10 @@ export async function createAdminMenu(data: FormData | any): Promise<ActionRespo
     if (error) throw error;
 
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/pengguna/menu");
     return { success: true, message: "Menu berhasil dibuat.", data: menu };
   } catch (error: any) {
-    return { success: false, message: "Gagal membuat menu." };
+    return { success: false, message: error?.message || "Gagal membuat menu." };
   }
 }
 
@@ -139,9 +148,10 @@ export async function updateAdminMenu(
     if (error) throw error;
 
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/pengguna/menu");
     return { success: true, message: "Menu berhasil diperbarui.", data: menu };
   } catch (error: any) {
-    return { success: false, message: "Gagal memperbarui menu." };
+    return { success: false, message: error?.message || "Gagal memperbarui menu." };
   }
 }
 
@@ -150,9 +160,10 @@ export async function deleteAdminMenu(id: string): Promise<ActionResponse> {
     const { error } = await supabaseAdmin.from("AdminMenu").delete().eq("id", id);
     if (error) throw error;
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/pengguna/menu");
     return { success: true, message: "Menu berhasil dihapus." };
   } catch (error: any) {
-    return { success: false, message: "Gagal menghapus menu." };
+    return { success: false, message: error?.message || "Gagal menghapus menu." };
   }
 }
 
@@ -167,8 +178,33 @@ export async function toggleAdminMenuStatus(
       .eq("id", id);
     if (error) throw error;
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/pengguna/menu");
     return { success: true, message: "Status menu diperbarui." };
   } catch (error: any) {
-    return { success: false, message: "Gagal memperbarui status menu." };
+    return { success: false, message: error?.message || "Gagal memperbarui status menu." };
+  }
+}
+
+export async function resetDefaultAdminMenus(): Promise<ActionResponse> {
+  try {
+    for (const m of INITIAL_MENUS) {
+      await supabaseAdmin.from("AdminMenu").upsert({
+        id: m.id,
+        label: m.label,
+        icon: m.icon,
+        url: m.url,
+        parentId: m.parentId,
+        sortOrder: m.sortOrder,
+        isActive: m.isActive,
+        permission: m.permission,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/pengguna/menu");
+    return { success: true, message: "Susunan menu standar Sahabat Belajar berhasil dipulihkan." };
+  } catch (error: any) {
+    return { success: false, message: error?.message || "Gagal memulihkan menu standar." };
   }
 }
