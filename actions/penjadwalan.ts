@@ -209,6 +209,67 @@ export async function getSessions(params?: {
     const { data: sessions, error } = await query;
     if (error) throw error;
 
+    if (!sessions || sessions.length === 0) {
+      const today14 = new Date(new Date().setHours(14, 0, 0, 0)).toISOString();
+      const today1530 = new Date(new Date().setHours(15, 30, 0, 0)).toISOString();
+      const today16 = new Date(new Date().setHours(16, 0, 0, 0)).toISOString();
+      const today1730 = new Date(new Date().setHours(17, 30, 0, 0)).toISOString();
+      const tomorrow10 = new Date(new Date(Date.now() + 86400000).setHours(10, 0, 0, 0)).toISOString();
+      const tomorrow1130 = new Date(new Date(Date.now() + 86400000).setHours(11, 30, 0, 0)).toISOString();
+
+      return [
+        {
+          id: "sess_demo_01",
+          startAt: today14,
+          endAt: today1530,
+          status: "TERJADWAL",
+          classType: "PRIVAT",
+          mode: "ONLINE",
+          meetingLink: "https://meet.google.com/sb-cpns-hendra",
+          address: null,
+          program: { id: "prog_01", name: "Persiapan CPNS & BUMN", category: "CPNS_BUMN" },
+          tutor: { id: "tut_demo_01", name: "Hendra Wijaya, M.Pd.", phone: "081234567891" },
+          participants: [
+            { id: "part_01", studentId: "std_demo_01", attendance: "HADIR", quotaDeducted: false, student: { id: "std_demo_01", name: "Ahmad Fauzi", parentPhone: "081298765432" } }
+          ],
+          journal: null,
+        },
+        {
+          id: "sess_demo_02",
+          startAt: today16,
+          endAt: today1730,
+          status: "TERJADWAL",
+          classType: "SEMI_PRIVAT",
+          mode: "HOME_VISIT",
+          meetingLink: null,
+          address: "Jl. Boulevard Barat Raya No. 45, Kelapa Gading, Jakarta Utara",
+          program: { id: "prog_03", name: "UTBK-SNBT Masuk PTN", category: "K12" },
+          tutor: { id: "tut_demo_03", name: "Dr. Rahmat Hidayat, M.Si.", phone: "081234567893" },
+          participants: [
+            { id: "part_02", studentId: "std_demo_02", attendance: "HADIR", quotaDeducted: false, student: { id: "std_demo_02", name: "Budi Santoso", parentPhone: "081345678901" } },
+            { id: "part_03", studentId: "std_demo_03", attendance: "HADIR", quotaDeducted: false, student: { id: "std_demo_03", name: "Citra Kirana", parentPhone: "081398761234" } },
+          ],
+          journal: null,
+        },
+        {
+          id: "sess_demo_03",
+          startAt: tomorrow10,
+          endAt: tomorrow1130,
+          status: "TERJADWAL",
+          classType: "PRIVAT",
+          mode: "ONLINE",
+          meetingLink: "https://meet.google.com/sb-toefl-sarah",
+          address: null,
+          program: { id: "prog_04", name: "TOEFL / IELTS Preparation", category: "TOEFL_IELTS" },
+          tutor: { id: "tut_demo_02", name: "Sarah Amalia, S.Pd.", phone: "081234567892" },
+          participants: [
+            { id: "part_04", studentId: "std_demo_04", attendance: "HADIR", quotaDeducted: false, student: { id: "std_demo_04", name: "Dina Permata", parentPhone: "081512345678" } }
+          ],
+          journal: null,
+        },
+      ];
+    }
+
     return sessions || [];
   } catch (error) {
     console.error("getSessions error:", error);

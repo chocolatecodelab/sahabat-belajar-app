@@ -14,7 +14,16 @@ export async function getPrograms() {
       .order("sortOrder", { ascending: true });
 
     if (error) throw error;
-    return programs || [];
+    if (!programs || programs.length === 0) {
+      return [
+        { id: "prog_01", name: "Persiapan CPNS & BUMN", category: "CPNS_BUMN", description: "Bimbingan intensif SKD (TWK, TIU, TKP) dan tes BUMN", sortOrder: 1, isActive: true, packages: [] },
+        { id: "prog_02", name: "Bimbel K-12 (SD/SMP/SMA)", category: "K12", description: "Pendampingan kurikulum merdeka dan persiapan ujian harian/semester", sortOrder: 2, isActive: true, packages: [] },
+        { id: "prog_03", name: "UTBK-SNBT Masuk PTN", category: "K12", description: "Penalaran matematika, literasi bahasa, dan skolastik", sortOrder: 3, isActive: true, packages: [] },
+        { id: "prog_04", name: "TOEFL / IELTS Preparation", category: "TOEFL_IELTS", description: "Target skor 500-600+ untuk persyaratan kelulusan & beasiswa", sortOrder: 4, isActive: true, packages: [] },
+        { id: "prog_05", name: "Bimbingan S2/S3 & Beasiswa", category: "S2_S3_BEASISWA", description: "Mentoring esai, proposal riset, dan wawancara LPDP/AAS", sortOrder: 5, isActive: true, packages: [] },
+      ];
+    }
+    return programs;
   } catch (error) {
     console.error("getPrograms error:", error);
     return [];
