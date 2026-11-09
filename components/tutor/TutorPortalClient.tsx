@@ -36,6 +36,7 @@ import { formatTime, formatDate } from "@/lib/date";
 import type { TutorPortalData, TutorSessionItem } from "@/actions/tutor-portal";
 import { submitTutorJournalQuick } from "@/actions/tutor-portal";
 import { AttendanceStatus } from "@prisma/client";
+import { useToast } from "@/components/ui/Toast";
 
 export default function TutorPortalClient({
   initialData,
@@ -45,6 +46,7 @@ export default function TutorPortalClient({
   currentTutorId?: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<"jadwal" | "jurnal" | "honor">("jadwal");
 
   // Journal Modal State
@@ -89,7 +91,10 @@ export default function TutorPortalClient({
   const handleSaveJournal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSessionForJournal || !topic.trim()) {
-      alert("Mohon masukkan topik materi bimbingan yang diajarkan.");
+      toast.warning(
+        "Topik Wajib Diisi",
+        "Mohon masukkan topik materi bimbingan yang diajarkan."
+      );
       return;
     }
 
@@ -109,11 +114,11 @@ export default function TutorPortalClient({
     setIsSubmittingJournal(false);
 
     if (res.success) {
-      alert(res.message);
+      toast.success("Jurnal Tersimpan", res.message);
       setSelectedSessionForJournal(null);
-      window.location.reload();
+      router.refresh();
     } else {
-      alert(res.message);
+      toast.error("Gagal Menyimpan", res.message);
     }
   };
 
@@ -618,6 +623,7 @@ export default function TutorPortalClient({
             <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-[#D5DDEB] space-y-5 relative max-h-[90vh] overflow-y-auto no-scrollbar">
               <button
                 onClick={() => setSelectedSessionForJournal(null)}
+                aria-label="Tutup dialog jurnal"
                 className="absolute top-5 right-5 p-1.5 rounded-full text-[#5B6882] hover:bg-slate-100 transition-colors"
               >
                 <X size={18} />
@@ -677,10 +683,11 @@ export default function TutorPortalClient({
 
                 {/* 2. Topik Materi yang Diajarkan */}
                 <div>
-                  <label className="block font-semibold text-[#1B2A41] mb-1">
+                  <label htmlFor="tutor-journal-topic" className="block font-semibold text-[#1B2A41] mb-1">
                     Topik Materi yang Dibahas <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="tutor-journal-topic"
                     type="text"
                     required
                     placeholder="Contoh: Trik Cepat Silogisme & Penalaran Logis Bab 4"
@@ -692,10 +699,11 @@ export default function TutorPortalClient({
 
                 {/* 3. Catatan Pemahaman Siswa */}
                 <div>
-                  <label className="block font-semibold text-[#1B2A41] mb-1">
+                  <label htmlFor="tutor-journal-notes" className="block font-semibold text-[#1B2A41] mb-1">
                     Catatan Pemahaman & Evaluasi Siswa (Terbaca di Portal Siswa/Ortu)
                   </label>
                   <textarea
+                    id="tutor-journal-notes"
                     rows={2}
                     placeholder="Contoh: Siswa memahami konsep dasar silogisme dengan baik. Tingkatkan ketelitian pada penarikan kesimpulan negatif."
                     value={notes}
@@ -706,10 +714,11 @@ export default function TutorPortalClient({
 
                 {/* 4. Tugas / PR Siswa */}
                 <div>
-                  <label className="block font-semibold text-[#1B2A41] mb-1">
+                  <label htmlFor="tutor-journal-homework" className="block font-semibold text-[#1B2A41] mb-1">
                     Tugas / Latihan Mandiri (Opsional)
                   </label>
                   <input
+                    id="tutor-journal-homework"
                     type="text"
                     placeholder="Contoh: Kerjakan 10 butir soal latihan mandiri di modul halaman 35"
                     value={homework}
@@ -719,7 +728,7 @@ export default function TutorPortalClient({
                 </div>
 
                 {/* Submit Action */}
-                <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#D5DDEB]">
+                <div className="pt-3 flex items-center justify-end gap-2 border-t border-[#D5DDEB] sticky bottom-0 bg-white">
                   <button
                     type="button"
                     onClick={() => setSelectedSessionForJournal(null)}

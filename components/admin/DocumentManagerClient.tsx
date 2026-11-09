@@ -20,12 +20,14 @@ import {
 } from "lucide-react";
 import type { AcademicDocument, DocumentStage, DocumentCategory } from "@/actions/dokumen";
 import { reviewDocument } from "@/actions/dokumen";
+import { useToast } from "@/components/ui/Toast";
 
 export default function DocumentManagerClient({
   initialDocuments = [],
 }: {
   initialDocuments: AcademicDocument[];
 }) {
+  const toast = useToast();
   const [documents, setDocuments] = useState<AcademicDocument[]>(initialDocuments);
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("ALL");
@@ -89,8 +91,12 @@ export default function DocumentManagerClient({
         )
       );
       setIsReviewModalOpen(false);
+      toast.success(
+        "Evaluasi Disimpan",
+        "Catatan telaah mentor dan status draf naskah berhasil diperbarui."
+      );
     } else {
-      alert(res.message);
+      toast.error("Gagal Menyimpan", res.message);
     }
   };
 
@@ -361,10 +367,11 @@ export default function DocumentManagerClient({
 
             <form onSubmit={handleSaveReview} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="doc-review-stage" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Keputusan Tahap / Status Naskah *
                 </label>
                 <select
+                  id="doc-review-stage"
                   value={reviewStage}
                   onChange={(e) => setReviewStage(e.target.value as DocumentStage)}
                   className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white font-bold"
@@ -376,10 +383,11 @@ export default function DocumentManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="doc-mentor-name" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Nama Mentor / Penelaah
                 </label>
                 <input
+                  id="doc-mentor-name"
                   type="text"
                   required
                   value={mentorName}
@@ -389,10 +397,11 @@ export default function DocumentManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="doc-mentor-notes" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Catatan Evaluasi, Ulasan Argumen & Saran Perbaikan *
                 </label>
                 <textarea
+                  id="doc-mentor-notes"
                   rows={5}
                   required
                   placeholder="Uraikan kelebihan naskah, bagian yang perlu penajaman data/sitasi, serta rekomendasi perbaikan tata bahasa..."

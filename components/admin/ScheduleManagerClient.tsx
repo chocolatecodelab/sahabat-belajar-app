@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   Calendar,
   Clock,
@@ -46,6 +47,7 @@ import {
 } from "@/actions/smart-scheduling";
 import { SessionStatus, AttendanceStatus } from "@prisma/client";
 import { formatDayDate, formatDate, formatTime } from "@/lib/date";
+import { useToast } from "@/components/ui/Toast";
 
 export default function ScheduleManagerClient({
   initialSessions,
@@ -60,6 +62,9 @@ export default function ScheduleManagerClient({
   programs: any[];
   initialAvailability: TutorAvailabilityGrid;
 }) {
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [activeTab, setActiveTab] = useState<"agenda" | "matriks" | "smart-match">("agenda");
   const [sessions, setSessions] = useState(initialSessions);
   const [availability, setAvailability] = useState<TutorAvailabilityGrid>(initialAvailability);
@@ -75,6 +80,11 @@ export default function ScheduleManagerClient({
 
   // Matriks filter
   const [matrixTutorFilter, setMatrixTutorFilter] = useState<string>("ALL");
+  // Mobile Day Selector for Matrix (SB-QA-RES-001)
+  const [selectedMobileDayIndex, setSelectedMobileDayIndex] = useState<number>(1); // 1 = Senin
+
+  // Confirm Complete Session Dialog state (SB-QA-UX-001)
+  const [sessionToComplete, setSessionToComplete] = useState<any | null>(null);
 
   // Form states for Create Session
   const [tutorId, setTutorId] = useState(tutors[0]?.id || "");
@@ -127,7 +137,7 @@ export default function ScheduleManagerClient({
         setSelectedStudentIds((prev) => prev.filter((s) => s !== id));
       } else {
         if (selectedStudentIds.length >= 5) {
-          alert("Kelas semi-privat maksimal 5 peserta (BR-3).");
+          toast.warning("Kelas semi-privat maksimal 5 peserta (BR-3).");
           return;
         }
         setSelectedStudentIds((prev) => [...prev, id]);
@@ -158,7 +168,7 @@ export default function ScheduleManagerClient({
     setConflictError(null);
 
     if (selectedStudentIds.length === 0) {
-      alert("Pilih minimal 1 siswa.");
+      toast.warning("Pilih minimal 1 siswa peserta bimbingan.");
       return;
     }
 
@@ -181,29 +191,29 @@ export default function ScheduleManagerClient({
     setIsSubmitting(false);
 
     if (res.success) {
-      alert(res.message);
+      toast.success(res.message, "Sesi Berhasil Dibuat");
       setShowCreateModal(false);
-      window.location.reload();
+      router.refresh();
     } else {
       setConflictError(res.message || "Gagal membuat sesi.");
+      toast.error(res.message || "Gagal membuat sesi bimbingan.");
     }
   };
 
-  const handleMarkCompleted = async (session: any) => {
-    const confirm = window.confirm(
-      `Tandai sesi ini Terlaksana? Kuota bimbingan masing-masing siswa yang hadir akan terpotong tepat 1 (BR-1).`
-    );
-    if (!confirm) return;
-
+  const executeMarkCompleted = async (session: any) => {
     setIsSubmitting(true);
     const res = await updateSessionStatus(session.id, SessionStatus.TERLAKSANA);
     setIsSubmitting(false);
+    setSessionToComplete(null);
 
     if (res.success) {
-      alert(res.message);
-      window.location.reload();
+      toast.success(res.message, "Status Terlaksana & Kuota Terpotong (BR-1)");
+      setSessions((prev) =>
+        prev.map((s) => (s.id === session.id ? { ...s, status: "TERLAKSANA" } : s))
+      );
+      router.refresh();
     } else {
-      alert(res.message);
+      toast.error(res.message);
     }
   };
 
@@ -222,7 +232,7 @@ export default function ScheduleManagerClient({
 
   const handleSaveJournal = async () => {
     if (!selectedSession || !journalTopic.trim()) {
-      alert("Topik materi wajib diisi.");
+      toast.warning("Topik materi wajib diisi sebelum menyimpan jurnal.");
       return;
     }
 
@@ -236,11 +246,25 @@ export default function ScheduleManagerClient({
     setIsSubmitting(false);
 
     if (res.success) {
-      alert(res.message);
+      toast.success(res.message, "Jurnal Pertemuan Tersimpan");
       setSelectedSession(null);
-      window.location.reload();
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === selectedSession.id
+            ? {
+                ...s,
+                journal: {
+                  topic: journalTopic,
+                  notes: journalNotes,
+                  homework: journalHomework,
+                },
+              }
+            : s
+        )
+      );
+      router.refresh();
     } else {
-      alert(res.message);
+      toast.error(res.message);
     }
   };
 
@@ -362,10 +386,10 @@ export default function ScheduleManagerClient({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#D5DDEB] pb-2">
+      <div className="flex items-center gap-2 border-b border-[#D5DDEB] pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab("agenda")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
             activeTab === "agenda"
               ? "bg-[#09408C] text-white shadow-xs"
               : "text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA]"
@@ -386,7 +410,7 @@ export default function ScheduleManagerClient({
 
         <button
           onClick={() => setActiveTab("matriks")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
             activeTab === "matriks"
               ? "bg-[#09408C] text-white shadow-xs"
               : "text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA]"
@@ -401,7 +425,7 @@ export default function ScheduleManagerClient({
             setActiveTab("smart-match");
             if (!matchCalculated) runSmartMatch();
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
             activeTab === "smart-match"
               ? "bg-[#09408C] text-white shadow-xs"
               : "text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA]"
@@ -430,6 +454,7 @@ export default function ScheduleManagerClient({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                aria-label="Cari agenda sesi"
               />
             </div>
 
@@ -439,6 +464,7 @@ export default function ScheduleManagerClient({
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="text-xs py-1.5 px-3 rounded-xl border border-[#D5DDEB] bg-white text-[#1B2A41] focus-ring"
+                aria-label="Filter status sesi"
               >
                 <option value="ALL">Semua Status</option>
                 <option value="TERJADWAL">Terjadwal</option>
@@ -507,7 +533,7 @@ export default function ScheduleManagerClient({
                               </>
                             ) : (
                               <>
-                                <Home size={12} className="text-[#F5B82E]" />
+                                <Home size={12} className="text-[#B45309]" />
                                 Home Visit: {session.address || "Alamat siswa"}
                               </>
                             )}
@@ -549,7 +575,7 @@ export default function ScheduleManagerClient({
 
                       {!isDone && session.status !== "DIBATALKAN" && (
                         <button
-                          onClick={() => handleMarkCompleted(session)}
+                          onClick={() => setSessionToComplete(session)}
                           disabled={isSubmitting}
                           className="px-3 py-1.5 rounded-xl bg-[#1F6F4A] text-white text-xs font-semibold hover:bg-[#165538] transition-colors shadow-2xs"
                         >
@@ -587,6 +613,7 @@ export default function ScheduleManagerClient({
                   value={matrixTutorFilter}
                   onChange={(e) => setMatrixTutorFilter(e.target.value)}
                   className="text-xs p-2 rounded-xl border border-[#D5DDEB] bg-white text-[#1B2A41] focus-ring"
+                  aria-label="Pilih filter tutor"
                 >
                   <option value="ALL">Semua Tutor ({tutors.length})</option>
                   {tutors.map((t) => (
@@ -595,6 +622,29 @@ export default function ScheduleManagerClient({
                     </option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* Mobile Day Selector Tabs (SB-QA-RES-001) */}
+            <div className="block sm:hidden bg-[#EAF1FA] p-1.5 rounded-xl border border-[#9AC1E2]/40">
+              <div className="text-[11px] font-bold text-[#09408C] mb-1.5 px-1">
+                Pilih Hari untuk Layar HP:
+              </div>
+              <div className="grid grid-cols-4 gap-1">
+                {DAYS_OF_WEEK.map((d) => (
+                  <button
+                    key={d.index}
+                    type="button"
+                    onClick={() => setSelectedMobileDayIndex(d.index)}
+                    className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
+                      selectedMobileDayIndex === d.index
+                        ? "bg-[#09408C] text-white shadow-xs"
+                        : "bg-white text-[#5B6882] hover:bg-white/80"
+                    }`}
+                  >
+                    {d.name.slice(0, 3)}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -634,8 +684,60 @@ export default function ScheduleManagerClient({
                       </div>
                     </div>
 
-                    {/* Weekly Schedule Table */}
-                    <div className="overflow-x-auto">
+                    {/* Mobile Slot View (SB-QA-RES-001) */}
+                    <div className="block sm:hidden space-y-2">
+                      <div className="text-xs font-bold text-[#09408C]">
+                        Slot {DAYS_OF_WEEK.find((d) => d.index === selectedMobileDayIndex)?.name}:
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {TIME_SLOTS.map((slot) => {
+                          const isAvailable = Boolean(
+                            tutorAvail[selectedMobileDayIndex]?.[slot.key]
+                          );
+
+                          return (
+                            <button
+                              key={slot.key}
+                              type="button"
+                              onClick={() =>
+                                handleToggleSlot(
+                                  tutor.id,
+                                  selectedMobileDayIndex,
+                                  slot.key,
+                                  isAvailable
+                                )
+                              }
+                              className={`p-2.5 rounded-xl text-left border transition-all ${
+                                isAvailable
+                                  ? "bg-[#E3F4EC] text-[#1F6F4A] border-[#A3E635]"
+                                  : "bg-white text-[#5B6882] border-[#D5DDEB]"
+                              }`}
+                            >
+                              <div className="text-xs font-bold">{slot.label}</div>
+                              <div className="text-[10px] mt-0.5 opacity-80">
+                                {slot.startHour} - {slot.endHour}
+                              </div>
+                              <div className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold">
+                                {isAvailable ? (
+                                  <>
+                                    <Check size={12} className="stroke-[3]" />
+                                    <span>Tersedia</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <X size={12} />
+                                    <span>Libur</span>
+                                  </>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Desktop Weekly Schedule Table (Hidden on small mobile) */}
+                    <div className="hidden sm:block overflow-x-auto">
                       <table className="w-full text-xs text-center border-collapse">
                         <thead>
                           <tr className="border-b border-[#D5DDEB] bg-white">
@@ -683,6 +785,7 @@ export default function ScheduleManagerClient({
                                           : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA] border border-[#D5DDEB]"
                                       }`}
                                       title="Klik untuk ubah ketersediaan"
+                                      aria-label={`Ubah slot ${slot.label} hari ${day.name} untuk tutor ${tutor.name}`}
                                     >
                                       {isAvailable ? (
                                         <>
@@ -718,10 +821,6 @@ export default function ScheduleManagerClient({
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-[#F4F7FB] border border-[#D5DDEB]"></span>
                 <span>Libur / Tidak Tersedia</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-[#09408C]"></span>
-                <span>Terjadwal Sesi Bimbingan (BR-2 Terproteksi)</span>
               </div>
             </div>
           </div>
@@ -761,10 +860,11 @@ export default function ScheduleManagerClient({
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="match-prog-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   1. Program Bimbingan
                 </label>
                 <select
+                  id="match-prog-select"
                   value={matchProgramId}
                   onChange={(e) => setMatchProgramId(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] bg-white focus-ring"
@@ -778,10 +878,11 @@ export default function ScheduleManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="match-student-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   2. Siswa Peserta
                 </label>
                 <select
+                  id="match-student-select"
                   value={matchStudentId}
                   onChange={(e) => setMatchStudentId(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] bg-white focus-ring"
@@ -795,10 +896,11 @@ export default function ScheduleManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="match-date-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   3. Tanggal Bimbingan
                 </label>
                 <input
+                  id="match-date-input"
                   type="date"
                   value={matchDate}
                   onChange={(e) => setMatchDate(e.target.value)}
@@ -808,7 +910,7 @@ export default function ScheduleManagerClient({
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-bold text-[#1B2A41]">
+                  <label htmlFor="match-time-start" className="text-xs font-bold text-[#1B2A41]">
                     4. Jam (Default 90 Mnt BR-5)
                   </label>
                   <button
@@ -821,16 +923,19 @@ export default function ScheduleManagerClient({
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
                   <input
+                    id="match-time-start"
                     type="time"
                     value={matchStartTime}
                     onChange={(e) => setMatchStartTime(e.target.value)}
                     className="w-full text-xs p-2 rounded-xl border border-[#D5DDEB] focus-ring"
                   />
                   <input
+                    id="match-time-end"
                     type="time"
                     value={matchEndTime}
                     onChange={(e) => setMatchEndTime(e.target.value)}
                     className="w-full text-xs p-2 rounded-xl border border-[#D5DDEB] focus-ring"
+                    aria-label="Waktu selesai bimbingan"
                   />
                 </div>
               </div>
@@ -966,14 +1071,20 @@ export default function ScheduleManagerClient({
       {/* MODAL JADWALKAN SESI BARU (DILENGKAPI SIMULATOR SESI BERULANG) */}
       {/* ============================================================== */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-schedule-title"
+        >
           <form
             onSubmit={handleCreateSession}
-            className="bg-white rounded-2xl p-6 max-w-xl w-full border border-[#D5DDEB] shadow-xl space-y-4 max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl max-w-xl w-full border border-[#D5DDEB] shadow-xl flex flex-col max-h-[92vh] overflow-hidden"
           >
-            <div className="flex items-center justify-between border-b border-[#D5DDEB] pb-3">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[#D5DDEB] p-5 shrink-0 bg-white">
               <div>
-                <h3 className="text-base font-bold text-[#09408C] font-display">
+                <h3 id="modal-schedule-title" className="text-base font-bold text-[#09408C] font-display">
                   Jadwalkan Sesi Bimbingan
                 </h3>
                 <p className="text-xs text-[#5B6882]">
@@ -983,279 +1094,294 @@ export default function ScheduleManagerClient({
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
-                className="text-[#5B6882] hover:text-[#1B2A41]"
+                className="text-[#5B6882] hover:text-[#1B2A41] p-1 rounded-lg"
+                aria-label="Tutup dialog penjadwalan"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Conflict Alert Banner */}
-            {conflictError && (
-              <div className="p-3 bg-[#FEF7E6] border border-[#F5B82E] rounded-xl text-xs text-[#B45309] flex items-start gap-2">
-                <AlertTriangle size={16} className="shrink-0 mt-0.5" />
-                <span>{conflictError}</span>
-              </div>
-            )}
+            {/* Modal Scrollable Body */}
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+              {/* Conflict Alert Banner */}
+              {conflictError && (
+                <div className="p-3 bg-[#FEF7E6] border border-[#F5B82E] rounded-xl text-xs text-[#B45309] flex items-start gap-2">
+                  <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                  <span>{conflictError}</span>
+                </div>
+              )}
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
-                  Pilih Tutor *
-                </label>
-                <select
-                  value={tutorId}
-                  onChange={(e) => {
-                    setTutorId(e.target.value);
-                    if (recurrenceWeeks > 1) handleRecurrenceChange(recurrenceWeeks);
-                  }}
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
-                >
-                  {tutors.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} ({(t.expertise || []).slice(0, 2).join(", ")})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="create-tutor-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Pilih Tutor *
+                  </label>
+                  <select
+                    id="create-tutor-select"
+                    value={tutorId}
+                    onChange={(e) => {
+                      setTutorId(e.target.value);
+                      if (recurrenceWeeks > 1) handleRecurrenceChange(recurrenceWeeks);
+                    }}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+                  >
+                    {tutors.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({(t.expertise || []).slice(0, 2).join(", ")})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
-                  Program Bimbingan *
-                </label>
-                <select
-                  value={programId}
-                  onChange={(e) => setProgramId(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
-                >
-                  {programs.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
-                  Model Kelas *
-                </label>
-                <select
-                  value={classType}
-                  onChange={(e) => {
-                    const val = e.target.value as any;
-                    setClassType(val);
-                    if (val === "PRIVAT" && selectedStudentIds.length > 1) {
-                      setSelectedStudentIds([selectedStudentIds[0]]);
-                    }
-                  }}
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
-                >
-                  <option value="PRIVAT">Privat (1 Siswa)</option>
-                  <option value="SEMI_PRIVAT">Semi-Privat (2-5 Siswa - BR-3)</option>
-                </select>
+                <div>
+                  <label htmlFor="create-program-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Program Bimbingan *
+                  </label>
+                  <select
+                    id="create-program-select"
+                    value={programId}
+                    onChange={(e) => setProgramId(e.target.value)}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+                  >
+                    {programs.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
-                  Mode Pertemuan *
-                </label>
-                <select
-                  value={mode}
-                  onChange={(e) => setMode(e.target.value as any)}
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
-                >
-                  <option value="ONLINE">Online (Zoom / Meet)</option>
-                  <option value="HOME_VISIT">Home Visit (Datang ke Rumah)</option>
-                </select>
-              </div>
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="create-class-type" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Model Kelas *
+                  </label>
+                  <select
+                    id="create-class-type"
+                    value={classType}
+                    onChange={(e) => {
+                      const val = e.target.value as any;
+                      setClassType(val);
+                      if (val === "PRIVAT" && selectedStudentIds.length > 1) {
+                        setSelectedStudentIds([selectedStudentIds[0]]);
+                      }
+                    }}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+                  >
+                    <option value="PRIVAT">Privat (1 Siswa)</option>
+                    <option value="SEMI_PRIVAT">Semi-Privat (2-5 Siswa - BR-3)</option>
+                  </select>
+                </div>
 
-            {/* Pilih Siswa */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-bold text-[#1B2A41]">
-                  Pilih Siswa Peserta ({selectedStudentIds.length} terpilih
-                  {classType === "SEMI_PRIVAT" && " - maks 5 peserta"}) *
-                </label>
-              </div>
-              <div className="max-h-36 overflow-y-auto border border-[#D5DDEB] rounded-xl p-2 space-y-1 bg-[#F4F7FB]/50">
-                {students.map((s) => {
-                  const isChecked = selectedStudentIds.includes(s.id);
-                  return (
-                    <label
-                      key={s.id}
-                      className={`flex items-center gap-2 p-1.5 rounded-lg text-xs cursor-pointer ${
-                        isChecked ? "bg-[#EAF1FA] font-semibold text-[#09408C]" : "hover:bg-white"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => handleStudentToggle(s.id)}
-                        className="rounded"
-                      />
-                      <span>
-                        {s.name} ({s.level} - {s.school || "Umum"})
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Waktu & Durasi Default 90 Menit (BR-5) */}
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
-                  Tanggal Mulai *
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={sessionDate}
-                  onChange={(e) => {
-                    setSessionDate(e.target.value);
-                    if (recurrenceWeeks > 1) handleRecurrenceChange(recurrenceWeeks);
-                  }}
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
-                />
+                <div>
+                  <label htmlFor="create-session-mode" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Mode Pertemuan *
+                  </label>
+                  <select
+                    id="create-session-mode"
+                    value={mode}
+                    onChange={(e) => setMode(e.target.value as any)}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+                  >
+                    <option value="ONLINE">Online (Zoom / Meet)</option>
+                    <option value="HOME_VISIT">Home Visit (Datang ke Rumah)</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
-                  Mulai *
-                </label>
-                <input
-                  type="time"
-                  required
-                  value={startTime}
-                  onChange={(e) => {
-                    setStartTime(e.target.value);
-                    handleSet90Min(e.target.value, setEndTime);
-                  }}
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
-                />
-              </div>
-
+              {/* Pilih Siswa */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs font-bold text-[#1B2A41]">
-                    Selesai (BR-5) *
+                    Pilih Siswa Peserta ({selectedStudentIds.length} terpilih
+                    {classType === "SEMI_PRIVAT" && " - maks 5 peserta"}) *
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => handleSet90Min(startTime, setEndTime)}
-                    className="text-[10px] text-[#09408C] font-bold hover:underline"
-                  >
-                    90 mnt
-                  </button>
                 </div>
-                <input
-                  type="time"
-                  required
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
-                />
-              </div>
-            </div>
-
-            {mode === "ONLINE" ? (
-              <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
-                  Tautan Zoom / Google Meet
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://meet.google.com/sb-..."
-                  value={meetingLink}
-                  onChange={(e) => setMeetingLink(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
-                />
-              </div>
-            ) : (
-              <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
-                  Alamat Home Visit
-                </label>
-                <input
-                  type="text"
-                  placeholder="Jl. Boulevard Barat No. 45..."
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
-                />
-              </div>
-            )}
-
-            {/* Recurrence (PRD C3) */}
-            <div className="p-3 bg-[#EAF1FA]/60 rounded-xl border border-[#9AC1E2]/40 space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-[#09408C] flex items-center gap-1.5">
-                  <CalendarDays size={14} />
-                  <span>Sesi Berulang Mingguan (PRD C3)</span>
-                </label>
-                <span className="text-[10px] text-[#5B6882]">Otomatis terjadwal mingguan</span>
-              </div>
-
-              <select
-                value={recurrenceWeeks}
-                onChange={(e) => handleRecurrenceChange(parseInt(e.target.value))}
-                className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
-              >
-                <option value={1}>Hanya 1 Sesi (Tidak Berulang)</option>
-                <option value={2}>2 Sesi Berulang (2 Minggu)</option>
-                <option value={4}>4 Sesi Berulang (1 Bulan / 4 Minggu)</option>
-                <option value={8}>8 Sesi Berulang (2 Bulan / 8 Minggu)</option>
-                <option value={12}>12 Sesi Berulang (3 Bulan / 12 Minggu)</option>
-              </select>
-
-              {/* Simulation Breakdown Preview */}
-              {simulatedRecurrences.length > 0 && (
-                <div className="space-y-1.5 pt-2 border-t border-[#D5DDEB]/60 max-h-36 overflow-y-auto">
-                  <div className="text-[10px] font-bold text-[#5B6882]">
-                    Simulasi {simulatedRecurrences.length} Tanggal Jadwal Masa Depan:
-                  </div>
-                  {simulatedRecurrences.map((item) => (
-                    <div
-                      key={item.weekIndex}
-                      className={`flex items-center justify-between p-1.5 rounded-lg text-[11px] ${
-                        item.hasConflict
-                          ? "bg-[#FBE9E5] text-[#B4381F] font-semibold"
-                          : "bg-white text-[#1B2A41]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-[#EAF1FA] text-[#09408C] flex items-center justify-center font-bold text-[10px]">
-                          {item.weekIndex}
-                        </span>
+                <div className="max-h-32 overflow-y-auto border border-[#D5DDEB] rounded-xl p-2 space-y-1 bg-[#F4F7FB]/50">
+                  {students.map((s) => {
+                    const isChecked = selectedStudentIds.includes(s.id);
+                    return (
+                      <label
+                        key={s.id}
+                        className={`flex items-center gap-2 p-1.5 rounded-lg text-xs cursor-pointer ${
+                          isChecked ? "bg-[#EAF1FA] font-semibold text-[#09408C]" : "hover:bg-white"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => handleStudentToggle(s.id)}
+                          className="rounded"
+                        />
                         <span>
-                          {item.dayName}, {item.dateStr}
+                          {s.name} ({s.level} - {s.school || "Umum"})
                         </span>
-                      </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
 
-                      <div className="flex items-center gap-1 text-[10px]">
-                        {item.hasConflict ? (
-                          <>
-                            <X size={12} className="text-[#B4381F]" />
-                            <span>{item.conflictDetails || "Bentrok"}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Check size={12} className="text-[#1F6F4A]" />
-                            <span className="text-[#1F6F4A]">Aman Bebas Bentrok</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+              {/* Waktu & Durasi Default 90 Menit (BR-5) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div>
+                  <label htmlFor="create-session-date" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Tanggal Mulai *
+                  </label>
+                  <input
+                    id="create-session-date"
+                    type="date"
+                    required
+                    value={sessionDate}
+                    onChange={(e) => {
+                      setSessionDate(e.target.value);
+                      if (recurrenceWeeks > 1) handleRecurrenceChange(recurrenceWeeks);
+                    }}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="create-start-time" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Mulai *
+                  </label>
+                  <input
+                    id="create-start-time"
+                    type="time"
+                    required
+                    value={startTime}
+                    onChange={(e) => {
+                      setStartTime(e.target.value);
+                      handleSet90Min(e.target.value, setEndTime);
+                    }}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="create-end-time" className="text-xs font-bold text-[#1B2A41]">
+                      Selesai (BR-5) *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleSet90Min(startTime, setEndTime)}
+                      className="text-[10px] text-[#09408C] font-bold hover:underline"
+                    >
+                      90 mnt
+                    </button>
+                  </div>
+                  <input
+                    id="create-end-time"
+                    type="time"
+                    required
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
+              </div>
+
+              {mode === "ONLINE" ? (
+                <div>
+                  <label htmlFor="create-meeting-link" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Tautan Zoom / Google Meet
+                  </label>
+                  <input
+                    id="create-meeting-link"
+                    type="url"
+                    placeholder="https://meet.google.com/sb-..."
+                    value={meetingLink}
+                    onChange={(e) => setMeetingLink(e.target.value)}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label htmlFor="create-home-address" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Alamat Home Visit
+                  </label>
+                  <input
+                    id="create-home-address"
+                    type="text"
+                    placeholder="Jl. Boulevard Barat No. 45..."
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
                 </div>
               )}
+
+              {/* Recurrence (PRD C3) */}
+              <div className="p-3 bg-[#EAF1FA]/60 rounded-xl border border-[#9AC1E2]/40 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="create-recurrence-select" className="text-xs font-bold text-[#09408C] flex items-center gap-1.5">
+                    <CalendarDays size={14} />
+                    <span>Sesi Berulang Mingguan (PRD C3)</span>
+                  </label>
+                  <span className="text-[10px] text-[#5B6882]">Otomatis terjadwal mingguan</span>
+                </div>
+
+                <select
+                  id="create-recurrence-select"
+                  value={recurrenceWeeks}
+                  onChange={(e) => handleRecurrenceChange(parseInt(e.target.value))}
+                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+                >
+                  <option value={1}>Hanya 1 Sesi (Tidak Berulang)</option>
+                  <option value={2}>2 Sesi Berulang (2 Minggu)</option>
+                  <option value={4}>4 Sesi Berulang (1 Bulan / 4 Minggu)</option>
+                  <option value={8}>8 Sesi Berulang (2 Bulan / 8 Minggu)</option>
+                  <option value={12}>12 Sesi Berulang (3 Bulan / 12 Minggu)</option>
+                </select>
+
+                {/* Simulation Breakdown Preview */}
+                {simulatedRecurrences.length > 0 && (
+                  <div className="space-y-1.5 pt-2 border-t border-[#D5DDEB]/60 max-h-32 overflow-y-auto">
+                    <div className="text-[10px] font-bold text-[#5B6882]">
+                      Simulasi {simulatedRecurrences.length} Tanggal Jadwal Masa Depan:
+                    </div>
+                    {simulatedRecurrences.map((item) => (
+                      <div
+                        key={item.weekIndex}
+                        className={`flex items-center justify-between p-1.5 rounded-lg text-[11px] ${
+                          item.hasConflict
+                            ? "bg-[#FBE9E5] text-[#B4381F] font-semibold"
+                            : "bg-white text-[#1B2A41]"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#EAF1FA] text-[#09408C] flex items-center justify-center font-bold text-[10px]">
+                            {item.weekIndex}
+                          </span>
+                          <span>
+                            {item.dayName}, {item.dateStr}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1 text-[10px]">
+                          {item.hasConflict ? (
+                            <>
+                              <X size={12} className="text-[#B4381F]" />
+                              <span>{item.conflictDetails || "Bentrok"}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Check size={12} className="text-[#1F6F4A]" />
+                              <span className="text-[#1F6F4A]">Aman Bebas Bentrok</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#D5DDEB]">
+            {/* Sticky Action Footer (SB-QA-RES-002) */}
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-[#D5DDEB] bg-white shrink-0">
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
@@ -1279,93 +1405,114 @@ export default function ScheduleManagerClient({
       {/* MODAL JURNAL & ABSENSI                                         */}
       {/* ============================================================== */}
       {selectedSession && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full border border-[#D5DDEB] shadow-xl space-y-4">
-            <h3 className="text-lg font-bold text-[#09408C] font-display">
-              Jurnal Pertemuan & Absensi
-            </h3>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-journal-title"
+        >
+          <div className="bg-white rounded-2xl max-w-md w-full border border-[#D5DDEB] shadow-xl flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between border-b border-[#D5DDEB] p-5 shrink-0 bg-white">
+              <h3 id="modal-journal-title" className="text-base font-bold text-[#09408C] font-display">
+                Jurnal Pertemuan & Absensi
+              </h3>
+              <button
+                type="button"
+                onClick={() => setSelectedSession(null)}
+                className="text-[#5B6882] hover:text-[#1B2A41] p-1"
+                aria-label="Tutup dialog jurnal"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-            {/* Daftar Siswa & Status Kehadiran */}
-            <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1.5">
-                Absensi Kehadiran Siswa
-              </label>
-              <div className="space-y-2">
-                {selectedSession.participants.map((p: any) => {
-                  const currentAtt =
-                    participantAttendances.find((a) => a.participantId === p.id)?.attendance ||
-                    p.attendance;
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+              {/* Daftar Siswa & Status Kehadiran */}
+              <div>
+                <label className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+                  Absensi Kehadiran Siswa
+                </label>
+                <div className="space-y-2">
+                  {selectedSession.participants.map((p: any) => {
+                    const currentAtt =
+                      participantAttendances.find((a) => a.participantId === p.id)?.attendance ||
+                      p.attendance;
 
-                  return (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between p-2 rounded-xl border border-[#D5DDEB] text-xs"
-                    >
-                      <span className="font-semibold text-[#1B2A41]">{p.student.name}</span>
-                      <select
-                        value={currentAtt}
-                        onChange={(e) => {
-                          const val = e.target.value as AttendanceStatus;
-                          setParticipantAttendances((prev) =>
-                            prev.map((a) =>
-                              a.participantId === p.id ? { ...a, attendance: val } : a
-                            )
-                          );
-                        }}
-                        className="text-xs p-1 rounded-lg border border-[#D5DDEB] bg-white font-medium focus-ring"
+                    return (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between p-2.5 rounded-xl border border-[#D5DDEB] text-xs"
                       >
-                        <option value="HADIR">Hadir</option>
-                        <option value="IZIN">Izin</option>
-                        <option value="SAKIT">Sakit</option>
-                        <option value="ALPA">Alpa</option>
-                      </select>
-                    </div>
-                  );
-                })}
+                        <span className="font-semibold text-[#1B2A41]">{p.student.name}</span>
+                        <select
+                          value={currentAtt}
+                          onChange={(e) => {
+                            const val = e.target.value as AttendanceStatus;
+                            setParticipantAttendances((prev) =>
+                              prev.map((a) =>
+                                a.participantId === p.id ? { ...a, attendance: val } : a
+                              )
+                            );
+                          }}
+                          className="text-xs p-1 rounded-lg border border-[#D5DDEB] bg-white font-medium focus-ring"
+                          aria-label={`Status kehadiran ${p.student.name}`}
+                        >
+                          <option value="HADIR">Hadir</option>
+                          <option value="IZIN">Izin</option>
+                          <option value="SAKIT">Sakit</option>
+                          <option value="ALPA">Alpa</option>
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="journal-topic-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  Topik Materi yang Dibahas *
+                </label>
+                <input
+                  id="journal-topic-input"
+                  type="text"
+                  required
+                  placeholder="Misal: Persamaan Kuadrat & Logaritma..."
+                  value={journalTopic}
+                  onChange={(e) => setJournalTopic(e.target.value)}
+                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="journal-notes-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  Catatan Evaluasi Pemahaman Siswa
+                </label>
+                <textarea
+                  id="journal-notes-input"
+                  rows={2}
+                  placeholder="Catatan perkembangan belajar siswa..."
+                  value={journalNotes}
+                  onChange={(e) => setJournalNotes(e.target.value)}
+                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="journal-homework-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  Tugas / PR Siswa
+                </label>
+                <input
+                  id="journal-homework-input"
+                  type="text"
+                  placeholder="Misal: Latihan Soal Bab 3 No 1-10..."
+                  value={journalHomework}
+                  onChange={(e) => setJournalHomework(e.target.value)}
+                  className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                />
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
-                Topik Materi yang Dibahas *
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Misal: Persamaan Kuadrat & Logaritma..."
-                value={journalTopic}
-                onChange={(e) => setJournalTopic(e.target.value)}
-                className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
-                Catatan Evaluasi Pemahaman Siswa
-              </label>
-              <textarea
-                rows={2}
-                placeholder="Catatan perkembangan belajar siswa..."
-                value={journalNotes}
-                onChange={(e) => setJournalNotes(e.target.value)}
-                className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
-                Tugas / PR Siswa
-              </label>
-              <input
-                type="text"
-                placeholder="Misal: Latihan Soal Bab 3 No 1-10..."
-                value={journalHomework}
-                onChange={(e) => setJournalHomework(e.target.value)}
-                className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#D5DDEB]">
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-[#D5DDEB] bg-white shrink-0">
               <button
                 type="button"
                 onClick={() => setSelectedSession(null)}
@@ -1380,6 +1527,60 @@ export default function ScheduleManagerClient({
                 className="px-4 py-2 text-xs font-semibold bg-[#09408C] text-white hover:bg-[#0E3571] rounded-xl transition-colors disabled:opacity-50"
               >
                 {isSubmitting ? "Menyimpan..." : "Simpan Jurnal & Absensi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL KONFIRMASI SESI TERLAKSANA (BR-1)                         */}
+      {/* ============================================================== */}
+      {sessionToComplete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-complete-title"
+        >
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 border border-[#D5DDEB] shadow-xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#E3F4EC] text-[#1F6F4A] flex items-center justify-center mx-auto border border-[#A3E635]">
+              <CheckCircle2 size={24} />
+            </div>
+
+            <div className="text-center space-y-1">
+              <h3 id="modal-complete-title" className="text-base font-bold text-[#1B2A41] font-display">
+                Tandai Sesi Terlaksana?
+              </h3>
+              <p className="text-xs text-[#5B6882] leading-relaxed">
+                Sesuai aturan <strong>BR-1</strong>, kuota paket bimbingan siswa yang hadir akan berkurang tepat <strong>1 pertemuan</strong>.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-[#F4F7FB] border border-[#D5DDEB] text-xs space-y-1">
+              <div className="font-bold text-[#09408C]">
+                {sessionToComplete.program?.name}
+              </div>
+              <div className="text-[#5B6882]">
+                Siswa: {sessionToComplete.participants?.map((p: any) => p.student.name).join(", ")}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setSessionToComplete(null)}
+                className="flex-1 py-2 rounded-xl text-xs font-semibold text-[#5B6882] hover:bg-[#F4F7FB] border border-[#D5DDEB] transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => executeMarkCompleted(sessionToComplete)}
+                disabled={isSubmitting}
+                className="flex-1 py-2 rounded-xl text-xs font-bold text-white bg-[#1F6F4A] hover:bg-[#165538] transition-colors shadow-2xs disabled:opacity-50"
+              >
+                {isSubmitting ? "Memproses..." : "Ya, Tandai Selesai"}
               </button>
             </div>
           </div>

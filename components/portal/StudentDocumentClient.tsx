@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { AcademicDocument, DocumentCategory, DocumentStage } from "@/actions/dokumen";
 import { submitStudentDocument } from "@/actions/dokumen";
+import { useToast } from "@/components/ui/Toast";
 
 export default function StudentDocumentClient({
   initialDocuments = [],
@@ -29,6 +30,7 @@ export default function StudentDocumentClient({
   studentId?: string;
   studentName?: string;
 }) {
+  const toast = useToast();
   const [documents, setDocuments] = useState<AcademicDocument[]>(initialDocuments);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,13 +76,17 @@ export default function StudentDocumentClient({
       };
       setDocuments([newDoc, ...documents]);
       setIsModalOpen(false);
+      toast.success(
+        "Draf Berhasil Dikirim",
+        "Naskah Anda telah masuk ke antrean telaah mentor akademik."
+      );
       // Reset
       setTitle("");
       setTargetInstitution("");
       setFileName("");
       setStudentNotes("");
     } else {
-      alert(res.message);
+      toast.error("Gagal Mengunggah", res.message);
     }
   };
 
@@ -308,10 +314,11 @@ export default function StudentDocumentClient({
 
               <form onSubmit={handleUpload} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  <label htmlFor="doc-title" className="block text-xs font-bold text-[#1B2A41] mb-1">
                     Judul Dokumen / Esai *
                   </label>
                   <input
+                    id="doc-title"
                     type="text"
                     required
                     placeholder="Contoh: Esai Kontribusi LPDP - Rencana Studi S2"
@@ -323,10 +330,11 @@ export default function StudentDocumentClient({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    <label htmlFor="doc-category" className="block text-xs font-bold text-[#1B2A41] mb-1">
                       Kategori Dokumen
                     </label>
                     <select
+                      id="doc-category"
                       value={category}
                       onChange={(e) => setCategory(e.target.value as any)}
                       className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white"
@@ -339,10 +347,11 @@ export default function StudentDocumentClient({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    <label htmlFor="doc-institution" className="block text-xs font-bold text-[#1B2A41] mb-1">
                       Target Lembaga / Kampus
                     </label>
                     <input
+                      id="doc-institution"
                       type="text"
                       placeholder="Contoh: LPDP, UI, ITB, Monash Univ"
                       value={targetInstitution}
@@ -353,10 +362,11 @@ export default function StudentDocumentClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  <label htmlFor="doc-filename" className="block text-xs font-bold text-[#1B2A41] mb-1">
                     Nama File Naskah (PDF atau DOCX)
                   </label>
                   <input
+                    id="doc-filename"
                     type="text"
                     placeholder="Contoh: Draf_Esai_LPDP_v1.pdf"
                     value={fileName}
@@ -366,10 +376,11 @@ export default function StudentDocumentClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  <label htmlFor="doc-notes" className="block text-xs font-bold text-[#1B2A41] mb-1">
                     Catatan / Bagian Khusus yang Ingin Diberi Masukan
                   </label>
                   <textarea
+                    id="doc-notes"
                     rows={4}
                     placeholder="Tuliskan jika ada bagian tertentu yang Anda rasa kurang meyakinkan, misalnya latar belakang masalah, transisi paragraf, atau kesimpulan..."
                     value={studentNotes}

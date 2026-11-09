@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { createTutor, updateTutor } from "@/actions/tutor";
 import { TutorStatus } from "@prisma/client";
+import { useToast } from "@/components/ui/Toast";
 
 export default function TutorManagerClient({
   initialTutors,
@@ -22,6 +23,7 @@ export default function TutorManagerClient({
   initialTutors: any[];
   isStaffViewer?: boolean;
 }) {
+  const toast = useToast();
   const [tutors, setTutors] = useState(initialTutors);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -79,6 +81,7 @@ export default function TutorManagerClient({
         ...prev,
       ]);
       setShowAddModal(false);
+      toast.success("Tutor Ditambahkan", `Profil tutor ${name} berhasil didaftarkan.`);
       setName("");
       setPhone("");
       setEmail("");
@@ -86,7 +89,7 @@ export default function TutorManagerClient({
       setRatePerSession("100000");
       setBio("");
     } else {
-      alert(res.message);
+      toast.error("Gagal Menambah Tutor", res.message);
     }
   };
 
@@ -208,10 +211,11 @@ export default function TutorManagerClient({
             </h3>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="tutor-name-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Nama Lengkap & Gelar *
               </label>
               <input
+                id="tutor-name-input"
                 type="text"
                 required
                 placeholder="Contoh: Muhammad Akbar, S.Pd."
@@ -223,10 +227,11 @@ export default function TutorManagerClient({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="tutor-phone-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Nomor WhatsApp *
                 </label>
                 <input
+                  id="tutor-phone-input"
                   type="text"
                   required
                   placeholder="08123456789"
@@ -237,10 +242,11 @@ export default function TutorManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="tutor-rate-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Tarif Honor per Sesi (Rp) *
                 </label>
                 <input
+                  id="tutor-rate-input"
                   type="number"
                   required
                   value={ratePerSession}
@@ -251,10 +257,11 @@ export default function TutorManagerClient({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="tutor-expertise-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Bidang Keahlian / Mapel (pisahkan dengan koma)
               </label>
               <input
+                id="tutor-expertise-input"
                 type="text"
                 placeholder="Matematika SMA, Fisika, SKD TIU"
                 value={expertiseString}
@@ -264,10 +271,11 @@ export default function TutorManagerClient({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="tutor-bio-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Biografi Singkat / Pengalaman Mengajar
               </label>
               <textarea
+                id="tutor-bio-input"
                 rows={2}
                 placeholder="Pengalaman mengajar 4 tahun, alumni FMIPA..."
                 value={bio}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   FileCheck,
   Plus,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import { assignPackageToStudent } from "@/actions/pembayaran";
 import { createPackage } from "@/actions/program";
+import { useToast } from "@/components/ui/Toast";
 
 export default function PackageManagerClient({
   programs,
@@ -22,6 +24,8 @@ export default function PackageManagerClient({
   studentPackages: any[];
   students: any[];
 }) {
+  const router = useRouter();
+  const toast = useToast();
   const [stPackages, setStPackages] = useState(studentPackages);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showAddPackageModal, setShowAddPackageModal] = useState(false);
@@ -52,11 +56,11 @@ export default function PackageManagerClient({
     setIsSubmitting(false);
 
     if (res.success) {
-      alert(res.message);
+      toast.success("Paket Diaktifkan", res.message);
       setShowAssignModal(false);
-      window.location.reload();
+      router.refresh();
     } else {
-      alert(res.message);
+      toast.error("Gagal Menetapkan Paket", res.message);
     }
   };
 
@@ -76,11 +80,12 @@ export default function PackageManagerClient({
     setIsSubmitting(false);
 
     if (res.success) {
-      alert(res.message);
+      toast.success("Paket Dibuat", res.message);
       setShowAddPackageModal(false);
-      window.location.reload();
+      setPackageName("");
+      router.refresh();
     } else {
-      alert(res.message);
+      toast.error("Gagal Membuat Paket", res.message);
     }
   };
 
@@ -220,10 +225,11 @@ export default function PackageManagerClient({
             </h3>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="assign-student-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Pilih Siswa *
               </label>
               <select
+                id="assign-student-select"
                 value={studentId}
                 onChange={(e) => setStudentId(e.target.value)}
                 className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
@@ -237,10 +243,11 @@ export default function PackageManagerClient({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="assign-package-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Pilih Paket Bimbingan *
               </label>
               <select
+                id="assign-package-select"
                 value={packageId}
                 onChange={(e) => setPackageId(e.target.value)}
                 className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
@@ -288,10 +295,11 @@ export default function PackageManagerClient({
             </h3>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="create-prog-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Program Terkait *
               </label>
               <select
+                id="create-prog-select"
                 value={progId}
                 onChange={(e) => setProgId(e.target.value)}
                 className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
@@ -305,10 +313,11 @@ export default function PackageManagerClient({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="create-package-name" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Nama Paket *
               </label>
               <input
+                id="create-package-name"
                 type="text"
                 required
                 placeholder="Contoh: Paket 10 Sesi Privat Kimia"
@@ -320,10 +329,11 @@ export default function PackageManagerClient({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="create-quota-sessions" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Jumlah Kuota Sesi *
                 </label>
                 <input
+                  id="create-quota-sessions"
                   type="number"
                   required
                   value={quotaSessions}
@@ -333,10 +343,11 @@ export default function PackageManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="create-session-minutes" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Durasi per Sesi (Menit)
                 </label>
                 <input
+                  id="create-session-minutes"
                   type="number"
                   disabled
                   value={sessionMinutes}
@@ -346,10 +357,11 @@ export default function PackageManagerClient({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="create-package-price" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Biaya Paket (Rp) *
               </label>
               <input
+                id="create-package-price"
                 type="number"
                 required
                 value={price}

@@ -44,6 +44,7 @@ import type { ExamItem, StudentExamSession } from "@/actions/ujian";
 import type { LearningMaterial, ProgramCategory } from "@/actions/materi";
 import { formatDayDate, formatTime, formatDate } from "@/lib/date";
 import ScoreProgressChart from "@/components/portal/ScoreProgressChart";
+import { useToast } from "@/components/ui/Toast";
 
 export default function StudentPortalClient({
   initialData,
@@ -59,14 +60,13 @@ export default function StudentPortalClient({
   currentStudentId?: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<
     "overview" | "history" | "ujian" | "materi" | "tagihan"
   >("overview");
   const [selectedMaterialCategory, setSelectedMaterialCategory] =
     useState<ProgramCategory>("ALL");
   const [materialSearch, setMaterialSearch] = useState("");
-  const [downloadSuccessToast, setDownloadSuccessToast] = useState<string | null>(null);
-  const [copiedToast, setCopiedToast] = useState<string | null>(null);
 
   // Invoice & Receipt State
   const [selectedReceipt, setSelectedReceipt] = useState<StudentInvoice | null>(null);
@@ -129,8 +129,7 @@ export default function StudentPortalClient({
 
   const handleCopyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    setCopiedToast(`${label} berhasil disalin!`);
-    setTimeout(() => setCopiedToast(null), 3000);
+    toast.info("Berhasil Disalin", `${label} berhasil disalin ke clipboard.`);
   };
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
@@ -150,13 +149,14 @@ export default function StudentPortalClient({
     setIsSubmittingPay(false);
 
     if (res.success) {
-      alert(res.message);
+      toast.success("Konfirmasi Terkirim", res.message);
       setShowPayModal(false);
       setPaySenderName("");
       setPayAmount("");
       setPayNotes("");
+      router.refresh();
     } else {
-      alert(res.message);
+      toast.error("Gagal Mengirim", res.message);
     }
   };
 
@@ -197,31 +197,11 @@ export default function StudentPortalClient({
   });
 
   const handleSimulateDownload = (fileName: string) => {
-    setDownloadSuccessToast(fileName);
-    setTimeout(() => {
-      setDownloadSuccessToast(null), 4000;
-    });
+    toast.success("Modul Diunduh", `Modul ${fileName} berhasil diunduh.`);
   };
 
   return (
     <div className="min-h-screen bg-[#F4F7FB] text-[#1B2A41] font-sans pb-16">
-      {/* Toast Notification */}
-      {downloadSuccessToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#09408C] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-bounce">
-          <CheckCircle2 size={20} className="text-[#9AC1E2]" />
-          <div className="text-xs">
-            <span className="font-bold block">Modul Berhasil Diunduh!</span>
-            <span className="opacity-90">{downloadSuccessToast}</span>
-          </div>
-        </div>
-      )}
-
-      {copiedToast && (
-        <div className="fixed bottom-6 left-6 z-50 bg-[#1F6F4A] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3">
-          <Check size={18} />
-          <span className="text-xs font-bold">{copiedToast}</span>
-        </div>
-      )}
 
       {/* Top Header */}
       <header className="bg-white border-b border-[#D5DDEB] sticky top-0 z-40">
@@ -1268,6 +1248,7 @@ export default function StudentPortalClient({
               <div className="pt-2 border-t border-[#D5DDEB] flex items-center justify-end gap-2 print:hidden">
                 <button
                   onClick={() => setSelectedReceipt(null)}
+                  aria-label="Tutup kwitansi"
                   className="px-4 py-2 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#5B6882] hover:bg-slate-50 transition-colors"
                 >
                   Tutup
@@ -1287,9 +1268,10 @@ export default function StudentPortalClient({
         {/* Modal Konfirmasi Pembayaran Mandiri */}
         {showPayModal && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-[#D5DDEB] space-y-5 relative">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-[#D5DDEB] space-y-5 relative max-h-[90vh] overflow-y-auto no-scrollbar">
               <button
                 onClick={() => setShowPayModal(false)}
+                aria-label="Tutup dialog konfirmasi pembayaran"
                 className="absolute top-5 right-5 p-1.5 rounded-full text-[#5B6882] hover:bg-slate-100 transition-colors"
               >
                 <X size={18} />
@@ -1306,10 +1288,11 @@ export default function StudentPortalClient({
 
               <form onSubmit={handlePaymentSubmit} className="space-y-3.5 text-xs">
                 <div>
-                  <label className="block font-semibold text-[#1B2A41] mb-1">
+                  <label htmlFor="pay-bank" className="block font-semibold text-[#1B2A41] mb-1">
                     Rekening Tujuan Transfer <span className="text-red-500">*</span>
                   </label>
                   <select
+                    id="pay-bank"
                     value={payBank}
                     onChange={(e) => setPayBank(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
@@ -1322,10 +1305,11 @@ export default function StudentPortalClient({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#1B2A41] mb-1">
+                  <label htmlFor="pay-sender-name" className="block font-semibold text-[#1B2A41] mb-1">
                     Nama Pemilik Rekening Pengirim <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="pay-sender-name"
                     type="text"
                     required
                     placeholder="Contoh: Bambang Haryanto"
@@ -1336,10 +1320,11 @@ export default function StudentPortalClient({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#1B2A41] mb-1">
+                  <label htmlFor="pay-amount" className="block font-semibold text-[#1B2A41] mb-1">
                     Nominal Transfer (Rp) <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="pay-amount"
                     type="number"
                     required
                     placeholder="Contoh: 2250000"
@@ -1350,10 +1335,11 @@ export default function StudentPortalClient({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#1B2A41] mb-1">
+                  <label htmlFor="pay-notes" className="block font-semibold text-[#1B2A41] mb-1">
                     Catatan Tambahan (Opsional)
                   </label>
                   <input
+                    id="pay-notes"
                     type="text"
                     placeholder="Contoh: Pelunasan sisa 5 sesi bimbingan"
                     value={payNotes}
@@ -1362,7 +1348,7 @@ export default function StudentPortalClient({
                   />
                 </div>
 
-                <div className="pt-2 flex items-center justify-end gap-2">
+                <div className="pt-3 flex items-center justify-end gap-2 border-t border-[#D5DDEB] sticky bottom-0 bg-white">
                   <button
                     type="button"
                     onClick={() => setShowPayModal(false)}

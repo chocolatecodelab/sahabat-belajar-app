@@ -19,12 +19,14 @@ import {
 } from "lucide-react";
 import type { ExamItem, ExamQuestion, QuestionOption } from "@/actions/ujian";
 import { createExamQuestion, updateExamQuestion, deleteExamQuestion } from "@/actions/ujian";
+import { useToast } from "@/components/ui/Toast";
 
 export default function ExamDetailClient({
   exam,
 }: {
   exam: ExamItem;
 }) {
+  const toast = useToast();
   const [questions, setQuestions] = useState<ExamQuestion[]>(
     exam.questions || []
   );
@@ -132,12 +134,15 @@ export default function ExamDetailClient({
     ].filter((o) => o.text.length > 0);
 
     if (options.length < 2) {
-      alert("Harap masukkan minimal pilihan A dan B.");
+      toast.warning("Pilihan Belum Lengkap", "Harap masukkan minimal pilihan A dan B.");
       return;
     }
 
     if (!options.some((o) => o.key === correctKey)) {
-      alert(`Pilihan ${correctKey} belum diisi teksnya. Harap pilih kunci jawaban yang memiliki opsi.`);
+      toast.warning(
+        "Kunci Jawaban Tidak Valid",
+        `Pilihan ${correctKey} belum diisi teksnya. Harap pilih kunci jawaban yang memiliki opsi.`
+      );
       return;
     }
 
@@ -172,8 +177,9 @@ export default function ExamDetailClient({
           )
         );
         setIsModalOpen(false);
+        toast.success("Soal Diperbarui", "Perubahan butir soal berhasil disimpan.");
       } else {
-        alert(res.message);
+        toast.error("Gagal Memperbarui Soal", res.message);
       }
     } else {
       const nextNumber = questions.length + 1;
@@ -202,8 +208,9 @@ export default function ExamDetailClient({
         };
         setQuestions([...questions, newQ]);
         setIsModalOpen(false);
+        toast.success("Soal Ditambahkan", `Butir soal nomor ${nextNumber} berhasil ditambahkan.`);
       } else {
-        alert(res.message);
+        toast.error("Gagal Menambah Soal", res.message);
       }
     }
   };
@@ -213,9 +220,10 @@ export default function ExamDetailClient({
 
     const res = await deleteExamQuestion(qId, exam.id);
     if (res.success) {
+      toast.success("Soal Dihapus", `Butir soal nomor ${qNum} berhasil dihapus.`);
       setQuestions(questions.filter((q) => q.id !== qId));
     } else {
-      alert(res.message);
+      toast.error("Gagal Menghapus", res.message);
     }
   };
 
@@ -497,10 +505,11 @@ export default function ExamDetailClient({
             <form onSubmit={handleSaveQuestion} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  <label htmlFor="q-section-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                     Bagian / Sub-Materi
                   </label>
                   <input
+                    id="q-section-input"
                     type="text"
                     required
                     placeholder="Contoh: TWK (Nasionalisme) atau TPS Kuantitatif"
@@ -511,10 +520,11 @@ export default function ExamDetailClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  <label htmlFor="q-points-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                     Bobot Poin Benar
                   </label>
                   <input
+                    id="q-points-input"
                     type="number"
                     required
                     value={points}
@@ -525,10 +535,11 @@ export default function ExamDetailClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="q-text-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Teks Pertanyaan Soal *
                 </label>
                 <textarea
+                  id="q-text-input"
                   rows={4}
                   required
                   placeholder="Tuliskan butir pertanyaan secara jelas dan terstruktur..."
@@ -668,10 +679,11 @@ export default function ExamDetailClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="q-correct-key-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Kunci Jawaban Benar *
                 </label>
                 <select
+                  id="q-correct-key-select"
                   value={correctKey}
                   onChange={(e) => setCorrectKey(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white font-bold text-[#1F6F4A]"
@@ -692,10 +704,11 @@ export default function ExamDetailClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="q-explanation-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Pembahasan Konsep Dasar & Trik Logis
                 </label>
                 <textarea
+                  id="q-explanation-input"
                   rows={3}
                   placeholder="Uraikan alasan mengapa jawaban tersebut benar dan konsep dasar yang melandasinya..."
                   value={explanation}

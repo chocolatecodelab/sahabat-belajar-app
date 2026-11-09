@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CreditCard,
   Plus,
@@ -18,6 +19,7 @@ import {
 import { recordManualPayment } from "@/actions/pembayaran";
 import { PaymentStatus } from "@prisma/client";
 import { formatDate } from "@/lib/date";
+import { useToast } from "@/components/ui/Toast";
 
 export default function PaymentManagerClient({
   initialPayments,
@@ -26,6 +28,8 @@ export default function PaymentManagerClient({
   initialPayments: any[];
   studentPackages: any[];
 }) {
+  const router = useRouter();
+  const toast = useToast();
   const [payments, setPayments] = useState(initialPayments);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,11 +61,14 @@ export default function PaymentManagerClient({
     setIsSubmitting(false);
 
     if (res.success) {
-      alert(res.message);
+      toast.success("Pembayaran Dicatat", res.message);
       setShowAddModal(false);
-      window.location.reload();
+      setAmount("");
+      setProofFile("");
+      setNotes("");
+      router.refresh();
     } else {
-      alert(res.message);
+      toast.error("Gagal Mencatat Pembayaran", res.message);
     }
   };
 
@@ -237,6 +244,7 @@ export default function PaymentManagerClient({
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-[#D5DDEB] shadow-2xl space-y-6 relative">
             <button
               onClick={() => setSelectedReceipt(null)}
+              aria-label="Tutup dialog kwitansi"
               className="absolute top-4 right-4 p-2 text-[#5B6882] hover:text-[#1B2A41] rounded-full hover:bg-slate-100"
             >
               <X size={18} />
@@ -332,10 +340,11 @@ export default function PaymentManagerClient({
             </h3>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="pay-student-package-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Pilih Siswa & Paket *
               </label>
               <select
+                id="pay-student-package-select"
                 value={studentPackageId}
                 onChange={(e) => setStudentPackageId(e.target.value)}
                 className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
@@ -350,10 +359,11 @@ export default function PaymentManagerClient({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="pay-amount-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Nominal Bayar (Rp) *
                 </label>
                 <input
+                  id="pay-amount-input"
                   type="number"
                   required
                   placeholder="1500000"
@@ -364,10 +374,11 @@ export default function PaymentManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="pay-method-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Metode Bayar
                 </label>
                 <select
+                  id="pay-method-select"
                   value={method}
                   onChange={(e) => setMethod(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
@@ -380,10 +391,11 @@ export default function PaymentManagerClient({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="pay-status-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Status Pembayaran
               </label>
               <select
+                id="pay-status-select"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as any)}
                 className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
@@ -395,10 +407,11 @@ export default function PaymentManagerClient({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="pay-proof-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Tautan / File Bukti Transfer
               </label>
               <input
+                id="pay-proof-input"
                 type="text"
                 placeholder="https://... atau nomor referensi transfer"
                 value={proofFile}
@@ -408,10 +421,11 @@ export default function PaymentManagerClient({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="pay-notes-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Catatan Transaksi
               </label>
               <input
+                id="pay-notes-input"
                 type="text"
                 placeholder="Keterangan transfer..."
                 value={notes}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Trophy,
   Calculator,
@@ -12,6 +13,7 @@ import {
 import { calculateTutorPayout, updatePayoutStatus } from "@/actions/honor";
 import { PayoutStatus } from "@prisma/client";
 import { formatDate } from "@/lib/date";
+import { useToast } from "@/components/ui/Toast";
 
 export default function HonorManagerClient({
   initialPayouts,
@@ -20,6 +22,8 @@ export default function HonorManagerClient({
   initialPayouts: any[];
   tutors: any[];
 }) {
+  const router = useRouter();
+  const toast = useToast();
   const [payouts, setPayouts] = useState(initialPayouts);
   const [showCalcModal, setShowCalcModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,22 +56,23 @@ export default function HonorManagerClient({
     setIsSubmitting(false);
 
     if (res.success) {
-      alert(res.message);
+      toast.success("Honor Dihitung", res.message);
       setShowCalcModal(false);
-      window.location.reload();
+      router.refresh();
     } else {
-      alert(res.message);
+      toast.error("Gagal Menghitung Honor", res.message);
     }
   };
 
   const handleUpdateStatus = async (id: string, status: PayoutStatus) => {
     const res = await updatePayoutStatus(id, status);
     if (res.success) {
+      toast.success("Status Diperbarui", "Status pembayaran honor berhasil diubah.");
       setPayouts((prev) =>
         prev.map((p) => (p.id === id ? { ...p, status } : p))
       );
     } else {
-      alert(res.message);
+      toast.error("Gagal Memperbarui", res.message);
     }
   };
 
@@ -223,10 +228,11 @@ export default function HonorManagerClient({
             </h3>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="honor-tutor-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Pilih Tutor *
               </label>
               <select
+                id="honor-tutor-select"
                 value={tutorId}
                 onChange={(e) => setTutorId(e.target.value)}
                 className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
@@ -241,10 +247,11 @@ export default function HonorManagerClient({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="honor-start-date" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Mulai Periode *
                 </label>
                 <input
+                  id="honor-start-date"
                   type="date"
                   required
                   value={startDate}
@@ -254,10 +261,11 @@ export default function HonorManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="honor-end-date" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Akhir Periode *
                 </label>
                 <input
+                  id="honor-end-date"
                   type="date"
                   required
                   value={endDate}
@@ -268,10 +276,11 @@ export default function HonorManagerClient({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="honor-notes-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Catatan
               </label>
               <input
+                id="honor-notes-input"
                 type="text"
                 placeholder="Misal: Periode bimbingan November 2026..."
                 value={notes}

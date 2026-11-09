@@ -21,6 +21,7 @@ import { updateLeadStatus, deleteLead } from "@/actions/lead";
 import { convertLeadToStudent } from "@/actions/siswa";
 import { LeadStatus } from "@prisma/client";
 import { formatDate } from "@/lib/date";
+import { useToast } from "@/components/ui/Toast";
 
 const STATUS_CONFIG: Record<
   LeadStatus,
@@ -68,6 +69,7 @@ export default function LeadManagerClient({
 }: {
   initialLeads: any[];
 }) {
+  const toast = useToast();
   const [leads, setLeads] = useState(initialLeads);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,6 +96,7 @@ export default function LeadManagerClient({
     setIsUpdating(false);
 
     if (res.success) {
+      toast.success("Status Diperbarui", "Status prospek berhasil diperbarui.");
       setLeads((prev) =>
         prev.map((l) =>
           l.id === selectedLead.id
@@ -104,24 +107,23 @@ export default function LeadManagerClient({
       setSelectedLead(null);
       setNotes("");
     } else {
-      alert(res.message);
+      toast.error("Gagal Memperbarui", res.message);
     }
   };
 
   const handleConvertToStudent = async (leadId: string) => {
-    if (!confirm("Konversi prospek ini menjadi Siswa Aktif Sahabat Belajar?")) return;
     setIsConverting(true);
     const res = await convertLeadToStudent(leadId);
     setIsConverting(false);
 
     if (res.success) {
-      alert(res.message);
+      toast.success("Berhasil Jadi Siswa", res.message);
       setLeads((prev) =>
         prev.map((l) => (l.id === leadId ? { ...l, status: "DAFTAR" } : l))
       );
       setSelectedLead(null);
     } else {
-      alert(res.message);
+      toast.error("Gagal Konversi", res.message);
     }
   };
 
@@ -308,10 +310,11 @@ export default function LeadManagerClient({
             </h3>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="lead-status-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Ubah Status Prospek
               </label>
               <select
+                id="lead-status-select"
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value as LeadStatus)}
                 className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium"
@@ -325,10 +328,11 @@ export default function LeadManagerClient({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+              <label htmlFor="lead-notes-textarea" className="block text-xs font-bold text-[#1B2A41] mb-1">
                 Catatan Hasil Konsultasi / Tindak Lanjut
               </label>
               <textarea
+                id="lead-notes-textarea"
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

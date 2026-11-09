@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import type { ExamItem, ExamQuestion } from "@/actions/ujian";
 import { submitExamSession } from "@/actions/ujian";
+import { useToast } from "@/components/ui/Toast";
 
 interface AnswerState {
   selectedKey: string;
@@ -37,6 +38,7 @@ export default function ExamSimulationClient({
   studentName?: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const questions: ExamQuestion[] = useMemo(
     () => exam.questions || [],
     [exam.questions]
@@ -237,7 +239,10 @@ export default function ExamSimulationClient({
   }, [questions, answers]);
 
   const handleAutoSubmit = async () => {
-    alert("Waktu ujian telah berakhir. Jawaban Anda otomatis dikumpulkan.");
+    toast.warning(
+      "Waktu Habis",
+      "Waktu ujian telah berakhir. Jawaban Anda otomatis dikumpulkan."
+    );
     await executeSubmit();
   };
 
@@ -277,7 +282,7 @@ export default function ExamSimulationClient({
 
       router.push(`/portal/ujian/${exam.id}/hasil?sessionId=${res.data.sessionId}`);
     } else {
-      alert(res.message || "Gagal mengumpulkan ujian.");
+      toast.error("Gagal Mengumpulkan", res.message || "Gagal mengumpulkan ujian.");
     }
   };
 
@@ -699,6 +704,7 @@ export default function ExamSimulationClient({
               </div>
               <button
                 onClick={() => setIsDrawerOpen(false)}
+                aria-label="Tutup daftar soal"
                 className="p-1.5 rounded-lg text-[#5B6882] hover:bg-[#F4F7FB]"
               >
                 <X size={18} />
@@ -757,6 +763,7 @@ export default function ExamSimulationClient({
               </div>
               <button
                 onClick={() => setIsKeyboardModalOpen(false)}
+                aria-label="Tutup petunjuk keyboard"
                 className="p-1 rounded-lg text-[#5B6882] hover:bg-[#F4F7FB]"
               >
                 <X size={16} />

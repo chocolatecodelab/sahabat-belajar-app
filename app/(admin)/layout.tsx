@@ -27,10 +27,8 @@ export default async function AdminLayout({
   const menus = await getAdminMenus();
 
   return (
-    <Providers>
-      <AdminLayoutClient menus={menus} sessionUser={session.user}>
-        {children}
-      </AdminLayoutClient>
-    </Providers>
+    <AdminLayoutClient menus={menus} sessionUser={session.user}>
+      {children}
+    </AdminLayoutClient>
   );
 }

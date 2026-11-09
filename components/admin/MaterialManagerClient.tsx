@@ -16,12 +16,14 @@ import {
 } from "lucide-react";
 import type { LearningMaterial, ProgramCategory } from "@/actions/materi";
 import { createLearningMaterial, deleteLearningMaterial } from "@/actions/materi";
+import { useToast } from "@/components/ui/Toast";
 
 export default function MaterialManagerClient({
   initialMaterials = [],
 }: {
   initialMaterials: LearningMaterial[];
 }) {
+  const toast = useToast();
   const [materials, setMaterials] = useState<LearningMaterial[]>(initialMaterials);
   const [search, setSearch] = useState("");
   const [selectedCat, setSelectedCat] = useState("ALL");
@@ -92,13 +94,14 @@ export default function MaterialManagerClient({
       };
       setMaterials([newMat, ...materials]);
       setIsModalOpen(false);
+      toast.success("Modul Ditambahkan", `Modul "${title}" berhasil dipublikasikan.`);
       // Reset form
       setTitle("");
       setSubject("");
       setDescription("");
       setFileName("");
     } else {
-      alert(res.message);
+      toast.error("Gagal Menambah Modul", res.message);
     }
   };
 
@@ -107,9 +110,10 @@ export default function MaterialManagerClient({
 
     const res = await deleteLearningMaterial(id);
     if (res.success) {
+      toast.success("Modul Dihapus", `Modul "${matTitle}" berhasil dihapus.`);
       setMaterials(materials.filter((m) => m.id !== id));
     } else {
-      alert(res.message);
+      toast.error("Gagal Menghapus Modul", res.message);
     }
   };
 
@@ -309,10 +313,11 @@ export default function MaterialManagerClient({
 
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="material-title-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Judul Modul Pembelajaran *
                 </label>
                 <input
+                  id="material-title-input"
                   type="text"
                   required
                   placeholder="Contoh: Modul Ringkasan Rumus Cepat TIU: Aritmatika & Deret"
@@ -324,10 +329,11 @@ export default function MaterialManagerClient({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  <label htmlFor="material-cat-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                     Kategori Program
                   </label>
                   <select
+                    id="material-cat-select"
                     value={programCategory}
                     onChange={(e) => setProgramCategory(e.target.value as any)}
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white"
@@ -341,10 +347,11 @@ export default function MaterialManagerClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  <label htmlFor="material-subject-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                     Mata Pelajaran / Topik *
                   </label>
                   <input
+                    id="material-subject-input"
                     type="text"
                     required
                     placeholder="Contoh: TIU atau Matematika Lanjutan"
@@ -357,10 +364,11 @@ export default function MaterialManagerClient({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  <label htmlFor="material-filename-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                     Nama File PDF
                   </label>
                   <input
+                    id="material-filename-input"
                     type="text"
                     placeholder="Contoh: Modul_TIU_Rumus_Cepat.pdf"
                     value={fileName}
@@ -370,10 +378,11 @@ export default function MaterialManagerClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  <label htmlFor="material-filesize-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                     Ukuran File (Perkiraan)
                   </label>
                   <input
+                    id="material-filesize-input"
                     type="text"
                     value={fileSize}
                     onChange={(e) => setFileSize(e.target.value)}
@@ -383,10 +392,11 @@ export default function MaterialManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="material-author-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Penyusun / Tutor
                 </label>
                 <input
+                  id="material-author-input"
                   type="text"
                   value={authorTutor}
                   onChange={(e) => setAuthorTutor(e.target.value)}
@@ -395,10 +405,11 @@ export default function MaterialManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="material-desc-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Deskripsi Isi Modul
                 </label>
                 <textarea
+                  id="material-desc-input"
                   rows={3}
                   placeholder="Uraian materi pokok yang dibahas dan target capaian bimbingan..."
                   value={description}

@@ -35,6 +35,8 @@ export const metadata: Metadata = {
   },
 };
 
+import Providers from "@/components/Providers";
+
 export default function RootLayout({
   children,
 }: {
@@ -47,7 +49,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen antialiased bg-[#F4F7FB] text-[#1B2A41]" suppressHydrationWarning>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

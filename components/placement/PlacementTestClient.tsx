@@ -24,8 +24,10 @@ import {
   submitDiagnosticPlacement,
   type DiagnosticResult,
 } from "@/actions/placement";
+import { useToast } from "@/components/ui/Toast";
 
 export default function PlacementTestClient() {
+  const toast = useToast();
   const [step, setStep] = useState<"intro" | "quiz" | "result">("intro");
 
   // Candidate Data Form
@@ -57,7 +59,10 @@ export default function PlacementTestClient() {
   const handleStartQuiz = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !phone.trim()) {
-      alert("Mohon masukkan nama lengkap dan nomor WhatsApp aktif Anda.");
+      toast.warning(
+        "Data Belum Lengkap",
+        "Mohon masukkan nama lengkap dan nomor WhatsApp aktif Anda."
+      );
       return;
     }
     setStep("quiz");
@@ -81,8 +86,12 @@ export default function PlacementTestClient() {
     if (res.success && res.data) {
       setResult(res.data);
       setStep("result");
+      toast.success("Tes Selesai", "Hasil analisis diagnostik Anda telah siap!");
     } else {
-      alert(res.message || "Gagal memproses tes. Silakan coba kembali.");
+      toast.error(
+        "Gagal Memproses",
+        res.message || "Gagal memproses tes. Silakan coba kembali."
+      );
     }
   };
 
@@ -186,10 +195,11 @@ export default function PlacementTestClient() {
 
                   <form onSubmit={handleStartQuiz} className="space-y-4">
                     <div>
-                      <label className="block text-xs font-semibold text-[#1B2A41] mb-1.5">
+                      <label htmlFor="placement-name" className="block text-xs font-semibold text-[#1B2A41] mb-1.5">
                         Nama Lengkap <span className="text-red-500">*</span>
                       </label>
                       <input
+                        id="placement-name"
                         type="text"
                         required
                         placeholder="Contoh: Budi Santoso"
@@ -201,10 +211,11 @@ export default function PlacementTestClient() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-[#1B2A41] mb-1.5">
+                        <label htmlFor="placement-phone" className="block text-xs font-semibold text-[#1B2A41] mb-1.5">
                           Nomor WhatsApp <span className="text-red-500">*</span>
                         </label>
                         <input
+                          id="placement-phone"
                           type="tel"
                           required
                           placeholder="0812xxxxxxx"
@@ -215,10 +226,11 @@ export default function PlacementTestClient() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-[#1B2A41] mb-1.5">
+                        <label htmlFor="placement-email" className="block text-xs font-semibold text-[#1B2A41] mb-1.5">
                           Email (Opsional)
                         </label>
                         <input
+                          id="placement-email"
                           type="email"
                           placeholder="nama@email.com"
                           value={email}
@@ -229,10 +241,11 @@ export default function PlacementTestClient() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-[#1B2A41] mb-1.5">
+                      <label htmlFor="placement-program" className="block text-xs font-semibold text-[#1B2A41] mb-1.5">
                         Fokus Program yang Dituju <span className="text-red-500">*</span>
                       </label>
                       <select
+                        id="placement-program"
                         value={targetProgram}
                         onChange={(e) => setTargetProgram(e.target.value)}
                         className="w-full px-4 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus:outline-none focus:border-[#09408C] bg-[#F4F7FB]"

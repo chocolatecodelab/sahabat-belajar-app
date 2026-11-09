@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   GraduationCap,
   Plus,
@@ -16,12 +17,15 @@ import {
 } from "lucide-react";
 import { createStudent, updateStudent, importStudentsFromCsv } from "@/actions/siswa";
 import { StudentStatus } from "@prisma/client";
+import { useToast } from "@/components/ui/Toast";
 
 export default function StudentManagerClient({
   initialStudents,
 }: {
   initialStudents: any[];
 }) {
+  const router = useRouter();
+  const toast = useToast();
   const [students, setStudents] = useState(initialStudents);
   const [searchQuery, setSearchQuery] = useState("");
   const [levelFilter, setLevelFilter] = useState("ALL");
@@ -80,13 +84,14 @@ export default function StudentManagerClient({
         ...prev,
       ]);
       setShowAddModal(false);
+      toast.success("Siswa Ditambahkan", `Data siswa ${name} berhasil didaftarkan.`);
       setName("");
       setSchool("");
       setParentName("");
       setParentPhone("");
       setNotes("");
     } else {
-      alert(res.message);
+      toast.error("Gagal Menambah Siswa", res.message);
     }
   };
 
@@ -116,10 +121,12 @@ export default function StudentManagerClient({
     setIsSubmitting(false);
 
     if (res.success) {
-      alert(res.message);
-      window.location.reload();
+      toast.success("Impor Berhasil", res.message);
+      setShowCsvModal(false);
+      setCsvContent("");
+      router.refresh();
     } else {
-      alert(res.message);
+      toast.error("Gagal Impor CSV", res.message);
     }
   };
 
@@ -343,10 +350,11 @@ export default function StudentManagerClient({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="student-name-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Nama Lengkap Siswa *
                 </label>
                 <input
+                  id="student-name-input"
                   type="text"
                   required
                   placeholder="Contoh: Aisyah Putri"
@@ -357,10 +365,11 @@ export default function StudentManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="student-level-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Jenjang Pendidikan *
                 </label>
                 <select
+                  id="student-level-select"
                   value={level}
                   onChange={(e) => setLevel(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
@@ -374,10 +383,11 @@ export default function StudentManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="student-school-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Asal Sekolah / Kampus
                 </label>
                 <input
+                  id="student-school-input"
                   type="text"
                   placeholder="Contoh: SMAN 1 Kandangan"
                   value={school}
@@ -387,10 +397,11 @@ export default function StudentManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="student-parent-name" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Nama Orang Tua / Wali
                 </label>
                 <input
+                  id="student-parent-name"
                   type="text"
                   placeholder="Contoh: Ibu Rina"
                   value={parentName}
@@ -400,10 +411,11 @@ export default function StudentManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="student-parent-phone" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   WhatsApp Orang Tua
                 </label>
                 <input
+                  id="student-parent-phone"
                   type="text"
                   placeholder="Contoh: 08123456789"
                   value={parentPhone}
@@ -413,10 +425,11 @@ export default function StudentManagerClient({
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="student-notes-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Catatan Khusus / Target Belajar
                 </label>
                 <textarea
+                  id="student-notes-input"
                   rows={2}
                   placeholder="Contoh: Persiapan ujian akhir semester mapel Matematika & Fisika..."
                   value={notes}

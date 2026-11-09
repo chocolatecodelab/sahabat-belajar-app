@@ -21,12 +21,14 @@ import {
 } from "lucide-react";
 import type { ExamItem } from "@/actions/ujian";
 import { createExam, updateExam, deleteExam } from "@/actions/ujian";
+import { useToast } from "@/components/ui/Toast";
 
 export default function ExamManagerClient({
   initialExams = [],
 }: {
   initialExams: ExamItem[];
 }) {
+  const toast = useToast();
   const [exams, setExams] = useState<ExamItem[]>(initialExams);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
@@ -117,8 +119,9 @@ export default function ExamManagerClient({
           )
         );
         setIsModalOpen(false);
+        toast.success("Paket Diperbarui", `Paket "${title}" berhasil diperbarui.`);
       } else {
-        alert(res.message);
+        toast.error("Gagal Memperbarui", res.message);
       }
     } else {
       const res = await createExam({
@@ -144,8 +147,9 @@ export default function ExamManagerClient({
         };
         setExams([newExam, ...exams]);
         setIsModalOpen(false);
+        toast.success("Paket Dibuat", `Paket simulasi "${title}" berhasil dibuat.`);
       } else {
-        alert(res.message);
+        toast.error("Gagal Membuat Paket", res.message);
       }
     }
   };
@@ -157,9 +161,10 @@ export default function ExamManagerClient({
 
     const res = await deleteExam(id);
     if (res.success) {
+      toast.success("Paket Dihapus", `Paket "${examTitle}" berhasil dihapus.`);
       setExams(exams.filter((e) => e.id !== id));
     } else {
-      alert(res.message);
+      toast.error("Gagal Menghapus Paket", res.message);
     }
   };
 
@@ -384,10 +389,11 @@ export default function ExamManagerClient({
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="exam-title-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Judul Paket Ujian *
                 </label>
                 <input
+                  id="exam-title-input"
                   type="text"
                   required
                   placeholder="Contoh: Simulasi CAT SKD CPNS 2026 - Paket 2"
@@ -399,10 +405,11 @@ export default function ExamManagerClient({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  <label htmlFor="exam-cat-select" className="block text-xs font-bold text-[#1B2A41] mb-1">
                     Kategori Program
                   </label>
                   <select
+                    id="exam-cat-select"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white"
@@ -416,10 +423,11 @@ export default function ExamManagerClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  <label htmlFor="exam-duration-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                     Durasi (Menit) *
                   </label>
                   <input
+                    id="exam-duration-input"
                     type="number"
                     required
                     min={10}
@@ -432,10 +440,11 @@ export default function ExamManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="exam-passing-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Passing Grade Kelulusan (Nilai Minimal)
                 </label>
                 <input
+                  id="exam-passing-input"
                   type="number"
                   required
                   value={passingGrade}
@@ -445,10 +454,11 @@ export default function ExamManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                <label htmlFor="exam-desc-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Deskripsi / Petunjuk Ujian
                 </label>
                 <textarea
+                  id="exam-desc-input"
                   rows={3}
                   placeholder="Petunjuk pengerjaan dan kisi-kisi topik..."
                   value={description}
