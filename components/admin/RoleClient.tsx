@@ -642,10 +642,13 @@ export default function RoleClient({ roles: initialRoles, allPermissions }: Role
                               const checked = selectedPerms.includes(perm.id);
 
                               return (
-                                <div
+                                <button
+                                  type="button"
+                                  role="checkbox"
+                                  aria-checked={checked}
                                   key={perm.id}
                                   onClick={() => togglePermission(perm.id)}
-                                  className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-xs cursor-pointer transition-all select-none ${
+                                  className={`flex items-start text-left gap-2.5 p-2.5 rounded-xl border text-xs cursor-pointer transition-all select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#09408C] focus-visible:ring-offset-1 ${
                                     checked
                                       ? "bg-[#EAF1FA]/60 border-[#9AC1E2] text-[#1B2A41]"
                                       : "bg-white border-[#D5DDEB] text-[#5B6882] hover:border-slate-400"
@@ -658,7 +661,7 @@ export default function RoleClient({ roles: initialRoles, allPermissions }: Role
                                       <Square size={16} className="text-slate-300" />
                                     )}
                                   </div>
-                                  <div className="min-w-0">
+                                  <div className="min-w-0 flex-1">
                                     <div className="font-bold text-[#1B2A41] flex items-center gap-1.5">
                                       <span>{perm.label || perm.name}</span>
                                     </div>
@@ -669,7 +672,7 @@ export default function RoleClient({ roles: initialRoles, allPermissions }: Role
                                       guard: {perm.name}
                                     </span>
                                   </div>
-                                </div>
+                                </button>
                               );
                             })}
                           </div>

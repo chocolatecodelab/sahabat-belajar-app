@@ -305,22 +305,25 @@ export default function AdminMenuClient({ menus: initial }: AdminMenuClientProps
                     <td className="py-3.5 px-4 text-right space-x-1">
                       <button
                         onClick={() => openCreate(item.id)}
-                        className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                        className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#09408C]"
                         title="Tambah Sub-Menu di dalam menu ini"
+                        aria-label={`Tambah Sub-Menu di dalam ${item.label}`}
                       >
                         <Plus size={15} />
                       </button>
                       <button
                         onClick={() => openEdit(item)}
-                        className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                        className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#09408C]"
                         title="Edit Menu"
+                        aria-label={`Edit menu ${item.label}`}
                       >
                         <Edit size={15} />
                       </button>
                       <button
                         onClick={() => handleDelete(item.id, item.label)}
-                        className="p-1.5 rounded-lg text-[#5B6882] hover:text-red-600 hover:bg-red-50 transition-colors"
+                        className="p-1.5 rounded-lg text-[#5B6882] hover:text-red-600 hover:bg-red-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
                         title="Hapus Menu"
+                        aria-label={`Hapus menu ${item.label}`}
                       >
                         <Trash2 size={15} />
                       </button>
@@ -372,15 +375,17 @@ export default function AdminMenuClient({ menus: initial }: AdminMenuClientProps
                         <td className="py-2.5 px-4 text-right space-x-1">
                           <button
                             onClick={() => openEdit(child)}
-                            className="p-1 rounded-md text-[#5B6882] hover:text-[#09408C] hover:bg-white transition-colors"
+                            className="p-1 rounded-md text-[#5B6882] hover:text-[#09408C] hover:bg-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#09408C]"
                             title="Edit Submenu"
+                            aria-label={`Edit submenu ${child.label}`}
                           >
                             <Edit size={14} />
                           </button>
                           <button
                             onClick={() => handleDelete(child.id, child.label)}
-                            className="p-1 rounded-md text-[#5B6882] hover:text-red-600 hover:bg-red-50 transition-colors"
+                            className="p-1 rounded-md text-[#5B6882] hover:text-red-600 hover:bg-red-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
                             title="Hapus Submenu"
+                            aria-label={`Hapus submenu ${child.label}`}
                           >
                             <Trash2 size={14} />
                           </button>
