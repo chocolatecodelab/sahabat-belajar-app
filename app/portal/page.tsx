@@ -2,11 +2,12 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getStudentPortalData } from "@/actions/portal";
 import { getExams, getStudentExamHistory } from "@/actions/ujian";
+import { getLearningMaterials } from "@/actions/materi";
 import StudentPortalClient from "@/components/portal/StudentPortalClient";
 
 export const metadata = {
   title: "Portal Siswa & Orang Tua | Sahabat Belajar",
-  description: "Pantau jadwal bimbingan, sisa kuota pertemuan, dan evaluasi hasil belajar di Sahabat Belajar.",
+  description: "Pantau jadwal bimbingan, sisa kuota pertemuan, modul belajar digital, dan evaluasi hasil belajar di Sahabat Belajar.",
 };
 
 export default async function StudentPortalPage() {
@@ -16,9 +17,10 @@ export default async function StudentPortalPage() {
     redirect("/login");
   }
 
-  const [portalRes, exams] = await Promise.all([
+  const [portalRes, exams, materials] = await Promise.all([
     getStudentPortalData(),
     getExams(),
+    getLearningMaterials(),
   ]);
 
   const studentId = portalRes.data?.student?.id || "std_demo_01";
@@ -29,6 +31,7 @@ export default async function StudentPortalPage() {
       initialData={portalRes.success && portalRes.data ? portalRes.data : null}
       availableExams={exams}
       examHistory={examHistory}
+      materials={materials}
     />
   );
 }
