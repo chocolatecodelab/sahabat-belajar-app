@@ -141,6 +141,24 @@ export default function ExamResultClient({
 
   return (
     <div className="min-h-screen bg-[#F4F7FB] text-[#1B2A41] py-8 px-4 sm:px-6 lg:px-8 font-sans">
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @media print {
+              body {
+                background: white !important;
+                color: #1B2A41 !important;
+              }
+              .card-print {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                box-shadow: none !important;
+                border: 1px solid #D5DDEB !important;
+              }
+            }
+          `,
+        }}
+      />
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Navigation & Action Bar (Hidden on Print) */}
         <div className="flex items-center justify-between gap-4 print:hidden">
@@ -439,7 +457,7 @@ export default function ExamResultClient({
               return (
                 <div
                   key={q.id || idx}
-                  className="bg-white rounded-3xl border border-[#D5DDEB] p-5 sm:p-6 shadow-xs space-y-4"
+                  className="bg-white rounded-3xl border border-[#D5DDEB] p-5 sm:p-6 shadow-xs space-y-4 card-print"
                 >
                   {/* Top Meta */}
                   <div className="flex items-center justify-between gap-3">

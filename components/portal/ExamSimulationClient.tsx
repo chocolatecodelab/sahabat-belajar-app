@@ -80,23 +80,51 @@ export default function ExamSimulationClient({
     } catch (e) {}
   };
 
-  // Timer countdown
+  // Persistent cheat-proof timer
   useEffect(() => {
+    const timerStorageKey = `sb_exam_${exam.id}_targetEndTime`;
+    let targetEndTime: number;
+
+    const savedTarget = localStorage.getItem(timerStorageKey);
+    if (savedTarget) {
+      targetEndTime = Number(savedTarget);
+      const remaining = Math.max(0, Math.floor((targetEndTime - Date.now()) / 1000));
+      setSecondsRemaining(remaining);
+      if (remaining <= 0) {
+        handleAutoSubmit();
+        return;
+      }
+    } else {
+      targetEndTime = Date.now() + exam.durationMinutes * 60 * 1000;
+      localStorage.setItem(timerStorageKey, String(targetEndTime));
+      setSecondsRemaining(exam.durationMinutes * 60);
+    }
+
     timerRef.current = setInterval(() => {
-      setSecondsRemaining((prev) => {
-        if (prev <= 1) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          handleAutoSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
+      const remaining = Math.max(0, Math.floor((targetEndTime - Date.now()) / 1000));
+      setSecondsRemaining(remaining);
+      if (remaining <= 0) {
+        if (timerRef.current) clearInterval(timerRef.current);
+        handleAutoSubmit();
+      }
     }, 1000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, []);
+  }, [exam.id, exam.durationMinutes]);
+
+  // Prevent accidental navigation
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isSubmitting) {
+        e.preventDefault();
+        e.returnValue = "Ujian sedang berlangsung. Apakah Anda yakin ingin meninggalkan ruang ujian?";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isSubmitting]);
 
   const formatTimer = (totalSec: number) => {
     const mins = Math.floor(totalSec / 60);
@@ -230,6 +258,7 @@ export default function ExamSimulationClient({
     if (res.success && res.data) {
       try {
         localStorage.removeItem(`sb_exam_${exam.id}_answers`);
+        localStorage.removeItem(`sb_exam_${exam.id}_targetEndTime`);
       } catch (e) {}
 
       try {

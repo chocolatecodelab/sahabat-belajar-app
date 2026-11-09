@@ -201,6 +201,46 @@ const SAMPLE_QUESTIONS: Record<string, ExamQuestion[]> = {
   ],
 };
 
+const SAMPLE_SESSIONS: Record<string, StudentExamSession> = {
+  sess_demo_01: {
+    id: "sess_demo_01",
+    examId: "exam_cpns_01",
+    studentId: "std_demo_01",
+    studentName: "Ahmad Fauzi",
+    startedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    submittedAt: new Date(Date.now() - 86400000 * 3 + 4500000).toISOString(),
+    durationSecondsUsed: 4500,
+    score: 385,
+    isPassed: true,
+    status: "SELESAI",
+    answers: {
+      q_cpns_01: { selectedKey: "A", pointsEarned: 5 },
+      q_cpns_02: { selectedKey: "B", pointsEarned: 5 },
+      q_cpns_03: { selectedKey: "E", pointsEarned: 5 },
+      q_cpns_04: { selectedKey: "B", pointsEarned: 5 },
+    },
+    sectionScores: { TWK: 85, TIU: 125, TKP: 175 },
+    exam: SAMPLE_EXAMS[0],
+  },
+  sess_demo_02: {
+    id: "sess_demo_02",
+    examId: "exam_snbt_01",
+    studentId: "std_demo_01",
+    studentName: "Ahmad Fauzi",
+    startedAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+    submittedAt: new Date(Date.now() - 86400000 * 7 + 4200000).toISOString(),
+    durationSecondsUsed: 4200,
+    score: 645,
+    isPassed: true,
+    status: "SELESAI",
+    answers: {
+      q_snbt_01: { selectedKey: "C", pointsEarned: 5 },
+    },
+    sectionScores: { "Penalaran Umum": 650, "Kuantitatif": 640 },
+    exam: SAMPLE_EXAMS[1],
+  },
+};
+
 // ==========================================
 // ACTIONS IMPLEMENTATION
 // ==========================================
@@ -397,6 +437,23 @@ export async function submitExamSession(input: {
     const isPassed = totalScore >= exam.passingGrade;
     const sessionId = "sess_" + Date.now();
 
+    const newSessionRecord: StudentExamSession = {
+      id: sessionId,
+      examId: input.examId,
+      studentId: input.studentId,
+      studentName: input.studentName || "Siswa",
+      startedAt: new Date(Date.now() - input.durationSecondsUsed * 1000).toISOString(),
+      submittedAt: new Date().toISOString(),
+      durationSecondsUsed: input.durationSecondsUsed,
+      score: totalScore,
+      isPassed,
+      status: "SELESAI",
+      answers: detailedAnswers,
+      sectionScores,
+      exam,
+    };
+    SAMPLE_SESSIONS[sessionId] = newSessionRecord;
+
     try {
       await supabaseAdmin.from("StudentExamSession").insert([
         {
@@ -438,39 +495,7 @@ export async function getStudentExamHistory(studentId: string): Promise<StudentE
       .order("createdAt", { ascending: false });
 
     if (error || !data || data.length === 0) {
-      // Return sample history for demo student
-      return [
-        {
-          id: "sess_demo_01",
-          examId: "exam_cpns_01",
-          studentId,
-          studentName: "Ahmad Fauzi",
-          startedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-          submittedAt: new Date(Date.now() - 86400000 * 3 + 4500000).toISOString(),
-          durationSecondsUsed: 4500,
-          score: 385,
-          isPassed: true,
-          status: "SELESAI",
-          answers: {},
-          sectionScores: { TWK: 85, TIU: 125, TKP: 175 },
-          exam: SAMPLE_EXAMS[0],
-        },
-        {
-          id: "sess_demo_02",
-          examId: "exam_snbt_01",
-          studentId,
-          studentName: "Ahmad Fauzi",
-          startedAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-          submittedAt: new Date(Date.now() - 86400000 * 7 + 4200000).toISOString(),
-          durationSecondsUsed: 4200,
-          score: 645,
-          isPassed: true,
-          status: "SELESAI",
-          answers: {},
-          sectionScores: { "Penalaran Umum": 650, "Kuantitatif": 640 },
-          exam: SAMPLE_EXAMS[1],
-        },
-      ];
+      return Object.values(SAMPLE_SESSIONS);
     }
 
     return data as StudentExamSession[];
@@ -627,12 +652,12 @@ export async function getExamSessionResult(sessionId: string): Promise<StudentEx
       .eq("id", sessionId)
       .maybeSingle();
 
-    if (error || !data) {
-      return null;
+    if (!error && data) {
+      return data as StudentExamSession;
     }
-    return data as StudentExamSession;
+    return SAMPLE_SESSIONS[sessionId] || null;
   } catch (err) {
     console.error("getExamSessionResult error:", err);
-    return null;
+    return SAMPLE_SESSIONS[sessionId] || null;
   }
 }

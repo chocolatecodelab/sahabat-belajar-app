@@ -44,6 +44,21 @@ export default function ExamDetailClient({
   const [optC, setOptC] = useState("");
   const [optD, setOptD] = useState("");
   const [optE, setOptE] = useState("");
+  const [ptsA, setPtsA] = useState("5");
+  const [ptsB, setPtsB] = useState("4");
+  const [ptsC, setPtsC] = useState("3");
+  const [ptsD, setPtsD] = useState("2");
+  const [ptsE, setPtsE] = useState("1");
+
+  const isTKP = section.toUpperCase().includes("TKP");
+
+  const availableOptionKeys = [
+    { key: "A", text: optA },
+    { key: "B", text: optB },
+    { key: "C", text: optC },
+    { key: "D", text: optD },
+    { key: "E", text: optE },
+  ].filter((o) => o.text.trim().length > 0);
 
   const sectionsCount = useMemo(() => {
     return questions.reduce((acc, q) => {
@@ -84,11 +99,23 @@ export default function ExamDetailClient({
     setExplanation(q.explanation || "");
 
     const getOpt = (key: string) => q.options.find((o) => o.key === key)?.text || "";
+    const getPts = (key: string, def: string) => {
+      const opt = q.options.find((o) => o.key === key);
+      return opt?.points !== undefined ? String(opt.points) : def;
+    };
+
     setOptA(getOpt("A"));
     setOptB(getOpt("B"));
     setOptC(getOpt("C"));
     setOptD(getOpt("D"));
     setOptE(getOpt("E"));
+
+    setPtsA(getPts("A", "5"));
+    setPtsB(getPts("B", "4"));
+    setPtsC(getPts("C", "3"));
+    setPtsD(getPts("D", "2"));
+    setPtsE(getPts("E", "1"));
+
     setIsModalOpen(true);
   };
 
@@ -97,15 +124,20 @@ export default function ExamDetailClient({
     if (!questionText.trim()) return;
 
     const options: QuestionOption[] = [
-      { key: "A", text: optA.trim() },
-      { key: "B", text: optB.trim() },
-      { key: "C", text: optC.trim() },
-      { key: "D", text: optD.trim() },
-      { key: "E", text: optE.trim() },
+      { key: "A", text: optA.trim(), points: isTKP ? Number(ptsA) || 1 : undefined },
+      { key: "B", text: optB.trim(), points: isTKP ? Number(ptsB) || 1 : undefined },
+      { key: "C", text: optC.trim(), points: isTKP ? Number(ptsC) || 1 : undefined },
+      { key: "D", text: optD.trim(), points: isTKP ? Number(ptsD) || 1 : undefined },
+      { key: "E", text: optE.trim(), points: isTKP ? Number(ptsE) || 1 : undefined },
     ].filter((o) => o.text.length > 0);
 
     if (options.length < 2) {
       alert("Harap masukkan minimal pilihan A dan B.");
+      return;
+    }
+
+    if (!options.some((o) => o.key === correctKey)) {
+      alert(`Pilihan ${correctKey} belum diisi teksnya. Harap pilih kunci jawaban yang memiliki opsi.`);
       return;
     }
 
@@ -524,6 +556,17 @@ export default function ExamDetailClient({
                     onChange={(e) => setOptA(e.target.value)}
                     className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
                   />
+                  {isTKP && (
+                    <input
+                      type="number"
+                      min={1}
+                      max={5}
+                      title="Skor Poin Opsi A (1-5)"
+                      value={ptsA}
+                      onChange={(e) => setPtsA(e.target.value)}
+                      className="w-14 px-2 py-1.5 text-xs rounded-xl border border-[#D5DDEB] text-center font-bold"
+                    />
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -538,6 +581,17 @@ export default function ExamDetailClient({
                     onChange={(e) => setOptB(e.target.value)}
                     className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
                   />
+                  {isTKP && (
+                    <input
+                      type="number"
+                      min={1}
+                      max={5}
+                      title="Skor Poin Opsi B (1-5)"
+                      value={ptsB}
+                      onChange={(e) => setPtsB(e.target.value)}
+                      className="w-14 px-2 py-1.5 text-xs rounded-xl border border-[#D5DDEB] text-center font-bold"
+                    />
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -551,6 +605,17 @@ export default function ExamDetailClient({
                     onChange={(e) => setOptC(e.target.value)}
                     className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
                   />
+                  {isTKP && (
+                    <input
+                      type="number"
+                      min={1}
+                      max={5}
+                      title="Skor Poin Opsi C (1-5)"
+                      value={ptsC}
+                      onChange={(e) => setPtsC(e.target.value)}
+                      className="w-14 px-2 py-1.5 text-xs rounded-xl border border-[#D5DDEB] text-center font-bold"
+                    />
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -564,6 +629,17 @@ export default function ExamDetailClient({
                     onChange={(e) => setOptD(e.target.value)}
                     className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
                   />
+                  {isTKP && (
+                    <input
+                      type="number"
+                      min={1}
+                      max={5}
+                      title="Skor Poin Opsi D (1-5)"
+                      value={ptsD}
+                      onChange={(e) => setPtsD(e.target.value)}
+                      className="w-14 px-2 py-1.5 text-xs rounded-xl border border-[#D5DDEB] text-center font-bold"
+                    />
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -577,6 +653,17 @@ export default function ExamDetailClient({
                     onChange={(e) => setOptE(e.target.value)}
                     className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
                   />
+                  {isTKP && (
+                    <input
+                      type="number"
+                      min={1}
+                      max={5}
+                      title="Skor Poin Opsi E (1-5)"
+                      value={ptsE}
+                      onChange={(e) => setPtsE(e.target.value)}
+                      className="w-14 px-2 py-1.5 text-xs rounded-xl border border-[#D5DDEB] text-center font-bold"
+                    />
+                  )}
                 </div>
               </div>
 
@@ -589,11 +676,18 @@ export default function ExamDetailClient({
                   onChange={(e) => setCorrectKey(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white font-bold text-[#1F6F4A]"
                 >
-                  <option value="A">Pilihan A</option>
-                  <option value="B">Pilihan B</option>
-                  <option value="C">Pilihan C</option>
-                  <option value="D">Pilihan D</option>
-                  <option value="E">Pilihan E</option>
+                  {availableOptionKeys.length > 0 ? (
+                    availableOptionKeys.map((o) => (
+                      <option key={o.key} value={o.key}>
+                        Pilihan {o.key}: {o.text.length > 40 ? o.text.substring(0, 40) + "..." : o.text}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="A">Pilihan A</option>
+                      <option value="B">Pilihan B</option>
+                    </>
+                  )}
                 </select>
               </div>
 
