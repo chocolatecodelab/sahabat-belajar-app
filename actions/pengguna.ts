@@ -353,8 +353,40 @@ export async function updateRole(
       updatedAt: new Date().toISOString(),
     };
 
-    // Protect Super Admin name renaming
-    if (id !== "role_superadmin") {
+    // System roles whose names are locked to preserve RBAC & session logic
+    const protectedRoleIds = [
+      "role_superadmin",
+      "role_admin",
+      "role_staf",
+      "role_tutor",
+      "role_siswa",
+      "role_ortu",
+      "role_mentor",
+      "role_student",
+    ];
+    const protectedRoleNames = [
+      "super admin",
+      "admin",
+      "staf",
+      "tutor",
+      "siswa",
+      "orang tua",
+      "mentor",
+      "student",
+    ];
+
+    const { data: currentRole } = await supabaseAdmin
+      .from("Role")
+      .select("name")
+      .eq("id", id)
+      .maybeSingle();
+
+    const isSystemRole =
+      protectedRoleIds.includes(id) ||
+      (currentRole?.name && protectedRoleNames.includes(currentRole.name.trim().toLowerCase()));
+
+    // Only allow renaming custom roles
+    if (!isSystemRole) {
       updatePayload.name = name;
     }
 
@@ -392,9 +424,18 @@ export async function deleteRole(id: string): Promise<ActionResponse> {
 
   try {
     // 1. Protect system core roles
-    const protectedRoleIds = ["role_superadmin", "role_admin", "role_mentor", "role_student"];
+    const protectedRoleIds = [
+      "role_superadmin",
+      "role_admin",
+      "role_staf",
+      "role_tutor",
+      "role_siswa",
+      "role_ortu",
+      "role_mentor",
+      "role_student",
+    ];
     if (protectedRoleIds.includes(id)) {
-      return { success: false, message: "Role sistem utama tidak dapat dihapus" };
+      return { success: false, message: "Role sistem utama Sahabat Belajar tidak dapat dihapus" };
     }
 
     const { data: role } = await supabaseAdmin
@@ -403,8 +444,19 @@ export async function deleteRole(id: string): Promise<ActionResponse> {
       .eq("id", id)
       .maybeSingle();
 
-    if (role?.name === "Super Admin" || role?.name === "Admin") {
-      return { success: false, message: `Role "${role?.name}" tidak dapat dihapus` };
+    const protectedRoleNames = [
+      "super admin",
+      "admin",
+      "staf",
+      "tutor",
+      "siswa",
+      "orang tua",
+      "mentor",
+      "student",
+    ];
+
+    if (role?.name && protectedRoleNames.includes(role.name.trim().toLowerCase())) {
+      return { success: false, message: `Role sistem "${role.name}" tidak dapat dihapus` };
     }
 
     // 2. Check if any user is currently assigned to this role

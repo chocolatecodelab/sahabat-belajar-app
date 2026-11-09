@@ -231,9 +231,27 @@ export default function RoleClient({ roles: initialRoles, allPermissions }: Role
   };
 
   const isProtectedRole = (id: string, roleName: string) => {
-    const protectedIds = ["role_superadmin", "role_admin", "role_staf", "role_tutor", "role_siswa", "role_ortu"];
-    const protectedNames = ["super admin", "admin", "staf", "tutor", "siswa", "orang tua"];
-    return protectedIds.includes(id) || protectedNames.includes(roleName.toLowerCase());
+    const protectedIds = [
+      "role_superadmin",
+      "role_admin",
+      "role_staf",
+      "role_tutor",
+      "role_siswa",
+      "role_ortu",
+      "role_mentor",
+      "role_student",
+    ];
+    const protectedNames = [
+      "super admin",
+      "admin",
+      "staf",
+      "tutor",
+      "siswa",
+      "orang tua",
+      "mentor",
+      "student",
+    ];
+    return protectedIds.includes(id) || protectedNames.includes(roleName.trim().toLowerCase());
   };
 
   return (
@@ -462,17 +480,24 @@ export default function RoleClient({ roles: initialRoles, allPermissions }: Role
                 {/* Role Information */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-[#1B2A41] block mb-1">
-                      Nama Role *
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-[#1B2A41]">
+                        Nama Role *
+                      </label>
+                      {editing && isProtectedRole(editing.id, editing.name) && (
+                        <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md font-semibold">
+                          Role Sistem (Nama Dikunci)
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      disabled={editing?.id === "role_superadmin"}
+                      disabled={editing ? isProtectedRole(editing.id, editing.name) : false}
                       placeholder="Contoh: Staf Front Office / Reviewer Esai"
                       required
-                      className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#D5DDEB] rounded-xl focus-ring disabled:bg-[#F4F7FB]"
+                      className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#D5DDEB] rounded-xl focus-ring disabled:bg-[#F4F7FB] disabled:text-[#5B6882]"
                     />
                   </div>
 
