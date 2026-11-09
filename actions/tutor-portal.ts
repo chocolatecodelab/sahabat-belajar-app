@@ -295,7 +295,24 @@ export async function getTutorPortalData(targetTutorId?: string): Promise<Action
       return { success: false, message: "Silakan login terlebih dahulu" };
     }
 
-    const requestedId = targetTutorId || "tut_demo_01";
+    const userRole = ((session.user as any)?.role || "").toLowerCase();
+    const isAdmin = userRole.includes("admin") || userRole.includes("super");
+    const isTutor = userRole.includes("tutor");
+
+    let requestedId = targetTutorId || "tut_demo_01";
+
+    // BR-7: Kunci akses ke profil tutor sendiri jika bukan Admin
+    if (isTutor && !isAdmin) {
+      const { data: linkedTutor } = await supabaseAdmin
+        .from("Tutor")
+        .select("id")
+        .eq("userId", session.user.id)
+        .maybeSingle();
+
+      if (linkedTutor) {
+        requestedId = linkedTutor.id;
+      }
+    }
 
     // 1. Try to fetch from Supabase
     const { data: dbTutors } = await supabaseAdmin
@@ -305,7 +322,7 @@ export async function getTutorPortalData(targetTutorId?: string): Promise<Action
 
     let currentTutor: any = null;
     if (dbTutors && dbTutors.length > 0) {
-      currentTutor = dbTutors.find((t: any) => t.id === targetTutorId) || dbTutors[0];
+      currentTutor = dbTutors.find((t: any) => t.id === requestedId) || dbTutors[0];
     }
 
     // Fallback to sample data for smooth demonstration

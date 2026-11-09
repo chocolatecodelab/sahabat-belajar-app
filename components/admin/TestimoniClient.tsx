@@ -267,7 +267,7 @@ export default function TestimoniClient({ testimonials: initial }: { testimonial
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   rows={4}
-                  placeholder="Tuliskan ulasan dan pengalaman peserta selama bimbingan di BIAS RISTEK..."
+                  placeholder="Tuliskan ulasan dan pengalaman peserta selama bimbingan di Sahabat Belajar..."
                   required
                   className="w-full px-4 py-2.5 rounded-lg border text-sm resize-none focus-ring"
                 />

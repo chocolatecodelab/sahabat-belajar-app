@@ -250,7 +250,39 @@ export async function getStudentPortalData(
     }
 
     const userId = session.user.id;
-    const requestedId = targetStudentId || "std_demo_01";
+    const userRole = ((session.user as any)?.role || "").toLowerCase();
+    const isAdminOrStaff = userRole.includes("admin") || userRole.includes("super") || userRole.includes("staf");
+
+    let effectiveTargetId = targetStudentId;
+
+    // Security IDOR Protection (SB-QA-FUN-002):
+    // Jika bukan Admin/Staf, pastikan targetStudentId adalah akun milik user atau saudaranya (multi-anak)
+    if (effectiveTargetId && !isAdminOrStaff) {
+      const { data: myStudents } = await supabaseAdmin
+        .from("Student")
+        .select("id, parentPhone")
+        .eq("userId", userId);
+
+      if (myStudents && myStudents.length > 0) {
+        const isOwner = myStudents.some((s: any) => s.id === effectiveTargetId);
+        if (!isOwner) {
+          // Periksa apakah memiliki nomor telepon wali yang sama (sibling)
+          const myParentPhone = myStudents[0].parentPhone;
+          const { data: requestedStudent } = await supabaseAdmin
+            .from("Student")
+            .select("parentPhone")
+            .eq("id", effectiveTargetId)
+            .maybeSingle();
+
+          if (!requestedStudent || requestedStudent.parentPhone !== myParentPhone) {
+            // Akses ditolak ke ID siswa asing! Paksa kembali ke ID siswa milik sendiri
+            effectiveTargetId = myStudents[0].id;
+          }
+        }
+      }
+    }
+
+    const requestedId = effectiveTargetId || "std_demo_01";
 
     // 1. Check if Supabase has student data
     let student: any = null;
@@ -267,8 +299,8 @@ export async function getStudentPortalData(
         )
       `);
 
-    if (targetStudentId) {
-      query = query.eq("id", targetStudentId);
+    if (effectiveTargetId) {
+      query = query.eq("id", effectiveTargetId);
     } else {
       query = query.eq("userId", userId);
     }

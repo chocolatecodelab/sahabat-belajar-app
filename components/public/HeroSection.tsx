@@ -98,13 +98,9 @@ export default function HeroSection({ slides }: { slides: Slide[] }) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
               <div className="max-w-2xl text-white space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <span
-                  className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full"
-                  style={{
-                    background: "var(--color-secondary-container)",
-                    color: "var(--color-on-secondary-container)",
-                  }}
+                  className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C]"
                 >
-                  BIAS RISTEK
+                  Sahabat Belajar
                 </span>
 
                 <h1 className="text-display-md sm:text-display-lg font-extrabold text-white leading-tight drop-shadow-md">

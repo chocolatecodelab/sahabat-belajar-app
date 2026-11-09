@@ -51,7 +51,7 @@ export default function PaymentSettingsClient({ initialAccounts }: PaymentSettin
       type: "BANK",
       bankName: "",
       accountNumber: "",
-      accountHolder: "BIAS RISTEK INDONESIA",
+      accountHolder: "BIMBEL SAHABAT BELAJAR INDONESIA",
       qrisImage: null,
       instructions: "Transfer tepat hingga 3 digit kode unik verifikasi.",
       isActive: true,
@@ -354,7 +354,7 @@ export default function PaymentSettingsClient({ initialAccounts }: PaymentSettin
                       type="text"
                       value={accountHolder}
                       onChange={(e) => setAccountHolder(e.target.value)}
-                      placeholder="Contoh: BIAS RISTEK INDONESIA"
+                      placeholder="Contoh: BIMBEL SAHABAT BELAJAR INDONESIA"
                       className="w-full px-3 py-2 rounded-lg border text-2xs bg-white"
                       style={{ borderColor: "var(--color-outline-variant)" }}
                     />

@@ -23,7 +23,7 @@ export async function generateMetadata(props: BeritaDetailPageProps): Promise<Me
     if (!article) return { title: "Berita Tidak Ditemukan" };
 
     return {
-      title: `${article.metaTitle || article.title} — BIAS RISTEK`,
+      title: `${article.metaTitle || article.title} — Sahabat Belajar`,
       description: article.metaDescription || article.excerpt || undefined,
       openGraph: {
         title: article.title,
@@ -32,7 +32,7 @@ export async function generateMetadata(props: BeritaDetailPageProps): Promise<Me
       },
     };
   } catch {
-    return { title: "Berita — BIAS RISTEK" };
+    return { title: "Berita — Sahabat Belajar" };
   }
 }
 

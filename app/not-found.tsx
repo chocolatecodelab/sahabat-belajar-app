@@ -5,12 +5,13 @@ export default function NotFound() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-16">
       <div className="max-w-md w-full text-center bg-white p-8 sm:p-10 rounded-3xl shadow-xl border border-gray-100">
-        <div className="flex justify-center mb-6">
-          <img
-            src="/uploads/images/bias_ristek-logo.png"
-            alt="BIAS RISTEK"
-            className="h-12 w-auto object-contain"
-          />
+        <div className="flex flex-col items-center justify-center mb-6">
+          <div className="text-2xl font-black text-[#09408C] font-display tracking-tight">
+            Sahabat Belajar
+          </div>
+          <span className="text-[11px] font-semibold text-[#5B6882] tracking-wider uppercase mt-0.5">
+            Comprehensive Academic Solution
+          </span>
         </div>
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-50 text-blue-900 mb-4 font-extrabold text-2xl font-[var(--font-heading)]">
           404

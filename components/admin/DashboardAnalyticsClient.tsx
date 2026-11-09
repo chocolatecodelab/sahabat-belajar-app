@@ -100,7 +100,7 @@ export default function DashboardAnalyticsClient({ initialData }: DashboardAnaly
                 Executive Analytics Center
               </span>
               <span className="text-body-sm text-blue-200">
-                BIAS RISTEK v2.0
+                Sahabat Belajar v2.0
               </span>
             </div>
             <h1 className="text-display-md font-extrabold leading-tight tracking-tight font-[var(--font-heading)]">

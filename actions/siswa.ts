@@ -137,6 +137,23 @@ export async function convertLeadToStudent(leadId: string): Promise<ActionRespon
       return { success: false, message: "Prospek lead tidak ditemukan." };
     }
 
+    // Proteksi Idempotensi (SB-QA-FUN-004): Cegah duplikasi siswa jika tombol diklik berulang
+    if (lead.status === "DAFTAR") {
+      const { data: existingStudent } = await supabaseAdmin
+        .from("Student")
+        .select("id")
+        .eq("leadId", leadId)
+        .maybeSingle();
+
+      if (existingStudent) {
+        return {
+          success: true,
+          message: "Prospek lead ini sudah terdaftar sebagai siswa sebelumnya.",
+          data: { id: existingStudent.id },
+        };
+      }
+    }
+
     const { data: student, error: studentError } = await supabaseAdmin
       .from("Student")
       .insert({

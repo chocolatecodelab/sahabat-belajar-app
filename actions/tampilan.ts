@@ -266,7 +266,7 @@ export async function getSiteSettings() {
   if (!settings) {
     const defaultObj = {
       id: "default_settings",
-      siteName: "BIAS RISTEK",
+      siteName: "Sahabat Belajar",
       siteDescription: "Badan Inovasi Akademik & Sains - Program Pengembangan Riset dan Teknologi",
       newsPerPage: 6,
       heroEnabled: true,
@@ -288,7 +288,7 @@ export async function updateSiteSettings(
 
   const updateData: Record<string, any> = {
     id: settings.id || "default_settings",
-    siteName: formData.has("siteName") ? (formData.get("siteName") as string) : (settings.siteName || "BIAS RISTEK"),
+    siteName: formData.has("siteName") ? (formData.get("siteName") as string) : (settings.siteName || "Sahabat Belajar"),
     siteDescription: formData.has("siteDescription") ? (formData.get("siteDescription") as string) : settings.siteDescription,
     logo: formData.has("logo") ? (formData.get("logo") as string) : settings.logo,
     contactEmail: formData.has("contactEmail") ? (formData.get("contactEmail") as string) : settings.contactEmail,
@@ -641,7 +641,7 @@ export async function deleteAdvantage(id: string): Promise<ActionResponse> {
 // ============================
 
 const INITIAL_TESTIMONIALS = [
-  { id: "testi_1", name: "Ahmad Fauzi, S.Si., M.Sc.", role: "Alumni Bootcamp Scopus", institution: "Universitas Lambung Mangkurat", content: "Alhamdulillah berkat bimbingan intensif dan bedah manuskrip di BIAS RISTEK, artikel tesis saya berhasil tembus jurnal Scopus Q2 hanya dalam 3 bulan revisi!", rating: 5, achievement: "Terbit Jurnal Scopus Q2", sortOrder: 1, isActive: true },
+  { id: "testi_1", name: "Ahmad Fauzi, S.Pd.", role: "Alumni Bimbingan CPNS", institution: "Lolos SKD CPNS Formasi Analis Kebijakan", content: "Alhamdulillah berkat bimbingan intensif persiapan SKD dan trik cepat TIU di Sahabat Belajar, nilai SKD saya tembus 438 poin dan berhasil lolos tahap akhir!", rating: 5, achievement: "Lolos SKD CPNS 2026", sortOrder: 1, isActive: true },
   { id: "testi_2", name: "Siti Rahmawati", role: "Mahasiswa S1 Farmasi", institution: "Universitas Airlangga", content: "Awalnya bingung banget mau mulai skripsi dari mana dan olah data SPSS selalu error. Mentornya sangat sabar membimbing dari nol sampai sidang dapat nilai A!", rating: 5, achievement: "Skripsi Nilai A & Lulus Cumlaude", sortOrder: 2, isActive: true },
   { id: "testi_3", name: "Dr. Hendra Gunawan", role: "Dosen & Peneliti Muda", institution: "Institut Teknologi Bandung", content: "Pelatihan Systematic Literature Review (PRISMA) sangat aplikatif dan terstruktur. Sangat direkomendasikan untuk dosen yang sedang mengejar hibah riset.", rating: 5, achievement: "Lolos Hibah Riset Dikti", sortOrder: 3, isActive: true },
 ];

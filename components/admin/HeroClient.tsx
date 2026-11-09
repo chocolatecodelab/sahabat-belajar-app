@@ -193,7 +193,7 @@ export default function HeroClient({ slides: initial }: { slides: Slide[] }) {
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Contoh: Selamat Datang di BIAS RISTEK"
+                  placeholder="Contoh: Selamat Datang di Sahabat Belajar"
                   required
                   className="w-full px-4 py-2.5 rounded-lg border text-body-sm focus-ring"
                   style={{ borderColor: "var(--color-outline-variant)" }}

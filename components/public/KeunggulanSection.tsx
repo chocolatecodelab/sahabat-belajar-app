@@ -26,21 +26,21 @@ export default function KeunggulanSection({ advantages }: { advantages: Advantag
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Column: Heading & Highlight */}
           <div className="lg:col-span-5">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#fef9c3] text-[#7a5900] border border-[#fef08a] mb-4">
-              <Award size={14} className="text-[#7a5900]" /> Nilai Unggulan
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#EAF1FA] text-[#09408C] border border-[#9AC1E2] mb-4">
+              <Award size={14} className="text-[#09408C]" /> Nilai Unggulan
             </span>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 tracking-tight font-[var(--font-heading)] leading-tight">
-              Mengapa Belajar Riset di <span className="text-[#001847]">BIAS RISTEK?</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#1B2A41] tracking-tight font-display leading-tight">
+              Mengapa Memilih Belajar di <span className="text-[#09408C]">Sahabat Belajar?</span>
             </h2>
-            <p className="mt-5 text-base sm:text-lg text-gray-600 leading-relaxed">
-              Kami menggabungkan kurikulum praktis, bimbingan intensif 1-on-1, dan mentor bereputasi Scopus untuk memastikan setiap peserta mampu menghasilkan riset berkualitas tinggi.
+            <p className="mt-5 text-base sm:text-lg text-[#5B6882] leading-relaxed">
+              Kami memadukan pendekatan personal bersahabat, pemahaman konsep dasar mendalam, dan tutor pakar untuk memastikan setiap siswa siap meraih prestasi akademik dan impian karirnya.
             </p>
 
-            <div className="mt-8 p-6 rounded-2xl bg-[#001847] text-white shadow-lg relative overflow-hidden">
+            <div className="mt-8 p-6 rounded-2xl bg-[#09408C] text-white shadow-lg relative overflow-hidden">
               <div className="absolute right-0 bottom-0 translate-x-4 translate-y-4 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
-              <div className="text-2xl font-bold text-[#fdbc13] font-display mb-1">100% Mentored</div>
+              <div className="text-2xl font-bold text-[#0CC0DF] font-display mb-1">100% Terbimbing & Terpantau</div>
               <p className="text-sm text-blue-50/90 leading-relaxed">
-                Setiap draft tugas akhir atau manuskrip peserta diperiksa baris demi baris hingga siap submit ke jurnal target.
+                Setiap sesi bimbingan 90 menit tercatat rapi di jurnal belajar, dilengkapi evaluasi pemahaman siswa dan laporan berkala untuk orang tua.
               </p>
             </div>
           </div>

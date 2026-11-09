@@ -144,7 +144,7 @@ export default function NotificationSettingsClient({
     const res = await sendTestNotificationAction({
       channel: "WHATSAPP",
       target: testPhone,
-      recipientName: "Admin BIAS RISTEK",
+      recipientName: "Admin Sahabat Belajar",
     });
 
     setTestWaResult({
@@ -164,7 +164,7 @@ export default function NotificationSettingsClient({
     const res = await sendTestNotificationAction({
       channel: "EMAIL",
       target: testEmail,
-      recipientName: "Admin BIAS RISTEK",
+      recipientName: "Admin Sahabat Belajar",
     });
 
     setTestEmailResult({
@@ -758,7 +758,7 @@ export default function NotificationSettingsClient({
                     type="text"
                     value={settings.emailSenderName}
                     onChange={(e) => setSettings({ ...settings, emailSenderName: e.target.value })}
-                    placeholder="BIAS RISTEK Akademik"
+                    placeholder="Sahabat Belajar Akademik"
                     className="w-full px-4 py-2.5 rounded-xl border text-body-sm focus-ring bg-gray-50 focus:bg-white"
                     style={{ borderColor: "var(--color-outline-variant)" }}
                   />

@@ -80,7 +80,7 @@ export default async function BeritaPublicPage(props: BeritaPublicProps) {
             Berita & Informasi
           </h1>
           <p className="text-body-md text-gray-600 mt-2">
-            Ikuti informasi terkini, publikasi riset, dan agenda ilmiah BIAS RISTEK
+            Ikuti informasi terkini, tips belajar, dan agenda bimbingan Sahabat Belajar
           </p>
         </div>
 

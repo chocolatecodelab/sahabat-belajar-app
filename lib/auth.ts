@@ -130,7 +130,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET || "bias-ristek-super-secret-key-2026",
+  secret: process.env.NEXTAUTH_SECRET || "sahabat-belajar-super-secret-key-2026",
 });
 
 /**
@@ -144,7 +144,7 @@ export async function hasPermission(permission: string): Promise<boolean> {
     const session = await auth();
     if (!session?.user) return false;
     const userRole = (session.user as any).role;
-    if (userRole === "Super Admin") return true;
+    if (userRole === "Super Admin" || userRole === "Admin") return true;
     const perms = (session.user as any).permissions as string[];
     return Array.isArray(perms) && perms.includes(permission);
   } catch {
@@ -202,17 +202,34 @@ export async function requirePermission(permission: string) {
 }
 
 /**
- * Require Mentor or Admin access (Super Admin, Admin, Mentor)
+ * Require Tutor or Admin access (BR-7: Super Admin, Admin, Tutor)
  */
-export async function requireMentorOrAdmin() {
+export async function requireTutorOrAdmin() {
   const session = await requireAuth();
   const userRole = ((session.user as any).role || "").toLowerCase();
   const isSuperAdmin = userRole.includes("super");
   const isAdmin = userRole.includes("admin");
-  const isMentor = userRole.includes("mentor") || userRole.includes("reviewer") || userRole.includes("dosen");
+  const isTutor = userRole.includes("tutor") || userRole.includes("mentor") || userRole.includes("reviewer") || userRole.includes("dosen");
 
-  if (!isSuperAdmin && !isAdmin && !isMentor) {
-    throw new Error("Forbidden: Akses hanya diizinkan untuk Mentor dan Administrator");
+  if (!isSuperAdmin && !isAdmin && !isTutor) {
+    throw new Error("Forbidden: Akses hanya diizinkan untuk Tutor dan Administrator Sahabat Belajar");
+  }
+  return session;
+}
+
+export const requireMentorOrAdmin = requireTutorOrAdmin;
+
+/**
+ * Require strictly Admin access (Super Admin, Admin) - enforces BR-7 (Staf tidak melihat honor)
+ */
+export async function requireAdminOnly() {
+  const session = await requireAuth();
+  const userRole = ((session.user as any).role || "").toLowerCase();
+  const isSuperAdmin = userRole.includes("super");
+  const isAdmin = userRole.includes("admin");
+
+  if (!isSuperAdmin && !isAdmin) {
+    throw new Error("Forbidden: Akses hanya diizinkan untuk Administrator (BR-7)");
   }
   return session;
 }

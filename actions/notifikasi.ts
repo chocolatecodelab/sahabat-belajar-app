@@ -51,8 +51,8 @@ export async function updateNotificationSettingsAction(formData: FormData): Prom
     const emailSmtpUser = (formData.get("emailSmtpUser") as string) || "";
     const emailSmtpPass = (formData.get("emailSmtpPass") as string) || "";
     const emailResendApiKey = (formData.get("emailResendApiKey") as string) || "";
-    const emailSenderName = (formData.get("emailSenderName") as string) || "BIAS RISTEK Akademik";
-    const emailSenderAddress = (formData.get("emailSenderAddress") as string) || "no-reply@biasristek.id";
+    const emailSenderName = (formData.get("emailSenderName") as string) || "Sahabat Belajar Akademik";
+    const emailSenderAddress = (formData.get("emailSenderAddress") as string) || "no-reply@sahabatbelajar.id";
 
     // Event Toggles
     const waEnabled_invoiceCreated = formData.get("waEnabled_invoiceCreated") === "true";
@@ -142,7 +142,7 @@ export async function sendTestNotificationAction(payload: {
 
   try {
     if (channel === "WHATSAPP") {
-      const testMsg = `🔬 *UJI COBA WHATSAPP GATEWAY BIAS RISTEK*\n\nHalo ${recipientName}, ini adalah pesan uji coba koneksi gateway WhatsApp dari sistem platform BIAS RISTEK.\n\nStatus: *BERHASIL TERHUBUNG* ✅\nWaktu: ${new Date().toLocaleString("id-ID")}\n\nSalam,\n*Tim Akademik BIAS RISTEK*`;
+      const testMsg = `📚 *UJI COBA WHATSAPP GATEWAY SAHABAT BELAJAR*\n\nHalo ${recipientName}, ini adalah pesan uji coba koneksi gateway WhatsApp resmi dari platform Sahabat Belajar (#BersamaSahabat).\n\nStatus: *BERHASIL TERHUBUNG* ✅\nWaktu: ${new Date().toLocaleString("id-ID")}\n\nSalam,\n*Tim Akademik Sahabat Belajar*`;
       const res = await sendWhatsApp(target, testMsg, "TEST_MESSAGE", recipientName);
       return {
         success: res.success,
@@ -150,13 +150,13 @@ export async function sendTestNotificationAction(payload: {
         data: { status: res.status },
       };
     } else {
-      const subject = `[Uji Coba] Koneksi Email Transaksional BIAS RISTEK`;
-      const testHtml = `<h2>Uji Coba Email Transaksional BIAS RISTEK</h2>
+      const subject = `[Uji Coba] Koneksi Email Transaksional Sahabat Belajar`;
+      const testHtml = `<h2>Uji Coba Email Transaksional Sahabat Belajar</h2>
 <p>Halo <strong>${recipientName}</strong>,</p>
-<p>Ini adalah pesan uji coba untuk memverifikasi bahwa konfigurasi SMTP / Email Gateway Anda telah berhasil terhubung dengan platform BIAS RISTEK.</p>
+<p>Ini adalah pesan uji coba untuk memverifikasi bahwa konfigurasi SMTP / Email Gateway Anda telah berhasil terhubung dengan platform Sahabat Belajar.</p>
 <p>Waktu Pengujian: <strong>${new Date().toLocaleString("id-ID")}</strong></p>
 <hr />
-<p style="color:#001847;font-weight:bold;">Sistem Notifikasi BIAS RISTEK Siap Digunakan!</p>`;
+<p style="color:#09408C;font-weight:bold;">Sistem Notifikasi Sahabat Belajar Siap Digunakan!</p>`;
       const res = await sendEmail(target, subject, testHtml, "TEST_MESSAGE", recipientName);
       return {
         success: res.success,

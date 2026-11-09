@@ -345,6 +345,42 @@ export async function updateSessionStatus(
           }
         }
       }
+    } else if (session.status === ("TERLAKSANA" as any) && newStatus !== ("TERLAKSANA" as any)) {
+      // 2b. BR-1 Quota Rollback (SB-QA-FUN-005): Pulihkan kuota jika sesi yang sebelumnya terlaksana dibatalkan/dijadwalkan ulang
+      for (const p of session.participants || []) {
+        if (p.quotaDeducted && p.studentPackageId) {
+          const { data: currentPkg } = await supabaseAdmin
+            .from("StudentPackage")
+            .select("*")
+            .eq("id", p.studentPackageId)
+            .single();
+
+          if (currentPkg) {
+            const newQuotaUsed = Math.max(0, (currentPkg.quotaUsed || 0) - 1);
+            let newPkgStatus = "AKTIF";
+            if (currentPkg.quotaTotal - newQuotaUsed <= 2) {
+              newPkgStatus = "HAMPIR_HABIS";
+            }
+
+            await supabaseAdmin
+              .from("StudentPackage")
+              .update({
+                quotaUsed: newQuotaUsed,
+                status: newPkgStatus,
+                updatedAt: now,
+              })
+              .eq("id", p.studentPackageId);
+
+            await supabaseAdmin
+              .from("SessionParticipant")
+              .update({
+                quotaDeducted: false,
+                updatedAt: now,
+              })
+              .eq("id", p.id);
+          }
+        }
+      }
     }
 
     revalidatePath("/dashboard/jadwal");

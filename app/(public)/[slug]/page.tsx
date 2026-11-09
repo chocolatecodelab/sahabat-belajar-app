@@ -20,7 +20,7 @@ export async function generateMetadata(props: DynamicPageProps): Promise<Metadat
     if (!page) return { title: "Halaman Tidak Ditemukan" };
 
     return {
-      title: `${page.metaTitle || page.title} — BIAS RISTEK`,
+      title: `${page.metaTitle || page.title} — Sahabat Belajar`,
       description: page.metaDescription || page.excerpt || undefined,
       openGraph: {
         title: page.title,
@@ -29,7 +29,7 @@ export async function generateMetadata(props: DynamicPageProps): Promise<Metadat
       },
     };
   } catch {
-    return { title: "Halaman — BIAS RISTEK" };
+    return { title: "Halaman — Sahabat Belajar" };
   }
 }
 

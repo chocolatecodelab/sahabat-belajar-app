@@ -4,7 +4,7 @@ import MediaLibraryClient from "@/components/admin/MediaLibraryClient";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Pustaka Media | BIAS RISTEK Admin",
+  title: "Pustaka Media | Sahabat Belajar Admin",
   description: "Pusat pengelolaan berkas media dan galeri gambar",
 };
 

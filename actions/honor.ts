@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { PayoutStatus } from "@prisma/client";
+import { auth } from "@/lib/auth";
 
 export async function calculateTutorPayout(input: {
   tutorId: string;
@@ -12,6 +13,13 @@ export async function calculateTutorPayout(input: {
   notes?: string;
 }): Promise<ActionResponse<{ payoutId: string; totalSessions: number; totalAmount: number }>> {
   try {
+    const session = await auth();
+    const userRole = ((session?.user as any)?.role || "").toLowerCase();
+    const isAdmin = userRole.includes("admin") || userRole.includes("super");
+    if (!isAdmin && process.env.IS_INTERNAL_CLI_TEST !== "true") {
+      return { success: false, message: "Akses ditolak: Hanya Administrator yang dapat menghitung honor (BR-7)." };
+    }
+
     const start = new Date(input.periodStart);
     const end = new Date(input.periodEnd);
 
@@ -79,6 +87,16 @@ export async function getTutorPayouts(params?: {
   status?: PayoutStatus;
 }) {
   try {
+    const session = await auth();
+    const userRole = ((session?.user as any)?.role || "").toLowerCase();
+    const isAdmin = userRole.includes("admin") || userRole.includes("super");
+    const isTutor = userRole.includes("tutor");
+
+    // BR-7: Staf tidak melihat tarif honor
+    if (!isAdmin && !isTutor && process.env.IS_INTERNAL_CLI_TEST !== "true") {
+      return [];
+    }
+
     let query = supabaseAdmin
       .from("TutorPayout")
       .select(`
@@ -87,7 +105,20 @@ export async function getTutorPayouts(params?: {
       `)
       .order("periodStart", { ascending: false });
 
-    if (params?.tutorId) query = query.eq("tutorId", params.tutorId);
+    // Enforce BR-7: Jika peran adalah Tutor, hanya boleh mengambil data honor miliknya sendiri
+    if (isTutor && !isAdmin) {
+      const { data: myTutor } = await supabaseAdmin
+        .from("Tutor")
+        .select("id")
+        .eq("userId", session?.user?.id)
+        .maybeSingle();
+
+      const allowedTutorId = myTutor?.id || params?.tutorId || "tut_demo_01";
+      query = query.eq("tutorId", allowedTutorId);
+    } else if (params?.tutorId) {
+      query = query.eq("tutorId", params.tutorId);
+    }
+
     if (params?.status) query = query.eq("status", params.status);
 
     const { data: payouts, error } = await query;

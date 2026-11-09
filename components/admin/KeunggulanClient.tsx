@@ -101,10 +101,10 @@ export default function KeunggulanClient({ advantages: initial }: { advantages: 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-headline-lg flex items-center gap-3" style={{ color: "var(--color-on-surface)" }}>
-            <Shield size={28} /> Keunggulan Kursus BIAS RISTEK
+            <Shield size={28} /> Keunggulan Bimbingan Sahabat Belajar
           </h1>
           <p className="text-body-md mt-1" style={{ color: "var(--color-on-surface-variant)" }}>
-            Kelola poin keunggulan dan alasan mengapa calon peserta memilih BIAS RISTEK
+            Kelola poin keunggulan dan alasan mengapa calon siswa memilih Sahabat Belajar
           </p>
         </div>
         <button
