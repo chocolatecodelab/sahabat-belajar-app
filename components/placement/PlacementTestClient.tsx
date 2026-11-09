@@ -112,41 +112,8 @@ export default function PlacementTestClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB] text-[#1B2A41] font-sans pb-16">
-      {/* Top Navbar */}
-      <header className="bg-white border-b border-[#D5DDEB] sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#09408C] flex items-center justify-center text-white font-heading font-bold text-lg shadow-sm">
-              SB
-            </div>
-            <div>
-              <span className="font-heading font-bold text-base text-[#09408C] block leading-tight">
-                Sahabat Belajar
-              </span>
-              <span className="text-[11px] text-[#5B6882] font-medium block">
-                Tes Diagnostik & Placement Test
-              </span>
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-semibold">
-              <Sparkles size={14} />
-              <span>Gratis & Akurat</span>
-            </div>
-            <Link
-              href="/"
-              className="text-xs text-[#5B6882] hover:text-[#09408C] px-3 py-1.5 rounded-lg border border-[#D5DDEB] hover:bg-slate-50 transition-colors"
-            >
-              Kembali ke Beranda
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="max-w-4xl mx-auto px-4 pt-8">
+    <div className="max-w-4xl mx-auto px-4 py-8 font-sans text-[#1B2A41]">
+      <div className="space-y-6">
         {/* ================= STEP 1: INTRO & FORM ================= */}
         {step === "intro" && (
           <div className="space-y-6">
@@ -629,7 +596,7 @@ export default function PlacementTestClient() {
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
