@@ -139,7 +139,7 @@ export default function DocumentManagerClient({
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
             <FileEdit size={14} />
-            <span>Tahap 3: Review Dokumen Ilmiah & Esai Beasiswa</span>
+            <span>Roadmap Fase 3: Review Dokumen Ilmiah & Esai Beasiswa</span>
           </div>
           <h1 className="text-2xl font-bold text-[#09408C] font-display">
             Bimbingan & Koreksi Naskah Akademik
@@ -147,6 +147,28 @@ export default function DocumentManagerClient({
           <p className="text-sm text-[#5B6882] mt-0.5">
             Layanan telaah proposal tesis, esai LPDP/AAS, motivation letter, dan skripsi untuk peserta program lanjutan.
           </p>
+        </div>
+      </div>
+
+      {/* Roadmap Phase 3 Notice Banner */}
+      <div className="bg-[#EAF1FA]/80 border border-[#9AC1E2] rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-[#09408C]">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-xl bg-white text-[#09408C] shadow-2xs shrink-0 mt-0.5">
+            <Sparkles size={18} />
+          </div>
+          <div>
+            <div className="font-bold text-sm text-[#09408C]">
+              Pratinjau Interaktif — Roadmap Fase 3 (Review Dokumen & Esai Beasiswa)
+            </div>
+            <p className="text-[#5B6882] mt-0.5 leading-relaxed">
+              Modul bimbingan khusus untuk telaah berkas akademik peserta (esai LPDP, proposal tesis S2/S3, dan personal statement) sesuai PRD Modul I. Anda dapat menguji alur review mentor, status revisi, dan catatan perbaikan secara interaktif.
+            </p>
+          </div>
+        </div>
+        <div className="shrink-0 flex items-center gap-2">
+          <span className="px-3 py-1 rounded-full bg-[#09408C] text-white font-bold text-[11px]">
+            Preview Aktif
+          </span>
         </div>
       </div>
 

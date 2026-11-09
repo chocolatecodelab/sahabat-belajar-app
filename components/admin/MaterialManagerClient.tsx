@@ -124,7 +124,7 @@ export default function MaterialManagerClient({
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
             <FolderOpen size={14} />
-            <span>Tahap 3: Modul & Bank Materi Digital</span>
+            <span>Roadmap Fase 2: Bank Modul & Materi Digital</span>
           </div>
           <h1 className="text-2xl font-bold text-[#09408C] font-display">
             Bank Modul & Ringkasan Konsep
@@ -141,6 +141,28 @@ export default function MaterialManagerClient({
           <Plus size={16} />
           <span>Tambah Modul Baru</span>
         </button>
+      </div>
+
+      {/* Roadmap Phase 2 Notice Banner */}
+      <div className="bg-[#EAF1FA]/80 border border-[#9AC1E2] rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-[#09408C]">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-xl bg-white text-[#09408C] shadow-2xs shrink-0 mt-0.5">
+            <Sparkles size={18} />
+          </div>
+          <div>
+            <div className="font-bold text-sm text-[#09408C]">
+              Pratinjau Interaktif — Roadmap Fase 2 (Ekspansi Pembelajaran Digital)
+            </div>
+            <p className="text-[#5B6882] mt-0.5 leading-relaxed">
+              Modul ini disiapkan untuk mendukung repositori digital materi belajar (K-12, CPNS, UTBK, TOEFL, dan S2). Berjalan dalam mode <strong>Interactive Preview</strong> untuk simulasi manajemen file materi sebelum integrasi penyimpanan awan diaktifkan pada Fase 2.
+            </p>
+          </div>
+        </div>
+        <div className="shrink-0 flex items-center gap-2">
+          <span className="px-3 py-1 rounded-full bg-[#09408C] text-white font-bold text-[11px]">
+            Preview Aktif
+          </span>
+        </div>
       </div>
 
       {/* Top Overview Cards */}

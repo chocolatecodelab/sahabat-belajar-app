@@ -96,10 +96,22 @@ export default function HonorManagerClient({
     document.body.removeChild(link);
   };
 
+  const totalPaid = payouts
+    .filter((p) => p.status === "DIBAYAR")
+    .reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+  const totalPending = payouts
+    .filter((p) => p.status !== "DIBAYAR")
+    .reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+  const totalCompletedSessions = payouts.reduce((sum, p) => sum + (p.totalSessions || 0), 0);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
+            <Trophy size={14} />
+            <span>Fase 1: MVP Operasional (Modul E - Honor Tutor)</span>
+          </div>
           <h1 className="text-2xl font-bold text-[#09408C] font-display">
             Rekap Honor Tutor
           </h1>
@@ -124,6 +136,48 @@ export default function HonorManagerClient({
             <Calculator size={14} />
             <span>+ Hitung Rekap Periode</span>
           </button>
+        </div>
+      </div>
+
+      {/* Top Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-2xs flex items-center justify-between">
+          <div>
+            <div className="text-xs text-[#5B6882] font-semibold">Total Honor Ditransfer</div>
+            <div className="text-xl font-bold text-[#1F6F4A] font-display mt-0.5 tabular-nums">
+              Rp {totalPaid.toLocaleString("id-ID")}
+            </div>
+            <div className="text-[11px] text-[#5B6882] mt-1">Status DIBAYAR</div>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#E3F4EC] text-[#1F6F4A] flex items-center justify-center font-bold">
+            ✓
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-2xs flex items-center justify-between">
+          <div>
+            <div className="text-xs text-[#5B6882] font-semibold">Menunggu Transfer</div>
+            <div className="text-xl font-bold text-[#09408C] font-display mt-0.5 tabular-nums">
+              Rp {totalPending.toLocaleString("id-ID")}
+            </div>
+            <div className="text-[11px] text-[#5B6882] mt-1">Status DRAFT / DISETUJUI</div>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center">
+            <DollarSign size={20} />
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-2xs flex items-center justify-between">
+          <div>
+            <div className="text-xs text-[#5B6882] font-semibold">Akumulasi Sesi Rekap</div>
+            <div className="text-xl font-bold text-[#09408C] font-display mt-0.5 tabular-nums">
+              {totalCompletedSessions} Sesi
+            </div>
+            <div className="text-[11px] text-[#5B6882] mt-1">Total sesi tersaring</div>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#F4F7FB] text-[#09408C] flex items-center justify-center">
+            <Calendar size={20} />
+          </div>
         </div>
       </div>
 

@@ -175,7 +175,7 @@ export default function ExamManagerClient({
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
             <Award size={14} />
-            <span>Tahap 2: Ruang Ujian Online & Bank Soal</span>
+            <span>Roadmap Fase 2: Ruang Ujian Online & Simulasi CAT</span>
           </div>
           <h1 className="text-2xl font-bold text-[#09408C] font-display">
             Paket Ujian & Simulasi CAT
@@ -192,6 +192,28 @@ export default function ExamManagerClient({
           <Plus size={16} />
           <span>Buat Paket Ujian Baru</span>
         </button>
+      </div>
+
+      {/* Roadmap Phase 2 Notice Banner */}
+      <div className="bg-[#EAF1FA]/80 border border-[#9AC1E2] rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-[#09408C]">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-xl bg-white text-[#09408C] shadow-2xs shrink-0 mt-0.5">
+            <Sparkles size={18} />
+          </div>
+          <div>
+            <div className="font-bold text-sm text-[#09408C]">
+              Pratinjau Interaktif — Roadmap Fase 2 (Simulasi CAT & Tryout Online)
+            </div>
+            <p className="text-[#5B6882] mt-0.5 leading-relaxed">
+              Modul ini menyajikan prototipe mesin tryout komputer (CAT CPNS SKD, UTBK-SNBT, dan TOEFL) sesuai spesifikasi PRD Modul F. Seluruh butir soal, passing grade, timer, dan skoring dapat dicoba secara interaktif.
+            </p>
+          </div>
+        </div>
+        <div className="shrink-0 flex items-center gap-2">
+          <span className="px-3 py-1 rounded-full bg-[#09408C] text-white font-bold text-[11px]">
+            Preview Aktif
+          </span>
+        </div>
       </div>
 
       {/* Top Stats Overview */}

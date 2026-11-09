@@ -108,8 +108,9 @@ export default function Sidebar({
 
   const canAccess = (permission?: string | null) => {
     if (!permission) return true;
-    if (userRole === "Super Admin") return true;
-    return userPermissions.includes(permission);
+    const roleLower = (userRole || "").toLowerCase();
+    if (roleLower.includes("super") || roleLower.includes("admin")) return true;
+    return Array.isArray(userPermissions) && userPermissions.includes(permission);
   };
 
   // Filter only active menus & permitted menus
@@ -267,7 +268,20 @@ export default function Sidebar({
               <span className={item.url && isActiveRoute(item.url) ? "text-[var(--color-secondary-container)]" : ""}>
                 {getIcon(item.icon)}
               </span>
-              {(!collapsed || mobileOpen) && <span>{item.label}</span>}
+              {(!collapsed || mobileOpen) && (
+                <div className="flex items-center justify-between flex-1 min-w-0">
+                  <span className="truncate">{item.label}</span>
+                  {item.url?.includes("/materi") || item.url?.includes("/ujian") ? (
+                    <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-white/20 text-[#9AC1E2] shrink-0 ml-1">
+                      Fase 2
+                    </span>
+                  ) : item.url?.includes("/dokumen") ? (
+                    <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-white/20 text-[#9AC1E2] shrink-0 ml-1">
+                      Fase 3
+                    </span>
+                  ) : null}
+                </div>
+              )}
             </Link>
           );
         })}

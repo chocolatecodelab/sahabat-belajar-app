@@ -48,9 +48,11 @@ export async function calculateTutorPayout(input: {
     const totalAmount = totalSessions * (tutor.ratePerSession || 100000);
 
     const now = new Date().toISOString();
+    const payoutId = `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const { data: payout, error: payErr } = await supabaseAdmin
       .from("TutorPayout")
       .insert({
+        id: payoutId,
         tutorId: input.tutorId,
         periodStart: start.toISOString(),
         periodEnd: end.toISOString(),
@@ -58,6 +60,7 @@ export async function calculateTutorPayout(input: {
         totalAmount,
         status: "DRAFT",
         notes: input.notes || null,
+        createdAt: now,
         updatedAt: now,
       })
       .select("id")
