@@ -33,6 +33,7 @@ import type { StudentPortalData } from "@/actions/portal";
 import type { ExamItem, StudentExamSession } from "@/actions/ujian";
 import type { LearningMaterial, ProgramCategory } from "@/actions/materi";
 import { formatDayDate, formatTime } from "@/lib/date";
+import ScoreProgressChart from "@/components/portal/ScoreProgressChart";
 
 export default function StudentPortalClient({
   initialData,
@@ -694,6 +695,9 @@ export default function StudentPortalClient({
                 ))}
               </div>
             )}
+
+            {/* Visual Score Progress & Trend Analysis Chart (Modul G2) */}
+            {examHistory.length > 0 && <ScoreProgressChart sessions={examHistory} />}
 
             {/* Riwayat Nilai & Rapor Digital */}
             {examHistory.length > 0 && (

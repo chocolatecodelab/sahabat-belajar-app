@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X, ChevronDown, ExternalLink, Phone, LogIn } from "lucide-react";
+import { Menu, X, ChevronDown, ExternalLink, Phone, LogIn, Sparkles } from "lucide-react";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -76,20 +76,28 @@ export default function Navbar() {
           </nav>
 
           {/* Action Buttons */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2.5">
+            <Link
+              href="/placement-test"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] hover:bg-[#9AC1E2]/30 transition-colors shadow-2xs"
+            >
+              <Sparkles size={13} className="text-[#09408C]" />
+              <span>Placement Test</span>
+            </Link>
+
             <a
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs"
             >
               <Phone size={14} />
-              <span>Konsultasi WhatsApp</span>
+              <span>Konsultasi WA</span>
             </a>
 
             <Link
               href="/login"
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
             >
               <LogIn size={14} />
               <span>Login Portal</span>
@@ -110,6 +118,18 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-[#D5DDEB] bg-white p-4 space-y-2">
+          <Link
+            href="/placement-test"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-[#09408C] bg-[#EAF1FA] border border-[#9AC1E2]"
+          >
+            <span className="flex items-center gap-2">
+              <Sparkles size={15} /> Ikuti Placement Test Gratis
+            </span>
+            <span className="text-[10px] font-bold uppercase bg-[#09408C] text-white px-2 py-0.5 rounded-full">
+              10 Mnt
+            </span>
+          </Link>
           <Link
             href="/"
             onClick={() => setMobileMenuOpen(false)}

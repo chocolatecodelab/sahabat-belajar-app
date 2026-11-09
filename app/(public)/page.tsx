@@ -61,6 +61,14 @@ export default function HomePage() {
                   <ArrowRight size={16} />
                 </a>
 
+                <Link
+                  href="/placement-test"
+                  className="px-5 py-3.5 rounded-xl bg-[#EAF1FA] hover:bg-[#9AC1E2]/30 text-[#09408C] font-bold text-sm transition-all border border-[#9AC1E2] flex items-center gap-2"
+                >
+                  <Sparkles size={16} className="text-[#09408C]" />
+                  <span>Ikuti Placement Test Gratis</span>
+                </Link>
+
                 <a
                   href={waUrl}
                   target="_blank"
@@ -68,7 +76,7 @@ export default function HomePage() {
                   className="px-6 py-3.5 rounded-xl border border-[#D5DDEB] bg-white hover:bg-[#EAF1FA] text-[#09408C] font-bold text-sm transition-all flex items-center gap-2"
                 >
                   <Phone size={16} className="text-[#1F6F4A]" />
-                  <span>Konsultasi via WhatsApp</span>
+                  <span>Konsultasi WA</span>
                 </a>
               </div>
 

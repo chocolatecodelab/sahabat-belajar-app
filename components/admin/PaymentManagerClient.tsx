@@ -13,6 +13,7 @@ import {
   Share2,
   X,
   ExternalLink,
+  Download,
 } from "lucide-react";
 import { recordManualPayment } from "@/actions/pembayaran";
 import { PaymentStatus } from "@prisma/client";
@@ -72,6 +73,34 @@ export default function PaymentManagerClient({
     return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
   };
 
+  const exportToCsv = () => {
+    if (payments.length === 0) return;
+    const header = "Nama Siswa,Nomor Wali,Paket Terdaftar,Program,Nominal (Rp),Metode,Tanggal Pembayaran,Status,Catatan\n";
+    const rows = payments
+      .map((p) => {
+        const studentName = p.studentPackage?.student?.name || "Siswa";
+        const parentPhone = p.studentPackage?.student?.parentPhone || "-";
+        const packageName = p.studentPackage?.package?.name || "-";
+        const programName = p.studentPackage?.program?.name || "-";
+        const amount = p.amount || 0;
+        const method = p.method || "TRANSFER_BANK";
+        const date = formatDate(p.paidAt);
+        const status = p.status || "LUNAS";
+        const notes = (p.notes || "").replace(/"/g, '""');
+        return `"${studentName}","${parentPhone}","${packageName}","${programName}",${amount},"${method}","${date}","${status}","${notes}"`;
+      })
+      .join("\n");
+
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `laporan-pembayaran-siswa-${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -84,13 +113,23 @@ export default function PaymentManagerClient({
           </p>
         </div>
 
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs"
-        >
-          <Plus size={14} />
-          <span>+ Catat Pembayaran Manual</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportToCsv}
+            disabled={payments.length === 0}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#D5DDEB] bg-white text-[#09408C] text-xs font-semibold hover:bg-[#EAF1FA] transition-colors disabled:opacity-50"
+          >
+            <Download size={14} />
+            <span>Ekspor CSV</span>
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs"
+          >
+            <Plus size={14} />
+            <span>+ Catat Pembayaran Manual</span>
+          </button>
+        </div>
       </div>
 
       {/* Table */}

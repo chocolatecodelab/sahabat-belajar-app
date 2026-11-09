@@ -81,7 +81,7 @@ export default function HonorManagerClient({
       )
       .join("\n");
 
-    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

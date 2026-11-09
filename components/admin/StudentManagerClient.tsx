@@ -6,6 +6,7 @@ import {
   Plus,
   Search,
   Upload,
+  Download,
   Phone,
   BookOpen,
   CheckCircle2,
@@ -122,6 +123,32 @@ export default function StudentManagerClient({
     }
   };
 
+  const exportToCsv = () => {
+    if (students.length === 0) return;
+    const header = "Nama Siswa,Jenjang,Sekolah/Kampus,Nama Wali,Kontak Wali,Status,Catatan\n";
+    const rows = students
+      .map((s) => {
+        const name = (s.name || "").replace(/"/g, '""');
+        const level = s.level || "";
+        const school = (s.school || "").replace(/"/g, '""');
+        const parentName = (s.parentName || "").replace(/"/g, '""');
+        const parentPhone = s.parentPhone || "";
+        const status = s.status || "AKTIF";
+        const notes = (s.notes || "").replace(/"/g, '""');
+        return `"${name}","${level}","${school}","${parentName}","${parentPhone}","${status}","${notes}"`;
+      })
+      .join("\n");
+
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `data-master-siswa-${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
@@ -136,6 +163,14 @@ export default function StudentManagerClient({
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={exportToCsv}
+            disabled={students.length === 0}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#D5DDEB] bg-white text-[#09408C] text-xs font-semibold hover:bg-[#EAF1FA] transition-colors disabled:opacity-50"
+          >
+            <Download size={14} />
+            <span>Ekspor CSV</span>
+          </button>
           <button
             onClick={() => setShowCsvModal(true)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#D5DDEB] bg-white text-[#09408C] text-xs font-semibold hover:bg-[#EAF1FA] transition-colors"
