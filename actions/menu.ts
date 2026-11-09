@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase";
+import { requirePermission } from "@/lib/auth";
 import type { ActionResponse } from "@/types";
 
 export type AdminMenuItem = {
@@ -86,6 +87,8 @@ export async function getAdminMenus(): Promise<AdminMenuItem[]> {
 
 export async function createAdminMenu(data: FormData | any): Promise<ActionResponse<AdminMenuItem>> {
   try {
+    await requirePermission("menu.update");
+
     const label = data instanceof FormData ? String(data.get("label") || "") : data.label;
     const url = data instanceof FormData ? String(data.get("url") || "") : data.url;
     const icon = data instanceof FormData ? (data.get("icon") ? String(data.get("icon")) : null) : data.icon;
@@ -126,6 +129,8 @@ export async function updateAdminMenu(
   data: FormData | any
 ): Promise<ActionResponse<AdminMenuItem>> {
   try {
+    await requirePermission("menu.update");
+
     const updateData: any = { updatedAt: new Date().toISOString() };
     if (data instanceof FormData) {
       if (data.has("label")) updateData.label = String(data.get("label"));
@@ -157,6 +162,11 @@ export async function updateAdminMenu(
 
 export async function deleteAdminMenu(id: string): Promise<ActionResponse> {
   try {
+    await requirePermission("menu.update");
+
+    // Clean up child sub-menus first if any
+    await supabaseAdmin.from("AdminMenu").delete().eq("parentId", id);
+
     const { error } = await supabaseAdmin.from("AdminMenu").delete().eq("id", id);
     if (error) throw error;
     revalidatePath("/dashboard");
@@ -172,6 +182,8 @@ export async function toggleAdminMenuStatus(
   isActive: boolean
 ): Promise<ActionResponse> {
   try {
+    await requirePermission("menu.update");
+
     const { error } = await supabaseAdmin
       .from("AdminMenu")
       .update({ isActive, updatedAt: new Date().toISOString() })
@@ -187,6 +199,8 @@ export async function toggleAdminMenuStatus(
 
 export async function resetDefaultAdminMenus(): Promise<ActionResponse> {
   try {
+    await requirePermission("menu.update");
+
     for (const m of INITIAL_MENUS) {
       await supabaseAdmin.from("AdminMenu").upsert({
         id: m.id,
