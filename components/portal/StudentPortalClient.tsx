@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   GraduationCap,
   Calendar,
@@ -27,12 +28,21 @@ import {
   Download,
   Search,
   Filter,
+  CreditCard,
+  Printer,
+  X,
+  Users,
+  Copy,
+  Plus,
+  ShieldCheck,
+  Check,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
-import type { StudentPortalData } from "@/actions/portal";
+import type { StudentPortalData, StudentInvoice } from "@/actions/portal";
+import { submitStudentPaymentConfirmation } from "@/actions/portal";
 import type { ExamItem, StudentExamSession } from "@/actions/ujian";
 import type { LearningMaterial, ProgramCategory } from "@/actions/materi";
-import { formatDayDate, formatTime } from "@/lib/date";
+import { formatDayDate, formatTime, formatDate } from "@/lib/date";
 import ScoreProgressChart from "@/components/portal/ScoreProgressChart";
 
 export default function StudentPortalClient({
@@ -40,16 +50,34 @@ export default function StudentPortalClient({
   availableExams = [],
   examHistory = [],
   materials = [],
+  currentStudentId,
 }: {
   initialData: StudentPortalData | null;
   availableExams?: ExamItem[];
   examHistory?: StudentExamSession[];
   materials?: LearningMaterial[];
+  currentStudentId?: string;
 }) {
-  const [activeTab, setActiveTab] = useState<"overview" | "history" | "ujian" | "materi">("overview");
-  const [selectedMaterialCategory, setSelectedMaterialCategory] = useState<ProgramCategory>("ALL");
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "history" | "ujian" | "materi" | "tagihan"
+  >("overview");
+  const [selectedMaterialCategory, setSelectedMaterialCategory] =
+    useState<ProgramCategory>("ALL");
   const [materialSearch, setMaterialSearch] = useState("");
   const [downloadSuccessToast, setDownloadSuccessToast] = useState<string | null>(null);
+  const [copiedToast, setCopiedToast] = useState<string | null>(null);
+
+  // Invoice & Receipt State
+  const [selectedReceipt, setSelectedReceipt] = useState<StudentInvoice | null>(null);
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [isSubmittingPay, setIsSubmittingPay] = useState(false);
+
+  // Payment Form States
+  const [payBank, setPayBank] = useState("BCA (123-456-7890)");
+  const [paySenderName, setPaySenderName] = useState("");
+  const [payAmount, setPayAmount] = useState("");
+  const [payNotes, setPayNotes] = useState("");
 
   if (!initialData) {
     return (
@@ -86,7 +114,51 @@ export default function StudentPortalClient({
     );
   }
 
-  const { student, packages, upcomingSessions, pastSessions } = initialData;
+  const {
+    student,
+    packages,
+    upcomingSessions,
+    pastSessions,
+    siblings = [],
+    invoices = [],
+  } = initialData;
+
+  const handleSwitchStudent = (id: string) => {
+    router.push(`/portal?studentId=${id}`);
+  };
+
+  const handleCopyText = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedToast(`${label} berhasil disalin!`);
+    setTimeout(() => setCopiedToast(null), 3000);
+  };
+
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!paySenderName.trim() || !payAmount) return;
+
+    setIsSubmittingPay(true);
+    const res = await submitStudentPaymentConfirmation({
+      studentId: student.id,
+      studentName: student.name,
+      packageName: packages[0]?.packageName || "Bimbingan Belajar",
+      amount: parseInt(payAmount) || 0,
+      bankDestination: payBank,
+      senderAccountName: paySenderName,
+      notes: payNotes,
+    });
+    setIsSubmittingPay(false);
+
+    if (res.success) {
+      alert(res.message);
+      setShowPayModal(false);
+      setPaySenderName("");
+      setPayAmount("");
+      setPayNotes("");
+    } else {
+      alert(res.message);
+    }
+  };
 
   // WhatsApp Reminder Generator
   const generateWaReminderUrl = (session: typeof upcomingSessions[0]) => {
@@ -127,8 +199,8 @@ export default function StudentPortalClient({
   const handleSimulateDownload = (fileName: string) => {
     setDownloadSuccessToast(fileName);
     setTimeout(() => {
-      setDownloadSuccessToast(null);
-    }, 4000);
+      setDownloadSuccessToast(null), 4000;
+    });
   };
 
   return (
@@ -141,6 +213,13 @@ export default function StudentPortalClient({
             <span className="font-bold block">Modul Berhasil Diunduh!</span>
             <span className="opacity-90">{downloadSuccessToast}</span>
           </div>
+        </div>
+      )}
+
+      {copiedToast && (
+        <div className="fixed bottom-6 left-6 z-50 bg-[#1F6F4A] text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3">
+          <Check size={18} />
+          <span className="text-xs font-bold">{copiedToast}</span>
         </div>
       )}
 
@@ -179,6 +258,48 @@ export default function StudentPortalClient({
 
       {/* Main Container */}
       <main className="max-w-6xl mx-auto px-4 pt-6 space-y-6">
+        {/* Multi-Anak Switcher Pill (PRD Modul H3) */}
+        {siblings.length > 1 && (
+          <div className="bg-white rounded-2xl border border-[#D5DDEB] p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2">
+              <Users size={16} className="text-[#09408C]" />
+              <span className="text-xs text-[#5B6882]">
+                Akun Wali / Orang Tua:{" "}
+                <strong className="text-[#1B2A41]">
+                  {student.parentName || "Wali Murid"}
+                </strong>
+              </span>
+              <span className="text-[10px] bg-[#EAF1FA] text-[#09408C] font-bold px-2 py-0.5 rounded-full">
+                Multi-Anak ({siblings.length})
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <span className="text-xs font-semibold text-[#5B6882] shrink-0 mr-1">
+                Pilih Profil Anak:
+              </span>
+              {siblings.map((sib) => {
+                const isActive = sib.id === student.id;
+                return (
+                  <button
+                    key={sib.id}
+                    onClick={() => handleSwitchStudent(sib.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                      isActive
+                        ? "bg-[#09408C] text-white shadow-2xs"
+                        : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#09408C] border border-[#D5DDEB]"
+                    }`}
+                  >
+                    <GraduationCap size={13} />
+                    <span>{sib.name}</span>
+                    <span className="text-[10px] opacity-80">({sib.level})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Student Welcome Banner */}
         <div className="bg-gradient-to-r from-[#09408C] via-[#0E3571] to-[#295897] rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
           <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
@@ -286,7 +407,10 @@ export default function StudentPortalClient({
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {packages.map((pkg) => {
-              const percent = pkg.quotaTotal > 0 ? Math.round((pkg.quotaUsed / pkg.quotaTotal) * 100) : 0;
+              const percent =
+                pkg.quotaTotal > 0
+                  ? Math.round((pkg.quotaUsed / pkg.quotaTotal) * 100)
+                  : 0;
               const isLow = pkg.quotaRemaining <= 2 && pkg.quotaRemaining > 0;
               const isExhausted = pkg.quotaRemaining === 0;
 
@@ -350,14 +474,15 @@ export default function StudentPortalClient({
                     <span className="text-[#5B6882]">
                       Status: <strong className="text-[#1B2A41]">{pkg.status}</strong>
                     </span>
-                    <a
-                      href="https://wa.me/628123456789?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20ingin%20top%20up%20kuota%20bimbel"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => {
+                        setActiveTab("tagihan");
+                        setShowPayModal(true);
+                      }}
                       className="text-[#09408C] font-semibold hover:underline inline-flex items-center gap-1"
                     >
-                      Perpanjang <ChevronRight size={14} />
-                    </a>
+                      Top-Up / Perpanjang <ChevronRight size={14} />
+                    </button>
                   </div>
                 </div>
               );
@@ -365,7 +490,7 @@ export default function StudentPortalClient({
           </div>
         </div>
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation (5 Tabs) */}
         <div className="flex items-center gap-2 border-b border-[#D5DDEB] pt-2 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab("overview")}
@@ -410,6 +535,17 @@ export default function StudentPortalClient({
           >
             <BookOpen size={16} />
             Bank Modul & Materi ({materials.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("tagihan")}
+            className={`pb-3 px-3.5 text-sm font-heading font-semibold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
+              activeTab === "tagihan"
+                ? "border-[#09408C] text-[#09408C]"
+                : "border-transparent text-[#5B6882] hover:text-[#1B2A41]"
+            }`}
+          >
+            <CreditCard size={16} />
+            Tagihan & Kwitansi ({invoices.length})
           </button>
         </div>
 
@@ -478,7 +614,9 @@ export default function StudentPortalClient({
                           )}
                           <span className="text-[#5B6882]">Metode:</span>
                           <strong className="text-[#1B2A41]">
-                            {session.mode === "ONLINE" ? "Online (Zoom / Meet)" : "Home Visit (Tatap Muka)"}
+                            {session.mode === "ONLINE"
+                              ? "Online (Zoom / Meet)"
+                              : "Home Visit (Tatap Muka)"}
                           </strong>
                         </div>
                       </div>
@@ -606,6 +744,9 @@ export default function StudentPortalClient({
         {/* Tab 3: Ruang Ujian Online & Rapor Digital */}
         {activeTab === "ujian" && (
           <div className="space-y-6">
+            {/* Visual Score Progress & Trend Analysis Chart (Modul G2) */}
+            {examHistory.length > 0 && <ScoreProgressChart sessions={examHistory} />}
+
             {/* Header Ruang Ujian */}
             <div className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
@@ -696,9 +837,6 @@ export default function StudentPortalClient({
               </div>
             )}
 
-            {/* Visual Score Progress & Trend Analysis Chart (Modul G2) */}
-            {examHistory.length > 0 && <ScoreProgressChart sessions={examHistory} />}
-
             {/* Riwayat Nilai & Rapor Digital */}
             {examHistory.length > 0 && (
               <div className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs space-y-4">
@@ -731,7 +869,9 @@ export default function StudentPortalClient({
                             {sess.isPassed ? "LULUS PASSING GRADE" : "BELUM LULUS"}
                           </span>
                           <span className="text-xs text-[#5B6882]">
-                            {new Date(sess.submittedAt || sess.startedAt).toLocaleDateString("id-ID", {
+                            {new Date(
+                              sess.submittedAt || sess.startedAt
+                            ).toLocaleDateString("id-ID", {
                               day: "numeric",
                               month: "short",
                               year: "numeric",
@@ -767,10 +907,9 @@ export default function StudentPortalClient({
           </div>
         )}
 
-        {/* Tab 4: Bank Modul & Materi Belajar Digital (Tahap 3 Modul H2) */}
+        {/* Tab 4: Bank Modul & Materi Belajar Digital */}
         {activeTab === "materi" && (
           <div className="space-y-6">
-            {/* Header Modul */}
             <div className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E3F4EC] text-[#1F6F4A] text-xs font-bold border border-[#1F6F4A]/30 mb-2">
@@ -785,7 +924,6 @@ export default function StudentPortalClient({
                 </p>
               </div>
 
-              {/* Search Box */}
               <div className="w-full sm:w-72 relative">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5B6882]" />
                 <input
@@ -798,7 +936,6 @@ export default function StudentPortalClient({
               </div>
             </div>
 
-            {/* Category Filter Chips */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
               {[
                 { key: "ALL", label: "Semua Program" },
@@ -822,7 +959,6 @@ export default function StudentPortalClient({
               ))}
             </div>
 
-            {/* Grid of Materials */}
             {filteredMaterials.length === 0 ? (
               <div className="bg-white rounded-2xl border border-[#D5DDEB] p-8 text-center text-[#5B6882]">
                 <BookOpen size={32} className="mx-auto mb-2 text-[#9AC1E2]" />
@@ -883,6 +1019,367 @@ export default function StudentPortalClient({
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Tab 5: Tagihan & Kwitansi Resmi (PRD Modul D4, H2) */}
+        {activeTab === "tagihan" && (
+          <div className="space-y-6">
+            {/* Header Tagihan */}
+            <div className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
+                  <CreditCard size={14} />
+                  <span>Kwitansi & Pembayaran Resmi</span>
+                </div>
+                <h3 className="text-xl font-bold text-[#09408C] font-heading">
+                  Riwayat Tagihan & Kwitansi Bimbingan Belajar
+                </h3>
+                <p className="text-xs sm:text-sm text-[#5B6882] mt-0.5">
+                  Pantau status pelunasan paket, unduh kwitansi resmi, dan lakukan konfirmasi pembayaran mandiri.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowPayModal(true)}
+                className="px-4 py-2.5 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors shrink-0"
+              >
+                <Plus size={14} />
+                <span>Konfirmasi Pembayaran Mandiri</span>
+              </button>
+            </div>
+
+            {/* Official Bank Account Cards */}
+            <div className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs space-y-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#09408C]">
+                <ShieldCheck size={16} />
+                <span>Rekening Resmi Pembayaran Sahabat Belajar (Atas Nama Lembaga):</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] text-[#5B6882] font-bold uppercase">Bank BCA</div>
+                    <div className="text-sm font-bold text-[#1B2A41] font-mono">123-456-7890</div>
+                    <div className="text-[10px] text-[#5B6882]">a.n. Sahabat Belajar</div>
+                  </div>
+                  <button
+                    onClick={() => handleCopyText("1234567890", "No. Rekening BCA")}
+                    className="p-2 rounded-xl text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                    title="Salin No. Rekening"
+                  >
+                    <Copy size={16} />
+                  </button>
+                </div>
+
+                <div className="bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] text-[#5B6882] font-bold uppercase">Bank Mandiri</div>
+                    <div className="text-sm font-bold text-[#1B2A41] font-mono">137-00-1234567-8</div>
+                    <div className="text-[10px] text-[#5B6882]">a.n. Sahabat Belajar</div>
+                  </div>
+                  <button
+                    onClick={() => handleCopyText("1370012345678", "No. Rekening Mandiri")}
+                    className="p-2 rounded-xl text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                    title="Salin No. Rekening"
+                  >
+                    <Copy size={16} />
+                  </button>
+                </div>
+
+                <div className="bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] text-[#5B6882] font-bold uppercase">QRIS Sahabat Belajar</div>
+                    <div className="text-xs font-bold text-[#1F6F4A]">Scan Instan Semua Aplikasi</div>
+                    <div className="text-[10px] text-[#5B6882]">GoPay, OVO, ShopeePay, BCA</div>
+                  </div>
+                  <div className="w-8 h-8 rounded-lg bg-[#E3F4EC] text-[#1F6F4A] flex items-center justify-center font-bold text-xs">
+                    QR
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Invoices List */}
+            <div className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs space-y-4">
+              <h4 className="font-heading font-bold text-base text-[#1B2A41]">
+                Daftar Tagihan & Bukti Kwitansi
+              </h4>
+
+              {invoices.length === 0 ? (
+                <div className="p-8 text-center text-sm text-[#5B6882]">
+                  Belum ada riwayat tagihan untuk profil siswa ini.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {invoices.map((inv) => (
+                    <div
+                      key={inv.id}
+                      className="p-4 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#9AC1E2] transition-colors"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                              inv.status === "LUNAS"
+                                ? "bg-[#E3F4EC] text-[#1F6F4A] border-[#1F6F4A]/30"
+                                : "bg-[#FEF7E6] text-[#B45309] border-[#F5B82E]/50"
+                            }`}
+                          >
+                            {inv.status === "LUNAS" ? "LUNAS" : "MENUNGGU PEMBAYARAN"}
+                          </span>
+                          <span className="text-xs text-[#5B6882] font-mono">
+                            {inv.invoiceNumber}
+                          </span>
+                        </div>
+                        <h5 className="font-bold text-sm text-[#1B2A41]">
+                          {inv.packageName}
+                        </h5>
+                        <p className="text-xs text-[#5B6882]">
+                          Metode: {inv.method.replace("_", " ")} | Tanggal:{" "}
+                          {inv.paidAt ? formatDate(inv.paidAt) : "-"}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-4 shrink-0">
+                        <div className="text-right">
+                          <div className="text-[10px] text-[#5B6882]">Total Tagihan</div>
+                          <div className="text-lg font-extrabold text-[#09408C] font-heading">
+                            Rp {inv.amount.toLocaleString("id-ID")}
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => setSelectedReceipt(inv)}
+                          className="px-3.5 py-2 rounded-xl bg-white border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors flex items-center gap-1.5 shadow-2xs"
+                        >
+                          <Printer size={14} />
+                          <span>Lihat Kwitansi</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Modal Kwitansi Resmi Sahabat Belajar */}
+        {selectedReceipt && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-[#D5DDEB] space-y-6 relative print:p-0">
+              <button
+                onClick={() => setSelectedReceipt(null)}
+                className="absolute top-5 right-5 p-1.5 rounded-full text-[#5B6882] hover:bg-slate-100 transition-colors print:hidden"
+              >
+                <X size={18} />
+              </button>
+
+              {/* Receipt Header */}
+              <div className="flex items-center justify-between border-b border-[#D5DDEB] pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#09408C] text-white flex items-center justify-center font-bold text-lg">
+                    SB
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-bold text-base text-[#09408C] leading-tight">
+                      Sahabat Belajar
+                    </h3>
+                    <p className="text-[11px] text-[#5B6882]">
+                      Lembaga Bimbingan Belajar & Solusi Akademik
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-bold text-[#1F6F4A] bg-[#E3F4EC] px-2.5 py-0.5 rounded-full inline-block border border-[#1F6F4A]/30">
+                    LUNAS
+                  </div>
+                  <div className="text-[10px] text-[#5B6882] font-mono mt-1">
+                    {selectedReceipt.invoiceNumber}
+                  </div>
+                </div>
+              </div>
+
+              {/* Receipt Body */}
+              <div className="space-y-4 text-xs">
+                <div className="grid grid-cols-2 gap-3 bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB]">
+                  <div>
+                    <span className="text-[#5B6882] block text-[11px]">Diterima dari:</span>
+                    <strong className="text-[#1B2A41] text-sm block">{student.name}</strong>
+                    <span className="text-[#5B6882]">Wali: {student.parentName || "-"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[#5B6882] block text-[11px]">Tanggal Pembayaran:</span>
+                    <strong className="text-[#1B2A41] block">
+                      {selectedReceipt.paidAt ? formatDate(selectedReceipt.paidAt) : "-"}
+                    </strong>
+                    <span className="text-[#5B6882]">Metode: {selectedReceipt.method.replace("_", " ")}</span>
+                  </div>
+                </div>
+
+                <div className="border border-[#D5DDEB] rounded-2xl overflow-hidden">
+                  <table className="w-full text-left">
+                    <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[11px] text-[#5B6882]">
+                      <tr>
+                        <th className="p-3">Uraian Paket Bimbingan</th>
+                        <th className="p-3 text-right">Nominal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="p-3">
+                          <strong className="text-[#1B2A41] block">{selectedReceipt.packageName}</strong>
+                          <span className="text-[#5B6882] text-[11px]">{selectedReceipt.programName}</span>
+                        </td>
+                        <td className="p-3 text-right font-bold text-[#09408C]">
+                          Rp {selectedReceipt.amount.toLocaleString("id-ID")}
+                        </td>
+                      </tr>
+                    </tbody>
+                    <tfoot className="border-t border-[#D5DDEB] bg-slate-50 font-bold">
+                      <tr>
+                        <td className="p-3">TOTAL PEMBAYARAN</td>
+                        <td className="p-3 text-right text-sm text-[#09408C]">
+                          Rp {selectedReceipt.amount.toLocaleString("id-ID")}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* Stempel & Signature Preview */}
+                <div className="pt-2 flex justify-between items-end">
+                  <div className="text-[10px] text-[#5B6882] max-w-xs">
+                    * Dokumen ini adalah bukti pembayaran sah yang diterbitkan oleh sistem digital Sahabat Belajar.
+                  </div>
+                  <div className="text-center">
+                    <div className="w-20 h-20 rounded-full border-2 border-dashed border-[#1F6F4A] flex flex-col items-center justify-center mx-auto text-[#1F6F4A] text-[9px] font-bold rotate-[-12deg] bg-[#E3F4EC]/30 mb-1">
+                      <span>SAHABAT BELAJAR</span>
+                      <span className="text-[11px]">★ LUNAS ★</span>
+                      <span>TERVERIFIKASI</span>
+                    </div>
+                    <div className="text-[11px] font-bold text-[#1B2A41]">Bagian Keuangan</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 border-t border-[#D5DDEB] flex items-center justify-end gap-2 print:hidden">
+                <button
+                  onClick={() => setSelectedReceipt(null)}
+                  className="px-4 py-2 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#5B6882] hover:bg-slate-50 transition-colors"
+                >
+                  Tutup
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
+                >
+                  <Printer size={14} />
+                  <span>Cetak Kwitansi (PDF)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Konfirmasi Pembayaran Mandiri */}
+        {showPayModal && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-[#D5DDEB] space-y-5 relative">
+              <button
+                onClick={() => setShowPayModal(false)}
+                className="absolute top-5 right-5 p-1.5 rounded-full text-[#5B6882] hover:bg-slate-100 transition-colors"
+              >
+                <X size={18} />
+              </button>
+
+              <div>
+                <h3 className="text-lg font-heading font-bold text-[#09408C]">
+                  Konfirmasi Pembayaran Mandiri
+                </h3>
+                <p className="text-xs text-[#5B6882] mt-0.5">
+                  Kirimkan detail transfer Anda agar kuota sesi bimbingan segera diaktifkan.
+                </p>
+              </div>
+
+              <form onSubmit={handlePaymentSubmit} className="space-y-3.5 text-xs">
+                <div>
+                  <label className="block font-semibold text-[#1B2A41] mb-1">
+                    Rekening Tujuan Transfer <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={payBank}
+                    onChange={(e) => setPayBank(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                  >
+                    <option value="BCA (123-456-7890)">BCA — 123-456-7890 a.n Sahabat Belajar</option>
+                    <option value="Mandiri (137-00-1234567-8)">Mandiri — 137-00-1234567-8 a.n Sahabat Belajar</option>
+                    <option value="BSI (7123-456-789)">BSI — 7123-456-789 a.n Sahabat Belajar</option>
+                    <option value="QRIS">QRIS Sahabat Belajar</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-[#1B2A41] mb-1">
+                    Nama Pemilik Rekening Pengirim <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Bambang Haryanto"
+                    value={paySenderName}
+                    onChange={(e) => setPaySenderName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-[#1B2A41] mb-1">
+                    Nominal Transfer (Rp) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="Contoh: 2250000"
+                    value={payAmount}
+                    onChange={(e) => setPayAmount(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-[#1B2A41] mb-1">
+                    Catatan Tambahan (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Pelunasan sisa 5 sesi bimbingan"
+                    value={payNotes}
+                    onChange={(e) => setPayNotes(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPayModal(false)}
+                    className="px-4 py-2.5 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#5B6882] hover:bg-slate-50 transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingPay}
+                    className="px-5 py-2.5 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-bold transition-colors shadow-xs disabled:opacity-50"
+                  >
+                    {isSubmittingPay ? "Mengirimkan..." : "Kirim Konfirmasi"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 

@@ -10,20 +10,27 @@ export const metadata = {
   description: "Pantau jadwal bimbingan, sisa kuota pertemuan, modul belajar digital, dan evaluasi hasil belajar di Sahabat Belajar.",
 };
 
-export default async function StudentPortalPage() {
+export default async function StudentPortalPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ studentId?: string }>;
+}) {
   const session = await auth();
 
   if (!session?.user) {
     redirect("/login");
   }
 
+  const resolvedParams = searchParams ? await searchParams : {};
+  const requestedStudentId = resolvedParams.studentId;
+
   const [portalRes, exams, materials] = await Promise.all([
-    getStudentPortalData(),
+    getStudentPortalData(requestedStudentId),
     getExams(),
     getLearningMaterials(),
   ]);
 
-  const studentId = portalRes.data?.student?.id || "std_demo_01";
+  const studentId = portalRes.data?.student?.id || requestedStudentId || "std_demo_01";
   const examHistory = await getStudentExamHistory(studentId);
 
   return (
@@ -32,6 +39,7 @@ export default async function StudentPortalPage() {
       availableExams={exams}
       examHistory={examHistory}
       materials={materials}
+      currentStudentId={studentId}
     />
   );
 }
