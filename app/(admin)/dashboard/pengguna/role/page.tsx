@@ -1,9 +1,21 @@
+import { redirect } from "next/navigation";
+import { hasPermission } from "@/lib/auth";
 import RoleClient from "@/components/admin/RoleClient";
 import { getRoles, getAllPermissions } from "@/actions/pengguna";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Role & Hak Akses | Sahabat Belajar",
+  description: "Pengaturan peran pengguna dan matriks hak akses sistem Sahabat Belajar",
+};
+
 export default async function RolePage() {
+  const allowed = await hasPermission("role.read");
+  if (!allowed) {
+    redirect("/dashboard");
+  }
+
   let roles: any[] = [];
   let allPermissions: any[] = [];
 
