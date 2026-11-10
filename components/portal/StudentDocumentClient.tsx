@@ -30,10 +30,14 @@ export default function StudentDocumentClient({
   initialDocuments = [],
   studentId = "std_demo_01",
   studentName = "Ahmad Fauzi",
+  studentLevel = "",
+  programCategory = "",
 }: {
   initialDocuments: AcademicDocument[];
   studentId?: string;
   studentName?: string;
+  studentLevel?: string;
+  programCategory?: string;
 }) {
   const toast = useToast();
   const [documents, setDocuments] = useState<AcademicDocument[]>(initialDocuments);
@@ -41,6 +45,16 @@ export default function StudentDocumentClient({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // K-12 Program Guard
+  const isK12 =
+    studentLevel.toLowerCase().includes("sd") ||
+    studentLevel.toLowerCase().includes("smp") ||
+    studentLevel.toLowerCase().includes("sma") ||
+    studentLevel.toLowerCase().includes("k-12") ||
+    studentLevel.toLowerCase().includes("k12") ||
+    programCategory.toLowerCase().includes("k12") ||
+    programCategory.toLowerCase().includes("k-12");
 
   // Form State for New Submission
   const [title, setTitle] = useState("");
@@ -264,17 +278,19 @@ export default function StudentDocumentClient({
     <div className="min-h-screen bg-[#F4F7FB] text-[#1B2A41] py-8 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Navigation & Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:items-center justify-between gap-4">
           <div>
-            <Link
-              href="/portal"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5B6882] hover:text-[#09408C] mb-2 transition-colors"
-            >
-              <ArrowLeft size={16} />
-              <span>Kembali ke Portal Siswa</span>
-            </Link>
+            <div className="mb-3">
+              <Link
+                href="/portal"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5B6882] hover:text-[#09408C] transition-colors"
+              >
+                <ArrowLeft size={16} />
+                <span>Kembali ke Portal Siswa</span>
+              </Link>
+            </div>
 
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-1 block w-fit">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
               <Sparkles size={13} />
               <span>Layanan Bimbingan Program Lanjutan</span>
             </div>
@@ -287,14 +303,54 @@ export default function StudentDocumentClient({
             </p>
           </div>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs shrink-0"
-          >
-            <Upload size={15} />
-            <span>Kirim Draf Baru</span>
-          </button>
+          {isK12 ? (
+            <a
+              href="https://wa.me/628123456789?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20siswa%20K-12%20ingin%20konsultasi%20bimbingan%20karya%20tulis%20atau%20esai%20seleksi%20PTN"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#EAF1FA] text-[#09408C] border border-[#9AC1E2] text-xs font-semibold hover:bg-[#D5DDEB] transition-colors shadow-xs shrink-0"
+            >
+              <span>Konsultasi via WA</span>
+              <ExternalLink size={13} />
+            </a>
+          ) : (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs shrink-0"
+            >
+              <Upload size={15} />
+              <span>Kirim Draf Baru</span>
+            </button>
+          )}
         </div>
+
+        {/* K-12 Segment Notice if K-12 Student visits this page */}
+        {isK12 && (
+          <div className="bg-[#EAF1FA] border border-[#9AC1E2] rounded-2xl p-4 flex items-start gap-3 shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-white text-[#09408C] flex items-center justify-center shrink-0 shadow-2xs font-bold text-sm">
+              ℹ
+            </div>
+            <div className="flex-1 text-xs">
+              <h4 className="font-bold text-[#09408C] text-sm font-heading">
+                Informasi Program Belajar: Khusus Peserta Program Lanjutan
+              </h4>
+              <p className="text-[#5B6882] mt-1 leading-relaxed">
+                Halo <strong>{studentName}</strong>! Halaman ini dikhususkan untuk peserta <strong>Program Lanjutan</strong> (persiapan beasiswa LPDP/AAS & riset tesis/disertasi S2/S3). Karena Anda terdaftar pada bimbingan jenjang <strong>{studentLevel || "K-12 (Sekolah)"}</strong>, Anda tidak perlu mengunggah berkas beasiswa di menu ini.
+              </p>
+              <div className="mt-2.5 flex items-center gap-3">
+                <a
+                  href="https://wa.me/628123456789?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20siswa%20K-12%20ingin%20konsultasi%20esai%20seleksi%20PTN%20atau%20lomba"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#09408C] text-white font-semibold text-[11px] hover:bg-[#0E3571] transition-colors"
+                >
+                  <span>Konsultasi Esai Masuk PTN / Lomba via WhatsApp</span>
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Informative Guidance Banner */}
         <div className="bg-white rounded-3xl p-6 border border-[#D5DDEB] shadow-xs space-y-3">

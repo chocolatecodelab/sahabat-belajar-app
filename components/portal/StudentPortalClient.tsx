@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -66,8 +66,58 @@ export default function StudentPortalClient({
   const [activeTab, setActiveTab] = useState<
     "overview" | "history" | "ujian" | "materi" | "tagihan"
   >("overview");
+
+  // Segment Identification (K-12 vs CPNS vs S2/Beasiswa)
+  const studentLevelStr = (initialData?.student?.level || "").toLowerCase();
+  const programNamesStr = (initialData?.packages || []).map((p) => p.programName.toLowerCase()).join(" ");
+
+  const isK12 =
+    studentLevelStr.includes("sd") ||
+    studentLevelStr.includes("smp") ||
+    studentLevelStr.includes("sma") ||
+    studentLevelStr.includes("k-12") ||
+    studentLevelStr.includes("k12") ||
+    studentLevelStr.includes("sekolah") ||
+    programNamesStr.includes("k-12") ||
+    programNamesStr.includes("sekolah");
+
+  const isCPNS =
+    studentLevelStr.includes("cpns") ||
+    studentLevelStr.includes("alumni") ||
+    studentLevelStr.includes("asn") ||
+    studentLevelStr.includes("kedinasan") ||
+    programNamesStr.includes("cpns") ||
+    programNamesStr.includes("bumn");
+
+  const isAdvancedProgram =
+    studentLevelStr.includes("s2") ||
+    studentLevelStr.includes("s3") ||
+    studentLevelStr.includes("beasiswa") ||
+    studentLevelStr.includes("tesis") ||
+    programNamesStr.includes("beasiswa") ||
+    programNamesStr.includes("penulisan ilmiah");
+
+  const [selectedExamCategory, setSelectedExamCategory] = useState<string>(
+    isK12 ? "RECOMMENDED_K12" : isCPNS ? "RECOMMENDED_CPNS" : "ALL"
+  );
   const [selectedMaterialCategory, setSelectedMaterialCategory] =
-    useState<ProgramCategory>("ALL");
+    useState<ProgramCategory>(isK12 ? "K12" : isCPNS ? "CPNS_BUMN" : isAdvancedProgram ? "S2_BEASISWA" : "ALL");
+
+  useEffect(() => {
+    if (isK12) {
+      setSelectedExamCategory("RECOMMENDED_K12");
+      setSelectedMaterialCategory("K12");
+    } else if (isCPNS) {
+      setSelectedExamCategory("RECOMMENDED_CPNS");
+      setSelectedMaterialCategory("CPNS_BUMN");
+    } else if (isAdvancedProgram) {
+      setSelectedExamCategory("ALL");
+      setSelectedMaterialCategory("S2_BEASISWA");
+    } else {
+      setSelectedExamCategory("ALL");
+      setSelectedMaterialCategory("ALL");
+    }
+  }, [initialData?.student?.id]);
   const [materialSearch, setMaterialSearch] = useState("");
   const [studentMaterials, setStudentMaterials] = useState<LearningMaterial[]>(materials);
   const [previewMaterial, setPreviewMaterial] = useState<LearningMaterial | null>(null);
@@ -198,6 +248,20 @@ export default function StudentPortalClient({
       m.subject.toLowerCase().includes(materialSearch.toLowerCase()) ||
       m.authorTutor.toLowerCase().includes(materialSearch.toLowerCase());
     return matchesCategory && matchesSearch;
+  });
+
+  // Filtered Exams (Adaptive to K-12 vs CPNS)
+  const filteredExams = availableExams.filter((exam) => {
+    if (selectedExamCategory === "RECOMMENDED_K12") {
+      return exam.category === "UTBK_SNBT" || exam.category === "K12";
+    }
+    if (selectedExamCategory === "RECOMMENDED_CPNS") {
+      return exam.category === "CPNS_BUMN" || exam.category === "KEDINASAN";
+    }
+    if (selectedExamCategory === "ALL") {
+      return true;
+    }
+    return exam.category === selectedExamCategory;
   });
 
   const handleDownloadMaterial = (mat: LearningMaterial) => {
@@ -343,34 +407,96 @@ export default function StudentPortalClient({
           </div>
         </div>
 
-        {/* Quick Academic Program Highlights (S2, Beasiswa, Bank Modul) */}
+        {/* Contextual Academic Program Highlights (Adaptive to K-12 vs CPNS vs S2/Beasiswa) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white rounded-2xl border border-[#D5DDEB] p-5 flex items-center justify-between gap-4 hover:border-[#09408C] transition-all shadow-xs">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center shrink-0">
-                <FileEdit size={22} />
-              </div>
-              <div>
-                <div className="text-[10px] font-bold text-[#09408C] uppercase tracking-wider">
-                  Program S2 / S3 & Beasiswa
+          {/* Card 1: Primary Action */}
+          {isAdvancedProgram ? (
+            <div className="bg-white rounded-2xl border border-[#D5DDEB] p-5 flex items-center justify-between gap-4 hover:border-[#09408C] transition-all shadow-xs">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center shrink-0">
+                  <FileEdit size={22} />
                 </div>
-                <h4 className="font-heading font-bold text-sm text-[#1B2A41]">
-                  Review Draf Esai & Naskah Akademik
-                </h4>
-                <p className="text-xs text-[#5B6882] mt-0.5">
-                  Konsultasikan draf esai LPDP/AAS & skripsi dengan mentor.
-                </p>
+                <div>
+                  <div className="text-[10px] font-bold text-[#09408C] uppercase tracking-wider">
+                    Program S2 / S3 & Beasiswa
+                  </div>
+                  <h4 className="font-heading font-bold text-sm text-[#1B2A41]">
+                    Review Draf Esai & Naskah Akademik
+                  </h4>
+                  <p className="text-xs text-[#5B6882] mt-0.5">
+                    Konsultasikan draf esai LPDP/AAS & skripsi dengan mentor ahli.
+                  </p>
+                </div>
               </div>
+              <Link
+                href={`/portal/dokumen?studentId=${student.id}`}
+                className="shrink-0 px-3.5 py-2 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
+              >
+                <span>Buka Draf</span>
+                <ArrowRight size={14} />
+              </Link>
             </div>
-            <Link
-              href="/portal/dokumen"
-              className="shrink-0 px-3.5 py-2 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
-            >
-              <span>Buka Draf</span>
-              <ArrowRight size={14} />
-            </Link>
-          </div>
+          ) : isK12 ? (
+            <div className="bg-white rounded-2xl border border-[#D5DDEB] p-5 flex items-center justify-between gap-4 hover:border-[#09408C] transition-all shadow-xs">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center shrink-0">
+                  <Award size={22} />
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-[#09408C] uppercase tracking-wider">
+                    Simulasi Ujian & Evaluasi
+                  </div>
+                  <h4 className="font-heading font-bold text-sm text-[#1B2A41]">
+                    Tryout UTBK-SNBT & Ujian Sekolah
+                  </h4>
+                  <p className="text-xs text-[#5B6882] mt-0.5">
+                    Latih kemampuan Penalaran Matematika, TPS, dan evaluasi konsep dasar.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedExamCategory("RECOMMENDED_K12");
+                  setActiveTab("ujian");
+                }}
+                className="shrink-0 px-3.5 py-2 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
+              >
+                <span>Mulai Tryout</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-[#D5DDEB] p-5 flex items-center justify-between gap-4 hover:border-[#09408C] transition-all shadow-xs">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center shrink-0">
+                  <Award size={22} />
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-[#09408C] uppercase tracking-wider">
+                    Persiapan Seleksi CASN
+                  </div>
+                  <h4 className="font-heading font-bold text-sm text-[#1B2A41]">
+                    Simulasi CAT SKD CPNS & BUMN
+                  </h4>
+                  <p className="text-xs text-[#5B6882] mt-0.5">
+                    Uji simulasi CAT berstandar BKN dengan timer dan passing grade resmi.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedExamCategory("RECOMMENDED_CPNS");
+                  setActiveTab("ujian");
+                }}
+                className="shrink-0 px-3.5 py-2 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
+              >
+                <span>Mulai CAT</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          )}
 
+          {/* Card 2: Materi Digital Belajar */}
           <div className="bg-white rounded-2xl border border-[#D5DDEB] p-5 flex items-center justify-between gap-4 hover:border-[#1F6F4A] transition-all shadow-xs">
             <div className="flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-2xl bg-[#E3F4EC] text-[#1F6F4A] flex items-center justify-center shrink-0">
@@ -378,21 +504,32 @@ export default function StudentPortalClient({
               </div>
               <div>
                 <div className="text-[10px] font-bold text-[#1F6F4A] uppercase tracking-wider">
-                  Repositori Materi Digital
+                  {isK12 ? "Materi Belajar Sekolah" : isCPNS ? "Kisi-Kisi & Modul Ujian" : "Repositori Materi Digital"}
                 </div>
                 <h4 className="font-heading font-bold text-sm text-[#1B2A41]">
-                  Bank Modul & Ringkasan Rumus
+                  {isK12
+                    ? "Bank Modul & Rumus K-12"
+                    : isCPNS
+                    ? "Modul Rumus Cepat TIU & TWK"
+                    : "Bank Modul & Ringkasan Rumus"}
                 </h4>
                 <p className="text-xs text-[#5B6882] mt-0.5">
-                  Akses e-book rumus cepat TIU, TWK, TOEFL, dan materi K-12.
+                  {isK12
+                    ? "Akses rangkuman rumus cepat Matematika, Fisika, dan bank soal UTBK."
+                    : isCPNS
+                    ? "Kumpulan rumus 40 detik TIU, intisari pilar negara TWK, dan TKP."
+                    : "Akses e-book rumus praktis dan panduan belajar terkurasi."}
                 </p>
               </div>
             </div>
             <button
-              onClick={() => setActiveTab("materi")}
+              onClick={() => {
+                setSelectedMaterialCategory(isK12 ? "K12" : isCPNS ? "CPNS_BUMN" : "ALL");
+                setActiveTab("materi");
+              }}
               className="shrink-0 px-3.5 py-2 rounded-xl bg-[#1F6F4A] hover:bg-[#155337] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
             >
-              <span>Buka Bank Modul</span>
+              <span>{isK12 ? "Buka Modul K-12" : isCPNS ? "Buka Modul CPNS" : "Buka Modul"}</span>
               <ArrowRight size={14} />
             </button>
           </div>
@@ -752,41 +889,108 @@ export default function StudentPortalClient({
               <div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
                   <Sparkles size={14} />
-                  <span>Simulasi CAT Berstandar Resmi</span>
+                  <span>
+                    {isK12
+                      ? "Tryout Berstandar UTBK & Kurikulum Sekolah"
+                      : isCPNS
+                      ? "Simulasi CAT Berstandar Resmi BKN"
+                      : "Ruang Ujian & Evaluasi Belajar"}
+                  </span>
                 </div>
                 <h3 className="text-xl font-bold text-[#09408C] font-heading">
-                  Pilih Paket Ujian & Simulasi CAT
+                  {isK12
+                    ? "Ruang Tryout Mandiri & Evaluasi Belajar"
+                    : isCPNS
+                    ? "Pilih Paket Ujian & Simulasi CAT SKD"
+                    : "Pilih Paket Ujian & Evaluasi Belajar"}
                 </h3>
                 <p className="text-xs sm:text-sm text-[#5B6882] mt-0.5">
-                  Latih kecepatan, akurasi penalaran, dan pemahaman konsep dasar dengan timer dan passing grade otomatis.
+                  {isK12
+                    ? "Latih penalaran matematika, pemahaman bacaan, dan penguasaan materi sekolah secara mandiri dengan evaluasi otomatis."
+                    : "Latih kecepatan, akurasi penalaran, dan pemahaman konsep dasar dengan timer dan passing grade otomatis."}
                 </p>
               </div>
             </div>
 
+            {/* Exam Category Filter Chips (Adaptive to Student Level) */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              {[
+                ...(isK12
+                  ? [{ key: "RECOMMENDED_K12", label: "★ Sesuai Jenjang Anda (UTBK & Sekolah)" }]
+                  : isCPNS
+                  ? [{ key: "RECOMMENDED_CPNS", label: "★ Sesuai Jenjang Anda (CPNS & BUMN)" }]
+                  : []),
+                { key: "UTBK_SNBT", label: "UTBK-SNBT" },
+                { key: "K12", label: "Bimbel K-12" },
+                { key: "CPNS_BUMN", label: "CPNS & BUMN" },
+                { key: "TOEFL_IELTS", label: "TOEFL & IELTS" },
+                { key: "ALL", label: "Semua Paket Tryout" },
+              ].map((filter) => {
+                const isSelected = selectedExamCategory === filter.key;
+                const count =
+                  filter.key === "RECOMMENDED_K12"
+                    ? availableExams.filter((e) => e.category === "UTBK_SNBT" || e.category === "K12").length
+                    : filter.key === "RECOMMENDED_CPNS"
+                    ? availableExams.filter((e) => e.category === "CPNS_BUMN" || e.category === "KEDINASAN").length
+                    : filter.key === "ALL"
+                    ? availableExams.length
+                    : availableExams.filter((e) => e.category === filter.key).length;
+
+                return (
+                  <button
+                    key={filter.key}
+                    onClick={() => setSelectedExamCategory(filter.key)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border flex items-center gap-1.5 ${
+                      isSelected
+                        ? "bg-[#09408C] text-white border-[#09408C] shadow-2xs"
+                        : "bg-white text-[#5B6882] border-[#D5DDEB] hover:border-[#9AC1E2] hover:text-[#1B2A41]"
+                    }`}
+                  >
+                    <span>{filter.label}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                        isSelected ? "bg-white/20 text-white" : "bg-[#EAF1FA] text-[#09408C]"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Grid of Available Exams */}
-            {availableExams.length === 0 ? (
+            {filteredExams.length === 0 ? (
               <div className="bg-white rounded-2xl border border-[#D5DDEB] p-8 text-center text-[#5B6882]">
                 <Award size={32} className="mx-auto mb-2 text-[#9AC1E2]" />
                 <h3 className="font-heading font-bold text-[#1B2A41] mb-1">
-                  Belum Ada Paket Ujian Aktif
+                  Belum Ada Paket Ujian untuk Kategori Ini
                 </h3>
                 <p className="text-sm">
-                  Paket ujian tryout akan dijadwalkan oleh admin dan tutor Sahabat Belajar.
+                  Silakan pilih filter "Semua Paket Tryout" atau hubungi admin untuk paket tryout baru.
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {availableExams.map((exam) => (
+                {filteredExams.map((exam) => (
                   <div
                     key={exam.id}
                     className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs hover:border-[#09408C] hover:shadow-md transition-all flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-3">
-                        <span className="px-2.5 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]/60">
-                          {exam.category.replace("_", " ")}
-                        </span>
-                        <span className="flex items-center gap-1 text-[11px] text-[#1F6F4A] font-semibold bg-[#E3F4EC] px-2 py-0.5 rounded-full">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="px-2.5 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]/60">
+                            {exam.category.replace("_", " ")}
+                          </span>
+                          {((isK12 && (exam.category === "UTBK_SNBT" || exam.category === "K12")) ||
+                            (isCPNS && exam.category === "CPNS_BUMN")) && (
+                            <span className="px-2 py-0.5 rounded-full bg-[#E3F4EC] text-[#1F6F4A] text-[10px] font-bold">
+                              ★ Rekomendasi
+                            </span>
+                          )}
+                        </div>
+                        <span className="flex items-center gap-1 text-[11px] text-[#1F6F4A] font-semibold bg-[#E3F4EC] px-2 py-0.5 rounded-full shrink-0">
                           Tersedia
                         </span>
                       </div>
@@ -829,7 +1033,7 @@ export default function StudentPortalClient({
                         className="w-full py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-bold hover:bg-[#0E3571] transition-colors flex items-center justify-center gap-2 shadow-xs"
                       >
                         <Play size={14} className="fill-white" />
-                        <span>Mulai Simulasi CAT</span>
+                        <span>{exam.category === "CPNS_BUMN" ? "Mulai Simulasi CAT" : "Mulai Tryout Ujian"}</span>
                       </Link>
                     </div>
                   </div>
@@ -937,15 +1141,36 @@ export default function StudentPortalClient({
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-              {[
-                { key: "ALL", label: "Semua Program" },
-                { key: "CPNS_BUMN", label: "CPNS & BUMN" },
-                { key: "UTBK_SNBT", label: "UTBK-SNBT" },
-                { key: "TOEFL_IELTS", label: "TOEFL & IELTS" },
-                { key: "S2_BEASISWA", label: "S2 & Beasiswa" },
-                { key: "PENULISAN_ILMIAH", label: "Kepenulisan Ilmiah" },
-                { key: "K12", label: "Bimbel K-12" },
-              ].map((c) => {
+              {(isK12
+                ? [
+                    { key: "K12", label: "★ Bimbel K-12 (Jenjang Anda)" },
+                    { key: "UTBK_SNBT", label: "UTBK-SNBT" },
+                    { key: "ALL", label: "Semua Program" },
+                    { key: "CPNS_BUMN", label: "CPNS & BUMN" },
+                    { key: "TOEFL_IELTS", label: "TOEFL & IELTS" },
+                    { key: "S2_BEASISWA", label: "S2 & Beasiswa" },
+                    { key: "PENULISAN_ILMIAH", label: "Kepenulisan Ilmiah" },
+                  ]
+                : isCPNS
+                ? [
+                    { key: "CPNS_BUMN", label: "★ CPNS & BUMN (Jenjang Anda)" },
+                    { key: "ALL", label: "Semua Program" },
+                    { key: "UTBK_SNBT", label: "UTBK-SNBT" },
+                    { key: "TOEFL_IELTS", label: "TOEFL & IELTS" },
+                    { key: "S2_BEASISWA", label: "S2 & Beasiswa" },
+                    { key: "PENULISAN_ILMIAH", label: "Kepenulisan Ilmiah" },
+                    { key: "K12", label: "Bimbel K-12" },
+                  ]
+                : [
+                    { key: "ALL", label: "Semua Program" },
+                    { key: "CPNS_BUMN", label: "CPNS & BUMN" },
+                    { key: "UTBK_SNBT", label: "UTBK-SNBT" },
+                    { key: "TOEFL_IELTS", label: "TOEFL & IELTS" },
+                    { key: "S2_BEASISWA", label: "S2 & Beasiswa" },
+                    { key: "PENULISAN_ILMIAH", label: "Kepenulisan Ilmiah" },
+                    { key: "K12", label: "Bimbel K-12" },
+                  ]
+              ).map((c) => {
                 const count =
                   c.key === "ALL"
                     ? studentMaterials.length

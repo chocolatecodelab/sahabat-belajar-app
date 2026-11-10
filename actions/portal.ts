@@ -76,19 +76,112 @@ export type StudentPortalData = {
 // SAMPLE DATA FOR MULTI-STUDENT SIBLINGS & INVOICES
 // ==========================================
 const SIBLINGS_MAP: Record<string, StudentPortalData> = {
-  std_demo_01: {
+  student_01: {
     student: {
-      id: "std_demo_01",
+      id: "student_01",
       name: "Ahmad Fauzi",
-      level: "Alumni / Persiapan CPNS & Kedinasan",
-      school: "Universitas Indonesia",
-      parentName: "Bambang Haryanto, S.E.",
-      parentPhone: "081298765432",
+      level: "Kelas 12 SMA (Sains & Teknologi)",
+      school: "SMAN 1 Jakarta",
+      parentName: "Bapak Hendro",
+      parentPhone: "+62 812-9988-7766",
       status: "AKTIF",
     },
     siblings: [
-      { id: "std_demo_01", name: "Ahmad Fauzi", level: "Alumni / CPNS" },
-      { id: "std_demo_02", name: "Nadia Salsabila", level: "Kelas 12 SMA" },
+      { id: "student_01", name: "Ahmad Fauzi", level: "Kelas 12 SMA" },
+      { id: "std_demo_01", name: "Rian Hendro", level: "Alumni / CPNS" },
+    ],
+    packages: [
+      {
+        id: "sp_01",
+        packageName: "Paket 10 Sesi Privat K-12",
+        programName: "Bimbel K-12 (SD, SMP, SMA)",
+        quotaTotal: 10,
+        quotaUsed: 2,
+        quotaRemaining: 8,
+        startDate: new Date(Date.now() - 86400000 * 14).toISOString(),
+        endDate: new Date(Date.now() + 86400000 * 50).toISOString(),
+        status: "AKTIF",
+      },
+    ],
+    upcomingSessions: [
+      {
+        id: "sess_up_k12_01",
+        programName: "Bimbel K-12 (SD, SMP, SMA)",
+        tutorName: "Dr. Rahmat Hidayat, M.Si.",
+        classType: "PRIVAT",
+        mode: "ONLINE",
+        startAt: new Date(Date.now() + 86400000 * 1 + 3600000 * 16).toISOString(),
+        endAt: new Date(Date.now() + 86400000 * 1 + 3600000 * 17.5).toISOString(),
+        meetingLink: "https://meet.google.com/sb-k12-rahmat",
+        address: null,
+      },
+      {
+        id: "sess_up_k12_02",
+        programName: "Bimbel K-12 (SD, SMP, SMA)",
+        tutorName: "Sarah Amalia, S.Pd.",
+        classType: "PRIVAT",
+        mode: "HOME_VISIT",
+        startAt: new Date(Date.now() + 86400000 * 3 + 3600000 * 15).toISOString(),
+        endAt: new Date(Date.now() + 86400000 * 3 + 3600000 * 16.5).toISOString(),
+        meetingLink: null,
+        address: "Jl. Teuku Umar No. 12, Menteng, Jakarta Pusat",
+      },
+    ],
+    pastSessions: [
+      {
+        id: "sess_past_k12_01",
+        programName: "Bimbel K-12 (SD, SMP, SMA)",
+        tutorName: "Dr. Rahmat Hidayat, M.Si.",
+        startAt: new Date(Date.now() - 86400000 * 3 + 3600000 * 16).toISOString(),
+        endAt: new Date(Date.now() - 86400000 * 3 + 3600000 * 17.5).toISOString(),
+        status: "TERLAKSANA",
+        attendance: "HADIR",
+        topic: "Fisika: Gelombang Elektromagnetik & Optika Fisis",
+        notes: "Ahmad memahami konsep interferensi dengan baik. Latihan soal HOTS diselesaikan tepat waktu.",
+        homework: "Kerjakan 10 soal evaluasi gelombang pada modul Fisika Bab 5.",
+      },
+      {
+        id: "sess_past_k12_02",
+        programName: "Bimbel K-12 (SD, SMP, SMA)",
+        tutorName: "Sarah Amalia, S.Pd.",
+        startAt: new Date(Date.now() - 86400000 * 6 + 3600000 * 15).toISOString(),
+        endAt: new Date(Date.now() - 86400000 * 6 + 3600000 * 16.5).toISOString(),
+        status: "TERLAKSANA",
+        attendance: "HADIR",
+        topic: "Matematika: Integral Substitusi & Luas Daerah Kurva",
+        notes: "Perlu sedikit ketelitian pada tanda negatif saat integrasi parsial.",
+        homework: "Review 5 soal latihan integral pada pocket book Matematika SMA.",
+      },
+    ],
+    invoices: [
+      {
+        id: "inv_k12_01",
+        invoiceNumber: "INV-SB/2026/04/0078",
+        packageName: "Paket 10 Sesi Privat K-12",
+        programName: "Bimbel K-12 (SD, SMP, SMA)",
+        amount: 1400000,
+        paidAt: new Date(Date.now() - 86400000 * 14).toISOString(),
+        method: "TRANSFER_BCA",
+        status: "LUNAS",
+        proofFile: null,
+        notes: "Pembayaran lunas via Transfer BCA.",
+      },
+    ],
+  },
+
+  std_demo_01: {
+    student: {
+      id: "std_demo_01",
+      name: "Rian Hendro",
+      level: "Alumni / Persiapan CPNS & Kedinasan",
+      school: "Universitas Indonesia",
+      parentName: "Bapak Hendro",
+      parentPhone: "+62 812-9988-7766",
+      status: "AKTIF",
+    },
+    siblings: [
+      { id: "student_01", name: "Ahmad Fauzi", level: "Kelas 12 SMA" },
+      { id: "std_demo_01", name: "Rian Hendro", level: "Alumni / CPNS" },
     ],
     packages: [
       {
@@ -115,17 +208,6 @@ const SIBLINGS_MAP: Record<string, StudentPortalData> = {
         meetingLink: "https://meet.google.com/sb-cpns-hendra",
         address: null,
       },
-      {
-        id: "sess_up_02",
-        programName: "Persiapan CPNS & BUMN",
-        tutorName: "Sarah Amalia, S.Pd.",
-        classType: "PRIVAT",
-        mode: "HOME_VISIT",
-        startAt: new Date(Date.now() + 86400000 * 3 + 3600000 * 14).toISOString(),
-        endAt: new Date(Date.now() + 86400000 * 3 + 3600000 * 15.5).toISOString(),
-        meetingLink: null,
-        address: "Jl. Margonda Raya No. 45, Beji, Depok",
-      },
     ],
     pastSessions: [
       {
@@ -140,18 +222,6 @@ const SIBLINGS_MAP: Record<string, StudentPortalData> = {
         notes: "Pemahaman konsep sudah 85%. Tingkatkan kecepatan waktu pengerjaan di bawah 40 detik.",
         homework: "Latihan 15 butir deret variasi kombinasi pada modul bab 3.",
       },
-      {
-        id: "sess_past_02",
-        programName: "Persiapan CPNS & BUMN",
-        tutorName: "Sarah Amalia, S.Pd.",
-        startAt: new Date(Date.now() - 86400000 * 6 + 3600000 * 14).toISOString(),
-        endAt: new Date(Date.now() - 86400000 * 6 + 3600000 * 15.5).toISOString(),
-        status: "TERLAKSANA",
-        attendance: "HADIR",
-        topic: "Studi Kasus TWK: Nasionalisme, Bela Negara & Amandemen UUD",
-        notes: "Siswa sangat aktif berdiskusi. Skor postest TWK mencapai 85 poin.",
-        homework: "Review pasal-pasal amandemen 1 s.d. 4 pada pocket book TWK.",
-      },
     ],
     invoices: [
       {
@@ -163,7 +233,7 @@ const SIBLINGS_MAP: Record<string, StudentPortalData> = {
         paidAt: new Date(Date.now() - 86400000 * 20).toISOString(),
         method: "TRANSFER_BCA",
         status: "LUNAS",
-        proofFile: "/proof/bca-transfer-inv01.pdf",
+        proofFile: null,
         notes: "Pembayaran lunas termin awal bimbingan.",
       },
     ],
@@ -180,8 +250,8 @@ const SIBLINGS_MAP: Record<string, StudentPortalData> = {
       status: "AKTIF",
     },
     siblings: [
-      { id: "std_demo_01", name: "Ahmad Fauzi", level: "Alumni / CPNS" },
-      { id: "std_demo_02", name: "Nadia Salsabila", level: "Kelas 12 SMA" },
+      { id: "student_01", name: "Ahmad Fauzi", level: "Kelas 12 SMA" },
+      { id: "std_demo_01", name: "Rian Hendro", level: "Alumni / CPNS" },
     ],
     packages: [
       {
@@ -400,8 +470,8 @@ export async function getStudentPortalData(
     ];
 
     const siblings: SiblingStudent[] = [
-      { id: "std_demo_01", name: "Ahmad Fauzi", level: "Alumni / CPNS" },
-      { id: "std_demo_02", name: "Nadia Salsabila", level: "Kelas 12 SMA" },
+      { id: "student_01", name: "Ahmad Fauzi", level: "Kelas 12 SMA" },
+      { id: "std_demo_01", name: "Rian Hendro", level: "Alumni / CPNS" },
     ];
 
     return {

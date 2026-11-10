@@ -90,6 +90,17 @@ const SAMPLE_EXAMS: ExamItem[] = [
     isActive: true,
     createdAt: new Date().toISOString(),
   },
+  {
+    id: "exam_k12_01",
+    title: "Tryout Evaluasi Semester SMA - Matematika & Fisika",
+    description: "Evaluasi penguasaan materi Kalkulus Integral Diferensial, Trigonometri, dan Gelombang Optika untuk persiapan Penilaian Akhir Semester.",
+    category: "K12",
+    durationMinutes: 90,
+    passingGrade: 75,
+    totalQuestions: 10,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
 ];
 
 const SAMPLE_QUESTIONS: Record<string, ExamQuestion[]> = {
@@ -198,6 +209,25 @@ const SAMPLE_QUESTIONS: Record<string, ExamQuestion[]> = {
       correctKey: "D",
       points: 5,
       explanation: "Kalimat membutuhkan sebuah Verb (kata kerja utama) berbentuk Simple Present untuk menyatakan fakta umum. Subjek 'The North Pole' tunggal, sehingga kata kerja yang tepat adalah 'has'.",
+    },
+  ],
+  exam_k12_01: [
+    {
+      id: "q_k12_01",
+      examId: "exam_k12_01",
+      questionNumber: 1,
+      section: "Matematika SMA",
+      questionText: "Nilai dari lim (x -> 0) [sin(4x) / (2x)] adalah...",
+      options: [
+        { key: "A", text: "0" },
+        { key: "B", text: "1" },
+        { key: "C", text: "2" },
+        { key: "D", text: "4" },
+        { key: "E", text: "8" },
+      ],
+      correctKey: "C",
+      points: 10,
+      explanation: "Berdasarkan teorema limit trigonometri dasar: lim (x -> 0) [sin(ax) / (bx)] = a / b. Di sini a = 4, b = 2, sehingga nilainya 4 / 2 = 2.",
     },
   ],
 };
