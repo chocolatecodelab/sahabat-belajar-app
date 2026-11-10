@@ -137,3 +137,22 @@ Peran pengguna yang sah di Sahabat Belajar:
 * Pertahankan infrastruktur Next.js 16, Prisma ORM, NextAuth v5, Lucide Icons, Media Library, dan shell admin yang sudah ada.
 * Gantikan logika dan halaman domain BIAS RISTEK dengan domain Sahabat Belajar secara bertahap dan rapi.
 * Pastikan typecheck `tsc` dan linter lulus sebelum pekerjaan dinyatakan selesai.
+
+---
+
+## 8. PROTOKOL KONSISTENSI PERSONA & ANTI-TABRAKAN LAYOUT (SKILL: `sahabat-belajar-ux-audit`)
+
+Setiap agen AI yang memodifikasi atau membuat komponen UI wajib mematuhi aturan berikut (rujuk `.agents/skills/sahabat-belajar-ux-audit/SKILL.md`):
+
+1. **Konsistensi Persona & Segmentasi Siswa**:
+   - **K-12 (SD/SMP/SMA)**: Fokus pada kurikulum sekolah, Penilaian Akhir Semester (PAS), dan UTBK-SNBT (TPS & Literasi). DILARANG menampilkan formulir review draf beasiswa LPDP/proposal tesis atau memberi label "Simulasi CAT SKD".
+   - **CPNS / Kedinasan**: Fokus pada Simulasi CAT SKD (TWK, TIU, TKP) berstandar BKN dan modul rumus cepat TIU/TWK.
+   - **S2 / S3 & Beasiswa**: Fokus pada Review Draf Dokumen & Esai Beasiswa.
+2. **Anti-Tabrakan Layout & Isolasi Baris Navigasi**:
+   - Tautan `← Kembali ke...` (`Link`) WAJIB dibungkus kontainer blok tersendiri (`<div className="mb-2">` atau `<div className="mb-3">`) agar tidak bertabrakan dengan elemen lencana/badge di sebelahnya.
+   - DILARANG menumpuk class display yang bertolak belakang pada satu elemen (misal: `inline-flex` + `block`).
+   - Gunakan `flex-wrap` dan `shrink-0` pada tombol/lencana agar tidak terpotong pada layar mobile.
+3. **Penamaan Ujian & Rapor Nilai Dinamis**:
+   - Header ruang ujian dan rapor cetak WAJIB menyesuaikan kategori ujian (`Simulasi CAT BKN` untuk CPNS, `Tryout UTBK-SNBT` untuk UTBK, `Rapor Evaluasi Siswa` untuk K-12), DILARANG menamai semua tes secara serampangan sebagai "Simulasi CAT".
+4. **Sinkronisasi Switcher Multi-Profil**:
+   - Label jenjang pada tombol anak (misal: `Ahmad Fauzi (Kelas 12 SMA)`) harus 100% konsisten dengan paket belajar aktifnya. Beralih anak harus langsung memperbarui seluruh tampilan dan filter secara real-time.

@@ -371,13 +371,15 @@ export default function ExamDetailClient({
       {/* Back Button & Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <Link
-            href="/dashboard/ujian"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5B6882] hover:text-[#09408C] mb-2 transition-colors"
-          >
-            <ArrowLeft size={14} />
-            <span>Kembali ke Daftar Paket Ujian</span>
-          </Link>
+          <div className="mb-2">
+            <Link
+              href="/dashboard/ujian"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5B6882] hover:text-[#09408C] transition-colors"
+            >
+              <ArrowLeft size={14} />
+              <span>Kembali ke Daftar Paket Ujian</span>
+            </Link>
+          </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-0.5 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]">

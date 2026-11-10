@@ -359,7 +359,15 @@ export default function ExamSimulationClient({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-[#09408C] uppercase tracking-wider block">
-                  Simulasi CAT Digital Sahabat Belajar
+                  {exam.category === "CPNS_BUMN" || exam.category === "KEDINASAN"
+                    ? "Simulasi CAT Digital BKN"
+                    : exam.category === "UTBK_SNBT"
+                    ? "Simulasi Tryout UTBK-SNBT"
+                    : exam.category === "K12"
+                    ? "Tryout & Evaluasi Kurikulum K-12"
+                    : exam.category === "TOEFL_IELTS"
+                    ? "Diagnostic Test TOEFL / Bahasa Inggris"
+                    : "Ruang Ujian Digital Sahabat Belajar"}
                 </span>
                 <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-[#1F6F4A] bg-[#E3F4EC] px-1.5 py-0.2 rounded-full font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#1F6F4A]"></span>

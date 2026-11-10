@@ -244,7 +244,15 @@ export default function ExamResultClient({
               </div>
             </div>
             <div className="text-right text-xs">
-              <div className="font-bold text-[#09408C]">LEMBAR HASIL SIMULASI CAT</div>
+              <div className="font-bold text-[#09408C]">
+                {exam.category === "CPNS_BUMN" || exam.category === "KEDINASAN"
+                  ? "LEMBAR HASIL SIMULASI CAT BKN"
+                  : exam.category === "UTBK_SNBT"
+                  ? "LEMBAR HASIL TRYOUT UTBK-SNBT"
+                  : exam.category === "K12"
+                  ? "LEMBAR RAPOR EVALUASI SISWA K-12"
+                  : "LEMBAR HASIL EVALUASI UJIAN DIGITAL"}
+              </div>
               <div className="text-[#5B6882]">No. Sesi: {sessionId}</div>
             </div>
           </div>
