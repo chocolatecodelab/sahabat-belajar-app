@@ -933,8 +933,7 @@ export default function NotificationSettingsClient({
                   type="button"
                   onClick={handleTestEmail}
                   disabled={testingEmail || !testEmail}
-                  className="w-full py-2.5 rounded-xl text-xs font-bold text-white shadow-xs flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
-                  style={{ background: "#001847" }}
+                  className="w-full py-2.5 rounded-xl text-xs font-bold text-white shadow-xs flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer bg-[#09408C] hover:bg-[#0E3571]"
                 >
                   {testingEmail ? (
                     <RefreshCw size={14} className="animate-spin" />

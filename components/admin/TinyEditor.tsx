@@ -83,9 +83,9 @@ export default function TinyEditor({
         <button
           type="button"
           onClick={() => handleOpenMediaPicker()}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-[#001847] hover:bg-blue-100 border border-blue-200 transition-all shadow-xs cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EAF1FA] text-[#09408C] hover:bg-[#D5DDEB]/60 border border-[#9AC1E2] transition-all shadow-xs cursor-pointer"
         >
-          <FolderOpen size={14} className="text-[#001847]" />
+          <FolderOpen size={14} className="text-[#09408C]" />
           <span>Pilih dari Pustaka Media</span>
         </button>
       </div>
@@ -139,7 +139,7 @@ export default function TinyEditor({
             h1, h2, h3, h4, h5, h6 {
               font-family: 'Plus Jakarta Sans', sans-serif;
               font-weight: 600;
-              color: #001847;
+              color: #09408C;
             }
             img {
               max-width: 100%;

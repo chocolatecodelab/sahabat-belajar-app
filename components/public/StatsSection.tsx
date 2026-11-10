@@ -32,14 +32,14 @@ export default function StatsSection({ stats }: { stats: StatItem[] }) {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="w-6 h-6 rounded-md bg-blue-50 text-[#001847] flex items-center justify-center shrink-0">
-                      <IconComp size={13} className="text-[#001847]" />
+                    <div className="w-6 h-6 rounded-md bg-[#EAF1FA] text-[#09408C] flex items-center justify-center shrink-0">
+                      <IconComp size={13} className="text-[#09408C]" />
                     </div>
                     <span className="text-2xs sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">
                       {stat.label}
                     </span>
                   </div>
-                  <div className="text-2xl sm:text-3xl lg:text-display-md font-bold text-[#001847] font-display tracking-tight leading-none">
+                  <div className="text-2xl sm:text-3xl lg:text-display-md font-bold text-[#09408C] font-display tracking-tight leading-none">
                     {stat.value}
                   </div>
                 </div>

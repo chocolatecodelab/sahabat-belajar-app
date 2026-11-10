@@ -574,7 +574,7 @@ export default function ExamManagerClient({
                       type="button"
                       onClick={() => handleDuplicate(exam)}
                       disabled={duplicatingId === exam.id}
-                      className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                      className="p-2 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
                       title="Duplikasi Paket Ujian & Soal"
                     >
                       {duplicatingId === exam.id ? (
@@ -588,7 +588,7 @@ export default function ExamManagerClient({
                     <button
                       type="button"
                       onClick={() => openEditModal(exam)}
-                      className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                      className="p-2 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
                       title="Edit Pengaturan Paket"
                     >
                       <Edit3 size={14} />
@@ -598,7 +598,7 @@ export default function ExamManagerClient({
                     <button
                       type="button"
                       onClick={() => handleDelete(exam.id, exam.title)}
-                      className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
+                      className="p-2 rounded-lg text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
                       title="Hapus Paket Ujian"
                     >
                       <Trash2 size={14} />

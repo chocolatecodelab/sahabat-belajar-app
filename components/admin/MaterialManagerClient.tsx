@@ -636,7 +636,7 @@ export default function MaterialManagerClient({
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleCopyLink(mat)}
-                    className="p-1.5 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                    className="p-2 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
                     title="Salin Tautan Modul"
                   >
                     {copiedId === mat.id ? <Check size={15} className="text-[#1F6F4A]" /> : <Copy size={15} />}
@@ -644,7 +644,7 @@ export default function MaterialManagerClient({
 
                   <button
                     onClick={() => handleShareWhatsApp(mat)}
-                    className="p-1.5 rounded-xl text-[#5B6882] hover:text-[#1F6F4A] hover:bg-[#E3F4EC] transition-colors"
+                    className="p-2 rounded-xl text-[#5B6882] hover:text-[#1F6F4A] hover:bg-[#E3F4EC] transition-colors"
                     title="Bagikan ke Siswa via WhatsApp"
                   >
                     <Share2 size={15} />
@@ -652,7 +652,7 @@ export default function MaterialManagerClient({
 
                   <button
                     onClick={() => openEditModal(mat)}
-                    className="p-1.5 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                    className="p-2 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
                     title="Edit Modul"
                   >
                     <Edit2 size={15} />
@@ -660,7 +660,7 @@ export default function MaterialManagerClient({
 
                   <button
                     onClick={() => handleDelete(mat.id, mat.title)}
-                    className="p-1.5 rounded-xl text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
+                    className="p-2 rounded-xl text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
                     title="Hapus Modul"
                   >
                     <Trash2 size={15} />

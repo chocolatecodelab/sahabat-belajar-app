@@ -28,7 +28,7 @@ export default function HeroSection({ slides }: { slides: Slide[] }) {
   if (slides.length === 0) {
     // Default fallback banner
     return (
-      <section className="relative bg-[#001847] border-b border-[#0b2c6b] text-white py-28 px-4">
+      <section className="relative bg-[#09408C] border-b border-[#0E3571] text-white py-28 px-4">
         <div className="max-w-7xl mx-auto text-center space-y-6">
           <span
             className="inline-block text-xs font-semibold uppercase tracking-widest px-3.5 py-1.5 rounded-full"

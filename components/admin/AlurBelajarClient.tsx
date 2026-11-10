@@ -126,20 +126,20 @@ export default function AlurBelajarClient({ steps: initial }: { steps: LearningS
             }`}
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="w-8 h-8 rounded-full bg-[#001847] text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+              <span className="w-8 h-8 rounded-full bg-[#09408C] text-white flex items-center justify-center font-bold text-xs shadow-2xs">
                 {item.stepNumber}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => openEdit(item)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-[#001847] hover:bg-slate-100 transition-colors"
+                  className="p-2 rounded-lg text-slate-400 hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
                   title="Edit"
                 >
                   <Edit size={16} />
                 </button>
                 <button
                   onClick={() => handleDelete(item.id)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                  className="p-2 rounded-lg text-gray-400 hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
                   title="Hapus"
                 >
                   <Trash2 size={16} />

@@ -279,7 +279,7 @@ export default function TutorPortalClient({
             }`}
           >
             <DollarSign size={16} />
-            Rekap Honor Mandiri (BR-6 & 7)
+            Rekap Honor Mandiri
           </button>
         </div>
 
@@ -358,7 +358,7 @@ export default function TutorPortalClient({
                                 href={`https://wa.me/${session.students[0].phone.replace(/[^0-9]/g, "")}?text=Halo%20${encodeURIComponent(session.students[0].name)}%2C%20saya%20${encodeURIComponent(tutor.name)}%20dari%20Sahabat%20Belajar%20...`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-[11px] text-[#1F6F4A] font-semibold hover:underline mt-1"
+                                className="inline-flex items-center gap-1 text-xs text-[#1F6F4A] font-semibold hover:underline mt-1"
                               >
                                 <Phone size={12} />
                                 <span>Hubungi Siswa / Wali ({session.students[0].phone})</span>
@@ -374,7 +374,7 @@ export default function TutorPortalClient({
                                   <Video size={14} className="text-[#0CC0DF]" />
                                   <span>Online (Zoom / Meet)</span>
                                 </div>
-                                <span className="text-[11px] text-[#5B6882] block mt-0.5">
+                                <span className="text-xs text-[#5B6882] block mt-0.5 leading-relaxed">
                                   Buka tautan ruang belajar 5 menit sebelum sesi dimulai.
                                 </span>
                               </div>
@@ -384,7 +384,7 @@ export default function TutorPortalClient({
                                   <MapPin size={14} className="text-[#F5B82E]" />
                                   <span>Home Visit (Tatap Muka)</span>
                                 </div>
-                                <span className="text-[11px] text-[#1B2A41] block mt-0.5">
+                                <span className="text-xs text-[#1B2A41] block mt-0.5 leading-relaxed">
                                   {session.address || "Alamat rumah siswa"}
                                 </span>
                               </div>
@@ -575,7 +575,7 @@ export default function TutorPortalClient({
                 <div>
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-1.5">
                     <ShieldCheck size={14} />
-                    <span>Transparan & Sesuai Sesi Terlaksana (BR-6 & BR-7)</span>
+                    <span>Transparan & Sesuai Sesi Terlaksana</span>
                   </div>
                   <h3 className="text-xl font-bold text-[#09408C] font-heading">
                     Rekapitulasi Honorarium Mengajar
@@ -589,29 +589,29 @@ export default function TutorPortalClient({
               {/* Financial KPI Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                 <div className="bg-[#F4F7FB] p-4 rounded-2xl border border-[#D5DDEB]">
-                  <div className="text-[11px] text-[#5B6882] font-semibold">Tarif Honor Anda</div>
+                  <div className="text-xs text-[#5B6882] font-semibold">Tarif Honor Anda</div>
                   <div className="text-xl font-black text-[#09408C] font-heading mt-1">
                     Rp {financialSummary.ratePerSession.toLocaleString("id-ID")}
                   </div>
-                  <div className="text-[10px] text-[#5B6882] mt-0.5">Per sesi bimbingan (90 menit)</div>
+                  <div className="text-xs text-[#5B6882] mt-0.5">Per sesi bimbingan (90 menit)</div>
                 </div>
 
                 <div className="bg-[#F4F7FB] p-4 rounded-2xl border border-[#D5DDEB]">
-                  <div className="text-[11px] text-[#5B6882] font-semibold">Sesi Terlaksana Bulan Ini</div>
+                  <div className="text-xs text-[#5B6882] font-semibold">Sesi Terlaksana Bulan Ini</div>
                   <div className="text-xl font-black text-[#1B2A41] font-heading mt-1">
                     {financialSummary.sessionsThisMonth} Sesi
                   </div>
-                  <div className="text-[10px] text-[#5B6882] mt-0.5">
+                  <div className="text-xs text-[#5B6882] mt-0.5">
                     Total {financialSummary.sessionsThisMonth * 1.5} jam mengajar
                   </div>
                 </div>
 
                 <div className="bg-[#E3F4EC] p-4 rounded-2xl border border-[#1F6F4A]/30">
-                  <div className="text-[11px] text-[#1F6F4A] font-semibold">Total Honor Berjalan</div>
+                  <div className="text-xs text-[#1F6F4A] font-semibold">Total Honor Berjalan</div>
                   <div className="text-xl font-black text-[#1F6F4A] font-heading mt-1">
                     Rp {financialSummary.totalHonorThisMonth.toLocaleString("id-ID")}
                   </div>
-                  <div className="text-[10px] text-[#1F6F4A] mt-0.5">Status: Siap Dicairkan Akhir Bulan</div>
+                  <div className="text-xs text-[#1F6F4A] mt-0.5">Status: Siap Dicairkan Akhir Bulan</div>
                 </div>
               </div>
             </div>
@@ -686,7 +686,7 @@ export default function TutorPortalClient({
                 {/* 1. Presensi Kehadiran Peserta Didik */}
                 <div className="space-y-2 bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB]">
                   <span className="font-bold text-[#1B2A41] block">
-                    Presensi Kehadiran Siswa (BR-1: Hadir memotong 1 kuota):
+                    Presensi Kehadiran Siswa (Status Hadir memotong 1 kuota):
                   </span>
                   {selectedSessionForJournal.students.map((st) => (
                     <div

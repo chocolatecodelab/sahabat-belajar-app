@@ -397,7 +397,7 @@ export default function DashboardAnalyticsClient({ initialData }: DashboardAnaly
                 <path
                   d={linePath}
                   fill="none"
-                  stroke="#001847"
+                  stroke="#09408C"
                   strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -433,7 +433,7 @@ export default function DashboardAnalyticsClient({ initialData }: DashboardAnaly
                         cx={cx}
                         cy={cy}
                         r={isHovered ? "6" : "4"}
-                        fill={isHovered ? "#fdbc13" : "#001847"}
+                        fill={isHovered ? "#F5B82E" : "#09408C"}
                         stroke="#ffffff"
                         strokeWidth="2"
                         className="transition-all duration-150"

@@ -1323,9 +1323,9 @@ export default function StudentPortalClient({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between">
                   <div>
-                    <div className="text-[10px] text-[#5B6882] font-bold uppercase">Bank BCA</div>
+                    <div className="text-[11px] text-[#5B6882] font-bold uppercase">Bank BCA</div>
                     <div className="text-sm font-bold text-[#1B2A41] font-mono">123-456-7890</div>
-                    <div className="text-[10px] text-[#5B6882]">a.n. Sahabat Belajar</div>
+                    <div className="text-xs text-[#5B6882]">a.n. Sahabat Belajar</div>
                   </div>
                   <button
                     onClick={() => handleCopyText("1234567890", "No. Rekening BCA")}
@@ -1338,9 +1338,9 @@ export default function StudentPortalClient({
 
                 <div className="bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between">
                   <div>
-                    <div className="text-[10px] text-[#5B6882] font-bold uppercase">Bank Mandiri</div>
+                    <div className="text-[11px] text-[#5B6882] font-bold uppercase">Bank Mandiri</div>
                     <div className="text-sm font-bold text-[#1B2A41] font-mono">137-00-1234567-8</div>
-                    <div className="text-[10px] text-[#5B6882]">a.n. Sahabat Belajar</div>
+                    <div className="text-xs text-[#5B6882]">a.n. Sahabat Belajar</div>
                   </div>
                   <button
                     onClick={() => handleCopyText("1370012345678", "No. Rekening Mandiri")}
@@ -1353,9 +1353,9 @@ export default function StudentPortalClient({
 
                 <div className="bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between">
                   <div>
-                    <div className="text-[10px] text-[#5B6882] font-bold uppercase">QRIS Sahabat Belajar</div>
+                    <div className="text-[11px] text-[#5B6882] font-bold uppercase">QRIS Sahabat Belajar</div>
                     <div className="text-xs font-bold text-[#1F6F4A]">Scan Instan Semua Aplikasi</div>
-                    <div className="text-[10px] text-[#5B6882]">GoPay, OVO, ShopeePay, BCA</div>
+                    <div className="text-xs text-[#5B6882]">GoPay, OVO, ShopeePay, BCA</div>
                   </div>
                   <div className="w-8 h-8 rounded-lg bg-[#E3F4EC] text-[#1F6F4A] flex items-center justify-center font-bold text-xs">
                     QR

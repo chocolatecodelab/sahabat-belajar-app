@@ -113,7 +113,7 @@ export default function SahabatBelajarDashboard({
       {/* 4 Core Financial & Operational KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* 1. Omset Finansial */}
-        <div className="bg-white p-5 rounded-3xl border border-[#D5DDEB] shadow-xs hover:border-[#09408C] transition-all">
+        <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-xs hover:border-[#09408C] transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#5B6882]">Estimasi Omset Bulan Ini</span>
             <div className="w-10 h-10 rounded-2xl bg-[#EAF1FA] flex items-center justify-center text-[#09408C]">
@@ -135,7 +135,7 @@ export default function SahabatBelajarDashboard({
         </div>
 
         {/* 2. Siswa Aktif */}
-        <div className="bg-white p-5 rounded-3xl border border-[#D5DDEB] shadow-xs hover:border-[#09408C] transition-all">
+        <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-xs hover:border-[#09408C] transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#5B6882]">Total Siswa Aktif</span>
             <div className="w-10 h-10 rounded-2xl bg-[#EAF1FA] flex items-center justify-center text-[#09408C]">
@@ -157,7 +157,7 @@ export default function SahabatBelajarDashboard({
         </div>
 
         {/* 3. Sesi Hari Ini */}
-        <div className="bg-white p-5 rounded-3xl border border-[#D5DDEB] shadow-xs hover:border-[#295897] transition-all">
+        <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-xs hover:border-[#295897] transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#5B6882]">Sesi Belajar Hari Ini</span>
             <div className="w-10 h-10 rounded-2xl bg-[#EAF1FA] flex items-center justify-center text-[#295897]">
@@ -179,7 +179,7 @@ export default function SahabatBelajarDashboard({
         </div>
 
         {/* 4. Kuota Kritis */}
-        <div className="bg-white p-5 rounded-3xl border border-[#D5DDEB] shadow-xs hover:border-[#F5B82E] transition-all">
+        <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-xs hover:border-[#F5B82E] transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#5B6882]">Kuota Hampir Habis</span>
             <div className="w-10 h-10 rounded-2xl bg-[#FEF7E6] flex items-center justify-center text-[#B45309]">
@@ -196,7 +196,7 @@ export default function SahabatBelajarDashboard({
             Perlu Penawaran Top-Up Paket
           </div>
           <p className="text-[11px] text-[#5B6882] mt-2 pt-2 border-t border-[#D5DDEB]/60">
-            Terdeteksi otomatis sesuai aturan BR-4
+            Terdeteksi otomatis saat sisa kuota tipis
           </p>
         </div>
       </div>
@@ -206,7 +206,7 @@ export default function SahabatBelajarDashboard({
         {/* Left Column (2 Cols) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Visual Trend Chart Card */}
-          <div className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl border border-[#D5DDEB] p-6 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-1">
@@ -286,7 +286,7 @@ export default function SahabatBelajarDashboard({
           </div>
 
           {/* Live Monitor Sesi Bimbingan Hari Ini */}
-          <div className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl border border-[#D5DDEB] p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calendar size={18} className="text-[#09408C]" />
@@ -416,8 +416,8 @@ export default function SahabatBelajarDashboard({
 
         {/* Right Column (1 Col): Radar Kuota Kritis, Leads, & Program Distribution */}
         <div className="space-y-6">
-          {/* Radar Kuota Kritis Siswa (BR-4) */}
-          <div className="bg-white rounded-3xl border border-[#D5DDEB] p-5 shadow-xs space-y-3">
+          {/* Radar Kuota Kritis Siswa */}
+          <div className="bg-white rounded-2xl border border-[#D5DDEB] p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-heading font-bold text-sm text-[#09408C] flex items-center gap-2">
                 <AlertCircle size={16} className="text-[#B45309]" />
@@ -464,7 +464,7 @@ export default function SahabatBelajarDashboard({
           </div>
 
           {/* Pipa Prospek / Lead Baru Masuk */}
-          <div className="bg-white rounded-3xl border border-[#D5DDEB] p-5 shadow-xs space-y-3">
+          <div className="bg-white rounded-2xl border border-[#D5DDEB] p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-heading font-bold text-sm text-[#09408C] flex items-center gap-2">
                 <Users size={16} className="text-[#09408C]" />
@@ -511,7 +511,7 @@ export default function SahabatBelajarDashboard({
           </div>
 
           {/* Distribusi Siswa per Program */}
-          <div className="bg-white rounded-3xl border border-[#D5DDEB] p-5 shadow-xs space-y-3">
+          <div className="bg-white rounded-2xl border border-[#D5DDEB] p-5 shadow-xs space-y-3">
             <h3 className="font-heading font-bold text-sm text-[#09408C] flex items-center gap-2">
               <PieChart size={16} className="text-[#295897]" />
               <span>Peta Distribusi Program Belajar</span>
@@ -538,7 +538,7 @@ export default function SahabatBelajarDashboard({
           </div>
 
           {/* Quick Hub: Navigasi Modul Lanjutan */}
-          <div className="bg-gradient-to-br from-[#09408C] to-[#0E3571] text-white rounded-3xl p-5 shadow-xs space-y-3">
+          <div className="bg-gradient-to-br from-[#09408C] to-[#0E3571] text-white rounded-2xl p-5 shadow-xs space-y-3">
             <div className="flex items-center gap-2 text-xs font-bold text-[#9AC1E2]">
               <Compass size={16} />
               <span>Akses Cepat Modul Akademik</span>

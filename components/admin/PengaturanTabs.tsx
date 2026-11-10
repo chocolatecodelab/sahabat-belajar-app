@@ -31,7 +31,7 @@ export default function PengaturanTabs() {
   const pathname = usePathname();
 
   return (
-    <div className="flex items-center gap-1.5 p-1 bg-[#EAF1FA] border border-[#D5DDEB] rounded-2xl overflow-x-auto scrollbar-none mb-6">
+    <div className="lg:hidden flex items-center gap-1.5 p-1 bg-[#EAF1FA] border border-[#D5DDEB] rounded-2xl overflow-x-auto scrollbar-none mb-6">
       {TABS.map((tab) => {
         const isActive = pathname === tab.href;
 

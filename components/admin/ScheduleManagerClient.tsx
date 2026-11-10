@@ -350,7 +350,7 @@ export default function ScheduleManagerClient({
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-semibold mb-2">
             <UserCheck size={13} className="text-[#09408C]" />
-            <span>Asisten Cerdas Sahabat Belajar (PRD C2/C3)</span>
+            <span>Asisten Penjadwalan Sahabat Belajar</span>
           </div>
           <h1 className="text-2xl font-bold text-[#09408C] font-display">
             Jadwal Sesi & Ketersediaan Tutor
@@ -579,7 +579,7 @@ export default function ScheduleManagerClient({
                           disabled={isSubmitting}
                           className="px-3 py-1.5 rounded-xl bg-[#1F6F4A] text-white text-xs font-semibold hover:bg-[#165538] transition-colors shadow-2xs"
                         >
-                          Tandai Selesai (BR-1 Potong Kuota)
+                          Tandai Selesai & Potong Kuota
                         </button>
                       )}
                     </div>
@@ -911,7 +911,7 @@ export default function ScheduleManagerClient({
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label htmlFor="match-time-start" className="text-xs font-bold text-[#1B2A41]">
-                    4. Jam (Default 90 Mnt BR-5)
+                    4. Jam (Default 90 Menit)
                   </label>
                   <button
                     type="button"
@@ -1088,7 +1088,7 @@ export default function ScheduleManagerClient({
                   Jadwalkan Sesi Bimbingan
                 </h3>
                 <p className="text-xs text-[#5B6882]">
-                  Validasi bentrok otomatis BR-2, durasi standar 90 menit BR-5, & limit semi-privat 5 siswa BR-3.
+                  Validasi bentrok otomatis, durasi standar 90 menit, dan batas maksimal 5 siswa untuk semi-privat.
                 </p>
               </div>
               <button
@@ -1170,7 +1170,7 @@ export default function ScheduleManagerClient({
                     className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
                   >
                     <option value="PRIVAT">Privat (1 Siswa)</option>
-                    <option value="SEMI_PRIVAT">Semi-Privat (2-5 Siswa - BR-3)</option>
+                    <option value="SEMI_PRIVAT">Semi-Privat (2-5 Siswa)</option>
                   </select>
                 </div>
 
@@ -1318,7 +1318,7 @@ export default function ScheduleManagerClient({
                 <div className="flex items-center justify-between">
                   <label htmlFor="create-recurrence-select" className="text-xs font-bold text-[#09408C] flex items-center gap-1.5">
                     <CalendarDays size={14} />
-                    <span>Sesi Berulang Mingguan (PRD C3)</span>
+                    <span>Sesi Berulang Mingguan</span>
                   </label>
                   <span className="text-[10px] text-[#5B6882]">Otomatis terjadwal mingguan</span>
                 </div>
@@ -1394,7 +1394,7 @@ export default function ScheduleManagerClient({
                 disabled={isSubmitting}
                 className="px-4 py-2 text-xs font-semibold bg-[#09408C] text-white hover:bg-[#0E3571] rounded-xl transition-colors disabled:opacity-50 shadow-2xs"
               >
-                {isSubmitting ? "Menyimpan & Validasi BR-2..." : "Simpan & Buat Jadwal"}
+                {isSubmitting ? "Menyimpan & Memvalidasi Jadwal..." : "Simpan & Buat Jadwal"}
               </button>
             </div>
           </form>
@@ -1553,7 +1553,7 @@ export default function ScheduleManagerClient({
                 Tandai Sesi Terlaksana?
               </h3>
               <p className="text-xs text-[#5B6882] leading-relaxed">
-                Sesuai aturan <strong>BR-1</strong>, kuota paket bimbingan siswa yang hadir akan berkurang tepat <strong>1 pertemuan</strong>.
+                Kuota paket bimbingan siswa yang hadir akan berkurang tepat <strong>1 pertemuan</strong> secara otomatis.
               </p>
             </div>
 

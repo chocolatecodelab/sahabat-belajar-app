@@ -222,7 +222,7 @@ export default function PaymentManagerClient({
                               href={getWhatsAppConfirmationUrl(p)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                              className="p-2 rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
                               title="Kirim Konfirmasi via WhatsApp"
                             >
                               <Share2 size={13} />
