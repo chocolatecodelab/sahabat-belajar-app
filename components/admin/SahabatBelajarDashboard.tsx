@@ -65,8 +65,8 @@ export default function SahabatBelajarDashboard({
   return (
     <div className="space-y-6">
       {/* Top Executive Header */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#D5DDEB] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#D5DDEB] shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-[11px] font-bold text-[#09408C] uppercase tracking-wider bg-[#EAF1FA] px-2.5 py-0.5 rounded-full border border-[#9AC1E2]">
               Executive Command Center
@@ -79,33 +79,33 @@ export default function SahabatBelajarDashboard({
           <h1 className="text-2xl sm:text-3xl font-bold text-[#09408C] tracking-tight font-heading">
             Pusat Kendali Operasional & Finansial
           </h1>
-          <p className="text-xs sm:text-sm text-[#5B6882] mt-1">
+          <p className="text-xs sm:text-sm text-[#5B6882] mt-1 max-w-2xl leading-relaxed">
             Monitoring real-time operasional bimbingan belajar, kesehatan kuota siswa, pipa prospek, dan performa finansial.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap print:hidden">
           <Link
             href="/dashboard/jadwal"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#09408C] text-white hover:bg-[#0E3571] text-xs font-bold transition-colors shadow-xs"
+            className="flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl bg-[#09408C] text-white hover:bg-[#0E3571] text-xs font-bold transition-colors shadow-xs shrink-0 cursor-pointer"
           >
             <Plus size={15} />
             <span>Jadwalkan Sesi</span>
           </Link>
           <Link
             href="/dashboard/pembayaran"
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] bg-white text-[#09408C] hover:bg-[#EAF1FA] text-xs font-bold transition-colors"
+            className="flex items-center gap-2 px-3 sm:px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] bg-white text-[#09408C] hover:bg-[#EAF1FA] text-xs font-bold transition-colors shrink-0 cursor-pointer"
           >
             <DollarSign size={15} />
             <span>Catat Pembayaran</span>
           </Link>
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-[#D5DDEB] bg-white text-[#5B6882] hover:text-[#1B2A41] hover:bg-slate-50 text-xs font-semibold transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-[#D5DDEB] bg-white text-[#5B6882] hover:text-[#09408C] hover:border-[#09408C] hover:bg-[#EAF1FA] text-xs font-semibold transition-colors shrink-0 cursor-pointer shadow-2xs"
             title="Cetak Laporan Eksekutif"
           >
             <Printer size={15} />
-            <span className="hidden sm:inline">Cetak</span>
+            <span>Cetak</span>
           </button>
         </div>
       </div>

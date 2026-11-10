@@ -30,8 +30,8 @@ export function StatCardSkeleton() {
 
 export function PageHeaderSkeleton() {
   return (
-    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#D5DDEB] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div className="space-y-2">
+    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#D5DDEB] shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+      <div className="space-y-2 flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <Skeleton className="w-32 h-5 rounded-full" />
           <Skeleton className="w-20 h-5 rounded-full" />
@@ -39,9 +39,10 @@ export function PageHeaderSkeleton() {
         <Skeleton className="w-64 sm:w-80 h-8" />
         <Skeleton className="w-80 sm:w-96 h-4" />
       </div>
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2 shrink-0">
         <Skeleton className="w-32 h-10 rounded-xl" />
         <Skeleton className="w-32 h-10 rounded-xl" />
+        <Skeleton className="w-20 h-10 rounded-xl" />
       </div>
     </div>
   );
