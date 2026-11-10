@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Send, CheckCircle2, AlertCircle, Phone, FileText } from "lucide-react";
+import { Send, CheckCircle2, AlertCircle, Phone, FileText, ArrowRight, ArrowLeft } from "lucide-react";
 import { createPublicLead } from "@/actions/lead";
 
 export default function PublicLeadForm() {
+  const [step, setStep] = useState<1 | 2>(1);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -17,6 +18,12 @@ export default function PublicLeadForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleNextStep = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setStep(2);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,10 +85,7 @@ export default function PublicLeadForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-white rounded-3xl p-6 sm:p-10 border border-[#D5DDEB] shadow-md space-y-5"
-    >
+    <div className="bg-white rounded-3xl p-6 sm:p-10 border border-[#D5DDEB] shadow-md space-y-6">
       <div className="border-b border-[#D5DDEB] pb-4">
         <div className="flex items-center gap-1.5 text-xs font-bold text-[#09408C] uppercase tracking-wider mb-1">
           <FileText size={14} className="text-[#09408C]" />
@@ -91,8 +95,43 @@ export default function PublicLeadForm() {
           Mulai Bimbingan Belajar Bersama Sahabat
         </h3>
         <p className="text-xs text-[#5B6882] mt-1">
-          Isi data diri Anda di bawah ini. Tim kami akan menyiapkan rekomendasi tutor dan rancangan jadwal belajar.
+          {step === 1
+            ? "Langkah 1 dari 2: Tentukan program bimbingan dan metode belajar yang Anda butuhkan."
+            : "Langkah 2 dari 2: Masukkan data kontak Anda agar tim konselor dapat menghubungi."}
         </p>
+
+        {/* Progressive Disclosure Step Indicator */}
+        <div className="flex items-center gap-2 pt-4">
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            className={`flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+              step === 1
+                ? "bg-[#09408C] text-white shadow-xs"
+                : "bg-[#EAF1FA] text-[#09408C] hover:bg-[#D5DDEB]"
+            }`}
+          >
+            <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[11px]">
+              1
+            </span>
+            <span>Kebutuhan Belajar</span>
+          </button>
+          <div className="h-0.5 w-6 bg-[#D5DDEB]" />
+          <button
+            type="button"
+            onClick={() => setStep(2)}
+            className={`flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+              step === 2
+                ? "bg-[#09408C] text-white shadow-xs"
+                : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA]"
+            }`}
+          >
+            <span className="w-5 h-5 rounded-full bg-black/10 flex items-center justify-center text-[11px]">
+              2
+            </span>
+            <span>Data Kontak & Target</span>
+          </button>
+        </div>
       </div>
 
       {errorMessage && (
@@ -102,147 +141,206 @@ export default function PublicLeadForm() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="lead-name" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
-            Nama Lengkap Anda / Siswa *
-          </label>
-          <input
-            id="lead-name"
-            type="text"
-            required
-            placeholder="Contoh: Nabil Ramadhan"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
-          />
-        </div>
+      {step === 1 ? (
+        <form onSubmit={handleNextStep} className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="lead-program" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+                Program Bimbingan yang Diminati *
+              </label>
+              <select
+                id="lead-program"
+                value={programInterest}
+                onChange={(e) => {
+                  const selectedProg = e.target.value;
+                  setProgramInterest(selectedProg);
+                  // UX-FORM-001: Smart Default Synchronization antara Program & Jenjang
+                  if (selectedProg === "K-12 (SD/SMP/SMA)") {
+                    setLevel("SMA");
+                  } else if (selectedProg === "Persiapan CPNS / BUMN / PPPK") {
+                    setLevel("Umum / Fresh Graduate");
+                  } else if (
+                    selectedProg === "Persiapan S2 / S3 & Beasiswa" ||
+                    selectedProg === "Kepenulisan Ilmiah & Skripsi/Tesis"
+                  ) {
+                    setLevel("Kuliah (S1/S2)");
+                  } else if (selectedProg === "TOEFL & IELTS Preparation") {
+                    setLevel("Kuliah (S1/S2)");
+                  }
+                }}
+                className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
+              >
+                <option value="K-12 (SD/SMP/SMA)">Bimbel K-12 (SD, SMP, SMA)</option>
+                <option value="Persiapan CPNS / BUMN / PPPK">Persiapan CPNS / BUMN / PPPK</option>
+                <option value="Persiapan S2 / S3 & Beasiswa">Persiapan S2 / S3 & Beasiswa</option>
+                <option value="TOEFL & IELTS Preparation">TOEFL & IELTS Preparation</option>
+                <option value="Kepenulisan Ilmiah & Skripsi/Tesis">Kepenulisan Ilmiah & Skripsi/Tesis</option>
+              </select>
+            </div>
 
-        <div>
-          <label htmlFor="lead-phone" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
-            Nomor WhatsApp Aktif *
-          </label>
-          <input
-            id="lead-phone"
-            type="tel"
-            required
-            placeholder="Contoh: 08123456789"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
-          />
-        </div>
+            <div>
+              <label htmlFor="lead-level" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+                Jenjang Pendidikan Saat Ini
+              </label>
+              <select
+                id="lead-level"
+                value={level}
+                onChange={(e) => setLevel(e.target.value)}
+                className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
+              >
+                <option value="SD">SD (Sekolah Dasar)</option>
+                <option value="SMP">SMP</option>
+                <option value="SMA">SMA</option>
+                <option value="Kuliah (S1/S2)">Kuliah (S1 / S2)</option>
+                <option value="Umum / Fresh Graduate">Umum / Fresh Graduate</option>
+              </select>
+            </div>
 
-        <div>
-          <label htmlFor="lead-program" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
-            Program Bimbingan yang Diminati
-          </label>
-          <select
-            id="lead-program"
-            value={programInterest}
-            onChange={(e) => {
-              const selectedProg = e.target.value;
-              setProgramInterest(selectedProg);
-              // UX-FORM-001: Smart Default Synchronization antara Program & Jenjang
-              if (selectedProg === "K-12 (SD/SMP/SMA)") {
-                setLevel("SMA");
-              } else if (selectedProg === "Persiapan CPNS / BUMN / PPPK") {
-                setLevel("Umum / Fresh Graduate");
-              } else if (
-                selectedProg === "Persiapan S2 / S3 & Beasiswa" ||
-                selectedProg === "Kepenulisan Ilmiah & Skripsi/Tesis"
-              ) {
-                setLevel("Kuliah (S1/S2)");
-              } else if (selectedProg === "TOEFL & IELTS Preparation") {
-                setLevel("Kuliah (S1/S2)");
-              }
-            }}
-            className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
-          >
-            <option value="K-12 (SD/SMP/SMA)">Bimbel K-12 (SD, SMP, SMA)</option>
-            <option value="Persiapan CPNS / BUMN / PPPK">Persiapan CPNS / BUMN / PPPK</option>
-            <option value="Persiapan S2 / S3 & Beasiswa">Persiapan S2 / S3 & Beasiswa</option>
-            <option value="TOEFL & IELTS Preparation">TOEFL & IELTS Preparation</option>
-            <option value="Kepenulisan Ilmiah & Skripsi/Tesis">Kepenulisan Ilmiah & Skripsi/Tesis</option>
-          </select>
-        </div>
+            <div>
+              <label htmlFor="lead-class-model" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+                Model Kelas
+              </label>
+              <select
+                id="lead-class-model"
+                value={classModel}
+                onChange={(e) => setClassModel(e.target.value)}
+                className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
+              >
+                <option value="PRIVAT">Privat 1-on-1 (Intensif)</option>
+                <option value="SEMI_PRIVAT">Semi-Privat (2-5 Siswa Bersama Teman)</option>
+              </select>
+            </div>
 
-        <div>
-          <label htmlFor="lead-level" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
-            Jenjang Pendidikan Saat Ini
-          </label>
-          <select
-            id="lead-level"
-            value={level}
-            onChange={(e) => setLevel(e.target.value)}
-            className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
-          >
-            <option value="SD">SD (Sekolah Dasar)</option>
-            <option value="SMP">SMP</option>
-            <option value="SMA">SMA</option>
-            <option value="Kuliah (S1/S2)">Kuliah (S1 / S2)</option>
-            <option value="Umum / Fresh Graduate">Umum / Fresh Graduate</option>
-          </select>
-        </div>
+            <div>
+              <label htmlFor="lead-learning-mode" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+                Metode Pembelajaran
+              </label>
+              <select
+                id="lead-learning-mode"
+                value={learningMode}
+                onChange={(e) => setLearningMode(e.target.value)}
+                className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
+              >
+                <option value="ONLINE">Online (Live Zoom / Google Meet)</option>
+                <option value="HOME_VISIT">Home Visit (Tutor Datang ke Rumah)</option>
+              </select>
+            </div>
+          </div>
 
-        <div>
-          <label htmlFor="lead-class-model" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
-            Model Kelas
-          </label>
-          <select
-            id="lead-class-model"
-            value={classModel}
-            onChange={(e) => setClassModel(e.target.value)}
-            className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
-          >
-            <option value="PRIVAT">Privat 1-on-1 (Intensif)</option>
-            <option value="SEMI_PRIVAT">Semi-Privat (2-5 Siswa Bersama Teman)</option>
-          </select>
-        </div>
+          <div className="pt-2">
+            <button
+              type="submit"
+              className="w-full py-3.5 px-6 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Lanjut ke Data Kontak & Jadwal</span>
+              <ArrowRight size={16} />
+            </button>
+            <p className="text-[11px] text-[#5B6882] text-center mt-2">
+              Langkah 1 dari 2 • Bebas biaya pendaftaran awal
+            </p>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="bg-[#EAF1FA] p-3 rounded-xl border border-[#9AC1E2] flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 text-[#09408C] font-semibold">
+              <span>Program Dipilih:</span>
+              <strong className="text-[#1B2A41]">{programInterest} ({level})</strong>
+              <span className="hidden sm:inline text-[#5B6882]">• {classModel === "PRIVAT" ? "Privat" : "Semi-Privat"} • {learningMode === "ONLINE" ? "Online" : "Home Visit"}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="text-[#09408C] hover:underline font-bold text-[11px] shrink-0"
+            >
+              Ubah
+            </button>
+          </div>
 
-        <div>
-          <label htmlFor="lead-learning-mode" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
-            Metode Pembelajaran
-          </label>
-          <select
-            id="lead-learning-mode"
-            value={learningMode}
-            onChange={(e) => setLearningMode(e.target.value)}
-            className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
-          >
-            <option value="ONLINE">Online (Live Zoom / Google Meet)</option>
-            <option value="HOME_VISIT">Home Visit (Tutor Datang ke Rumah)</option>
-          </select>
-        </div>
-      </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="lead-name" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+                Nama Lengkap Anda / Siswa *
+              </label>
+              <input
+                id="lead-name"
+                type="text"
+                required
+                placeholder="Contoh: Nabil Ramadhan"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+              />
+            </div>
 
-      <div>
-        <label htmlFor="lead-notes" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
-          Keluhan Belajar / Target yang Ingin Dicapai (Opsional)
-        </label>
-        <textarea
-          id="lead-notes"
-          rows={3}
-          placeholder="Misal: Kesulitan memahami rumus fisika dasar, ingin persiapan UTBK / tes SKD CPNS bulan depan..."
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
-        />
-      </div>
+            <div>
+              <label htmlFor="lead-phone" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+                Nomor WhatsApp Aktif *
+              </label>
+              <input
+                id="lead-phone"
+                type="tel"
+                required
+                placeholder="Contoh: 08123456789"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+              />
+            </div>
+          </div>
 
-      <div className="pt-2">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full py-3.5 px-6 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-        >
-          <Send size={16} />
-          <span>{isSubmitting ? "Mengirim Pendaftaran..." : "Daftar & Konsultasi Gratis Sekarang"}</span>
-        </button>
-        <p className="text-[11px] text-[#5B6882] text-center mt-2">
-          Privasi Anda terjamin. Data hanya digunakan untuk kebutuhan koordinasi bimbingan Sahabat Belajar.
-        </p>
-      </div>
-    </form>
+          <div>
+            <label htmlFor="lead-email" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+              Alamat Email (Opsional)
+            </label>
+            <input
+              id="lead-email"
+              type="email"
+              placeholder="Contoh: nabil@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="lead-notes" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+              Keluhan Belajar / Target yang Ingin Dicapai (Opsional)
+            </label>
+            <textarea
+              id="lead-notes"
+              rows={3}
+              placeholder="Misal: Kesulitan memahami rumus fisika dasar, ingin persiapan UTBK / tes SKD CPNS bulan depan..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+            />
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="w-full sm:w-auto py-3 px-5 rounded-xl border border-[#D5DDEB] text-[#5B6882] hover:text-[#1B2A41] hover:bg-[#F4F7FB] font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <ArrowLeft size={15} />
+              <span>Kembali</span>
+            </button>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full sm:flex-1 py-3.5 px-6 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+            >
+              <Send size={16} />
+              <span>{isSubmitting ? "Mengirim Pendaftaran..." : "Daftar & Konsultasi Gratis Sekarang"}</span>
+            </button>
+          </div>
+          <p className="text-[11px] text-[#5B6882] text-center mt-2">
+            Privasi Anda terjamin. Data hanya digunakan untuk kebutuhan koordinasi bimbingan Sahabat Belajar.
+          </p>
+        </form>
+      )}
+    </div>
   );
 }
