@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   FileEdit,
   CheckCircle2,
@@ -22,9 +22,21 @@ import {
   X,
   RotateCcw,
   Layers,
+  Plus,
+  Share2,
+  Edit3,
+  MessageCircle,
+  Check,
+  ArrowUpDown,
+  BookOpen,
 } from "lucide-react";
 import type { AcademicDocument, DocumentStage, DocumentCategory } from "@/actions/dokumen";
-import { reviewDocument, deleteDocument } from "@/actions/dokumen";
+import {
+  reviewDocument,
+  deleteDocument,
+  createAdminDocument,
+  updateDocumentDetails,
+} from "@/actions/dokumen";
 import { useToast } from "@/components/ui/Toast";
 
 export default function DocumentManagerClient({
@@ -37,10 +49,18 @@ export default function DocumentManagerClient({
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("ALL");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
-  const [selectedDoc, setSelectedDoc] = useState<AcademicDocument | null>(null);
+  const [sortBy, setSortBy] = useState<"NEWEST" | "STUDENT_ASC" | "TITLE_ASC" | "VERSION_DESC">("NEWEST");
+
+  // Modals state
   const [previewDoc, setPreviewDoc] = useState<AcademicDocument | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<AcademicDocument | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<AcademicDocument | null>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Escape key listener to close modals
   useEffect(() => {
@@ -48,31 +68,83 @@ export default function DocumentManagerClient({
       if (e.key === "Escape") {
         if (previewDoc) setPreviewDoc(null);
         if (isReviewModalOpen) setIsReviewModalOpen(false);
+        if (isCreateModalOpen) setIsCreateModalOpen(false);
+        if (isEditModalOpen) setIsEditModalOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [previewDoc, isReviewModalOpen]);
+  }, [previewDoc, isReviewModalOpen, isCreateModalOpen, isEditModalOpen]);
 
   // Review Form State
   const [reviewStage, setReviewStage] = useState<DocumentStage>("APPROVED");
-  const [mentorName, setMentorName] = useState("Tim Mentor Akademik Sahabat Belajar");
+  const [mentorName, setMentorName] = useState("Dr. Hendra Wijaya / Mentor Akademik");
   const [mentorNotes, setMentorNotes] = useState("");
 
-  const filteredDocs = documents.filter((doc) => {
-    const matchStage = stageFilter === "ALL" || doc.stage === stageFilter;
-    const matchCat = categoryFilter === "ALL" || doc.category === categoryFilter;
-    const matchSearch =
-      doc.title.toLowerCase().includes(search.toLowerCase()) ||
-      doc.studentName.toLowerCase().includes(search.toLowerCase()) ||
-      (doc.targetInstitution && doc.targetInstitution.toLowerCase().includes(search.toLowerCase()));
-    return matchStage && matchCat && matchSearch;
-  });
+  // Create Form State
+  const [newTitle, setNewTitle] = useState("");
+  const [newStudentName, setNewStudentName] = useState("");
+  const [newStudentId, setNewStudentId] = useState("std_demo_01");
+  const [newCategory, setNewCategory] = useState<DocumentCategory>("ESAI_BEASISWA");
+  const [newTargetInstitution, setNewTargetInstitution] = useState("");
+  const [newFileName, setNewFileName] = useState("");
+  const [newFileUrl, setNewFileUrl] = useState("");
+  const [newStudentNotes, setNewStudentNotes] = useState("");
 
-  // Metrics
-  const totalWaiting = documents.filter((d) => d.stage === "REVIEW_MENTOR").length;
-  const totalRevision = documents.filter((d) => d.stage === "REVISI").length;
-  const totalApproved = documents.filter((d) => d.stage === "APPROVED").length;
+  // Edit Form State
+  const [editTitle, setEditTitle] = useState("");
+  const [editCategory, setEditCategory] = useState<DocumentCategory>("ESAI_BEASISWA");
+  const [editTargetInstitution, setEditTargetInstitution] = useState("");
+  const [editFileName, setEditFileName] = useState("");
+  const [editStudentNotes, setEditStudentNotes] = useState("");
+
+  // Category counts
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: documents.length };
+    ["ESAI_BEASISWA", "PROPOSAL_TESIS", "SKRIPSI_KTI", "MOTIVATION_LETTER"].forEach((c) => {
+      counts[c] = documents.filter((d) => d.category === c).length;
+    });
+    return counts;
+  }, [documents]);
+
+  // Stage counts
+  const totalWaiting = useMemo(() => documents.filter((d) => d.stage === "REVIEW_MENTOR").length, [documents]);
+  const totalRevision = useMemo(() => documents.filter((d) => d.stage === "REVISI").length, [documents]);
+  const totalApproved = useMemo(() => documents.filter((d) => d.stage === "APPROVED").length, [documents]);
+
+  // Filter & Sort Documents
+  const filteredDocs = useMemo(() => {
+    let list = documents.filter((doc) => {
+      const matchStage = stageFilter === "ALL" || doc.stage === stageFilter;
+      const matchCat = categoryFilter === "ALL" || doc.category === categoryFilter;
+      const sLower = search.toLowerCase();
+      const matchSearch =
+        !search ||
+        doc.title.toLowerCase().includes(sLower) ||
+        doc.studentName.toLowerCase().includes(sLower) ||
+        (doc.targetInstitution && doc.targetInstitution.toLowerCase().includes(sLower)) ||
+        (doc.mentorNotes && doc.mentorNotes.toLowerCase().includes(sLower));
+      return matchStage && matchCat && matchSearch;
+    });
+
+    list.sort((a, b) => {
+      if (sortBy === "NEWEST") {
+        return new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime();
+      }
+      if (sortBy === "STUDENT_ASC") {
+        return a.studentName.localeCompare(b.studentName);
+      }
+      if (sortBy === "TITLE_ASC") {
+        return a.title.localeCompare(b.title);
+      }
+      if (sortBy === "VERSION_DESC") {
+        return (b.version || 1) - (a.version || 1);
+      }
+      return 0;
+    });
+
+    return list;
+  }, [documents, stageFilter, categoryFilter, search, sortBy]);
 
   const openReviewModal = (doc: AcademicDocument) => {
     setSelectedDoc(doc);
@@ -80,6 +152,16 @@ export default function DocumentManagerClient({
     setMentorName(doc.mentorName || "Dr. Hendra Wijaya / Mentor Akademik");
     setMentorNotes(doc.mentorNotes || "");
     setIsReviewModalOpen(true);
+  };
+
+  const openEditModal = (doc: AcademicDocument) => {
+    setEditingDoc(doc);
+    setEditTitle(doc.title);
+    setEditCategory(doc.category);
+    setEditTargetInstitution(doc.targetInstitution || "");
+    setEditFileName(doc.fileName || "");
+    setEditStudentNotes(doc.studentNotes || "");
+    setIsEditModalOpen(true);
   };
 
   const handleSaveReview = async (e: React.FormEvent) => {
@@ -109,6 +191,7 @@ export default function DocumentManagerClient({
                 mentorNotes,
                 reviewedAt: new Date().toISOString(),
                 version: reviewStage === "REVISI" ? d.version + 1 : d.version,
+                updatedAt: new Date().toISOString(),
               }
             : d
         )
@@ -116,10 +199,104 @@ export default function DocumentManagerClient({
       setIsReviewModalOpen(false);
       toast.success(
         "Evaluasi Disimpan",
-        "Catatan telaah mentor dan status draf naskah berhasil diperbarui di database."
+        `Catatan telaah mentor disimpan. Status: ${
+          reviewStage === "APPROVED"
+            ? "Disetujui (Approved)"
+            : reviewStage === "REVISI"
+            ? "Perlu Revisi"
+            : "Sedang Ditelaah"
+        }.`
       );
     } else {
       toast.error("Gagal Menyimpan", res.message);
+    }
+  };
+
+  const handleCreateDocument = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim() || !newStudentName.trim()) {
+      toast.warning("Form Belum Lengkap", "Judul naskah dan nama siswa wajib diisi.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const res = await createAdminDocument({
+      title: newTitle,
+      studentName: newStudentName,
+      studentId: newStudentId || "std_demo_01",
+      category: newCategory,
+      targetInstitution: newTargetInstitution,
+      fileName: newFileName || `${newTitle.replace(/\s+/g, "_")}.pdf`,
+      fileUrl: newFileUrl || "/materials/sample-document.pdf",
+      studentNotes: newStudentNotes,
+    });
+    setIsSubmitting(false);
+
+    if (res.success && res.data) {
+      const newDoc: AcademicDocument = {
+        id: res.data.id,
+        title: newTitle,
+        studentName: newStudentName,
+        studentId: newStudentId || "std_demo_01",
+        category: newCategory,
+        targetInstitution: newTargetInstitution || null,
+        stage: "REVIEW_MENTOR",
+        version: 1,
+        fileName: newFileName || `${newTitle.replace(/\s+/g, "_")}.pdf`,
+        fileUrl: newFileUrl || "/materials/sample-document.pdf",
+        studentNotes: newStudentNotes || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setDocuments([newDoc, ...documents]);
+      setIsCreateModalOpen(false);
+      toast.success("Draf Ditambahkan", `Draf dokumen "${newTitle}" berhasil ditambahkan.`);
+      // Reset form
+      setNewTitle("");
+      setNewStudentName("");
+      setNewTargetInstitution("");
+      setNewFileName("");
+      setNewFileUrl("");
+      setNewStudentNotes("");
+    } else {
+      toast.error("Gagal Menambahkan", res.message);
+    }
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDoc || !editTitle.trim()) return;
+
+    setIsSubmitting(true);
+    const res = await updateDocumentDetails(editingDoc.id, {
+      title: editTitle,
+      category: editCategory,
+      targetInstitution: editTargetInstitution,
+      fileName: editFileName,
+      studentNotes: editStudentNotes,
+    });
+    setIsSubmitting(false);
+
+    if (res.success) {
+      setDocuments(
+        documents.map((d) =>
+          d.id === editingDoc.id
+            ? {
+                ...d,
+                title: editTitle,
+                category: editCategory,
+                targetInstitution: editTargetInstitution || null,
+                fileName: editFileName || d.fileName,
+                studentNotes: editStudentNotes || null,
+                updatedAt: new Date().toISOString(),
+              }
+            : d
+        )
+      );
+      setIsEditModalOpen(false);
+      toast.success("Data Diperbarui", "Perubahan data draf naskah berhasil disimpan.");
+    } else {
+      toast.error("Gagal Memperbarui", res.message);
     }
   };
 
@@ -133,6 +310,29 @@ export default function DocumentManagerClient({
     } else {
       toast.error("Gagal Menghapus", res.message);
     }
+  };
+
+  // WhatsApp Notification Sender
+  const handleSendWhatsAppNotification = (doc: AcademicDocument) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const portalUrl = `${origin}/portal/dokumen`;
+    const statusText =
+      doc.stage === "APPROVED"
+        ? "✅ DISETUJUI (APPROVED) — Siap diajukan ke beasiswa / seminar"
+        : doc.stage === "REVISI"
+        ? "⚠️ PERLU REVISI TAMBAHAN — Cek catatan mentor"
+        : "⏳ SEDANG DITELAAH MENTOR";
+
+    const feedbackSnippet = doc.mentorNotes
+      ? doc.mentorNotes.length > 150
+        ? doc.mentorNotes.substring(0, 150) + "..."
+        : doc.mentorNotes
+      : "Silakan periksa umpan balik lengkap di portal.";
+
+    const text = `Halo *${doc.studentName}*!\n\nKabar baik dari tim Sahabat Belajar. Draf naskah kamu:\n📄 *${doc.title}* (Versi ${doc.version})\n\nTelah selesai ditelaah oleh mentor *${doc.mentorName || "Tim Akademik"}*.\n\nStatus: *${statusText}*\n\n💬 *Catatan Mentor:*\n"${feedbackSnippet}"\n\nBuka portal siswa untuk membaca telaah lengkap & mengunggah draf revisi:\n${portalUrl}\n\n#BersamaSahabat #SahabatBelajar`;
+
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+    toast.success("WhatsApp Terbuka", `Draf notifikasi telaah untuk ${doc.studentName} siap dikirim.`);
   };
 
   const insertTemplateNote = (text: string) => {
@@ -159,7 +359,7 @@ export default function DocumentManagerClient({
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#E3F4EC] text-[#1F6F4A] text-[11px] font-bold border border-[#1F6F4A]/30">
             <CheckCircle2 size={12} />
-            <span>Siap Diajukan (Approved)</span>
+            <span>Disetujui (Approved)</span>
           </span>
         );
       default:
@@ -181,35 +381,20 @@ export default function DocumentManagerClient({
             <span>Layanan Review Dokumen Ilmiah & Esai Beasiswa</span>
           </div>
           <h1 className="text-2xl font-bold text-[#09408C] font-display">
-            Bimbingan & Koreksi Naskah Akademik
+            Bimbingan & Telaah Naskah Akademik
           </h1>
           <p className="text-sm text-[#5B6882] mt-0.5">
-            Layanan telaah proposal tesis, esai LPDP/AAS, motivation letter, dan skripsi untuk peserta program lanjutan.
+            Layanan telaah proposal tesis, esai beasiswa LPDP/AAS/MEXT, motivation letter, dan skripsi terhubung langsung ke Portal Siswa.
           </p>
         </div>
-      </div>
 
-      {/* Production Notice Banner */}
-      <div className="bg-[#EAF1FA]/80 border border-[#9AC1E2] rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-[#09408C]">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-xl bg-white text-[#09408C] shadow-2xs shrink-0 mt-0.5">
-            <Layers size={18} />
-          </div>
-          <div>
-            <div className="font-bold text-sm text-[#09408C]">
-              Sinkronisasi Langsung ke Portal Siswa (Database Cloud Terhubung)
-            </div>
-            <p className="text-[#5B6882] mt-0.5 leading-relaxed">
-              Seluruh telaah mentor, draf revisi, dan status persetujuan tersimpan di cloud database Supabase dan langsung dapat diakses oleh siswa di menu <strong>Review Dokumen</strong> pada Portal Siswa.
-            </p>
-          </div>
-        </div>
-        <div className="shrink-0 flex items-center gap-2">
-          <span className="px-3 py-1 rounded-full bg-[#09408C] text-white font-bold text-[11px] flex items-center gap-1">
-            <CheckCircle2 size={12} />
-            <span>Database Aktif</span>
-          </span>
-        </div>
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs shrink-0"
+        >
+          <Plus size={16} />
+          <span>Tambah Draf Naskah</span>
+        </button>
       </div>
 
       {/* Top Metric Cards */}
@@ -251,7 +436,7 @@ export default function DocumentManagerClient({
               {totalApproved} Draf
             </div>
             <div className="text-[11px] text-[#1F6F4A] mt-1 font-medium">
-              Siap submit ke beasiswa/sidang
+              Siap submit ke beasiswa / sidang
             </div>
           </div>
           <div className="w-11 h-11 rounded-xl bg-[#E3F4EC] text-[#1F6F4A] flex items-center justify-center">
@@ -260,65 +445,121 @@ export default function DocumentManagerClient({
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-[#D5DDEB] shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
-        <div className="relative w-full md:w-80">
-          <Search size={16} className="absolute left-3 top-2.5 text-[#5B6882]" />
-          <input
-            type="text"
-            placeholder="Cari judul draf, siswa, atau beasiswa..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white text-[#1B2A41]"
-          />
+      {/* Filter, Search & Sort Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-[#D5DDEB] shadow-xs space-y-3">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          {/* Search Bar */}
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-2.5 text-[#5B6882]" />
+            <input
+              type="text"
+              placeholder="Cari judul naskah, nama siswa, target beasiswa, atau catatan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white text-[#1B2A41]"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Stage Filter Pills with Badges */}
+            <div className="inline-flex rounded-xl bg-[#F4F7FB] p-1 border border-[#D5DDEB] text-xs">
+              <button
+                type="button"
+                onClick={() => setStageFilter("ALL")}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                  stageFilter === "ALL"
+                    ? "bg-white text-[#09408C] shadow-2xs"
+                    : "text-[#5B6882] hover:text-[#09408C]"
+                }`}
+              >
+                Semua ({documents.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStageFilter("REVIEW_MENTOR")}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                  stageFilter === "REVIEW_MENTOR"
+                    ? "bg-white text-[#09408C] shadow-2xs"
+                    : "text-[#5B6882] hover:text-[#09408C]"
+                }`}
+              >
+                Menunggu ({totalWaiting})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStageFilter("REVISI")}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                  stageFilter === "REVISI"
+                    ? "bg-white text-[#B45309] shadow-2xs"
+                    : "text-[#5B6882] hover:text-[#B45309]"
+                }`}
+              >
+                Revisi ({totalRevision})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStageFilter("APPROVED")}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                  stageFilter === "APPROVED"
+                    ? "bg-white text-[#1F6F4A] shadow-2xs"
+                    : "text-[#5B6882] hover:text-[#1F6F4A]"
+                }`}
+              >
+                Disetujui ({totalApproved})
+              </button>
+            </div>
+
+            {/* Sorting Dropdown */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-[#D5DDEB] bg-white text-xs">
+              <ArrowUpDown size={13} className="text-[#5B6882]" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-transparent text-[#1B2A41] font-medium outline-hidden cursor-pointer"
+              >
+                <option value="NEWEST">Terbaru Diperbarui</option>
+                <option value="VERSION_DESC">Versi Tertinggi</option>
+                <option value="STUDENT_ASC">Nama Siswa A - Z</option>
+                <option value="TITLE_ASC">Judul A - Z</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
+        {/* Category Pills */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-[#D5DDEB]/60">
           {[
-            { key: "ALL", label: "Semua Status" },
-            { key: "REVIEW_MENTOR", label: "Menunggu Review" },
-            { key: "REVISI", label: "Perlu Revisi" },
-            { key: "APPROVED", label: "Disetujui" },
-          ].map((st) => (
-            <button
-              key={st.key}
-              onClick={() => setStageFilter(st.key)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                stageFilter === st.key
-                  ? "bg-[#09408C] text-white shadow-2xs"
-                  : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#09408C]"
-              }`}
-            >
-              {st.label}
-            </button>
-          ))}
-
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-[#D5DDEB] bg-white text-[#5B6882] focus-ring"
-          >
-            <option value="ALL">Semua Kategori</option>
-            <option value="ESAI_BEASISWA">Esai Beasiswa</option>
-            <option value="PROPOSAL_TESIS">Proposal Tesis</option>
-            <option value="SKRIPSI_KTI">Skripsi / KTI</option>
-            <option value="MOTIVATION_LETTER">Motivation Letter</option>
-          </select>
-
-          {(stageFilter !== "ALL" || categoryFilter !== "ALL" || search) && (
-            <button
-              onClick={() => {
-                setStageFilter("ALL");
-                setCategoryFilter("ALL");
-                setSearch("");
-              }}
-              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#B4381F] hover:bg-[#FBE9E5] transition-colors flex items-center gap-1"
-              title="Reset Filter"
-            >
-              <RotateCcw size={12} />
-              <span>Reset</span>
-            </button>
-          )}
+            { key: "ALL", label: "Semua Kategori" },
+            { key: "ESAI_BEASISWA", label: "Esai Beasiswa" },
+            { key: "PROPOSAL_TESIS", label: "Proposal Tesis" },
+            { key: "SKRIPSI_KTI", label: "Skripsi / KTI" },
+            { key: "MOTIVATION_LETTER", label: "Motivation Letter" },
+          ].map((c) => {
+            const isSelected = categoryFilter === c.key;
+            const count = categoryCounts[c.key] || 0;
+            return (
+              <button
+                key={c.key}
+                onClick={() => setCategoryFilter(c.key)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 ${
+                  isSelected
+                    ? "bg-[#09408C] text-white shadow-xs font-bold"
+                    : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#09408C]"
+                }`}
+              >
+                <span>{c.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    isSelected
+                      ? "bg-white/20 text-white"
+                      : "bg-[#D5DDEB]/60 text-[#5B6882]"
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -327,21 +568,27 @@ export default function DocumentManagerClient({
         <div className="bg-white rounded-3xl p-12 text-center border border-[#D5DDEB]">
           <FileText size={40} className="mx-auto text-[#9AC1E2] mb-3" />
           <h3 className="text-base font-bold text-[#1B2A41]">
-            Tidak ada draf dokumen
+            {search
+              ? `Tidak ditemukan draf naskah yang memuat "${search}"`
+              : "Belum ada draf naskah pada filter ini"}
           </h3>
-          <p className="text-xs text-[#5B6882] mt-1 mb-4">
-            Belum ada naskah yang dikirimkan pada filter ini.
+          <p className="text-xs text-[#5B6882] mt-1 max-w-md mx-auto">
+            {search
+              ? "Coba gunakan kata kunci pencarian yang berbeda atau bersihkan filter."
+              : "Klik tombol di atas untuk menambahkan draf naskah baru."}
           </p>
-          <button
-            onClick={() => {
-              setStageFilter("ALL");
-              setCategoryFilter("ALL");
-              setSearch("");
-            }}
-            className="px-4 py-2 rounded-xl bg-[#EAF1FA] text-[#09408C] text-xs font-semibold hover:bg-[#D5DDEB]"
-          >
-            Tampilkan Semua Naskah
-          </button>
+          {(search || stageFilter !== "ALL" || categoryFilter !== "ALL") && (
+            <button
+              onClick={() => {
+                setStageFilter("ALL");
+                setCategoryFilter("ALL");
+                setSearch("");
+              }}
+              className="mt-4 px-4 py-2 rounded-xl bg-[#EAF1FA] text-[#09408C] text-xs font-bold hover:bg-[#9AC1E2]/30 transition-colors"
+            >
+              Reset Semua Filter
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
@@ -366,7 +613,7 @@ export default function DocumentManagerClient({
                   <h3 className="font-bold text-base text-[#1B2A41] font-display mt-1">
                     {doc.title}
                   </h3>
-                  
+
                   {doc.targetInstitution && (
                     <p className="text-xs text-[#09408C] font-semibold flex items-center gap-1">
                       <span>Target Lembaga / Kampus:</span>
@@ -375,7 +622,19 @@ export default function DocumentManagerClient({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                  {/* WhatsApp Notification Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleSendWhatsAppNotification(doc)}
+                    className="px-3 py-2 rounded-xl bg-[#E3F4EC] text-[#1F6F4A] text-xs font-semibold hover:bg-[#1F6F4A] hover:text-white transition-colors flex items-center gap-1.5"
+                    title="Kirim notifikasi ulasan & status ke WhatsApp siswa"
+                  >
+                    <MessageCircle size={14} />
+                    <span>Notif WA Siswa</span>
+                  </button>
+
+                  {/* Read Document Modal */}
                   {doc.fileUrl && (
                     <button
                       onClick={() => setPreviewDoc(doc)}
@@ -387,14 +646,25 @@ export default function DocumentManagerClient({
                     </button>
                   )}
 
+                  {/* Review Button */}
                   <button
                     onClick={() => openReviewModal(doc)}
-                    className="px-4 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
+                    className="px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
                   >
                     <MessageSquare size={14} />
-                    <span>Beri Catatan Review</span>
+                    <span>Beri Telaah Review</span>
                   </button>
 
+                  {/* Edit metadata button */}
+                  <button
+                    onClick={() => openEditModal(doc)}
+                    className="p-2 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                    title="Edit Data Naskah"
+                  >
+                    <Edit3 size={15} />
+                  </button>
+
+                  {/* Delete button */}
                   <button
                     onClick={() => handleDelete(doc.id, doc.title)}
                     className="p-2 rounded-xl text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
@@ -624,6 +894,7 @@ export default function DocumentManagerClient({
                     "Sesuaikan gaya bahasa academic writing agar lebih formal.",
                     "Sempurnakan perumusan Research Gap dan State of the Art.",
                     "Format sitasi pustaka perlu diselaraskan dengan Mendeley/APA style.",
+                    "Novelty metodologi sudah sangat tajam dan siap diajukan.",
                   ].map((tip, idx) => (
                     <button
                       key={idx}
@@ -652,10 +923,164 @@ export default function DocumentManagerClient({
                 />
               </div>
 
+              <div className="pt-3 border-t border-[#D5DDEB] flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSendWhatsAppNotification(selectedDoc)}
+                  className="px-3 py-2 rounded-xl bg-[#E3F4EC] text-[#1F6F4A] text-xs font-semibold hover:bg-[#1F6F4A] hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <MessageCircle size={14} />
+                  <span>Kirim via WA</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsReviewModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-[#5B6882] hover:bg-[#F4F7FB]"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    <Send size={14} />
+                    <span>{isSubmitting ? "Menyimpan..." : "Simpan Evaluasi"}</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Tambah Draf Dokumen Baru (Admin) */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-xl border border-[#D5DDEB] space-y-5 animate-in fade-in duration-200 max-h-[90vh] overflow-y-auto">
+            <div>
+              <h3 className="text-xl font-bold text-[#09408C] font-display">
+                Tambah Draf Naskah Baru
+              </h3>
+              <p className="text-xs text-[#5B6882] mt-0.5">
+                Unggah atau catat naskah akademik/esai beasiswa milik siswa.
+              </p>
+            </div>
+
+            <form onSubmit={handleCreateDocument} className="space-y-4">
+              <div>
+                <label htmlFor="new-doc-title" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  Judul Dokumen / Esai *
+                </label>
+                <input
+                  id="new-doc-title"
+                  type="text"
+                  required
+                  placeholder="Contoh: Esai Kontribusi LPDP Tahap 1"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="new-student-name" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Nama Siswa *
+                  </label>
+                  <input
+                    id="new-student-name"
+                    type="text"
+                    required
+                    placeholder="Contoh: Dinda Kirana"
+                    value={newStudentName}
+                    onChange={(e) => setNewStudentName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="new-category" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Kategori Naskah
+                  </label>
+                  <select
+                    id="new-category"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value as DocumentCategory)}
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+                  >
+                    <option value="ESAI_BEASISWA">Esai Beasiswa</option>
+                    <option value="PROPOSAL_TESIS">Proposal Tesis</option>
+                    <option value="SKRIPSI_KTI">Skripsi / KTI</option>
+                    <option value="MOTIVATION_LETTER">Motivation Letter</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="new-target-inst" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  Target Lembaga / Beasiswa / Kampus
+                </label>
+                <input
+                  id="new-target-inst"
+                  type="text"
+                  placeholder="Contoh: LPDP Kemenkeu RI / ITB S2 Informatika"
+                  value={newTargetInstitution}
+                  onChange={(e) => setNewTargetInstitution(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="new-file-name" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Nama Berkas
+                  </label>
+                  <input
+                    id="new-file-name"
+                    type="text"
+                    placeholder="Contoh: Esai_LPDP_Dinda.pdf"
+                    value={newFileName}
+                    onChange={(e) => setNewFileName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="new-file-url" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Tautan / URL Berkas
+                  </label>
+                  <input
+                    id="new-file-url"
+                    type="text"
+                    placeholder="Contoh: /materials/sample-document.pdf"
+                    value={newFileUrl}
+                    onChange={(e) => setNewFileUrl(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="new-notes" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  Catatan Siswa / Pokok Masalah yang Ingin Ditelaah
+                </label>
+                <textarea
+                  id="new-notes"
+                  rows={3}
+                  placeholder="Misal: Mohon koreksi bagian Research Gap dan relevansi rencana studi..."
+                  value={newStudentNotes}
+                  onChange={(e) => setNewStudentNotes(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                />
+              </div>
+
               <div className="pt-3 border-t border-[#D5DDEB] flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsReviewModalOpen(false)}
+                  onClick={() => setIsCreateModalOpen(false)}
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-[#5B6882] hover:bg-[#F4F7FB]"
                 >
                   Batal
@@ -663,10 +1088,116 @@ export default function DocumentManagerClient({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] disabled:opacity-50"
                 >
-                  <Send size={14} />
-                  <span>{isSubmitting ? "Menyimpan..." : "Simpan Evaluasi"}</span>
+                  {isSubmitting ? "Menyimpan..." : "Simpan Draf Naskah"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edit Data Dokumen */}
+      {isEditModalOpen && editingDoc && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-xl border border-[#D5DDEB] space-y-5 animate-in fade-in duration-200">
+            <div>
+              <h3 className="text-xl font-bold text-[#09408C] font-display">
+                Edit Data Naskah
+              </h3>
+              <p className="text-xs text-[#5B6882] mt-0.5">
+                Perbarui judul, kategori, atau target lembaga dokumen.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              <div>
+                <label htmlFor="edit-doc-title" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  Judul Dokumen *
+                </label>
+                <input
+                  id="edit-doc-title"
+                  type="text"
+                  required
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="edit-category" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Kategori Naskah
+                  </label>
+                  <select
+                    id="edit-category"
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value as DocumentCategory)}
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+                  >
+                    <option value="ESAI_BEASISWA">Esai Beasiswa</option>
+                    <option value="PROPOSAL_TESIS">Proposal Tesis</option>
+                    <option value="SKRIPSI_KTI">Skripsi / KTI</option>
+                    <option value="MOTIVATION_LETTER">Motivation Letter</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="edit-target-inst" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                    Target Lembaga / Kampus
+                  </label>
+                  <input
+                    id="edit-target-inst"
+                    type="text"
+                    value={editTargetInstitution}
+                    onChange={(e) => setEditTargetInstitution(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="edit-file-name" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  Nama Berkas
+                </label>
+                <input
+                  id="edit-file-name"
+                  type="text"
+                  value={editFileName}
+                  onChange={(e) => setEditFileName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="edit-notes" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  Catatan Permohonan Siswa
+                </label>
+                <textarea
+                  id="edit-notes"
+                  rows={3}
+                  value={editStudentNotes}
+                  onChange={(e) => setEditStudentNotes(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-[#D5DDEB] flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#5B6882] hover:bg-[#F4F7FB]"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] disabled:opacity-50"
+                >
+                  {isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
                 </button>
               </div>
             </form>

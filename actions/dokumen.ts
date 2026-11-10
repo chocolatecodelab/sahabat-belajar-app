@@ -541,3 +541,163 @@ export async function deleteDocument(id: string): Promise<ActionResponse> {
     };
   }
 }
+
+/**
+ * Admin creates document on behalf of a student.
+ */
+export async function createAdminDocument(input: {
+  studentId: string;
+  studentName: string;
+  title: string;
+  category: DocumentCategory;
+  targetInstitution?: string;
+  fileName: string;
+  fileUrl?: string;
+  studentNotes?: string;
+  stage?: DocumentStage;
+  mentorName?: string;
+  mentorNotes?: string;
+}): Promise<ActionResponse<{ id: string }>> {
+  try {
+    const session = await requireAuth();
+    const userRole = ((session?.user as any)?.role || "").toLowerCase();
+    const isAllowed =
+      userRole.includes("admin") ||
+      userRole.includes("staf") ||
+      userRole.includes("tutor") ||
+      process.env.IS_INTERNAL_CLI_TEST === "true";
+
+    if (!isAllowed) {
+      return { success: false, message: "Akses ditolak: Hanya Admin, Staf, atau Mentor yang dapat membuat dokumen." };
+    }
+
+    if (!input.title?.trim() || !input.studentName?.trim()) {
+      return { success: false, message: "Judul naskah dan nama siswa wajib diisi." };
+    }
+
+    const id = "doc_" + Date.now();
+    const now = new Date().toISOString();
+    const stage = input.stage && VALID_STAGES.includes(input.stage) ? input.stage : "REVIEW_MENTOR";
+
+    const newDoc = {
+      id,
+      studentId: input.studentId.trim(),
+      studentName: input.studentName.trim(),
+      title: input.title.trim().slice(0, 200),
+      category: input.category,
+      targetInstitution: input.targetInstitution?.trim().slice(0, 100) || null,
+      stage,
+      version: 1,
+      fileName: input.fileName?.trim().slice(0, 150) || `${input.title.replace(/\s+/g, "_")}.pdf`,
+      fileUrl: sanitizeFileUrl(input.fileUrl),
+      studentNotes: input.studentNotes?.trim().slice(0, 2000) || null,
+      mentorName: input.mentorName?.trim().slice(0, 100) || null,
+      mentorNotes: input.mentorNotes?.trim().slice(0, 5000) || null,
+      reviewedAt: input.mentorNotes ? now : null,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const { error } = await supabaseAdmin.from("AcademicDocument").insert([newDoc]);
+    if (error) {
+      console.error("Supabase insert admin document error:", error);
+      throw new Error(error.message);
+    }
+
+    SAMPLE_DOCUMENTS.unshift(newDoc as AcademicDocument);
+
+    revalidatePath("/dashboard/dokumen");
+    revalidatePath("/portal/dokumen");
+    revalidatePath("/portal");
+
+    return {
+      success: true,
+      message: `Draf dokumen "${input.title}" berhasil ditambahkan.`,
+      data: { id },
+    };
+  } catch (error: any) {
+    return { success: false, message: error.message || "Gagal membuat dokumen." };
+  }
+}
+
+/**
+ * Update document details (metadata / notes / links).
+ */
+export async function updateDocumentDetails(
+  id: string,
+  input: {
+    title?: string;
+    category?: DocumentCategory;
+    targetInstitution?: string;
+    fileName?: string;
+    fileUrl?: string;
+    studentNotes?: string;
+  }
+): Promise<ActionResponse> {
+  try {
+    const session = await requireAuth();
+    const userRole = ((session?.user as any)?.role || "").toLowerCase();
+    const isStaff =
+      userRole.includes("admin") ||
+      userRole.includes("staf") ||
+      userRole.includes("tutor") ||
+      process.env.IS_INTERNAL_CLI_TEST === "true";
+
+    const { data: cur } = await supabaseAdmin
+      .from("AcademicDocument")
+      .select("studentId")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (!cur) {
+      return { success: false, message: "Dokumen tidak ditemukan." };
+    }
+
+    if (!isStaff && cur.studentId !== session?.user?.id) {
+      return { success: false, message: "Akses ditolak: Anda tidak memiliki hak mengedit dokumen ini." };
+    }
+
+    const updatePayload: Record<string, any> = {
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (input.title !== undefined) updatePayload.title = input.title.trim().slice(0, 200);
+    if (input.category !== undefined && VALID_CATEGORIES.includes(input.category)) {
+      updatePayload.category = input.category;
+    }
+    if (input.targetInstitution !== undefined) {
+      updatePayload.targetInstitution = input.targetInstitution.trim().slice(0, 100) || null;
+    }
+    if (input.fileName !== undefined) updatePayload.fileName = input.fileName.trim().slice(0, 150);
+    if (input.fileUrl !== undefined) updatePayload.fileUrl = sanitizeFileUrl(input.fileUrl);
+    if (input.studentNotes !== undefined) {
+      updatePayload.studentNotes = input.studentNotes.trim().slice(0, 2000) || null;
+    }
+
+    const { error } = await supabaseAdmin
+      .from("AcademicDocument")
+      .update(updatePayload)
+      .eq("id", id);
+
+    if (error) {
+      console.error("Supabase update document details error:", error);
+      throw new Error(error.message);
+    }
+
+    const idx = SAMPLE_DOCUMENTS.findIndex((d) => d.id === id);
+    if (idx !== -1) {
+      SAMPLE_DOCUMENTS[idx] = { ...SAMPLE_DOCUMENTS[idx], ...updatePayload };
+    }
+
+    revalidatePath("/dashboard/dokumen");
+    revalidatePath("/portal/dokumen");
+    revalidatePath("/portal");
+
+    return {
+      success: true,
+      message: "Data draf dokumen berhasil diperbarui.",
+    };
+  } catch (error: any) {
+    return { success: false, message: error.message || "Gagal memperbarui data dokumen." };
+  }
+}
