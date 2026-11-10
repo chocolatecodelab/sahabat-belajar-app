@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   FolderOpen,
   Plus,
@@ -21,6 +21,11 @@ import {
   Layers,
   X,
   RotateCcw,
+  Share2,
+  Copy,
+  Check,
+  ArrowUpDown,
+  SlidersHorizontal,
 } from "lucide-react";
 import type { LearningMaterial, ProgramCategory } from "@/actions/materi";
 import {
@@ -40,6 +45,8 @@ export default function MaterialManagerClient({
   const [materials, setMaterials] = useState<LearningMaterial[]>(initialMaterials);
   const [search, setSearch] = useState("");
   const [selectedCat, setSelectedCat] = useState("ALL");
+  const [sortBy, setSortBy] = useState<"NEWEST" | "DOWNLOADS" | "TITLE_AZ" | "SIZE">("NEWEST");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<LearningMaterial | null>(null);
   const [previewMaterial, setPreviewMaterial] = useState<LearningMaterial | null>(null);
@@ -81,17 +88,87 @@ export default function MaterialManagerClient({
     { key: "PENULISAN_ILMIAH", label: "Kepenulisan Ilmiah" },
   ];
 
-  const filteredMaterials = materials.filter((mat) => {
-    const matchCat = selectedCat === "ALL" || mat.programCategory === selectedCat;
-    const matchSearch =
-      mat.title.toLowerCase().includes(search.toLowerCase()) ||
-      mat.subject.toLowerCase().includes(search.toLowerCase()) ||
-      (mat.description && mat.description.toLowerCase().includes(search.toLowerCase())) ||
-      mat.authorTutor.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
-  });
+  // Category counts
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: materials.length };
+    categories.forEach((c) => {
+      if (c.key !== "ALL") counts[c.key] = 0;
+    });
+    materials.forEach((m) => {
+      counts[m.programCategory] = (counts[m.programCategory] || 0) + 1;
+    });
+    return counts;
+  }, [materials]);
+
+  // Filtered and Sorted Materials
+  const filteredMaterials = useMemo(() => {
+    const filtered = materials.filter((mat) => {
+      const matchCat = selectedCat === "ALL" || mat.programCategory === selectedCat;
+      const matchSearch =
+        mat.title.toLowerCase().includes(search.toLowerCase()) ||
+        mat.subject.toLowerCase().includes(search.toLowerCase()) ||
+        (mat.description && mat.description.toLowerCase().includes(search.toLowerCase())) ||
+        mat.authorTutor.toLowerCase().includes(search.toLowerCase());
+      return matchCat && matchSearch;
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "DOWNLOADS") {
+        return (b.downloadCount || 0) - (a.downloadCount || 0);
+      }
+      if (sortBy === "TITLE_AZ") {
+        return a.title.localeCompare(b.title);
+      }
+      if (sortBy === "SIZE") {
+        const parseMB = (s: string) => parseFloat(s) || 0;
+        return parseMB(b.fileSize) - parseMB(a.fileSize);
+      }
+      // Default: NEWEST
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [materials, selectedCat, search, sortBy]);
 
   const totalDownloads = materials.reduce((acc, m) => acc + (m.downloadCount || 0), 0);
+  const publishedCount = materials.filter((m) => m.isPublished).length;
+  const draftCount = materials.length - publishedCount;
+
+  const handleTogglePublish = async (mat: LearningMaterial) => {
+    const newStatus = !mat.isPublished;
+    const res = await updateLearningMaterial(mat.id, { isPublished: newStatus });
+    if (res.success) {
+      setMaterials((prev) =>
+        prev.map((m) => (m.id === mat.id ? { ...m, isPublished: newStatus } : m))
+      );
+      toast.success(
+        newStatus ? "Modul Dipublikasikan" : "Modul Dijadikan Draf",
+        `Modul "${mat.title}" kini ${newStatus ? "tampil di portal siswa" : "disembunyikan dari siswa"}.`
+      );
+    } else {
+      toast.error("Gagal Mengubah Status", res.message);
+    }
+  };
+
+  const handleCopyLink = (mat: LearningMaterial) => {
+    const fullUrl = `${window.location.origin}${mat.fileUrl}`;
+    navigator.clipboard.writeText(fullUrl);
+    setCopiedId(mat.id);
+    setTimeout(() => setCopiedId(null), 2500);
+    toast.info("Tautan Disalin", `Tautan unduh modul "${mat.title}" berhasil disalin ke clipboard.`);
+  };
+
+  const handleShareWhatsApp = (mat: LearningMaterial) => {
+    const fullUrl = `${window.location.origin}${mat.fileUrl}`;
+    const text =
+      `Halo! 📚 Modul Pembelajaran Resmi Sahabat Belajar:\n\n` +
+      `*${mat.title}*\n` +
+      `• Program: ${mat.programCategory.replace(/_/g, " ")}\n` +
+      `• Mata Pelajaran: ${mat.subject}\n` +
+      `• Penyusun: ${mat.authorTutor}\n` +
+      `• Ukuran File: ${mat.fileSize}\n\n` +
+      `Akses dan unduh modul materi lengkap di: ${fullUrl}\n\n` +
+      `Semangat belajarnya! ✨ #BersamaSahabat`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
 
   const resetForm = () => {
     setTitle("");
@@ -337,8 +414,10 @@ export default function MaterialManagerClient({
             <div className="text-2xl font-bold text-[#09408C] font-display mt-0.5">
               {materials.length} E-Book / Modul
             </div>
-            <div className="text-[11px] text-[#1F6F4A] mt-1 font-medium">
-              Tersedia untuk semua program
+            <div className="text-[11px] text-[#1F6F4A] mt-1 font-medium flex items-center gap-1.5">
+              <span>{publishedCount} Terbit</span>
+              <span>•</span>
+              <span className="text-[#5B6882]">{draftCount} Draf</span>
             </div>
           </div>
           <div className="w-11 h-11 rounded-xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center">
@@ -377,47 +456,81 @@ export default function MaterialManagerClient({
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-[#D5DDEB] shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
-        <div className="relative w-full md:w-80">
-          <Search size={16} className="absolute left-3 top-2.5 text-[#5B6882]" />
-          <input
-            type="text"
-            placeholder="Cari judul modul, topik, atau mata pelajaran..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white text-[#1B2A41]"
-          />
+      {/* Filter & Sort Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-[#D5DDEB] shadow-xs space-y-3">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="relative w-full md:w-80">
+            <Search size={16} className="absolute left-3 top-2.5 text-[#5B6882]" />
+            <input
+              type="text"
+              placeholder="Cari judul modul, topik, atau mata pelajaran..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white text-[#1B2A41]"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+            <div className="flex items-center gap-1.5 text-xs text-[#5B6882] font-medium">
+              <ArrowUpDown size={14} className="text-[#09408C]" />
+              <span className="hidden sm:inline">Urutkan:</span>
+            </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="px-3 py-1.5 text-xs rounded-xl border border-[#D5DDEB] bg-[#F4F7FB] text-[#09408C] font-semibold focus:outline-none focus:border-[#09408C]"
+            >
+              <option value="NEWEST">Terbaru Ditambahkan</option>
+              <option value="DOWNLOADS">Paling Banyak Diunduh</option>
+              <option value="TITLE_AZ">Judul (A - Z)</option>
+              <option value="SIZE">Ukuran File</option>
+            </select>
+
+            {(selectedCat !== "ALL" || search || sortBy !== "NEWEST") && (
+              <button
+                onClick={() => {
+                  setSelectedCat("ALL");
+                  setSearch("");
+                  setSortBy("NEWEST");
+                }}
+                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#B4381F] hover:bg-[#FBE9E5] transition-colors flex items-center gap-1"
+                title="Reset Filter"
+              >
+                <RotateCcw size={12} />
+                <span>Reset</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
-          {categories.map((c) => (
-            <button
-              key={c.key}
-              onClick={() => setSelectedCat(c.key)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                selectedCat === c.key
-                  ? "bg-[#09408C] text-white shadow-2xs"
-                  : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#09408C]"
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
-
-          {(selectedCat !== "ALL" || search) && (
-            <button
-              onClick={() => {
-                setSelectedCat("ALL");
-                setSearch("");
-              }}
-              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#B4381F] hover:bg-[#FBE9E5] transition-colors flex items-center gap-1"
-              title="Reset Filter"
-            >
-              <RotateCcw size={12} />
-              <span>Reset</span>
-            </button>
-          )}
+        {/* Category Tabs with Badges */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-[#D5DDEB]/60">
+          {categories.map((c) => {
+            const count = categoryCounts[c.key] || 0;
+            const isSelected = selectedCat === c.key;
+            return (
+              <button
+                key={c.key}
+                onClick={() => setSelectedCat(c.key)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  isSelected
+                    ? "bg-[#09408C] text-white shadow-2xs"
+                    : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#09408C]"
+                }`}
+              >
+                <span>{c.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    isSelected
+                      ? "bg-white/20 text-white"
+                      : "bg-[#D5DDEB] text-[#5B6882]"
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -455,11 +568,22 @@ export default function MaterialManagerClient({
                     <span className="px-2.5 py-0.5 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]/60">
                       {mat.programCategory.replace(/_/g, " ")}
                     </span>
-                    {!mat.isPublished && (
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-semibold">
-                        Draft
-                      </span>
-                    )}
+                    <button
+                      onClick={() => handleTogglePublish(mat)}
+                      title={
+                        mat.isPublished
+                          ? "Klik untuk jadikan Draf (sembunyikan dari siswa)"
+                          : "Klik untuk Terbitkan ke siswa"
+                      }
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all shadow-2xs ${
+                        mat.isPublished
+                          ? "bg-[#E3F4EC] text-[#1F6F4A] hover:bg-emerald-100 border border-[#1F6F4A]/30"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-300"
+                      }`}
+                    >
+                      {mat.isPublished ? <Eye size={11} /> : <EyeOff size={11} />}
+                      <span>{mat.isPublished ? "Terbit" : "Draf"}</span>
+                    </button>
                   </div>
                   <span className="text-[11px] font-semibold text-[#5B6882] bg-slate-100 px-2 py-0.5 rounded-md tabular-nums">
                     {mat.fileSize}
@@ -491,29 +615,45 @@ export default function MaterialManagerClient({
 
               {/* Actions */}
               <div className="mt-5 pt-4 border-t border-[#D5DDEB] flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => handleDownload(mat)}
-                    className="px-3 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
+                    className="px-3 py-1.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
                   >
-                    <Download size={14} />
+                    <Download size={13} />
                     <span>Unduh</span>
                   </button>
 
                   <button
                     onClick={() => setPreviewMaterial(mat)}
-                    className="px-3 py-2 rounded-xl bg-[#EAF1FA] text-[#09408C] text-xs font-semibold hover:bg-[#D5DDEB] transition-colors flex items-center gap-1"
+                    className="px-2.5 py-1.5 rounded-xl bg-[#EAF1FA] text-[#09408C] text-xs font-semibold hover:bg-[#D5DDEB] transition-colors flex items-center gap-1"
                     title="Pratinjau Modul"
                   >
-                    <Eye size={14} />
-                    <span>Baca</span>
+                    <Eye size={13} />
+                    <span className="hidden sm:inline">Baca</span>
                   </button>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <button
+                    onClick={() => handleCopyLink(mat)}
+                    className="p-1.5 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                    title="Salin Tautan Modul"
+                  >
+                    {copiedId === mat.id ? <Check size={15} className="text-[#1F6F4A]" /> : <Copy size={15} />}
+                  </button>
+
+                  <button
+                    onClick={() => handleShareWhatsApp(mat)}
+                    className="p-1.5 rounded-xl text-[#5B6882] hover:text-[#1F6F4A] hover:bg-[#E3F4EC] transition-colors"
+                    title="Bagikan ke Siswa via WhatsApp"
+                  >
+                    <Share2 size={15} />
+                  </button>
+
+                  <button
                     onClick={() => openEditModal(mat)}
-                    className="p-2 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                    className="p-1.5 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
                     title="Edit Modul"
                   >
                     <Edit2 size={15} />
@@ -521,7 +661,7 @@ export default function MaterialManagerClient({
 
                   <button
                     onClick={() => handleDelete(mat.id, mat.title)}
-                    className="p-2 rounded-xl text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
+                    className="p-1.5 rounded-xl text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
                     title="Hapus Modul"
                   >
                     <Trash2 size={15} />
@@ -555,26 +695,50 @@ export default function MaterialManagerClient({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <button
+                  onClick={() => handleCopyLink(previewMaterial)}
+                  className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white border border-[#D5DDEB] text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors text-xs font-semibold flex items-center gap-1 shadow-2xs"
+                  title="Salin Tautan Modul"
+                >
+                  {copiedId === previewMaterial.id ? (
+                    <Check size={13} className="text-[#1F6F4A]" />
+                  ) : (
+                    <Copy size={13} />
+                  )}
+                  <span className="hidden sm:inline">Salin Tautan</span>
+                </button>
+
+                <button
+                  onClick={() => handleShareWhatsApp(previewMaterial)}
+                  className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#E3F4EC] text-[#1F6F4A] hover:bg-emerald-100 border border-[#1F6F4A]/30 transition-colors text-xs font-semibold flex items-center gap-1 shadow-2xs"
+                  title="Bagikan ke WhatsApp Siswa"
+                >
+                  <Share2 size={13} />
+                  <span className="hidden sm:inline">Kirim WA</span>
+                </button>
+
                 <a
                   href={previewMaterial.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                  className="p-1.5 sm:p-2 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
                   title="Buka di Tab Baru"
                 >
                   <ExternalLink size={16} />
                 </a>
+
                 <button
                   onClick={() => handleDownload(previewMaterial)}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
+                  className="px-3 py-1.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
                 >
                   <Download size={14} />
-                  <span>Unduh</span>
+                  <span className="hidden sm:inline">Unduh</span>
                 </button>
+
                 <button
                   onClick={() => setPreviewMaterial(null)}
-                  className="p-2 rounded-xl text-[#5B6882] hover:text-[#1B2A41] hover:bg-[#EAF1FA] transition-colors"
+                  className="p-1.5 sm:p-2 rounded-xl text-[#5B6882] hover:text-[#1B2A41] hover:bg-[#EAF1FA] transition-colors"
                 >
                   <X size={18} />
                 </button>

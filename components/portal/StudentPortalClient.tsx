@@ -945,19 +945,34 @@ export default function StudentPortalClient({
                 { key: "S2_BEASISWA", label: "S2 & Beasiswa" },
                 { key: "PENULISAN_ILMIAH", label: "Kepenulisan Ilmiah" },
                 { key: "K12", label: "Bimbel K-12" },
-              ].map((c) => (
-                <button
-                  key={c.key}
-                  onClick={() => setSelectedMaterialCategory(c.key as ProgramCategory)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border ${
-                    selectedMaterialCategory === c.key
-                      ? "bg-[#09408C] text-white border-[#09408C] shadow-2xs"
-                      : "bg-white text-[#5B6882] border-[#D5DDEB] hover:border-[#9AC1E2] hover:text-[#1B2A41]"
-                  }`}
-                >
-                  {c.label}
-                </button>
-              ))}
+              ].map((c) => {
+                const count =
+                  c.key === "ALL"
+                    ? studentMaterials.length
+                    : studentMaterials.filter((m) => m.programCategory === c.key).length;
+                return (
+                  <button
+                    key={c.key}
+                    onClick={() => setSelectedMaterialCategory(c.key as ProgramCategory)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors border flex items-center gap-1.5 ${
+                      selectedMaterialCategory === c.key
+                        ? "bg-[#09408C] text-white border-[#09408C] shadow-2xs"
+                        : "bg-white text-[#5B6882] border-[#D5DDEB] hover:border-[#9AC1E2] hover:text-[#1B2A41]"
+                    }`}
+                  >
+                    <span>{c.label}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                        selectedMaterialCategory === c.key
+                          ? "bg-white/20 text-white"
+                          : "bg-[#EAF1FA] text-[#09408C]"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {filteredMaterials.length === 0 ? (
