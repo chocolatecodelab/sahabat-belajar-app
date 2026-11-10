@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase";
+import { requirePermission } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { ActionResponse } from "@/types";
 
@@ -27,7 +28,7 @@ export interface LearningMaterial {
   createdAt: string;
 }
 
-const SAMPLE_MATERIALS: LearningMaterial[] = [
+const SAMPLE_FALLBACK_MATERIALS: LearningMaterial[] = [
   {
     id: "mat_cpns_01",
     title: "Modul Ringkasan Rumus Cepat TIU: Aritmatika, Deret & Silogisme",
@@ -98,8 +99,25 @@ const SAMPLE_MATERIALS: LearningMaterial[] = [
     isPublished: true,
     createdAt: new Date(Date.now() - 86400000 * 20).toISOString(),
   },
+  {
+    id: "mat_k12_01",
+    title: "Intisari Konsep & Bedah Soal Matematika Wajib & Fisika SMA (Fase F)",
+    programCategory: "K12",
+    subject: "Matematika & Fisika SMA",
+    description: "Ringkasan konsep integral kalkulus, trigonometri analitis, dan dinamika rotasi sesuai Kurikulum Merdeka.",
+    fileUrl: "/materials/k12-matematika-fisika-sma.pdf",
+    fileName: "Intisari_Konsep_MIPA_SMA_FaseF.pdf",
+    fileSize: "3.5 MB",
+    authorTutor: "Tim Tutor Sains SMA Sahabat Belajar",
+    downloadCount: 167,
+    isPublished: true,
+    createdAt: new Date(Date.now() - 86400000 * 22).toISOString(),
+  },
 ];
 
+/**
+ * Fetch learning materials from Supabase LearningMaterial table.
+ */
 export async function getLearningMaterials(
   category?: string
 ): Promise<LearningMaterial[]> {
@@ -116,18 +134,24 @@ export async function getLearningMaterials(
     const { data, error } = await query;
     if (error || !data || data.length === 0) {
       if (category && category !== "ALL") {
-        return SAMPLE_MATERIALS.filter((m) => m.programCategory === category);
+        return SAMPLE_FALLBACK_MATERIALS.filter((m) => m.programCategory === category);
       }
-      return SAMPLE_MATERIALS;
+      return SAMPLE_FALLBACK_MATERIALS;
     }
 
     return data as LearningMaterial[];
   } catch (err) {
     console.error("getLearningMaterials error:", err);
-    return SAMPLE_MATERIALS;
+    if (category && category !== "ALL") {
+      return SAMPLE_FALLBACK_MATERIALS.filter((m) => m.programCategory === category);
+    }
+    return SAMPLE_FALLBACK_MATERIALS;
   }
 }
 
+/**
+ * Create a new learning material in database (Enforces material.create).
+ */
 export async function createLearningMaterial(input: {
   title: string;
   programCategory: "K12" | "CPNS_BUMN" | "UTBK_SNBT" | "TOEFL_IELTS" | "S2_BEASISWA";
@@ -139,28 +163,36 @@ export async function createLearningMaterial(input: {
   authorTutor?: string;
 }): Promise<ActionResponse<{ id: string }>> {
   try {
+    await requirePermission("material.create");
+
+    if (!input.title?.trim() || !input.subject?.trim()) {
+      return {
+        success: false,
+        message: "Judul modul dan mata pelajaran wajib diisi.",
+      };
+    }
+
     const id = "mat_" + Date.now();
-    const newMat: LearningMaterial = {
+    const newMat = {
       id,
-      title: input.title,
+      title: input.title.trim(),
       programCategory: input.programCategory,
-      subject: input.subject,
-      description: input.description || null,
+      subject: input.subject.trim(),
+      description: input.description?.trim() || null,
       fileUrl: input.fileUrl || "/materials/sample-document.pdf",
-      fileName: input.fileName,
+      fileName: input.fileName.trim() || `${input.title.replace(/\s+/g, "_")}.pdf`,
       fileSize: input.fileSize || "2.0 MB",
-      authorTutor: input.authorTutor || "Tim Akademik Sahabat Belajar",
+      authorTutor: input.authorTutor?.trim() || "Tim Akademik Sahabat Belajar",
       downloadCount: 0,
       isPublished: true,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
-    SAMPLE_MATERIALS.unshift(newMat);
-
-    try {
-      await supabaseAdmin.from("LearningMaterial").insert([newMat]);
-    } catch (e) {
-      console.warn("Supabase insert material warning:", e);
+    const { error } = await supabaseAdmin.from("LearningMaterial").insert([newMat]);
+    if (error) {
+      console.error("Supabase insert material error:", error);
+      throw new Error(error.message);
     }
 
     revalidatePath("/dashboard/materi");
@@ -172,28 +204,144 @@ export async function createLearningMaterial(input: {
       data: { id },
     };
   } catch (error: any) {
-    return { success: false, message: error.message || "Gagal membuat modul materi" };
+    return {
+      success: false,
+      message: error.message || "Gagal membuat modul materi pembelajaran.",
+    };
   }
 }
 
-export async function deleteLearningMaterial(id: string): Promise<ActionResponse> {
+/**
+ * Update an existing learning material in database (Enforces material.update).
+ */
+export async function updateLearningMaterial(
+  id: string,
+  input: {
+    title?: string;
+    programCategory?: "K12" | "CPNS_BUMN" | "UTBK_SNBT" | "TOEFL_IELTS" | "S2_BEASISWA";
+    subject?: string;
+    description?: string;
+    fileUrl?: string;
+    fileName?: string;
+    fileSize?: string;
+    authorTutor?: string;
+    isPublished?: boolean;
+  }
+): Promise<ActionResponse> {
   try {
-    const idx = SAMPLE_MATERIALS.findIndex((m) => m.id === id);
-    if (idx !== -1) {
-      SAMPLE_MATERIALS.splice(idx, 1);
-    }
+    await requirePermission("material.update");
 
-    try {
-      await supabaseAdmin.from("LearningMaterial").delete().eq("id", id);
-    } catch (e) {
-      console.warn("Supabase delete material warning:", e);
+    const updatePayload: Record<string, any> = {
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (input.title !== undefined) updatePayload.title = input.title.trim();
+    if (input.programCategory !== undefined) updatePayload.programCategory = input.programCategory;
+    if (input.subject !== undefined) updatePayload.subject = input.subject.trim();
+    if (input.description !== undefined) updatePayload.description = input.description?.trim() || null;
+    if (input.fileUrl !== undefined) updatePayload.fileUrl = input.fileUrl;
+    if (input.fileName !== undefined) updatePayload.fileName = input.fileName.trim();
+    if (input.fileSize !== undefined) updatePayload.fileSize = input.fileSize;
+    if (input.authorTutor !== undefined) updatePayload.authorTutor = input.authorTutor.trim();
+    if (input.isPublished !== undefined) updatePayload.isPublished = input.isPublished;
+
+    const { error } = await supabaseAdmin
+      .from("LearningMaterial")
+      .update(updatePayload)
+      .eq("id", id);
+
+    if (error) {
+      console.error("Supabase update material error:", error);
+      throw new Error(error.message);
     }
 
     revalidatePath("/dashboard/materi");
     revalidatePath("/portal");
 
-    return { success: true, message: "Modul berhasil dihapus" };
+    return {
+      success: true,
+      message: "Modul pembelajaran berhasil diperbarui.",
+    };
   } catch (error: any) {
-    return { success: false, message: error.message || "Gagal menghapus modul" };
+    return {
+      success: false,
+      message: error.message || "Gagal memperbarui modul pembelajaran.",
+    };
+  }
+}
+
+/**
+ * Delete a learning material from database (Enforces material.delete).
+ */
+export async function deleteLearningMaterial(id: string): Promise<ActionResponse> {
+  try {
+    await requirePermission("material.delete");
+
+    const { error } = await supabaseAdmin.from("LearningMaterial").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete material error:", error);
+      throw new Error(error.message);
+    }
+
+    revalidatePath("/dashboard/materi");
+    revalidatePath("/portal");
+
+    return {
+      success: true,
+      message: "Modul pembelajaran berhasil dihapus dari bank materi digital.",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.message || "Gagal menghapus modul pembelajaran.",
+    };
+  }
+}
+
+/**
+ * Track download of a learning material (increments downloadCount by 1).
+ * Safe to be invoked by students and visitors.
+ */
+export async function trackMaterialDownload(
+  id: string
+): Promise<ActionResponse<{ downloadCount: number }>> {
+  try {
+    const { data: cur, error: fetchErr } = await supabaseAdmin
+      .from("LearningMaterial")
+      .select("downloadCount")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (fetchErr) {
+      console.warn("trackMaterialDownload fetch error:", fetchErr);
+    }
+
+    const newCount = ((cur?.downloadCount as number) || 0) + 1;
+
+    const { error: updErr } = await supabaseAdmin
+      .from("LearningMaterial")
+      .update({
+        downloadCount: newCount,
+        updatedAt: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (updErr) {
+      console.warn("trackMaterialDownload update error:", updErr);
+    }
+
+    revalidatePath("/dashboard/materi");
+    revalidatePath("/portal");
+
+    return {
+      success: true,
+      message: "Unduhan berhasil dicatat.",
+      data: { downloadCount: newCount },
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.message || "Gagal mencatat unduhan.",
+    };
   }
 }

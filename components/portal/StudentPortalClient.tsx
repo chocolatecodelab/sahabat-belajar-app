@@ -41,7 +41,7 @@ import { signOut } from "next-auth/react";
 import type { StudentPortalData, StudentInvoice } from "@/actions/portal";
 import { submitStudentPaymentConfirmation } from "@/actions/portal";
 import type { ExamItem, StudentExamSession } from "@/actions/ujian";
-import type { LearningMaterial, ProgramCategory } from "@/actions/materi";
+import { trackMaterialDownload, type LearningMaterial, type ProgramCategory } from "@/actions/materi";
 import { formatDayDate, formatTime, formatDate } from "@/lib/date";
 import ScoreProgressChart from "@/components/portal/ScoreProgressChart";
 import { useToast } from "@/components/ui/Toast";
@@ -196,8 +196,14 @@ export default function StudentPortalClient({
     return matchesCategory && matchesSearch;
   });
 
-  const handleSimulateDownload = (fileName: string) => {
-    toast.success("Modul Diunduh", `Modul ${fileName} berhasil diunduh.`);
+  const handleDownloadMaterial = (mat: LearningMaterial) => {
+    try {
+      trackMaterialDownload(mat.id);
+    } catch (e) {
+      console.warn("Failed tracking download:", e);
+    }
+    window.open(mat.fileUrl, "_blank");
+    toast.success("Modul Diunduh", `Modul ${mat.fileName} sedang diunduh.`);
   };
 
   return (
@@ -988,7 +994,7 @@ export default function StudentPortalClient({
 
                     <div className="mt-5 pt-4 border-t border-[#D5DDEB]">
                       <button
-                        onClick={() => handleSimulateDownload(mat.fileName)}
+                        onClick={() => handleDownloadMaterial(mat)}
                         className="w-full py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-bold hover:bg-[#0E3571] transition-colors flex items-center justify-center gap-2 shadow-xs"
                       >
                         <Download size={14} />

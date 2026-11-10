@@ -83,7 +83,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             "package.read", "package.manage",
             "payment.read", "payment.manage",
             "payout.read", "payout.manage",
-            "material.read", "material.manage",
+            "material.read", "material.manage", "material.create", "material.update", "material.delete",
             "exam.read", "exam.manage",
             "document.read", "document.manage",
             "media.read", "media.create", "media.delete",

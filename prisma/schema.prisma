@@ -447,3 +447,27 @@ model Article {
   @@index([authorId])
   @@index([slug])
 }
+
+// ============================
+// MODUL & BANK MATERI BELAJAR DIGITAL
+// ============================
+
+model LearningMaterial {
+  id              String   @id @default(cuid())
+  title           String
+  programCategory String   // K12, CPNS_BUMN, UTBK_SNBT, TOEFL_IELTS, S2_BEASISWA
+  subject         String
+  description     String?  @db.Text
+  fileUrl         String
+  fileName        String
+  fileSize        String   @default("2.0 MB")
+  authorTutor     String   @default("Tim Akademik Sahabat Belajar")
+  downloadCount   Int      @default(0)
+  isPublished     Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([programCategory])
+  @@index([isPublished])
+}
+

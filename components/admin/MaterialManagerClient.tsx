@@ -13,9 +13,20 @@ import {
   BookOpen,
   CheckCircle2,
   Tag,
+  Edit2,
+  UploadCloud,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  Layers,
 } from "lucide-react";
 import type { LearningMaterial, ProgramCategory } from "@/actions/materi";
-import { createLearningMaterial, deleteLearningMaterial } from "@/actions/materi";
+import {
+  createLearningMaterial,
+  updateLearningMaterial,
+  deleteLearningMaterial,
+  trackMaterialDownload,
+} from "@/actions/materi";
 import { useToast } from "@/components/ui/Toast";
 
 export default function MaterialManagerClient({
@@ -28,9 +39,11 @@ export default function MaterialManagerClient({
   const [search, setSearch] = useState("");
   const [selectedCat, setSelectedCat] = useState("ALL");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingMaterial, setEditingMaterial] = useState<LearningMaterial | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Form State
+  // Form State (for both create & edit)
   const [title, setTitle] = useState("");
   const [programCategory, setProgramCategory] = useState<
     "K12" | "CPNS_BUMN" | "UTBK_SNBT" | "TOEFL_IELTS" | "S2_BEASISWA"
@@ -38,8 +51,10 @@ export default function MaterialManagerClient({
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [fileName, setFileName] = useState("");
+  const [fileUrl, setFileUrl] = useState("");
   const [fileSize, setFileSize] = useState("2.5 MB");
   const [authorTutor, setAuthorTutor] = useState("Tim Akademik Sahabat Belajar");
+  const [isPublished, setIsPublished] = useState(true);
 
   const categories = [
     { key: "ALL", label: "Semua Kategori" },
@@ -55,58 +70,177 @@ export default function MaterialManagerClient({
     const matchSearch =
       mat.title.toLowerCase().includes(search.toLowerCase()) ||
       mat.subject.toLowerCase().includes(search.toLowerCase()) ||
-      (mat.description && mat.description.toLowerCase().includes(search.toLowerCase()));
+      (mat.description && mat.description.toLowerCase().includes(search.toLowerCase())) ||
+      mat.authorTutor.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
 
   const totalDownloads = materials.reduce((acc, m) => acc + (m.downloadCount || 0), 0);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const resetForm = () => {
+    setTitle("");
+    setProgramCategory("CPNS_BUMN");
+    setSubject("");
+    setDescription("");
+    setFileName("");
+    setFileUrl("");
+    setFileSize("2.5 MB");
+    setAuthorTutor("Tim Akademik Sahabat Belajar");
+    setIsPublished(true);
+    setEditingMaterial(null);
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (mat: LearningMaterial) => {
+    setEditingMaterial(mat);
+    setTitle(mat.title);
+    setProgramCategory(mat.programCategory);
+    setSubject(mat.subject);
+    setDescription(mat.description || "");
+    setFileName(mat.fileName);
+    setFileUrl(mat.fileUrl);
+    setFileSize(mat.fileSize);
+    setAuthorTutor(mat.authorTutor);
+    setIsPublished(mat.isPublished);
+    setIsModalOpen(true);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      toast.error("Format File Tidak Valid", "Harap unggah berkas dengan format PDF.");
+      return;
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("File Terlalu Besar", "Ukuran file PDF maksimal 15MB.");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "modules");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Gagal mengunggah file");
+      }
+
+      setFileUrl(data.url);
+      setFileName(file.name);
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1) + " MB";
+      setFileSize(sizeMB);
+      toast.success("File Terunggah", `Berkas ${file.name} (${sizeMB}) siap dipublikasikan.`);
+    } catch (err: any) {
+      toast.error("Gagal Mengunggah", err.message || "Terjadi kesalahan saat unggah berkas.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !subject.trim()) return;
+    if (!title.trim() || !subject.trim()) {
+      toast.error("Data Belum Lengkap", "Judul modul dan mata pelajaran wajib diisi.");
+      return;
+    }
 
     setIsSubmitting(true);
-    const res = await createLearningMaterial({
-      title,
-      programCategory,
-      subject,
-      description,
-      fileName: fileName || `${title.replace(/\s+/g, "_")}.pdf`,
-      fileSize,
-      authorTutor,
-    });
-    setIsSubmitting(false);
 
-    if (res.success && res.data) {
-      const newMat: LearningMaterial = {
-        id: res.data.id,
+    if (editingMaterial) {
+      // Edit Mode
+      const res = await updateLearningMaterial(editingMaterial.id, {
         title,
         programCategory,
         subject,
         description,
-        fileUrl: "/materials/sample-document.pdf",
         fileName: fileName || `${title.replace(/\s+/g, "_")}.pdf`,
+        fileUrl: fileUrl || editingMaterial.fileUrl,
         fileSize,
         authorTutor,
-        downloadCount: 0,
-        isPublished: true,
-        createdAt: new Date().toISOString(),
-      };
-      setMaterials([newMat, ...materials]);
-      setIsModalOpen(false);
-      toast.success("Modul Ditambahkan", `Modul "${title}" berhasil dipublikasikan.`);
-      // Reset form
-      setTitle("");
-      setSubject("");
-      setDescription("");
-      setFileName("");
+        isPublished,
+      });
+      setIsSubmitting(false);
+
+      if (res.success) {
+        setMaterials((prev) =>
+          prev.map((m) =>
+            m.id === editingMaterial.id
+              ? {
+                  ...m,
+                  title,
+                  programCategory,
+                  subject,
+                  description,
+                  fileName: fileName || `${title.replace(/\s+/g, "_")}.pdf`,
+                  fileUrl: fileUrl || editingMaterial.fileUrl,
+                  fileSize,
+                  authorTutor,
+                  isPublished,
+                }
+              : m
+          )
+        );
+        setIsModalOpen(false);
+        toast.success("Modul Diperbarui", `Modul "${title}" berhasil diperbarui.`);
+        resetForm();
+      } else {
+        toast.error("Gagal Memperbarui Modul", res.message);
+      }
     } else {
-      toast.error("Gagal Menambah Modul", res.message);
+      // Create Mode
+      const res = await createLearningMaterial({
+        title,
+        programCategory,
+        subject,
+        description,
+        fileName: fileName || `${title.replace(/\s+/g, "_")}.pdf`,
+        fileUrl: fileUrl || "/materials/sample-document.pdf",
+        fileSize,
+        authorTutor,
+      });
+      setIsSubmitting(false);
+
+      if (res.success && res.data) {
+        const newMat: LearningMaterial = {
+          id: res.data.id,
+          title,
+          programCategory,
+          subject,
+          description,
+          fileUrl: fileUrl || "/materials/sample-document.pdf",
+          fileName: fileName || `${title.replace(/\s+/g, "_")}.pdf`,
+          fileSize,
+          authorTutor,
+          downloadCount: 0,
+          isPublished: true,
+          createdAt: new Date().toISOString(),
+        };
+        setMaterials([newMat, ...materials]);
+        setIsModalOpen(false);
+        toast.success("Modul Ditambahkan", `Modul "${title}" berhasil dipublikasikan.`);
+        resetForm();
+      } else {
+        toast.error("Gagal Menambah Modul", res.message);
+      }
     }
   };
 
   const handleDelete = async (id: string, matTitle: string) => {
-    if (!confirm(`Hapus modul "${matTitle}" dari bank materi?`)) return;
+    if (!confirm(`Hapus modul "${matTitle}" secara permanen dari database bank materi?`)) return;
 
     const res = await deleteLearningMaterial(id);
     if (res.success) {
@@ -117,6 +251,19 @@ export default function MaterialManagerClient({
     }
   };
 
+  const handleDownload = async (mat: LearningMaterial) => {
+    try {
+      trackMaterialDownload(mat.id);
+      setMaterials((prev) =>
+        prev.map((m) => (m.id === mat.id ? { ...m, downloadCount: m.downloadCount + 1 } : m))
+      );
+      window.open(mat.fileUrl, "_blank");
+      toast.success("Mengunduh Modul", `Mengunduh berkas ${mat.fileName}`);
+    } catch {
+      window.open(mat.fileUrl, "_blank");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -124,18 +271,18 @@ export default function MaterialManagerClient({
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
             <FolderOpen size={14} />
-            <span>Roadmap Fase 2: Bank Modul & Materi Digital</span>
+            <span>Bank Modul & Repositori Materi Digital</span>
           </div>
           <h1 className="text-2xl font-bold text-[#09408C] font-display">
             Bank Modul & Ringkasan Konsep
           </h1>
           <p className="text-sm text-[#5B6882] mt-0.5">
-            Kelola materi bimbingan digital, modul rumus cepat, pocket book, dan silabus untuk siswa Sahabat Belajar.
+            Kelola modul bimbingan digital, ringkasan rumus cepat, pocket book, dan silabus untuk siswa Sahabat Belajar.
           </p>
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={openCreateModal}
           className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs shrink-0"
         >
           <Plus size={16} />
@@ -143,24 +290,25 @@ export default function MaterialManagerClient({
         </button>
       </div>
 
-      {/* Roadmap Phase 2 Notice Banner */}
+      {/* Production Info Banner */}
       <div className="bg-[#EAF1FA]/80 border border-[#9AC1E2] rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-[#09408C]">
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-xl bg-white text-[#09408C] shadow-2xs shrink-0 mt-0.5">
-            <Sparkles size={18} />
+            <Layers size={18} />
           </div>
           <div>
             <div className="font-bold text-sm text-[#09408C]">
-              Pratinjau Interaktif — Roadmap Fase 2 (Ekspansi Pembelajaran Digital)
+              Sinkronisasi Langsung ke Portal Siswa & Orang Tua
             </div>
             <p className="text-[#5B6882] mt-0.5 leading-relaxed">
-              Modul ini disiapkan untuk mendukung repositori digital materi belajar (K-12, CPNS, UTBK, TOEFL, dan S2). Berjalan dalam mode <strong>Interactive Preview</strong> untuk simulasi manajemen file materi sebelum integrasi penyimpanan awan diaktifkan pada Fase 2.
+              Seluruh modul yang diunggah di sini tersimpan di database cloud Supabase dan otomatis dapat diunduh oleh siswa aktif di Portal Siswa pada tab <strong>Materi Belajar</strong>.
             </p>
           </div>
         </div>
         <div className="shrink-0 flex items-center gap-2">
-          <span className="px-3 py-1 rounded-full bg-[#09408C] text-white font-bold text-[11px]">
-            Preview Aktif
+          <span className="px-3 py-1 rounded-full bg-[#09408C] text-white font-bold text-[11px] flex items-center gap-1">
+            <CheckCircle2 size={12} />
+            <span>Database Terhubung</span>
           </span>
         </div>
       </div>
@@ -222,7 +370,7 @@ export default function MaterialManagerClient({
             placeholder="Cari judul modul, topik, atau mata pelajaran..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white text-[#1B2A41]"
           />
         </div>
 
@@ -251,7 +399,7 @@ export default function MaterialManagerClient({
             Tidak ada modul belajar
           </h3>
           <p className="text-xs text-[#5B6882] mt-1">
-            Belum ada materi pembelajaran pada kategori ini.
+            Belum ada materi pembelajaran pada kategori ini. Klik &quot;Tambah Modul Baru&quot; untuk mengunggah.
           </p>
         </div>
       ) : (
@@ -264,10 +412,17 @@ export default function MaterialManagerClient({
               <div>
                 {/* Meta Header */}
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]/60">
-                    {mat.programCategory.replace("_", " ")}
-                  </span>
-                  <span className="text-[11px] font-semibold text-[#5B6882] bg-slate-100 px-2 py-0.5 rounded-md">
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]/60">
+                      {mat.programCategory.replace("_", " ")}
+                    </span>
+                    {!mat.isPublished && (
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-semibold">
+                        Draft
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] font-semibold text-[#5B6882] bg-slate-100 px-2 py-0.5 rounded-md tabular-nums">
                     {mat.fileSize}
                   </span>
                 </div>
@@ -285,11 +440,11 @@ export default function MaterialManagerClient({
                 </p>
 
                 <div className="mt-4 pt-3 border-t border-[#D5DDEB] text-[11px] text-[#5B6882] flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <User size={12} className="text-[#09408C]" />
-                    <span>{mat.authorTutor}</span>
+                  <span className="flex items-center gap-1 truncate max-w-[180px]">
+                    <User size={12} className="text-[#09408C] shrink-0" />
+                    <span className="truncate">{mat.authorTutor}</span>
                   </span>
-                  <span className="font-semibold text-[#09408C]">
+                  <span className="font-semibold text-[#09408C] shrink-0 tabular-nums">
                     {mat.downloadCount} unduhan
                   </span>
                 </div>
@@ -297,43 +452,53 @@ export default function MaterialManagerClient({
 
               {/* Actions */}
               <div className="mt-5 pt-4 border-t border-[#D5DDEB] flex items-center justify-between gap-2">
-                <a
-                  href={mat.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => handleDownload(mat)}
                   className="px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
                 >
                   <Download size={14} />
                   <span>Unduh Modul</span>
-                </a>
-
-                <button
-                  onClick={() => handleDelete(mat.id, mat.title)}
-                  className="p-2 rounded-xl text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
-                  title="Hapus Modul"
-                >
-                  <Trash2 size={15} />
                 </button>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => openEditModal(mat)}
+                    className="p-2 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                    title="Edit Modul"
+                  >
+                    <Edit2 size={15} />
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(mat.id, mat.title)}
+                    className="p-2 rounded-xl text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
+                    title="Hapus Modul"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Modal Tambah Modul Belajar */}
+      {/* Modal Tambah / Edit Modul Belajar */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-xl border border-[#D5DDEB] space-y-5 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-xl border border-[#D5DDEB] space-y-5 animate-in fade-in duration-200 max-h-[90vh] overflow-y-auto">
             <div>
               <h3 className="text-xl font-bold text-[#09408C] font-display">
-                Tambah Modul Belajar Baru
+                {editingMaterial ? "Edit Modul Belajar" : "Tambah Modul Belajar Baru"}
               </h3>
               <p className="text-xs text-[#5B6882] mt-0.5">
-                Unggah atau tautkan ringkasan materi bimbingan Sahabat Belajar.
+                {editingMaterial
+                  ? "Perbarui metadata atau berkas modul pembelajaran ini."
+                  : "Unggah berkas PDF dan terbitkan modul bimbingan Sahabat Belajar."}
               </p>
             </div>
 
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label htmlFor="material-title-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
                   Judul Modul Pembelajaran *
@@ -345,7 +510,7 @@ export default function MaterialManagerClient({
                   placeholder="Contoh: Modul Ringkasan Rumus Cepat TIU: Aritmatika & Deret"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring text-[#1B2A41]"
                 />
               </div>
 
@@ -358,7 +523,7 @@ export default function MaterialManagerClient({
                     id="material-cat-select"
                     value={programCategory}
                     onChange={(e) => setProgramCategory(e.target.value as any)}
-                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white text-[#1B2A41]"
                   >
                     <option value="CPNS_BUMN">CPNS & BUMN</option>
                     <option value="UTBK_SNBT">UTBK-SNBT</option>
@@ -379,15 +544,42 @@ export default function MaterialManagerClient({
                     placeholder="Contoh: TIU atau Matematika Lanjutan"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring text-[#1B2A41]"
                   />
                 </div>
+              </div>
+
+              {/* Upload File PDF */}
+              <div className="p-3.5 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB] space-y-2">
+                <label className="block text-xs font-bold text-[#09408C]">
+                  Unggah Berkas PDF Modul
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    onChange={handleFileUpload}
+                    disabled={isUploading}
+                    className="text-xs text-[#5B6882] file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#09408C] file:text-white hover:file:bg-[#0E3571] cursor-pointer"
+                  />
+                  {isUploading && (
+                    <span className="text-xs text-[#09408C] font-semibold animate-pulse">
+                      Mengunggah berkas...
+                    </span>
+                  )}
+                </div>
+                {fileName && (
+                  <div className="text-[11px] text-[#1F6F4A] flex items-center gap-1 font-medium mt-1">
+                    <CheckCircle2 size={12} />
+                    <span>Berkas siap: {fileName} ({fileSize})</span>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="material-filename-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
-                    Nama File PDF
+                    Nama File Tampilan
                   </label>
                   <input
                     id="material-filename-input"
@@ -395,7 +587,7 @@ export default function MaterialManagerClient({
                     placeholder="Contoh: Modul_TIU_Rumus_Cepat.pdf"
                     value={fileName}
                     onChange={(e) => setFileName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring text-[#1B2A41]"
                   />
                 </div>
 
@@ -408,7 +600,7 @@ export default function MaterialManagerClient({
                     type="text"
                     value={fileSize}
                     onChange={(e) => setFileSize(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring text-[#1B2A41]"
                   />
                 </div>
               </div>
@@ -422,7 +614,7 @@ export default function MaterialManagerClient({
                   type="text"
                   value={authorTutor}
                   onChange={(e) => setAuthorTutor(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring text-[#1B2A41]"
                 />
               </div>
 
@@ -436,9 +628,25 @@ export default function MaterialManagerClient({
                   placeholder="Uraian materi pokok yang dibahas dan target capaian bimbingan..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring text-[#1B2A41]"
                 />
               </div>
+
+              {/* Status Publikasi */}
+              {editingMaterial && (
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="is-published-check"
+                    checked={isPublished}
+                    onChange={(e) => setIsPublished(e.target.checked)}
+                    className="rounded border-[#D5DDEB] text-[#09408C] focus:ring-[#09408C]"
+                  />
+                  <label htmlFor="is-published-check" className="text-xs font-bold text-[#1B2A41]">
+                    Terbitkan di Portal Siswa (Tampil untuk siswa aktif)
+                  </label>
+                </div>
+              )}
 
               <div className="pt-3 border-t border-[#D5DDEB] flex items-center justify-end gap-2">
                 <button
@@ -450,10 +658,17 @@ export default function MaterialManagerClient({
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] disabled:opacity-50"
+                  disabled={isSubmitting || isUploading}
+                  className="px-5 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] disabled:opacity-50 flex items-center gap-1.5"
                 >
-                  {isSubmitting ? "Menyimpan..." : "Publikasikan Modul"}
+                  <CheckCircle2 size={14} />
+                  <span>
+                    {isSubmitting
+                      ? "Menyimpan..."
+                      : editingMaterial
+                      ? "Simpan Perubahan"
+                      : "Publikasikan Modul"}
+                  </span>
                 </button>
               </div>
             </form>
