@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   Star,
   Quote,
@@ -23,6 +24,7 @@ export interface StudentTestimonial {
   content: string;
   avatarColor: string;
   initials: string;
+  avatarUrl?: string;
 }
 
 const DEFAULT_TESTIMONIALS: StudentTestimonial[] = [
@@ -40,6 +42,7 @@ const DEFAULT_TESTIMONIALS: StudentTestimonial[] = [
       "Dulu saya sangat takut fisika dan matematika karena di sekolah pembahasannya terlalu cepat. Bersama tutor Sahabat Belajar, materi 90 menit terasa sangat padat tapi santai. Konsep dasarnya dibongkar tuntas dari akar sampai saya bisa mengerjakan soal variasi tersulit.",
     avatarColor: "bg-[#09408C]",
     initials: "AF",
+    avatarUrl: "/images/testimonials/testi-ahmad.jpg",
   },
   {
     id: "testi-2",
@@ -55,6 +58,7 @@ const DEFAULT_TESTIMONIALS: StudentTestimonial[] = [
       "Sebagai ibu yang bekerja, saya sangat terbantu dengan jurnal pertemuan dan laporan sisa kuota yang transparan. Tutornya sangat sopan, santun, dan sabar mendampingi Kevin yang awalnya malas belajar. Sekarang nilai tugas dan ujiannya konsisten di atas 90.",
     avatarColor: "bg-[#295897]",
     initials: "RD",
+    avatarUrl: "/images/testimonials/testi-ratna.jpg",
   },
   {
     id: "testi-3",
@@ -70,21 +74,23 @@ const DEFAULT_TESTIMONIALS: StudentTestimonial[] = [
       "Materi TIU (penalaran dan numerik cepat) dari tutor benar-benar membuka cara berpikir logis di bawah tekanan waktu ujian. Bukan cuma rumus cepat instan, tapi paham pola soalnya. Kuota sesi belajarnya juga fleksibel dan tidak ada yang terbuang sia-sia.",
     avatarColor: "bg-[#0A2650]",
     initials: "BW",
+    avatarUrl: "/images/testimonials/testi-bima.jpg",
   },
   {
     id: "testi-4",
-    name: "Dinda Kirana",
+    name: "Clarissa Nathania",
     role: "Mahasiswi S1 & Pejuang Beasiswa",
     schoolOrInstitution: "Universitas Negeri",
     program: "TOEFL ITP Preparation & Structure",
     classMode: "Semi-Privat Online (3 Peserta)",
     modeIcon: "users",
-    achievement: "🎯 Skor TOEFL Naik dari 465 ke 575",
+    achievement: "🎯 Skor TOEFL Naik dari 465 ke 585",
     rating: 5,
     content:
       "Kelas semi-privatnya seru banget karena dibatasi maksimal 5 orang, jadi tutor tetap bisa mengoreksi satu per satu kelemahan grammar dan listening kami. Dalam 10 pertemuan, skor TOEFL saya naik lebih dari 100 poin dan lolos berkas beasiswa!",
     avatarColor: "bg-[#09408C]",
-    initials: "DK",
+    initials: "CN",
+    avatarUrl: "/images/testimonials/testi-clarissa.jpg",
   },
   {
     id: "testi-5",
@@ -185,13 +191,23 @@ export default function TestimoniSiswaSection({
             {/* Profile Info & Mode Badge */}
             <div className="pt-4 border-t border-[#D5DDEB] space-y-3">
               <div className="flex items-center gap-3">
-                {/* Avatar Bulat dengan Border Navy */}
-                <div className="w-11 h-11 rounded-full border-2 border-[#09408C] p-0.5 bg-white shrink-0 shadow-2xs">
-                  <div
-                    className={`w-full h-full rounded-full ${testi.avatarColor} text-white flex items-center justify-center font-bold text-xs font-display`}
-                  >
-                    {testi.initials}
-                  </div>
+                {/* Avatar Bulat dengan Border Navy (DESIGN.md Motif 2) */}
+                <div className="w-11 h-11 rounded-full border-2 border-[#09408C] p-0.5 bg-white shrink-0 shadow-2xs overflow-hidden relative">
+                  {testi.avatarUrl ? (
+                    <Image
+                      src={testi.avatarUrl}
+                      alt={testi.name}
+                      width={44}
+                      height={44}
+                      className="w-full h-full rounded-full object-cover object-top"
+                    />
+                  ) : (
+                    <div
+                      className={`w-full h-full rounded-full ${testi.avatarColor} text-white flex items-center justify-center font-bold text-xs font-display`}
+                    >
+                      {testi.initials}
+                    </div>
+                  )}
                 </div>
 
                 <div className="min-w-0 flex-1">

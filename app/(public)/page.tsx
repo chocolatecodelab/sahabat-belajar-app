@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Sparkles,
   Phone,
@@ -97,21 +98,29 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Graphic: Circular Navy Frame (Design 3) */}
+            {/* Right Graphic: Circular Navy Frame (DESIGN.md Motif 2) */}
             <div className="lg:col-span-5 flex justify-center py-4">
               <div className="relative">
-                {/* Navy thick circular border */}
-                <div className="w-64 h-64 sm:w-80 sm:h-80 lg:w-88 lg:h-88 rounded-full border-8 border-[#09408C] p-2 bg-white shadow-xl relative z-10 flex items-center justify-center overflow-hidden">
-                  <div className="w-full h-full rounded-full bg-linear-to-br from-[#EAF1FA] to-[#D5DDEB] flex flex-col items-center justify-center p-6 text-center">
-                    <GraduationCap size={64} className="text-[#09408C] mb-2" />
-                    <span className="font-extrabold text-[#09408C] text-lg font-display">
-                      Sahabat Belajar
-                    </span>
-                    <span className="text-xs text-[#5B6882] font-semibold mt-1">
-                      K-12 & Program Lanjutan
-                    </span>
-                    <div className="mt-3 px-3 py-1 bg-[#09408C] text-white rounded-full text-[11px] font-bold">
-                      #BersamaSahabat
+                {/* Navy thick circular border with official photo */}
+                <div className="w-64 h-64 sm:w-80 sm:h-80 lg:w-92 lg:h-92 rounded-full border-8 border-[#09408C] p-1.5 bg-white shadow-2xl relative z-10 flex items-center justify-center overflow-hidden group">
+                  <div className="relative w-full h-full rounded-full overflow-hidden">
+                    <Image
+                      src="/images/hero/hero-students.jpg"
+                      alt="Siswa Sahabat Belajar sedang belajar dengan fokus dan ceria"
+                      fill
+                      priority
+                      className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 640px) 256px, (max-width: 1024px) 320px, 368px"
+                    />
+                    {/* Gradient overlay for contrast */}
+                    <div className="absolute inset-0 bg-linear-to-t from-[#09408C]/50 via-transparent to-transparent pointer-events-none" />
+
+                    {/* Bottom pill overlay */}
+                    <div className="absolute bottom-4 inset-x-0 flex justify-center z-20 pointer-events-none">
+                      <div className="bg-[#09408C]/90 backdrop-blur-xs text-white px-3.5 py-1 rounded-full text-[11px] font-bold shadow-md flex items-center gap-1.5 border border-white/20">
+                        <GraduationCap size={13} className="text-[#9AC1E2]" />
+                        <span>#BersamaSahabat</span>
+                      </div>
                     </div>
                   </div>
                 </div>

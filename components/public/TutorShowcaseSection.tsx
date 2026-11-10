@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   GraduationCap,
   Sparkles,
@@ -24,6 +25,7 @@ export interface TutorShowcaseItem {
   quote: string;
   avatarColor: string;
   initials: string;
+  avatarUrl?: string;
   highlightTag: string;
 }
 
@@ -41,6 +43,7 @@ const DEFAULT_FEATURED_TUTORS: TutorShowcaseItem[] = [
       "Membantu siswa menaklukkan soal hitungan dengan membongkar konsep dasar secara visual dan aplikatif, bukan hafalan rumus.",
     avatarColor: "bg-[#09408C]",
     initials: "HW",
+    avatarUrl: "/images/tutors/tutor-hendra.jpg",
     highlightTag: "Pakar SNBT & Sains",
   },
   {
@@ -56,6 +59,7 @@ const DEFAULT_FEATURED_TUTORS: TutorShowcaseItem[] = [
       "Belajar sains itu menyenangkan saat dipandu dengan sabar dan contoh riil kehidupan sehari-hari.",
     avatarColor: "bg-[#295897]",
     initials: "SA",
+    avatarUrl: "/images/tutors/tutor-sarah.jpg",
     highlightTag: "Persiapan Kedokteran",
   },
   {
@@ -71,6 +75,7 @@ const DEFAULT_FEATURED_TUTORS: TutorShowcaseItem[] = [
       "Trik berhitung cepat hanya ampuh bila pemahaman logikanya kokoh. Kami latih strategi menembus passing grade tinggi.",
     avatarColor: "bg-[#0A2650]",
     initials: "RP",
+    avatarUrl: "/images/tutors/tutor-rizky.jpg",
     highlightTag: "Master SKD CPNS & Kedinasan",
   },
   {
@@ -86,6 +91,7 @@ const DEFAULT_FEATURED_TUTORS: TutorShowcaseItem[] = [
       "Diagnostik tepat sasaran: kita langsung perbaiki kelemahan grammar dan listening tanpa membuang waktu.",
     avatarColor: "bg-[#09408C]",
     initials: "NS",
+    avatarUrl: "/images/tutors/tutor-nadia.jpg",
     highlightTag: "IELTS 8.0 & TOEFL Specialist",
   },
 ];
@@ -140,12 +146,22 @@ export default function TutorShowcaseSection({
 
               {/* Avatar dengan Frame Lingkaran Tebal Navy (Motif Visual 2 DESIGN.md) */}
               <div className="flex flex-col items-center text-center mb-4">
-                <div className="w-20 h-20 rounded-full border-4 border-[#09408C] p-1 bg-white shadow-sm mb-3 group-hover:scale-105 transition-transform">
-                  <div
-                    className={`w-full h-full rounded-full ${tutor.avatarColor} text-white flex items-center justify-center font-extrabold text-xl font-display shadow-inner`}
-                  >
-                    {tutor.initials}
-                  </div>
+                <div className="w-20 h-20 rounded-full border-4 border-[#09408C] p-0.5 bg-white shadow-sm mb-3 group-hover:scale-105 transition-transform overflow-hidden relative">
+                  {tutor.avatarUrl ? (
+                    <Image
+                      src={tutor.avatarUrl}
+                      alt={tutor.name}
+                      width={80}
+                      height={80}
+                      className="w-full h-full rounded-full object-cover object-top"
+                    />
+                  ) : (
+                    <div
+                      className={`w-full h-full rounded-full ${tutor.avatarColor} text-white flex items-center justify-center font-extrabold text-xl font-display shadow-inner`}
+                    >
+                      {tutor.initials}
+                    </div>
+                  )}
                 </div>
 
                 <h3 className="font-bold text-base text-[#1B2A41] font-display">
