@@ -129,63 +129,63 @@ export default function SosialMediaClient({ items: initial }: { items: SocialIte
         </button>
       </div>
 
-      <div className="elevation-1 rounded-2xl overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr style={{ background: "var(--color-surface-container)" }}>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Platform</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Username</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Link Profil</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Embed Feed</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Status</th>
-              <th className="text-right px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Aksi</th>
+      <div className="bg-white rounded-2xl border border-[#D5DDEB] overflow-hidden shadow-xs">
+        <table className="w-full text-left text-xs">
+          <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[#5B6882] font-semibold uppercase tracking-wider text-[11px]">
+            <tr>
+              <th className="px-4 py-3">Platform</th>
+              <th className="px-4 py-3">Username</th>
+              <th className="px-4 py-3">Link Profil</th>
+              <th className="px-4 py-3">Embed Feed</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="text-right px-4 py-3">Aksi</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#D5DDEB]">
             {items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-12 text-body-md text-gray-500">
+                <td colSpan={6} className="text-center py-12 text-[#5B6882] text-xs">
                   Belum ada akun sosial media yang ditambahkan.
                 </td>
               </tr>
             ) : (
               items.map((item) => (
-                <tr key={item.id} className="border-t hover:bg-black/[0.02] transition-colors" style={{ borderColor: "var(--color-outline-variant)" }}>
-                  <td className="px-5 py-3">
+                <tr key={item.id} className="hover:bg-[#EAF1FA]/50 transition-colors">
+                  <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2">
                       {getPlatformIcon(item.platform)}
-                      <span className="capitalize font-medium text-body-sm">{item.platform}</span>
+                      <span className="capitalize font-bold text-[#1B2A41]">{item.platform}</span>
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-body-md font-semibold" style={{ color: "var(--color-on-surface)" }}>
+                  <td className="px-4 py-3.5 font-bold text-[#09408C]">
                     @{item.username}
                   </td>
-                  <td className="px-5 py-3 text-body-sm text-gray-500">
-                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline text-blue-600">
-                      {item.url} <ExternalLink size={12} />
+                  <td className="px-4 py-3.5 text-[#5B6882]">
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline text-[#09408C]">
+                      <span className="truncate max-w-xs">{item.url}</span> <ExternalLink size={12} />
                     </a>
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-3.5">
                     {item.embedCode ? (
-                      <span className="text-label-md px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 flex items-center gap-1 w-fit">
-                        <Code size={12} /> Ada Widget Embed
+                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#EAF1FA] text-[#09408C] inline-flex items-center gap-1">
+                        <Code size={11} /> Widget Aktif
                       </span>
                     ) : (
-                      <span className="text-label-md text-gray-400">Link Saja</span>
+                      <span className="text-[11px] text-[#5B6882]">Tautan Saja</span>
                     )}
                   </td>
-                  <td className="px-5 py-3">
-                    <span className={`text-label-md px-2.5 py-1 rounded-full ${item.isActive ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                  <td className="px-4 py-3.5">
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 ${item.isActive ? "bg-[#E3F4EC] text-[#1F6F4A]" : "bg-slate-100 text-[#5B6882]"}`}>
                       {item.isActive ? "Aktif" : "Nonaktif"}
                     </span>
                   </td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => openEdit(item)} className="p-2 rounded-lg hover:bg-black/5" style={{ color: "var(--color-primary-container)" }}>
-                        <Edit size={16} />
+                  <td className="px-4 py-3.5 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button onClick={() => openEdit(item)} className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#EAF1FA] text-[#09408C] transition-colors">
+                        <Edit size={14} />
                       </button>
-                      <button onClick={() => handleDelete(item.id)} className="p-2 rounded-lg hover:bg-red-50" style={{ color: "var(--color-error)" }}>
-                        <Trash2 size={16} />
+                      <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#FBE9E5] hover:border-[#B4381F]/30 text-[#B4381F] transition-colors">
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>

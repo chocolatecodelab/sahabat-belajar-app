@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Plus, Edit, Trash2, X, Eye, EyeOff, Wrench, Microscope, BookOpen, Award, Building, Sparkles } from "lucide-react";
+import { Heart, Plus, Edit, Trash2, X, Eye, EyeOff, Wrench, Microscope, BookOpen, Award, Building, GraduationCap } from "lucide-react";
 import { getServices, createService, updateService, deleteService } from "@/actions/tampilan";
 
 type ServiceItem = {
@@ -21,7 +21,7 @@ const AVAILABLE_ICONS = [
   { name: "Building", label: "Ruangan / Fasilitas", icon: <Building size={20} /> },
   { name: "BookOpen", label: "Pelatihan & Magang", icon: <BookOpen size={20} /> },
   { name: "Award", label: "Sertifikasi & Etik", icon: <Award size={20} /> },
-  { name: "Sparkles", label: "Inovasi & Riset", icon: <Sparkles size={20} /> },
+  { name: "GraduationCap", label: "Akademik & Beasiswa", icon: <GraduationCap size={20} /> },
 ];
 
 export default function LayananClient({ services: initial }: { services: ServiceItem[] }) {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, Phone, MapPin, Heart, Sparkles } from "lucide-react";
+import { Mail, Phone, MapPin, Heart, GraduationCap } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -34,7 +34,7 @@ export default function Footer() {
             </p>
 
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[#9AC1E2] text-xs font-semibold">
-              <Sparkles size={12} className="text-[#0CC0DF]" />
+              <GraduationCap size={12} className="text-[#9AC1E2]" />
               <span>#BersamaSahabat</span>
             </div>
           </div>

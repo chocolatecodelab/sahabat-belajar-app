@@ -29,7 +29,6 @@ import {
   Trophy,
   Menu as MenuIcon,
   Info,
-  Sparkles,
   AlertTriangle,
 } from "lucide-react";
 import { getRoles, createRole, updateRole, deleteRole } from "@/actions/pengguna";

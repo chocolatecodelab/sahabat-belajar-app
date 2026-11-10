@@ -101,33 +101,33 @@ export default function KategoriClient({ categories: initial }: { categories: Ca
         </button>
       </div>
 
-      <div className="elevation-1 rounded-2xl overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr style={{ background: "var(--color-surface-container)" }}>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Warna</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Nama</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Slug</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Berita</th>
-              <th className="text-right px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Aksi</th>
+      <div className="bg-white rounded-2xl border border-[#D5DDEB] overflow-hidden shadow-xs">
+        <table className="w-full text-left text-xs">
+          <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[#5B6882] font-semibold uppercase tracking-wider text-[11px]">
+            <tr>
+              <th className="px-4 py-3">Warna</th>
+              <th className="px-4 py-3">Nama Kategori</th>
+              <th className="px-4 py-3">Slug URL</th>
+              <th className="px-4 py-3">Total Artikel</th>
+              <th className="text-right px-4 py-3">Aksi</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#D5DDEB]">
             {categories.length === 0 ? (
-              <tr><td colSpan={5} className="text-center py-12 text-body-md" style={{ color: "var(--color-outline)" }}>Belum ada kategori</td></tr>
+              <tr><td colSpan={5} className="text-center py-12 text-[#5B6882] text-xs">Belum ada kategori yang ditambahkan</td></tr>
             ) : (
               categories.map((cat) => (
-                <tr key={cat.id} className="border-t hover:bg-black/[0.02] transition-colors" style={{ borderColor: "var(--color-outline-variant)" }}>
-                  <td className="px-5 py-3">
-                    <div className="w-6 h-6 rounded-full" style={{ background: cat.color || "#ccc" }} />
+                <tr key={cat.id} className="hover:bg-[#EAF1FA]/50 transition-colors">
+                  <td className="px-4 py-3.5">
+                    <div className="w-6 h-6 rounded-full shadow-2xs border border-white" style={{ background: cat.color || "#09408C" }} />
                   </td>
-                  <td className="px-5 py-3 text-body-md font-medium" style={{ color: "var(--color-on-surface)" }}>{cat.name}</td>
-                  <td className="px-5 py-3 text-body-sm" style={{ color: "var(--color-outline)" }}>/{cat.slug}</td>
-                  <td className="px-5 py-3 text-body-sm" style={{ color: "var(--color-on-surface-variant)" }}>{cat._count.articles} artikel</td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => openEdit(cat)} className="p-2 rounded-lg transition-colors hover:bg-black/5" style={{ color: "var(--color-primary-container)" }}><Edit size={16} /></button>
-                      <button onClick={() => handleDelete(cat.id)} className="p-2 rounded-lg transition-colors hover:bg-red-50" style={{ color: "var(--color-error)" }}><Trash2 size={16} /></button>
+                  <td className="px-4 py-3.5 font-bold text-[#1B2A41]">{cat.name}</td>
+                  <td className="px-4 py-3.5 text-[#5B6882] font-mono text-[11px]">/{cat.slug}</td>
+                  <td className="px-4 py-3.5 text-[#5B6882] tabular-nums">{cat._count.articles} artikel</td>
+                  <td className="px-4 py-3.5 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button onClick={() => openEdit(cat)} className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#EAF1FA] text-[#09408C] transition-colors"><Edit size={14} /></button>
+                      <button onClick={() => handleDelete(cat.id)} className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#FBE9E5] hover:border-[#B4381F]/30 text-[#B4381F] transition-colors"><Trash2 size={14} /></button>
                     </div>
                   </td>
                 </tr>

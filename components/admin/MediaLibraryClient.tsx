@@ -375,79 +375,80 @@ export default function MediaLibraryClient({ initialData }: MediaLibraryClientPr
               </div>
             ) : (
               /* LIST VIEW */
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-body-sm">
-                  <thead>
-                    <tr className="border-b text-label-md" style={{ borderColor: "var(--color-outline-variant)", color: "var(--color-on-surface-variant)" }}>
-                      <th className="py-2.5 px-3">Preview</th>
-                      <th className="py-2.5 px-3">Nama File</th>
-                      <th className="py-2.5 px-3">Folder</th>
-                      <th className="py-2.5 px-3">Ukuran</th>
-                      <th className="py-2.5 px-3">Tanggal</th>
-                      <th className="py-2.5 px-3 text-right">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mediaList.map((item) => {
-                      const isImage = item.mimeType.startsWith("image/");
-                      const isCopied = copiedId === item.id;
+              <div className="bg-white rounded-2xl border border-[#D5DDEB] overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[#5B6882] font-semibold uppercase tracking-wider text-[11px]">
+                      <tr>
+                        <th className="py-3 px-4">Preview</th>
+                        <th className="py-3 px-4">Nama File</th>
+                        <th className="py-3 px-4">Folder</th>
+                        <th className="py-3 px-4">Ukuran</th>
+                        <th className="py-3 px-4">Tanggal</th>
+                        <th className="py-3 px-4 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#D5DDEB]">
+                      {mediaList.map((item) => {
+                        const isImage = item.mimeType.startsWith("image/");
+                        const isCopied = copiedId === item.id;
 
-                      return (
-                        <tr
-                          key={item.id}
-                          onClick={() => setSelectedMedia(item)}
-                          className="border-b hover:bg-slate-50 cursor-pointer transition-colors"
-                          style={{ borderColor: "var(--color-outline-variant)" }}
-                        >
-                          <td className="py-2.5 px-3">
-                            <div className="w-10 h-10 rounded-lg overflow-hidden relative bg-slate-100 flex items-center justify-center">
-                              {isImage ? (
-                                <Image src={item.url} alt={item.originalName} fill sizes="40px" className="object-cover" />
-                              ) : (
-                                <FileText size={18} className="text-gray-400" />
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-2.5 px-3">
-                            <p className="font-bold text-gray-900 truncate max-w-xs">{item.originalName}</p>
-                            <span className="text-3xs text-gray-400 truncate block max-w-xs">{item.url}</span>
-                          </td>
-                          <td className="py-2.5 px-3">
-                            <span className="px-2 py-0.5 rounded-full text-3xs font-bold uppercase bg-slate-100 text-gray-700">
-                              {item.folder}
-                            </span>
-                          </td>
-                          <td className="py-2.5 px-3 text-2xs text-gray-500 font-medium">
-                            {(item.size / 1024).toFixed(0)} KB
-                          </td>
-                          <td className="py-2.5 px-3 text-2xs text-gray-500">
-                            {formatDate(item.createdAt)}
-                          </td>
-                          <td className="py-2.5 px-3 text-right">
-                            <div className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                type="button"
-                                onClick={() => handleCopyUrl(item.url, item.id)}
-                                className="p-1.5 rounded-lg border hover:bg-slate-100 text-gray-600 transition-colors"
-                                title="Salin URL"
-                              >
-                                {isCopied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setDeleteId(item.id)}
-                                className="p-1.5 rounded-lg border hover:bg-red-50 text-red-600 transition-colors"
-                                title="Hapus File"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                        return (
+                          <tr
+                            key={item.id}
+                            onClick={() => setSelectedMedia(item)}
+                            className="hover:bg-[#EAF1FA]/50 cursor-pointer transition-colors"
+                          >
+                            <td className="py-3 px-4">
+                              <div className="w-10 h-10 rounded-xl overflow-hidden relative bg-slate-100 flex items-center justify-center border border-[#D5DDEB]">
+                                {isImage ? (
+                                  <Image src={item.url} alt={item.originalName} fill sizes="40px" className="object-cover" />
+                                ) : (
+                                  <FileText size={18} className="text-[#5B6882]" />
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <p className="font-bold text-[#1B2A41] truncate max-w-xs">{item.originalName}</p>
+                              <span className="text-[11px] text-[#5B6882] truncate block max-w-xs font-mono">{item.url}</span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[#EAF1FA] text-[#09408C]">
+                                {item.folder}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-xs text-[#5B6882] font-medium tabular-nums">
+                              {(item.size / 1024).toFixed(0)} KB
+                            </td>
+                            <td className="py-3 px-4 text-xs text-[#5B6882] tabular-nums">
+                              {formatDate(item.createdAt)}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyUrl(item.url, item.id)}
+                                  className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#EAF1FA] text-[#09408C] transition-colors"
+                                  title="Salin URL"
+                                >
+                                  {isCopied ? <Check size={14} className="text-[#1F6F4A]" /> : <Copy size={14} />}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteId(item.id)}
+                                  className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#FBE9E5] hover:border-[#B4381F]/30 text-[#B4381F] transition-colors"
+                                  title="Hapus File"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>

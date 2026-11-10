@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Sparkles,
+  Target,
   Phone,
   GraduationCap,
   BookOpen,
@@ -13,7 +13,6 @@ import {
   Home,
   ArrowRight,
   ShieldCheck,
-  Target,
   FileText,
   Lightbulb,
   HeartHandshake,
@@ -66,7 +65,7 @@ export default function HomePage() {
                   href="/placement-test"
                   className="px-5 py-3.5 rounded-xl bg-[#EAF1FA] hover:bg-[#9AC1E2]/30 text-[#09408C] font-bold text-sm transition-all border border-[#9AC1E2] flex items-center gap-2"
                 >
-                  <Sparkles size={16} className="text-[#09408C]" />
+                  <Target size={16} className="text-[#09408C]" />
                   <span>Ikuti Placement Test Gratis</span>
                 </Link>
 

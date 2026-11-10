@@ -8,7 +8,7 @@ import {
   X,
   Phone,
   LogIn,
-  Sparkles,
+  Target,
   BookOpen,
   GraduationCap,
   CreditCard,
@@ -78,7 +78,7 @@ export default function Navbar() {
               href="/placement-test"
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] hover:bg-[#9AC1E2]/30 transition-all whitespace-nowrap shadow-2xs"
             >
-              <Sparkles size={14} className="text-[#09408C] shrink-0" />
+              <Target size={14} className="text-[#09408C] shrink-0" />
               <span>Placement Test</span>
             </Link>
 
@@ -124,7 +124,7 @@ export default function Navbar() {
             className="flex items-center justify-between p-3 rounded-2xl text-xs font-bold text-[#09408C] bg-[#EAF1FA] border border-[#9AC1E2] hover:bg-[#9AC1E2]/20 transition-colors"
           >
             <span className="flex items-center gap-2">
-              <Sparkles size={16} className="text-[#09408C]" />
+              <Target size={16} className="text-[#09408C]" />
               <span>Ikuti Placement Test Gratis</span>
             </span>
             <span className="text-[10px] font-bold uppercase bg-[#09408C] text-white px-2.5 py-0.5 rounded-full">

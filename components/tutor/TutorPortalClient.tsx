@@ -16,7 +16,6 @@ import {
   HelpCircle,
   LogOut,
   ExternalLink,
-  Sparkles,
   ChevronRight,
   User,
   Award,
@@ -30,7 +29,6 @@ import {
   Navigation,
   MessageCircle,
   ShieldCheck,
-  Zap,
   FolderOpen,
 } from "lucide-react";
 import { signOut } from "next-auth/react";

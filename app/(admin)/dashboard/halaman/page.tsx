@@ -101,47 +101,46 @@ export default async function HalamanPage(props: HalamanPageProps) {
       </div>
 
       {/* Table */}
-      <div className="elevation-1 rounded-2xl overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr style={{ background: "var(--color-surface-container)" }}>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Judul</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Slug</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Status</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Author</th>
-              <th className="text-right px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Aksi</th>
+      <div className="bg-white rounded-2xl border border-[#D5DDEB] overflow-hidden shadow-xs">
+        <table className="w-full text-left text-xs">
+          <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[#5B6882] font-semibold uppercase tracking-wider text-[11px]">
+            <tr>
+              <th className="px-4 py-3">Judul Halaman</th>
+              <th className="px-4 py-3">Slug URL</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Penulis</th>
+              <th className="text-right px-4 py-3">Aksi</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#D5DDEB]">
             {result.data.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center py-12 text-body-md" style={{ color: "var(--color-outline)" }}>
+                <td colSpan={5} className="text-center py-12 text-[#5B6882] text-xs">
                   Belum ada halaman
                 </td>
               </tr>
             ) : (
               result.data.map((pg) => (
-                <tr key={pg.id} className="border-t hover:bg-black/[0.02] transition-colors" style={{ borderColor: "var(--color-outline-variant)" }}>
-                  <td className="px-5 py-3.5">
-                    <p className="text-body-md font-medium" style={{ color: "var(--color-on-surface)" }}>{pg.title}</p>
+                <tr key={pg.id} className="hover:bg-[#EAF1FA]/50 transition-colors">
+                  <td className="px-4 py-3.5">
+                    <p className="font-bold text-[#1B2A41]">{pg.title}</p>
                   </td>
-                  <td className="px-5 py-3.5 text-body-sm" style={{ color: "var(--color-outline)" }}>/{pg.slug}</td>
-                  <td className="px-5 py-3.5">
-                    <span className={`text-label-md px-2.5 py-1 rounded-full ${statusColors[pg.status]}`}>
+                  <td className="px-4 py-3.5 text-[#5B6882] font-mono text-[11px]">/{pg.slug}</td>
+                  <td className="px-4 py-3.5">
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${statusColors[pg.status]}`}>
                       {pg.status}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-body-sm" style={{ color: "var(--color-on-surface-variant)" }}>
+                  <td className="px-4 py-3.5 text-xs text-[#5B6882]">
                     {pg.author.name}
                   </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center justify-end gap-1">
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center justify-end gap-1.5">
                       <Link
                         href={`/dashboard/halaman/${pg.id}/edit`}
-                        className="p-2 rounded-lg transition-colors hover:bg-black/5"
-                        style={{ color: "var(--color-primary-container)" }}
+                        className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#EAF1FA] text-[#09408C] transition-colors"
                       >
-                        <Edit size={16} />
+                        <Edit size={14} />
                       </Link>
                       <form action={handleDelete}>
                         <input type="hidden" name="id" value={pg.id} />

@@ -7,7 +7,6 @@ import {
   Users,
   Video,
   Home,
-  Sparkles,
   TrendingUp,
 } from "lucide-react";
 

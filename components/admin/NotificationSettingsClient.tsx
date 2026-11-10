@@ -251,7 +251,7 @@ export default function NotificationSettingsClient({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-headline-lg flex items-center gap-3" style={{ color: "var(--color-on-surface)" }}>
-            <Bell size={28} className="text-[#001847]" /> Notifikasi & Gateway Omnichannel
+            <MessageSquare size={26} className="text-[#09408C]" /> Notifikasi & Gateway Omnichannel
           </h1>
           <p className="text-body-md mt-1 text-gray-600">
             Kelola gateway pengiriman pesan otomatis via WhatsApp dan Email Transaksional
@@ -1087,9 +1087,9 @@ export default function NotificationSettingsClient({
 
           {/* Table of Logs */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b bg-gray-50/80 text-gray-600 font-bold uppercase text-3xs tracking-wider" style={{ borderColor: "var(--color-outline-variant)" }}>
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[#5B6882] font-semibold uppercase tracking-wider text-[11px]">
+                <tr>
                   <th className="py-3 px-4">Waktu</th>
                   <th className="py-3 px-4">Channel</th>
                   <th className="py-3 px-4">Penerima</th>
@@ -1098,19 +1098,19 @@ export default function NotificationSettingsClient({
                   <th className="py-3 px-4 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[#D5DDEB]">
                 {logs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-gray-400">
-                      <History size={32} className="mx-auto text-gray-300 mb-2" />
-                      <p className="font-semibold text-xs text-gray-600">Belum ada riwayat pengiriman notifikasi</p>
-                      <p className="text-3xs text-gray-400 mt-0.5">Notifikasi otomatis akan tercatat saat pendaftaran atau pengujian dikirim.</p>
+                    <td colSpan={6} className="text-center py-12 text-[#5B6882]">
+                      <History size={32} className="mx-auto text-[#9AC1E2] mb-2" />
+                      <p className="font-semibold text-xs text-[#1B2A41]">Belum ada riwayat pengiriman notifikasi</p>
+                      <p className="text-[11px] text-[#5B6882] mt-0.5">Notifikasi otomatis akan tercatat saat pendaftaran atau pengujian dikirim.</p>
                     </td>
                   </tr>
                 ) : (
                   logs.map((log) => (
-                    <tr key={log.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3.5 px-4 font-mono text-gray-500 whitespace-nowrap">
+                    <tr key={log.id} className="hover:bg-[#EAF1FA]/50 transition-colors">
+                      <td className="py-3.5 px-4 font-mono text-[#5B6882] text-[11px] whitespace-nowrap">
                         {new Date(log.sentAt).toLocaleString("id-ID", {
                           day: "2-digit",
                           month: "short",
@@ -1120,33 +1120,33 @@ export default function NotificationSettingsClient({
                         })}
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-3xs font-bold ${
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
                           log.channel === "WHATSAPP"
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-blue-100 text-blue-800"
+                            ? "bg-[#E3F4EC] text-[#1F6F4A]"
+                            : "bg-[#EAF1FA] text-[#09408C]"
                         }`}>
                           {log.channel === "WHATSAPP" ? <MessageSquare size={11} /> : <Mail size={11} />}
                           {log.channel}
                         </span>
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="font-bold text-gray-900 truncate max-w-[200px]">
+                        <div className="font-bold text-[#1B2A41] truncate max-w-[200px]">
                           {log.recipientName || "Pengguna"}
                         </div>
-                        <div className="font-mono text-3xs text-gray-500 truncate max-w-[200px]">
+                        <div className="font-mono text-[11px] text-[#5B6882] truncate max-w-[200px]">
                           {log.recipient}
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-3xs font-semibold text-blue-900">
+                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] font-bold text-[#09408C]">
                         {log.event}
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-3xs font-bold ${
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                           log.status === "SENT"
-                            ? "bg-emerald-100 text-emerald-800"
+                            ? "bg-[#E3F4EC] text-[#1F6F4A]"
                             : log.status === "SIMULATED"
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-[#FEF5E7] text-[#B87A14]"
+                            : "bg-[#FBE9E5] text-[#B4381F]"
                         }`}>
                           {log.status === "SENT" && <Check size={10} />}
                           {log.status}
@@ -1156,7 +1156,7 @@ export default function NotificationSettingsClient({
                         <button
                           type="button"
                           onClick={() => setSelectedLog(log)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-3xs transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#EAF1FA] hover:bg-[#D5DDEB] text-[#09408C] font-bold text-xs transition-colors cursor-pointer"
                         >
                           <Eye size={12} />
                           <span>Lihat Pesan</span>

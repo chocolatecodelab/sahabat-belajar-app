@@ -13,7 +13,6 @@ import {
   ExternalLink,
   User,
   GraduationCap,
-  Sparkles,
   Send,
   MessageSquare,
   ChevronRight,
@@ -718,7 +717,7 @@ export default function DocumentManagerClient({
                 <div className="text-xs bg-[#EAF1FA]/70 rounded-2xl p-4 border border-[#9AC1E2]/60 text-[#1B2A41] space-y-1">
                   <div className="flex items-center justify-between text-[#09408C] font-bold text-[11px]">
                     <div className="flex items-center gap-1.5">
-                      <Sparkles size={13} />
+                      <MessageSquare size={13} />
                       <span>Umpan Balik Mentor ({doc.mentorName || "Tim Akademik"}):</span>
                     </div>
                     {doc.reviewedAt && (

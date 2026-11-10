@@ -12,7 +12,6 @@ import {
   ArrowRight,
   Send,
   Flag,
-  Sparkles,
   LayoutGrid,
   X,
   Keyboard,

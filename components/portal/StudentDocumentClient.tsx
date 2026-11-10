@@ -11,7 +11,7 @@ import {
   AlertCircle,
   FileText,
   Upload,
-  Sparkles,
+  GraduationCap,
   MessageSquare,
   ExternalLink,
   ChevronRight,
@@ -291,7 +291,7 @@ export default function StudentDocumentClient({
             </div>
 
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
-              <Sparkles size={13} />
+              <GraduationCap size={13} />
               <span>Layanan Bimbingan Program Lanjutan</span>
             </div>
 
@@ -517,7 +517,7 @@ export default function StudentDocumentClient({
                     <div className="bg-[#EAF1FA] rounded-2xl p-4 border border-[#9AC1E2] text-xs text-[#1B2A41] space-y-1">
                       <div className="flex items-center justify-between text-[#09408C] font-bold text-[11px]">
                         <div className="flex items-center gap-1.5">
-                          <Sparkles size={14} className="text-[#09408C]" />
+                          <MessageSquare size={14} className="text-[#09408C]" />
                           <span>Masukan & Telaah dari {doc.mentorName || "Mentor Akademik"}:</span>
                         </div>
                         {doc.reviewedAt && (

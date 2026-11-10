@@ -15,7 +15,7 @@ import {
   MessageCircle,
   CheckCircle2,
   Phone,
-  Sparkles,
+  Compass,
   Award,
   TrendingUp,
   DollarSign,
@@ -26,7 +26,6 @@ import {
   Printer,
   ChevronRight,
   ShieldCheck,
-  Zap,
 } from "lucide-react";
 import { formatTime, formatDate } from "@/lib/date";
 import type { SahabatBelajarDashboardData } from "@/actions/dashboard";
@@ -468,7 +467,7 @@ export default function SahabatBelajarDashboard({
           <div className="bg-white rounded-3xl border border-[#D5DDEB] p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-heading font-bold text-sm text-[#09408C] flex items-center gap-2">
-                <Zap size={16} className="text-[#09408C]" />
+                <Users size={16} className="text-[#09408C]" />
                 <span>Prospek & Placement Masuk</span>
               </h3>
               <Link
@@ -541,7 +540,7 @@ export default function SahabatBelajarDashboard({
           {/* Quick Hub: Navigasi Modul Lanjutan */}
           <div className="bg-gradient-to-br from-[#09408C] to-[#0E3571] text-white rounded-3xl p-5 shadow-xs space-y-3">
             <div className="flex items-center gap-2 text-xs font-bold text-[#9AC1E2]">
-              <Sparkles size={16} />
+              <Compass size={16} />
               <span>Akses Cepat Modul Akademik</span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">

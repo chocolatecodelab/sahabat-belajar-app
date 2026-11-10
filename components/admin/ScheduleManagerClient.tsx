@@ -15,7 +15,7 @@ import {
   BookOpen,
   FileText,
   AlertTriangle,
-  Sparkles,
+  Award,
   ChevronRight,
   Filter,
   Check,
@@ -349,7 +349,7 @@ export default function ScheduleManagerClient({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-2xs">
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-semibold mb-2">
-            <Sparkles size={13} className="text-[#0CC0DF]" />
+            <UserCheck size={13} className="text-[#09408C]" />
             <span>Asisten Cerdas Sahabat Belajar (PRD C2/C3)</span>
           </div>
           <h1 className="text-2xl font-bold text-[#09408C] font-display">
@@ -368,7 +368,7 @@ export default function ScheduleManagerClient({
             }}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#9AC1E2] bg-[#EAF1FA] text-[#09408C] text-xs font-bold hover:bg-[#d8e7f8] transition-colors"
           >
-            <Sparkles size={14} className="text-[#09408C]" />
+            <UserCheck size={14} className="text-[#09408C]" />
             <span>Cari Tutor Cerdas</span>
           </button>
 
@@ -431,7 +431,7 @@ export default function ScheduleManagerClient({
               : "text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA]"
           }`}
         >
-          <Sparkles size={15} className="text-[#0CC0DF]" />
+          <UserCheck size={15} className="text-[#09408C]" />
           <span>Auto-Match Tutor (Cerdas)</span>
         </button>
       </div>
@@ -740,7 +740,7 @@ export default function ScheduleManagerClient({
                     <div className="hidden sm:block overflow-x-auto">
                       <table className="w-full text-xs text-center border-collapse">
                         <thead>
-                          <tr className="border-b border-[#D5DDEB] bg-white">
+                          <tr className="border-b border-[#D5DDEB] bg-[#F4F7FB]">
                             <th className="py-2.5 px-3 text-left font-bold text-[#5B6882] text-[11px] w-28">
                               Slot Waktu
                             </th>
@@ -837,7 +837,7 @@ export default function ScheduleManagerClient({
             <div className="flex items-center justify-between border-b border-[#D5DDEB] pb-3">
               <div>
                 <h3 className="text-base font-bold text-[#09408C] font-display flex items-center gap-2">
-                  <Sparkles size={16} className="text-[#0CC0DF]" />
+                  <UserCheck size={16} className="text-[#09408C]" />
                   <span>Mesin Pencari Tutor Cerdas (Auto-Match Engine)</span>
                 </h3>
                 <p className="text-xs text-[#5B6882]">
@@ -977,7 +977,7 @@ export default function ScheduleManagerClient({
                               : "bg-[#EAF1FA] text-[#09408C]"
                           }`}
                         >
-                          {isTopMatch && <Sparkles size={11} />}
+                          {isTopMatch && <Award size={11} />}
                           {rec.statusText}
                         </span>
 

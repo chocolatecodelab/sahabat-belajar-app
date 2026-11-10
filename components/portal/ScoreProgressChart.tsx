@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { TrendingUp, Award, Target, CheckCircle2, AlertCircle, Sparkles, BarChart2 } from "lucide-react";
+import { TrendingUp, Award, Target, CheckCircle2, AlertCircle, BarChart2 } from "lucide-react";
 import type { StudentExamSession } from "@/actions/ujian";
 
 interface ScoreProgressChartProps {
@@ -73,7 +73,7 @@ export default function ScoreProgressChart({ sessions }: ScoreProgressChartProps
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-1.5">
-            <Sparkles size={14} />
+            <TrendingUp size={14} />
             <span>Pembelajaran Berbasis Data</span>
           </div>
           <h3 className="text-lg font-bold text-[#09408C] font-heading">
@@ -340,7 +340,7 @@ export default function ScoreProgressChart({ sessions }: ScoreProgressChartProps
       {/* Academic Recommendation Box */}
       <div className="bg-[#EAF1FA] p-4 rounded-2xl border border-[#9AC1E2] text-xs space-y-1.5">
         <div className="flex items-center gap-1.5 font-bold text-[#09408C]">
-          <Sparkles size={15} />
+          <Award size={15} />
           <span>Rekomendasi Akademik Tutor Sahabat Belajar:</span>
         </div>
         <p className="text-[#5B6882] pl-5 leading-relaxed">

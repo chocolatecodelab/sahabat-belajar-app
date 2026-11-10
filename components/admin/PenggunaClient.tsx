@@ -244,14 +244,11 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
       </div>
 
       {/* Users Table */}
-      <div
-        className="elevation-1 rounded-2xl bg-white border overflow-hidden"
-        style={{ borderColor: "var(--color-outline-variant)" }}
-      >
+      <div className="bg-white rounded-2xl border border-[#D5DDEB] overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-body-sm">
-            <thead>
-              <tr className="border-b text-label-md bg-slate-50/60" style={{ borderColor: "var(--color-outline-variant)", color: "var(--color-on-surface-variant)" }}>
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[#5B6882] font-semibold uppercase tracking-wider text-[11px]">
+              <tr>
                 <th className="py-3 px-4">Nama Lengkap</th>
                 <th className="py-3 px-4">Email Akun</th>
                 <th className="py-3 px-4">Role Hak Akses</th>
@@ -259,10 +256,10 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
                 <th className="py-3 px-4 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y" style={{ borderColor: "var(--color-outline-variant)" }}>
+            <tbody className="divide-y divide-[#D5DDEB]">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-400">
+                  <td colSpan={5} className="py-12 text-center text-[#5B6882] text-xs">
                     Tidak ada akun pengguna ditemukan.
                   </td>
                 </tr>
@@ -272,41 +269,38 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
                   const initial = u.name ? u.name.charAt(0).toUpperCase() : "U";
 
                   return (
-                    <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3 px-4">
+                    <tr key={u.id} className="hover:bg-[#EAF1FA]/50 transition-colors">
+                      <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0"
-                            style={{ background: "var(--color-primary)" }}
-                          >
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#09408C] text-white font-bold text-xs shrink-0 ring-2 ring-[#EAF1FA]">
                             {initial}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900 truncate max-w-xs">{u.name}</p>
+                            <p className="font-bold text-[#1B2A41] truncate max-w-xs">{u.name}</p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 text-slate-600 text-2xs font-mono">
+                      <td className="py-3.5 px-4 text-[#5B6882] font-mono text-[11px]">
                         {u.email}
                       </td>
 
-                      <td className="py-3 px-4">
-                        <span className={`px-2.5 py-0.5 rounded-full text-3xs font-semibold border ${getRoleBadgeClass(roleName)}`}>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getRoleBadgeClass(roleName)}`}>
                           {roleName}
                         </span>
                       </td>
 
-                      <td className="py-3 px-4 text-slate-500 text-3xs">
+                      <td className="py-3.5 px-4 text-[#5B6882] tabular-nums text-xs">
                         {formatDate(u.createdAt)}
                       </td>
 
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-4 text-right">
                         <div className="inline-flex items-center gap-1.5">
                           <button
                             type="button"
                             onClick={() => openEdit(u)}
-                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#EAF1FA] text-[#09408C] transition-colors cursor-pointer"
                             title="Edit Role & Data"
                           >
                             <Edit size={14} />
@@ -314,7 +308,7 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
                           <button
                             type="button"
                             onClick={() => handleDelete(u.id)}
-                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 hover:border-rose-200 text-rose-600 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#FBE9E5] hover:border-[#B4381F]/30 text-[#B4381F] transition-colors cursor-pointer"
                             title="Hapus Pengguna"
                           >
                             <Trash2 size={14} />

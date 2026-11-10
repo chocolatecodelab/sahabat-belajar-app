@@ -11,7 +11,6 @@ import {
   ArrowLeft,
   RotateCcw,
   BookOpen,
-  Sparkles,
   TrendingUp,
   Share2,
   Printer,
@@ -605,7 +604,7 @@ export default function ExamResultClient({
                   {q.explanation && (
                     <div className="bg-[#EAF1FA] rounded-2xl p-4 border border-[#9AC1E2] text-xs text-[#09408C] space-y-1">
                       <div className="font-bold flex items-center gap-1.5 text-xs text-[#09408C]">
-                        <Sparkles size={14} className="text-[#09408C]" />
+                        <BookOpen size={14} className="text-[#09408C]" />
                         <span>Pembahasan Konsep Dasar:</span>
                       </div>
                       <p className="leading-relaxed text-[#1B2A41] whitespace-pre-line">

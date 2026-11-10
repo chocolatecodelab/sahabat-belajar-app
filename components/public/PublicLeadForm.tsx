@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send, CheckCircle2, AlertCircle, Phone, Sparkles } from "lucide-react";
+import { Send, CheckCircle2, AlertCircle, Phone, FileText } from "lucide-react";
 import { createPublicLead } from "@/actions/lead";
 
 export default function PublicLeadForm() {
@@ -84,7 +84,7 @@ export default function PublicLeadForm() {
     >
       <div className="border-b border-[#D5DDEB] pb-4">
         <div className="flex items-center gap-1.5 text-xs font-bold text-[#09408C] uppercase tracking-wider mb-1">
-          <Sparkles size={14} className="text-[#0CC0DF]" />
+          <FileText size={14} className="text-[#09408C]" />
           <span>Formulir Pendaftaran & Konsultasi</span>
         </div>
         <h3 className="text-xl sm:text-2xl font-bold text-[#09408C] font-display">

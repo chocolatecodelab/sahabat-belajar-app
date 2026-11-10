@@ -14,7 +14,6 @@ import {
   HelpCircle,
   ExternalLink,
   Layers,
-  Sparkles,
   Filter,
   Search,
   Copy,
@@ -685,7 +684,7 @@ export default function ExamDetailClient({
               {q.explanation && (
                 <div className="bg-[#EAF1FA]/60 rounded-xl p-3 border border-[#9AC1E2]/40 text-xs text-[#09408C]">
                   <div className="font-bold flex items-center gap-1.5 mb-1 text-[11px] uppercase tracking-wide">
-                    <Sparkles size={13} className="text-[#09408C]" />
+                    <BookOpen size={13} className="text-[#09408C]" />
                     <span>Pembahasan Konsep Dasar (Sahabat Belajar):</span>
                   </div>
                   <p className="leading-relaxed text-[#1B2A41]">

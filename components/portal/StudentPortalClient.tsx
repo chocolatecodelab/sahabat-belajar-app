@@ -16,7 +16,6 @@ import {
   HelpCircle,
   LogOut,
   ExternalLink,
-  Sparkles,
   ChevronRight,
   User,
   Award,
@@ -864,7 +863,7 @@ export default function StudentPortalClient({
                       {session.notes && (
                         <div className="bg-[#F4F7FB] p-3 rounded-xl border border-[#D5DDEB] text-xs space-y-1">
                           <div className="flex items-center gap-1.5 font-semibold text-[#09408C]">
-                            <Sparkles size={14} />
+                            <FileText size={14} />
                             Catatan & Rekomendasi Tutor:
                           </div>
                           <p className="text-[#5B6882] pl-5 leading-relaxed">{session.notes}</p>
@@ -888,7 +887,7 @@ export default function StudentPortalClient({
             <div className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
-                  <Sparkles size={14} />
+                  <Award size={14} />
                   <span>
                     {isK12
                       ? "Tryout Berstandar UTBK & Kurikulum Sekolah"
@@ -1474,7 +1473,7 @@ export default function StudentPortalClient({
 
                 <div className="border border-[#D5DDEB] rounded-2xl overflow-hidden">
                   <table className="w-full text-left">
-                    <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[11px] text-[#5B6882]">
+                    <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[11px] font-semibold uppercase tracking-wider text-[#5B6882]">
                       <tr>
                         <th className="p-3">Uraian Paket Bimbingan</th>
                         <th className="p-3 text-right">Nominal</th>

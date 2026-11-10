@@ -29,7 +29,7 @@ const INITIAL_MENUS = [
   { id: "menu_siswa", label: "Data Siswa", icon: "GraduationCap", url: "/dashboard/siswa", parentId: "menu_siswa_group", sortOrder: 1, isActive: true, permission: "student.read" },
   { id: "menu_jadwal", label: "Jadwal & Sesi", icon: "Calendar", url: "/dashboard/jadwal", parentId: "menu_siswa_group", sortOrder: 2, isActive: true, permission: "schedule.read" },
   { id: "menu_paket", label: "Paket & Kuota", icon: "FileCheck", url: "/dashboard/paket", parentId: "menu_siswa_group", sortOrder: 3, isActive: true, permission: "package.read" },
-  { id: "menu_portal_siswa", label: "Portal Siswa", icon: "Sparkles", url: "/portal", parentId: "menu_siswa_group", sortOrder: 4, isActive: true, permission: "student.read" },
+  { id: "menu_portal_siswa", label: "Portal Siswa", icon: "GraduationCap", url: "/portal", parentId: "menu_siswa_group", sortOrder: 4, isActive: true, permission: "student.read" },
 
   // 4. Manajemen Tutor (Parent)
   { id: "menu_tutor_group", label: "Manajemen Tutor", icon: "BookOpen", url: "/dashboard/tutor", parentId: null, sortOrder: 4, isActive: true, permission: "tutor.read" },

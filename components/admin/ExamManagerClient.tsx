@@ -11,7 +11,6 @@ import {
   Search,
   Filter,
   ArrowRight,
-  Sparkles,
   FileQuestion,
   AlertCircle,
   Edit3,
@@ -389,7 +388,7 @@ export default function ExamManagerClient({
             </div>
           </div>
           <div className="w-11 h-11 rounded-xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center">
-            <Sparkles size={22} />
+            <Award size={22} />
           </div>
         </div>
       </div>

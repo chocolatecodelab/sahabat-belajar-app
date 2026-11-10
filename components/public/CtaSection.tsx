@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageCircle, ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { MessageCircle, ArrowRight, CheckCircle2, GraduationCap } from "lucide-react";
 
 export default function CtaSection({
   contactPhone,
@@ -26,7 +26,7 @@ export default function CtaSection({
             {/* Tagar & Badge Brand */}
             <div className="flex flex-wrap items-center gap-2 mb-6">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/15 text-[#9AC1E2] border border-white/20">
-                <Sparkles size={13} className="text-[#0CC0DF]" />
+                <GraduationCap size={13} className="text-[#9AC1E2]" />
                 #BersamaSahabat
               </span>
               <span className="text-xs text-blue-200 font-medium">

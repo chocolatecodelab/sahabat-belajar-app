@@ -83,58 +83,58 @@ export default async function BeritaPage(props: BeritaPageProps) {
       </div>
 
       {/* Table */}
-      <div className="elevation-1 rounded-2xl overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr style={{ background: "var(--color-surface-container)" }}>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Cover</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Judul</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Kategori</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Status</th>
-              <th className="text-left px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Views</th>
-              <th className="text-right px-5 py-3.5 text-label-lg" style={{ color: "var(--color-on-surface-variant)" }}>Aksi</th>
+      <div className="bg-white rounded-2xl border border-[#D5DDEB] overflow-hidden shadow-xs">
+        <table className="w-full text-left text-xs">
+          <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[#5B6882] font-semibold uppercase tracking-wider text-[11px]">
+            <tr>
+              <th className="px-4 py-3">Cover</th>
+              <th className="px-4 py-3">Judul Artikel</th>
+              <th className="px-4 py-3">Kategori</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Pembaca</th>
+              <th className="text-right px-4 py-3">Aksi</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#D5DDEB]">
             {result.data.length === 0 ? (
-              <tr><td colSpan={6} className="text-center py-12 text-body-md" style={{ color: "var(--color-outline)" }}>Belum ada berita</td></tr>
+              <tr><td colSpan={6} className="text-center py-12 text-[#5B6882] text-xs">Belum ada berita</td></tr>
             ) : (
               result.data.map((article) => (
-                <tr key={article.id} className="border-t hover:bg-black/[0.02] transition-colors" style={{ borderColor: "var(--color-outline-variant)" }}>
-                  <td className="px-5 py-3">
+                <tr key={article.id} className="hover:bg-[#EAF1FA]/50 transition-colors">
+                  <td className="px-4 py-3.5">
                     {article.featuredImage ? (
-                      <img src={article.featuredImage} alt="" className="w-16 h-10 rounded-lg object-cover" />
+                      <img src={article.featuredImage} alt="" className="w-16 h-10 rounded-xl object-cover border border-[#D5DDEB]" />
                     ) : (
-                      <div className="w-16 h-10 rounded-lg flex items-center justify-center" style={{ background: "var(--color-surface-container)" }}>
-                        <Newspaper size={16} style={{ color: "var(--color-outline)" }} />
+                      <div className="w-16 h-10 rounded-xl flex items-center justify-center bg-[#F4F7FB] border border-[#D5DDEB]">
+                        <Newspaper size={16} className="text-[#5B6882]" />
                       </div>
                     )}
                   </td>
-                  <td className="px-5 py-3">
-                    <p className="text-body-md font-medium truncate max-w-[250px]" style={{ color: "var(--color-on-surface)" }}>{article.title}</p>
-                    <p className="text-label-md mt-0.5" style={{ color: "var(--color-outline)" }}>{article.author?.name || "Admin"}</p>
+                  <td className="px-4 py-3.5">
+                    <p className="font-bold text-[#1B2A41] truncate max-w-[280px]">{article.title}</p>
+                    <p className="text-[11px] text-[#5B6882] mt-0.5">{article.author?.name || "Admin"}</p>
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-3.5">
                     {article.category ? (
-                      <span className="text-label-md px-2.5 py-1 rounded-full" style={{ background: article.category.color ? `${article.category.color}20` : "var(--color-surface-container)", color: article.category.color || "var(--color-on-surface-variant)" }}>
+                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1" style={{ background: article.category.color ? `${article.category.color}15` : "#EAF1FA", color: article.category.color || "#09408C" }}>
                         {article.category.name}
                       </span>
                     ) : (
-                      <span className="text-label-md" style={{ color: "var(--color-outline)" }}>—</span>
+                      <span className="text-[11px] text-[#5B6882]">—</span>
                     )}
                   </td>
-                  <td className="px-5 py-3">
-                    <span className={`text-label-md px-2.5 py-1 rounded-full ${statusColors[article.status]}`}>{article.status}</span>
+                  <td className="px-4 py-3.5">
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${statusColors[article.status]}`}>{article.status}</span>
                   </td>
-                  <td className="px-5 py-3">
-                    <span className="text-body-sm flex items-center gap-1" style={{ color: "var(--color-outline)" }}>
-                      <Eye size={14} /> {article.viewCount || 0}
+                  <td className="px-4 py-3.5">
+                    <span className="text-xs text-[#5B6882] tabular-nums flex items-center gap-1">
+                      <Eye size={13} /> {article.viewCount || 0}
                     </span>
                   </td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <Link href={`/dashboard/berita/${article.id}/edit`} className="p-2 rounded-lg transition-colors hover:bg-black/5" style={{ color: "var(--color-primary-container)" }}>
-                        <Edit size={16} />
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Link href={`/dashboard/berita/${article.id}/edit`} className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#EAF1FA] text-[#09408C] transition-colors">
+                        <Edit size={14} />
                       </Link>
                       <form action={handleDelete}>
                         <input type="hidden" name="id" value={article.id} />
