@@ -499,3 +499,66 @@ model AcademicDocument {
   @@index([category])
 }
 
+// ============================
+// RUANG UJIAN ONLINE & SIMULASI CAT
+// ============================
+
+model Exam {
+  id              String               @id @default(cuid())
+  title           String
+  description     String?              @db.Text
+  category        String               @default("CPNS_BUMN") // CPNS_BUMN, UTBK_SNBT, TOEFL_IELTS, K12, KEDINASAN
+  durationMinutes Int                  @default(90)
+  passingGrade    Int                  @default(300)
+  totalQuestions  Int                  @default(0)
+  isActive        Boolean              @default(true)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  questions       ExamQuestion[]
+  sessions        StudentExamSession[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model ExamQuestion {
+  id             String   @id @default(cuid())
+  examId         String
+  exam           Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questionNumber Int      @default(1)
+  section        String?  // TWK, TIU, TKP, Structure, Reading, Penalaran Matematika
+  questionText   String   @db.Text
+  image          String?
+  options        Json     @default("[]")
+  correctKey     String   @default("A")
+  points         Int      @default(5)
+  explanation    String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([examId])
+}
+
+model StudentExamSession {
+  id                  String    @id @default(cuid())
+  examId              String
+  exam                Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId           String
+  studentName         String?
+  startedAt           DateTime  @default(now())
+  submittedAt         DateTime?
+  durationSecondsUsed Int       @default(0)
+  score               Float     @default(0)
+  isPassed            Boolean   @default(false)
+  status              String    @default("SEDANG_MENGERJAKAN") // SEDANG_MENGERJAKAN, SELESAI
+  answers             Json      @default("{}")
+  sectionScores       Json      @default("{}")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([examId])
+  @@index([studentId])
+}
+
+

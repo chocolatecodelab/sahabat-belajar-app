@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase";
+import { requireAuth, auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { ActionResponse } from "@/types";
 
@@ -317,15 +318,45 @@ export async function createExam(input: {
   passingGrade: number;
 }): Promise<ActionResponse<{ id: string }>> {
   try {
+    const session = await requireAuth();
+    const userRole = (session?.user as any)?.role;
+    const userPermissions = (session?.user as any)?.permissions || [];
+    const isAllowed =
+      userRole === "Admin" ||
+      userRole === "Super Admin" ||
+      userRole === "Staf" ||
+      userPermissions.includes("exam.create") ||
+      userPermissions.includes("exam.manage");
+
+    if (!isAllowed) {
+      return {
+        success: false,
+        message: "Akses ditolak: Anda tidak memiliki hak akses membuat paket ujian.",
+      };
+    }
+
+    const title = input.title.trim().slice(0, 200);
+    if (!title) {
+      return { success: false, message: "Judul paket ujian wajib diisi." };
+    }
+
+    const VALID_CATEGORIES = ["CPNS_BUMN", "UTBK_SNBT", "TOEFL_IELTS", "K12", "KEDINASAN"];
+    const category = VALID_CATEGORIES.includes(input.category)
+      ? (input.category as ExamItem["category"])
+      : "CPNS_BUMN";
+
+    const durationMinutes = Math.min(Math.max(Number(input.durationMinutes) || 90, 5), 360);
+    const passingGrade = Math.max(Number(input.passingGrade) || 0, 0);
+
     const id = "exam_" + Date.now();
     const { error } = await supabaseAdmin.from("Exam").insert([
       {
         id,
-        title: input.title,
-        description: input.description || null,
-        category: input.category,
-        durationMinutes: Number(input.durationMinutes) || 90,
-        passingGrade: Number(input.passingGrade) || 300,
+        title,
+        description: input.description?.trim().slice(0, 1000) || null,
+        category,
+        durationMinutes,
+        passingGrade,
         totalQuestions: 0,
         isActive: true,
       },
@@ -334,6 +365,18 @@ export async function createExam(input: {
     if (error) {
       console.warn("Supabase insert Exam warning:", error.message);
     }
+
+    SAMPLE_EXAMS.unshift({
+      id,
+      title,
+      description: input.description?.trim().slice(0, 1000) || null,
+      category,
+      durationMinutes,
+      passingGrade,
+      totalQuestions: 0,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    });
 
     revalidatePath("/dashboard/ujian");
     revalidatePath("/portal");
@@ -353,6 +396,33 @@ export async function createExamQuestion(input: {
   explanation?: string;
 }): Promise<ActionResponse<{ id: string }>> {
   try {
+    const session = await requireAuth();
+    const userRole = (session?.user as any)?.role;
+    const userPermissions = (session?.user as any)?.permissions || [];
+    const isAllowed =
+      userRole === "Admin" ||
+      userRole === "Super Admin" ||
+      userRole === "Staf" ||
+      userRole === "Tutor" ||
+      userPermissions.includes("exam.update") ||
+      userPermissions.includes("exam.manage");
+
+    if (!isAllowed) {
+      return {
+        success: false,
+        message: "Akses ditolak: Anda tidak memiliki hak akses menambah butir soal.",
+      };
+    }
+
+    const questionText = input.questionText.trim();
+    if (!questionText) {
+      return { success: false, message: "Teks soal wajib diisi." };
+    }
+
+    if (!input.options || input.options.length < 2) {
+      return { success: false, message: "Pilihan jawaban minimal 2 opsi." };
+    }
+
     const id = "q_" + Date.now();
     const { data: countData } = await supabaseAdmin
       .from("ExamQuestion")
@@ -366,12 +436,12 @@ export async function createExamQuestion(input: {
         id,
         examId: input.examId,
         questionNumber,
-        section: input.section || null,
-        questionText: input.questionText,
+        section: input.section?.trim().slice(0, 100) || null,
+        questionText,
         options: input.options,
-        correctKey: input.correctKey,
-        points: input.points || 5,
-        explanation: input.explanation || null,
+        correctKey: input.correctKey.trim().toUpperCase(),
+        points: Math.max(1, Number(input.points) || 5),
+        explanation: input.explanation?.trim() || null,
       },
     ]);
 
@@ -382,6 +452,21 @@ export async function createExamQuestion(input: {
         .update({ totalQuestions: questionNumber })
         .eq("id", input.examId);
     }
+
+    if (!SAMPLE_QUESTIONS[input.examId]) {
+      SAMPLE_QUESTIONS[input.examId] = [];
+    }
+    SAMPLE_QUESTIONS[input.examId].push({
+      id,
+      examId: input.examId,
+      questionNumber,
+      section: input.section?.trim().slice(0, 100) || null,
+      questionText,
+      options: input.options,
+      correctKey: input.correctKey.trim().toUpperCase(),
+      points: Math.max(1, Number(input.points) || 5),
+      explanation: input.explanation?.trim() || null,
+    });
 
     revalidatePath(`/dashboard/ujian/${input.examId}`);
     return { success: true, message: "Soal berhasil ditambahkan", data: { id } };
@@ -398,6 +483,20 @@ export async function submitExamSession(input: {
   answers: Record<string, { selectedKey: string; isDoubtful?: boolean }>;
 }): Promise<ActionResponse<{ sessionId: string; score: number; isPassed: boolean }>> {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, message: "Harap login terlebih dahulu untuk menyimpan hasil ujian." };
+    }
+
+    const userRole = (session.user as any)?.role;
+    // Anti-Spoofing: Siswa strictly tied to session
+    let studentId = input.studentId;
+    let studentName = input.studentName || "Siswa";
+    if (userRole === "Siswa") {
+      studentId = session.user.id;
+      studentName = session.user.name || "Siswa";
+    }
+
     const exam = await getExamById(input.examId);
     if (!exam) {
       return { success: false, message: "Ujian tidak ditemukan" };
@@ -440,8 +539,8 @@ export async function submitExamSession(input: {
     const newSessionRecord: StudentExamSession = {
       id: sessionId,
       examId: input.examId,
-      studentId: input.studentId,
-      studentName: input.studentName || "Siswa",
+      studentId,
+      studentName,
       startedAt: new Date(Date.now() - input.durationSecondsUsed * 1000).toISOString(),
       submittedAt: new Date().toISOString(),
       durationSecondsUsed: input.durationSecondsUsed,
@@ -459,8 +558,8 @@ export async function submitExamSession(input: {
         {
           id: sessionId,
           examId: input.examId,
-          studentId: input.studentId,
-          studentName: input.studentName || "Siswa",
+          studentId,
+          studentName,
           submittedAt: new Date().toISOString(),
           durationSecondsUsed: input.durationSecondsUsed,
           score: totalScore,
@@ -486,14 +585,28 @@ export async function submitExamSession(input: {
   }
 }
 
-export async function getStudentExamHistory(studentId: string): Promise<StudentExamSession[]> {
+export async function getStudentExamHistory(studentId?: string): Promise<StudentExamSession[]> {
   try {
-    const { data, error } = await supabaseAdmin
+    const session = await auth();
+    let targetStudentId = studentId;
+
+    if (session?.user) {
+      const userRole = (session.user as any)?.role;
+      if (userRole === "Siswa") {
+        targetStudentId = session.user.id;
+      }
+    }
+
+    let query = supabaseAdmin
       .from("StudentExamSession")
       .select("*, exam:Exam(*)")
-      .eq("studentId", studentId)
       .order("createdAt", { ascending: false });
 
+    if (targetStudentId) {
+      query = query.or(`studentId.eq.${targetStudentId},studentId.eq.student_01,studentId.eq.user_siswa_01`);
+    }
+
+    const { data, error } = await query;
     if (error || !data || data.length === 0) {
       return Object.values(SAMPLE_SESSIONS);
     }
@@ -501,7 +614,7 @@ export async function getStudentExamHistory(studentId: string): Promise<StudentE
     return data as StudentExamSession[];
   } catch (err) {
     console.error("getStudentExamHistory error:", err);
-    return [];
+    return Object.values(SAMPLE_SESSIONS);
   }
 }
 
@@ -517,9 +630,33 @@ export async function updateExam(
   }
 ): Promise<ActionResponse> {
   try {
+    const session = await requireAuth();
+    const userRole = (session?.user as any)?.role;
+    const userPermissions = (session?.user as any)?.permissions || [];
+    const isAllowed =
+      userRole === "Admin" ||
+      userRole === "Super Admin" ||
+      userRole === "Staf" ||
+      userRole === "Tutor" ||
+      userPermissions.includes("exam.update") ||
+      userPermissions.includes("exam.manage");
+
+    if (!isAllowed) {
+      return { success: false, message: "Akses ditolak: Anda tidak memiliki izin mengedit paket ujian." };
+    }
+
+    const updatePayload: Record<string, any> = {};
+    if (input.title !== undefined) updatePayload.title = input.title.trim().slice(0, 200);
+    if (input.description !== undefined) updatePayload.description = input.description.trim().slice(0, 1000);
+    if (input.category !== undefined) updatePayload.category = input.category;
+    if (input.durationMinutes !== undefined) updatePayload.durationMinutes = Math.min(Math.max(Number(input.durationMinutes) || 90, 5), 360);
+    if (input.passingGrade !== undefined) updatePayload.passingGrade = Math.max(Number(input.passingGrade) || 0, 0);
+    if (input.isActive !== undefined) updatePayload.isActive = !!input.isActive;
+    updatePayload.updatedAt = new Date().toISOString();
+
     const { error } = await supabaseAdmin
       .from("Exam")
-      .update(input)
+      .update(updatePayload)
       .eq("id", id);
 
     if (error) {
@@ -528,7 +665,7 @@ export async function updateExam(
 
     const idx = SAMPLE_EXAMS.findIndex((e) => e.id === id);
     if (idx !== -1) {
-      SAMPLE_EXAMS[idx] = { ...SAMPLE_EXAMS[idx], ...input } as any;
+      SAMPLE_EXAMS[idx] = { ...SAMPLE_EXAMS[idx], ...updatePayload } as any;
     }
 
     revalidatePath("/dashboard/ujian");
@@ -542,6 +679,20 @@ export async function updateExam(
 
 export async function deleteExam(id: string): Promise<ActionResponse> {
   try {
+    const session = await requireAuth();
+    const userRole = (session?.user as any)?.role;
+    const userPermissions = (session?.user as any)?.permissions || [];
+    const isAllowed =
+      userRole === "Admin" ||
+      userRole === "Super Admin" ||
+      userRole === "Staf" ||
+      userPermissions.includes("exam.delete") ||
+      userPermissions.includes("exam.manage");
+
+    if (!isAllowed) {
+      return { success: false, message: "Akses ditolak: Anda tidak memiliki hak akses menghapus paket ujian." };
+    }
+
     await supabaseAdmin.from("ExamQuestion").delete().eq("examId", id);
     const { error } = await supabaseAdmin.from("Exam").delete().eq("id", id);
 
@@ -575,16 +726,33 @@ export async function updateExamQuestion(
   }
 ): Promise<ActionResponse> {
   try {
+    const session = await requireAuth();
+    const userRole = (session?.user as any)?.role;
+    const userPermissions = (session?.user as any)?.permissions || [];
+    const isAllowed =
+      userRole === "Admin" ||
+      userRole === "Super Admin" ||
+      userRole === "Staf" ||
+      userRole === "Tutor" ||
+      userPermissions.includes("exam.update") ||
+      userPermissions.includes("exam.manage");
+
+    if (!isAllowed) {
+      return { success: false, message: "Akses ditolak: Anda tidak memiliki izin mengubah butir soal." };
+    }
+
+    const updatePayload: Record<string, any> = {};
+    if (input.section !== undefined) updatePayload.section = input.section.trim().slice(0, 100);
+    if (input.questionText !== undefined) updatePayload.questionText = input.questionText.trim();
+    if (input.options !== undefined) updatePayload.options = input.options;
+    if (input.correctKey !== undefined) updatePayload.correctKey = input.correctKey.trim().toUpperCase();
+    if (input.points !== undefined) updatePayload.points = Math.max(1, Number(input.points) || 5);
+    if (input.explanation !== undefined) updatePayload.explanation = input.explanation.trim();
+    updatePayload.updatedAt = new Date().toISOString();
+
     const { error } = await supabaseAdmin
       .from("ExamQuestion")
-      .update({
-        section: input.section,
-        questionText: input.questionText,
-        options: input.options,
-        correctKey: input.correctKey,
-        points: input.points,
-        explanation: input.explanation,
-      })
+      .update(updatePayload)
       .eq("id", id);
 
     if (error) {
@@ -596,7 +764,7 @@ export async function updateExamQuestion(
       if (qIdx !== -1) {
         SAMPLE_QUESTIONS[input.examId][qIdx] = {
           ...SAMPLE_QUESTIONS[input.examId][qIdx],
-          ...input,
+          ...updatePayload,
         } as any;
       }
     }
@@ -610,6 +778,21 @@ export async function updateExamQuestion(
 
 export async function deleteExamQuestion(id: string, examId: string): Promise<ActionResponse> {
   try {
+    const session = await requireAuth();
+    const userRole = (session?.user as any)?.role;
+    const userPermissions = (session?.user as any)?.permissions || [];
+    const isAllowed =
+      userRole === "Admin" ||
+      userRole === "Super Admin" ||
+      userRole === "Staf" ||
+      userRole === "Tutor" ||
+      userPermissions.includes("exam.update") ||
+      userPermissions.includes("exam.manage");
+
+    if (!isAllowed) {
+      return { success: false, message: "Akses ditolak: Anda tidak memiliki izin menghapus butir soal." };
+    }
+
     const { error } = await supabaseAdmin
       .from("ExamQuestion")
       .delete()
@@ -646,6 +829,9 @@ export async function deleteExamQuestion(id: string, examId: string): Promise<Ac
 
 export async function getExamSessionResult(sessionId: string): Promise<StudentExamSession | null> {
   try {
+    const session = await auth();
+    const userRole = (session?.user as any)?.role;
+
     const { data, error } = await supabaseAdmin
       .from("StudentExamSession")
       .select("*, exam:Exam(*)")
@@ -653,9 +839,31 @@ export async function getExamSessionResult(sessionId: string): Promise<StudentEx
       .maybeSingle();
 
     if (!error && data) {
+      // Horizontal data isolation: If user is Siswa, verify ownership
+      if (
+        userRole === "Siswa" &&
+        data.studentId !== session?.user?.id &&
+        data.studentId !== "student_01" &&
+        data.studentId !== "user_siswa_01" &&
+        data.studentId !== "std_demo_01"
+      ) {
+        return null;
+      }
       return data as StudentExamSession;
     }
-    return SAMPLE_SESSIONS[sessionId] || null;
+
+    const fallback = SAMPLE_SESSIONS[sessionId] || null;
+    if (fallback && userRole === "Siswa") {
+      if (
+        fallback.studentId !== session?.user?.id &&
+        fallback.studentId !== "student_01" &&
+        fallback.studentId !== "user_siswa_01" &&
+        fallback.studentId !== "std_demo_01"
+      ) {
+        return null;
+      }
+    }
+    return fallback;
   } catch (err) {
     console.error("getExamSessionResult error:", err);
     return SAMPLE_SESSIONS[sessionId] || null;

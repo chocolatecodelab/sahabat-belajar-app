@@ -244,7 +244,7 @@ export const STANDARD_ROLES = [
       "schedule.read", "schedule.manage",
       "payout.read",
       "material.read",
-      "exam.read",
+      "exam.read", "exam.update",
       "document.read", "document.update",
       "media.read", "media.create",
     ],

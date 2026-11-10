@@ -1,6 +1,7 @@
 import { getExamById } from "@/actions/ujian";
 import ExamSimulationClient from "@/components/portal/ExamSimulationClient";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 
 export const metadata = {
   title: "Simulasi Ujian Online (CAT) | Sahabat Belajar",
@@ -11,6 +12,12 @@ export default async function PortalExamRoomPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
   const { id } = await params;
   const exam = await getExamById(id);
 
@@ -21,8 +28,8 @@ export default async function PortalExamRoomPage({
   return (
     <ExamSimulationClient
       exam={exam}
-      studentId="std_demo_01"
-      studentName="Ahmad Fauzi"
+      studentId={session.user.id}
+      studentName={session.user.name || "Siswa"}
     />
   );
 }

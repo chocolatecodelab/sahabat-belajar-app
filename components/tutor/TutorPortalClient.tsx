@@ -161,7 +161,15 @@ export default function TutorPortalClient({
               className="text-xs text-[#09408C] bg-[#EAF1FA] hover:bg-[#D5DDEB] px-3 py-1.5 rounded-xl border border-[#9AC1E2] transition-colors flex items-center gap-1.5 font-semibold"
             >
               <FolderOpen size={13} />
-              <span>Bank Modul</span>
+              <span className="hidden sm:inline">Bank Modul</span>
+            </Link>
+
+            <Link
+              href="/dashboard/ujian"
+              className="text-xs text-[#09408C] bg-[#EAF1FA] hover:bg-[#D5DDEB] px-3 py-1.5 rounded-xl border border-[#9AC1E2] transition-colors flex items-center gap-1.5 font-semibold"
+            >
+              <Award size={13} />
+              <span className="hidden sm:inline">Ruang Ujian</span>
             </Link>
 
             <Link
