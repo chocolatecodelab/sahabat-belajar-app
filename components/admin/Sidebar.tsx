@@ -91,7 +91,10 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen, collapsed, setCollapsed } = useAdminSidebar();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(["Pengaturan"]);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([
+    "Layanan Belajar Digital",
+    "Manajemen Siswa",
+  ]);
 
   useEffect(() => {
     visibleMenus.forEach((m) => {
@@ -231,7 +234,14 @@ export default function Sidebar({
               <div key={item.id || item.label}>
                 <button
                   suppressHydrationWarning
-                  onClick={() => (!collapsed || mobileOpen) && toggleExpand(item.label)}
+                  onClick={() => {
+                    if (collapsed && !mobileOpen) {
+                      setCollapsed(false);
+                      setExpandedMenus((prev) => (prev.includes(item.label) ? prev : [...prev, item.label]));
+                    } else {
+                      toggleExpand(item.label);
+                    }
+                  }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${hasActiveChild
                     ? "bg-white/15 text-white shadow-xs"
                     : "text-white/70 hover:bg-white/10 hover:text-white"
@@ -243,11 +253,16 @@ export default function Sidebar({
                   </span>
                   {(!collapsed || mobileOpen) && (
                     <>
-                      <span className="flex-1 text-left">{item.label}</span>
+                      <span className="flex-1 text-left truncate">{item.label}</span>
+                      {item.id === "menu_akademik_digital" && (
+                        <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-white/20 text-[#9AC1E2] shrink-0 mr-1.5">
+                          Fase 2 & 3
+                        </span>
+                      )}
                       {isExpanded ? (
-                        <ChevronDown size={16} />
+                        <ChevronDown size={16} className="shrink-0 text-white/60" />
                       ) : (
-                        <ChevronRight size={16} />
+                        <ChevronRight size={16} className="shrink-0 text-white/60" />
                       )}
                     </>
                   )}
@@ -260,13 +275,24 @@ export default function Sidebar({
                         key={child.id || child.label}
                         href={child.url || "#"}
                         onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${child.url && isActiveRoute(child.url)
-                          ? "bg-white/20 text-white font-semibold"
-                          : "text-white/60 hover:bg-white/10 hover:text-white"
+                        className={`flex items-center justify-between gap-2.5 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${child.url && isActiveRoute(child.url)
+                          ? "bg-white/20 text-white font-semibold shadow-2xs"
+                          : "text-white/70 hover:bg-white/10 hover:text-white"
                           }`}
                       >
-                        {getIcon(child.icon)}
-                        <span>{child.label}</span>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {getIcon(child.icon)}
+                          <span className="truncate">{child.label}</span>
+                        </div>
+                        {child.url?.includes("/materi") || child.url?.includes("/ujian") ? (
+                          <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-white/20 text-[#9AC1E2] shrink-0">
+                            Fase 2
+                          </span>
+                        ) : child.url?.includes("/dokumen") ? (
+                          <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-white/20 text-[#9AC1E2] shrink-0">
+                            Fase 3
+                          </span>
+                        ) : null}
                       </Link>
                     ))}
                   </div>

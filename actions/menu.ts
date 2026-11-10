@@ -18,26 +18,42 @@ export type AdminMenuItem = {
 };
 
 const INITIAL_MENUS = [
+  // 1. Dashboard
   { id: "menu_dashboard", label: "Dashboard", icon: "LayoutDashboard", url: "/dashboard", parentId: null, sortOrder: 1, isActive: true, permission: "dashboard.read" },
+  
+  // 2. Prospek / Lead
   { id: "menu_lead", label: "Prospek / Lead", icon: "Users", url: "/dashboard/lead", parentId: null, sortOrder: 2, isActive: true, permission: "lead.read" },
-  { id: "menu_siswa", label: "Data Siswa", icon: "GraduationCap", url: "/dashboard/siswa", parentId: null, sortOrder: 3, isActive: true, permission: "student.read" },
-  { id: "menu_tutor", label: "Direktori Tutor", icon: "BookOpen", url: "/dashboard/tutor", parentId: null, sortOrder: 4, isActive: true, permission: "tutor.read" },
-  { id: "menu_portal_tutor", label: "Portal Tutor (HP)", icon: "Compass", url: "/tutor", parentId: null, sortOrder: 5, isActive: true, permission: "tutor.read" },
-  { id: "menu_jadwal", label: "Jadwal & Sesi", icon: "Calendar", url: "/dashboard/jadwal", parentId: null, sortOrder: 6, isActive: true, permission: "schedule.read" },
-  { id: "menu_portal_siswa", label: "Portal Siswa", icon: "Sparkles", url: "/portal", parentId: null, sortOrder: 7, isActive: true, permission: "student.read" },
-  { id: "menu_paket", label: "Paket & Kuota", icon: "FileCheck", url: "/dashboard/paket", parentId: null, sortOrder: 8, isActive: true, permission: "package.read" },
-  { id: "menu_pembayaran", label: "Pembayaran", icon: "CreditCard", url: "/dashboard/pembayaran", parentId: null, sortOrder: 9, isActive: true, permission: "payment.read" },
-  { id: "menu_honor", label: "Rekap Honor Tutor", icon: "Trophy", url: "/dashboard/honor", parentId: null, sortOrder: 10, isActive: true, permission: "payout.read" },
-  { id: "menu_materi", label: "Modul & Materi", icon: "FolderOpen", url: "/dashboard/materi", parentId: null, sortOrder: 11, isActive: true, permission: "material.read" },
-  { id: "menu_ujian", label: "Ruang Ujian & CAT", icon: "Award", url: "/dashboard/ujian", parentId: null, sortOrder: 12, isActive: true, permission: "exam.read" },
-  { id: "menu_dokumen", label: "Review Dokumen", icon: "FileEdit", url: "/dashboard/dokumen", parentId: null, sortOrder: 13, isActive: true, permission: "document.read" },
-  { id: "menu_media", label: "Pustaka Media", icon: "Image", url: "/dashboard/media", parentId: null, sortOrder: 14, isActive: true, permission: "media.read" },
-  { id: "menu_pengaturan", label: "Pengaturan", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 15, isActive: true, permission: "settings.read" },
-  // Sub-menus under Pengaturan
+
+  // 3. Manajemen Siswa (Parent)
+  { id: "menu_siswa_group", label: "Manajemen Siswa", icon: "GraduationCap", url: "/dashboard/siswa", parentId: null, sortOrder: 3, isActive: true, permission: "student.read" },
+  { id: "menu_siswa", label: "Data Siswa", icon: "GraduationCap", url: "/dashboard/siswa", parentId: "menu_siswa_group", sortOrder: 1, isActive: true, permission: "student.read" },
+  { id: "menu_jadwal", label: "Jadwal & Sesi", icon: "Calendar", url: "/dashboard/jadwal", parentId: "menu_siswa_group", sortOrder: 2, isActive: true, permission: "schedule.read" },
+  { id: "menu_paket", label: "Paket & Kuota", icon: "FileCheck", url: "/dashboard/paket", parentId: "menu_siswa_group", sortOrder: 3, isActive: true, permission: "package.read" },
+  { id: "menu_portal_siswa", label: "Portal Siswa", icon: "Sparkles", url: "/portal", parentId: "menu_siswa_group", sortOrder: 4, isActive: true, permission: "student.read" },
+
+  // 4. Manajemen Tutor (Parent)
+  { id: "menu_tutor_group", label: "Manajemen Tutor", icon: "BookOpen", url: "/dashboard/tutor", parentId: null, sortOrder: 4, isActive: true, permission: "tutor.read" },
+  { id: "menu_tutor", label: "Direktori Tutor", icon: "BookOpen", url: "/dashboard/tutor", parentId: "menu_tutor_group", sortOrder: 1, isActive: true, permission: "tutor.read" },
+  { id: "menu_portal_tutor", label: "Portal Tutor (HP)", icon: "Compass", url: "/tutor", parentId: "menu_tutor_group", sortOrder: 2, isActive: true, permission: "tutor.read" },
+
+  // 5. Keuangan (Parent)
+  { id: "menu_keuangan_group", label: "Keuangan & Kas", icon: "CreditCard", url: "/dashboard/pembayaran", parentId: null, sortOrder: 5, isActive: true, permission: "payment.read" },
+  { id: "menu_pembayaran", label: "Pembayaran", icon: "CreditCard", url: "/dashboard/pembayaran", parentId: "menu_keuangan_group", sortOrder: 1, isActive: true, permission: "payment.read" },
+  { id: "menu_honor", label: "Rekap Honor Tutor", icon: "Trophy", url: "/dashboard/honor", parentId: "menu_keuangan_group", sortOrder: 2, isActive: true, permission: "payout.read" },
+
+  // 6. Layanan Belajar Digital (Parent)
+  { id: "menu_akademik_digital", label: "Layanan Belajar Digital", icon: "Award", url: "/dashboard/materi", parentId: null, sortOrder: 6, isActive: true, permission: "material.read" },
+  { id: "menu_materi", label: "Modul & Materi", icon: "FolderOpen", url: "/dashboard/materi", parentId: "menu_akademik_digital", sortOrder: 1, isActive: true, permission: "material.read" },
+  { id: "menu_ujian", label: "Ruang Ujian & CAT", icon: "Award", url: "/dashboard/ujian", parentId: "menu_akademik_digital", sortOrder: 2, isActive: true, permission: "exam.read" },
+  { id: "menu_dokumen", label: "Review Dokumen", icon: "FileEdit", url: "/dashboard/dokumen", parentId: "menu_akademik_digital", sortOrder: 3, isActive: true, permission: "document.read" },
+
+  // 7. Pengaturan & Sistem (Parent)
+  { id: "menu_pengaturan", label: "Pengaturan & Sistem", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 7, isActive: true, permission: "settings.read" },
   { id: "menu_set_umum", label: "Pengaturan Umum", icon: "Settings", url: "/dashboard/pengaturan", parentId: "menu_pengaturan", sortOrder: 1, isActive: true, permission: "settings.read" },
   { id: "menu_set_menu", label: "Kelola Menu Sidebar", icon: "Menu", url: "/dashboard/pengguna/menu", parentId: "menu_pengaturan", sortOrder: 2, isActive: true, permission: "menu.read" },
   { id: "menu_set_role", label: "Role & Hak Akses", icon: "Shield", url: "/dashboard/pengguna/role", parentId: "menu_pengaturan", sortOrder: 3, isActive: true, permission: "role.read" },
   { id: "menu_set_user", label: "Akun Pengguna & Staf", icon: "Users", url: "/dashboard/pengguna", parentId: "menu_pengaturan", sortOrder: 4, isActive: true, permission: "user.read" },
+  { id: "menu_media", label: "Pustaka Media", icon: "Image", url: "/dashboard/media", parentId: "menu_pengaturan", sortOrder: 5, isActive: true, permission: "media.read" },
 ];
 
 function groupMenus(menus: AdminMenuItem[]): AdminMenuItem[] {
