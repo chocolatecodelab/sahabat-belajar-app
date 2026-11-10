@@ -31,9 +31,11 @@ export async function assignPackageToStudent(input: {
     }
 
     const now = new Date().toISOString();
+    const studentPackageId = 'spkg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
     const { data: studentPackage, error: spErr } = await supabaseAdmin
       .from("StudentPackage")
       .insert({
+        id: studentPackageId,
         studentId: input.studentId,
         packageId: input.packageId,
         quotaTotal,
@@ -78,10 +80,12 @@ export async function recordManualPayment(input: {
 
     const now = new Date().toISOString();
     const paidAt = input.paidAt ? new Date(input.paidAt).toISOString() : now;
+    const paymentId = 'pay_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 
     const { data: payment, error } = await supabaseAdmin
       .from("Payment")
       .insert({
+        id: paymentId,
         studentPackageId: input.studentPackageId,
         amount: input.amount,
         paidAt,

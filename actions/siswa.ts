@@ -82,9 +82,11 @@ export async function createStudent(input: StudentInput): Promise<ActionResponse
       };
     }
 
+    const studentId = 'student_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
     const { data: student, error } = await supabaseAdmin
       .from("Student")
       .insert({
+        id: studentId,
         name: input.name.trim(),
         level: input.level,
         school: input.school?.trim() || null,
@@ -154,9 +156,11 @@ export async function convertLeadToStudent(leadId: string): Promise<ActionRespon
       }
     }
 
+    const studentId = 'student_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
     const { data: student, error: studentError } = await supabaseAdmin
       .from("Student")
       .insert({
+        id: studentId,
         name: lead.name,
         level: lead.level || "Umum",
         parentPhone: lead.phone,
@@ -261,7 +265,9 @@ export async function importStudentsFromCsv(
     for (const row of rows) {
       if (!row.name || !row.level) continue;
 
+      const studentId = 'student_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
       const { error } = await supabaseAdmin.from("Student").insert({
+        id: studentId,
         name: row.name.trim(),
         level: row.level.trim(),
         school: row.school?.trim() || null,

@@ -13,7 +13,12 @@ export async function calculateTutorPayout(input: {
   notes?: string;
 }): Promise<ActionResponse<{ payoutId: string; totalSessions: number; totalAmount: number }>> {
   try {
-    const session = await auth();
+    let session: any = null;
+    if (process.env.IS_INTERNAL_CLI_TEST !== "true") {
+      try {
+        session = await auth();
+      } catch {}
+    }
     const userRole = ((session?.user as any)?.role || "").toLowerCase();
     const isAdmin = userRole.includes("admin") || userRole.includes("super");
     if (!isAdmin && process.env.IS_INTERNAL_CLI_TEST !== "true") {
@@ -90,7 +95,12 @@ export async function getTutorPayouts(params?: {
   status?: PayoutStatus;
 }) {
   try {
-    const session = await auth();
+    let session: any = null;
+    if (process.env.IS_INTERNAL_CLI_TEST !== "true") {
+      try {
+        session = await auth();
+      } catch {}
+    }
     const userRole = ((session?.user as any)?.role || "").toLowerCase();
     const isAdmin = userRole.includes("admin") || userRole.includes("super");
     const isTutor = userRole.includes("tutor");

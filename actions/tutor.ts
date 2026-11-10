@@ -100,9 +100,11 @@ export async function createTutor(input: TutorInput): Promise<ActionResponse<{ i
       };
     }
 
+    const tutorId = 'tut_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
     const { data: tutor, error } = await supabaseAdmin
       .from("Tutor")
       .insert({
+        id: tutorId,
         name: input.name.trim(),
         phone: input.phone.trim(),
         email: input.email?.trim().toLowerCase() || null,

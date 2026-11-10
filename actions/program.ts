@@ -37,9 +37,11 @@ export async function createProgram(data: {
   sortOrder?: number;
 }): Promise<ActionResponse<{ id: string }>> {
   try {
+    const programId = 'prog_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
     const { data: program, error } = await supabaseAdmin
       .from("Program")
       .insert({
+        id: programId,
         name: data.name.trim(),
         category: data.category,
         description: data.description || null,
@@ -72,9 +74,11 @@ export async function createPackage(data: {
   price?: number;
 }): Promise<ActionResponse<{ id: string }>> {
   try {
+    const packageId = 'pkg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
     const { data: pkg, error } = await supabaseAdmin
       .from("Package")
       .insert({
+        id: packageId,
         programId: data.programId || null,
         name: data.name.trim(),
         type: data.type || "QUOTA",

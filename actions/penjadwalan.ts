@@ -116,9 +116,11 @@ export async function createSession(
       );
 
       const now = new Date().toISOString();
+      const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
       const { data: session, error: sessionError } = await supabaseAdmin
         .from("Session")
         .insert({
+          id: sessionId,
           tutorId: input.tutorId,
           programId: input.programId,
           classType: input.classType,
@@ -137,15 +139,17 @@ export async function createSession(
       if (sessionError) throw sessionError;
 
       // Insert participants
-      const participantsWithSession = participantData.map((p) => ({
+      const participantsWithSession = participantData.map((p, pIdx) => ({
+        id: 'spart_' + Date.now() + '_' + pIdx + '_' + Math.random().toString(36).substring(2, 7),
         ...p,
         sessionId: session.id,
-        updatedAt: now,
       }));
 
-      await supabaseAdmin
+      const { error: partErr } = await supabaseAdmin
         .from("SessionParticipant")
         .insert(participantsWithSession);
+
+      if (partErr) throw partErr;
 
       createdSessionIds.push(session.id);
     }
@@ -339,7 +343,6 @@ export async function updateSessionStatus(
               .from("SessionParticipant")
               .update({
                 quotaDeducted: true,
-                updatedAt: now,
               })
               .eq("id", p.id);
           }
@@ -375,7 +378,6 @@ export async function updateSessionStatus(
               .from("SessionParticipant")
               .update({
                 quotaDeducted: false,
-                updatedAt: now,
               })
               .eq("id", p.id);
           }
@@ -411,24 +413,26 @@ export async function saveSessionJournal(
 ): Promise<ActionResponse> {
   try {
     const now = new Date().toISOString();
+    const journalId = 'jnl_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 
     // Upsert journal
     await supabaseAdmin
       .from("SessionJournal")
       .upsert({
+        id: journalId,
         sessionId,
         topic: data.topic.trim(),
         notes: data.notes?.trim() || null,
         homework: data.homework?.trim() || null,
         updatedAt: now,
-      });
+      }, { onConflict: "sessionId" });
 
     // Update attendances if provided
     if (data.attendances && data.attendances.length > 0) {
       for (const att of data.attendances) {
         await supabaseAdmin
           .from("SessionParticipant")
-          .update({ attendance: att.attendance, updatedAt: now })
+          .update({ attendance: att.attendance })
           .eq("id", att.participantId);
       }
     }

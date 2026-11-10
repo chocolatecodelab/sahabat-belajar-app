@@ -34,9 +34,11 @@ export async function createPublicLead(
       cleanPhone = cleanPhone.slice(1);
     }
 
+    const leadId = `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const { data: lead, error } = await supabaseAdmin
       .from("Lead")
       .insert({
+        id: leadId,
         name: input.name.trim(),
         phone: cleanPhone,
         email: input.email ? input.email.trim().toLowerCase() : null,
