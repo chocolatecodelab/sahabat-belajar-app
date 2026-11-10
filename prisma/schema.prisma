@@ -471,3 +471,31 @@ model LearningMaterial {
   @@index([isPublished])
 }
 
+// ============================
+// REVIEW DOKUMEN & ESAI AKADEMIK
+// ============================
+
+model AcademicDocument {
+  id                String    @id @default(cuid())
+  studentId         String
+  studentName       String
+  title             String
+  category          String    @default("ESAI_BEASISWA") // ESAI_BEASISWA, PROPOSAL_TESIS, SKRIPSI_KTI, MOTIVATION_LETTER
+  targetInstitution String?
+  stage             String    @default("DRAFTING") // DRAFTING, REVIEW_MENTOR, REVISI, APPROVED
+  version           Int       @default(1)
+  fileName          String
+  fileUrl           String?
+  studentNotes      String?   @db.Text
+  mentorId          String?
+  mentorName        String?
+  mentorNotes       String?   @db.Text
+  reviewedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([studentId])
+  @@index([stage])
+  @@index([category])
+}
+

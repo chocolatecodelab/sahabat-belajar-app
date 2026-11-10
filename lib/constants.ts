@@ -96,7 +96,7 @@ export const DEFAULT_ROLES = [
   },
 ] as const;
 
-export const UPLOAD_MAX_SIZE = 5 * 1024 * 1024; // 5MB
+export const UPLOAD_MAX_SIZE = 15 * 1024 * 1024; // 15MB
 export const UPLOAD_ALLOWED_TYPES = [
   "image/jpeg",
   "image/png",
@@ -104,4 +104,6 @@ export const UPLOAD_ALLOWED_TYPES = [
   "image/webp",
   "image/svg+xml",
   "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
