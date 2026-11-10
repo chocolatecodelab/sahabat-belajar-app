@@ -312,7 +312,7 @@ export default function ExamManagerClient({
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
             <Award size={14} />
-            <span>Roadmap Fase 2: Ruang Ujian Online & Simulasi CAT</span>
+            <span>Layanan Belajar Digital: Ruang Ujian Online & Simulasi CAT</span>
           </div>
           <h1 className="text-2xl font-bold text-[#09408C] font-display">
             Paket Ujian & Simulasi CAT

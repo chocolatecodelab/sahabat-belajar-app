@@ -254,11 +254,6 @@ export default function Sidebar({
                   {(!collapsed || mobileOpen) && (
                     <>
                       <span className="flex-1 text-left truncate">{item.label}</span>
-                      {item.id === "menu_akademik_digital" && (
-                        <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-white/20 text-[#9AC1E2] shrink-0 mr-1.5">
-                          Fase 2 & 3
-                        </span>
-                      )}
                       {isExpanded ? (
                         <ChevronDown size={16} className="shrink-0 text-white/60" />
                       ) : (
@@ -284,15 +279,6 @@ export default function Sidebar({
                           {getIcon(child.icon)}
                           <span className="truncate">{child.label}</span>
                         </div>
-                        {child.url?.includes("/materi") || child.url?.includes("/ujian") ? (
-                          <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-white/20 text-[#9AC1E2] shrink-0">
-                            Fase 2
-                          </span>
-                        ) : child.url?.includes("/dokumen") ? (
-                          <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-white/20 text-[#9AC1E2] shrink-0">
-                            Fase 3
-                          </span>
-                        ) : null}
                       </Link>
                     ))}
                   </div>
@@ -318,15 +304,6 @@ export default function Sidebar({
               {(!collapsed || mobileOpen) && (
                 <div className="flex items-center justify-between flex-1 min-w-0">
                   <span className="truncate">{item.label}</span>
-                  {item.url?.includes("/materi") || item.url?.includes("/ujian") ? (
-                    <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-white/20 text-[#9AC1E2] shrink-0 ml-1">
-                      Fase 2
-                    </span>
-                  ) : item.url?.includes("/dokumen") ? (
-                    <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-white/20 text-[#9AC1E2] shrink-0 ml-1">
-                      Fase 3
-                    </span>
-                  ) : null}
                 </div>
               )}
             </Link>
