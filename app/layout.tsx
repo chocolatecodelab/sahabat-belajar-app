@@ -25,15 +25,15 @@ export const metadata: Metadata = {
     "Lembaga Bimbingan Belajar Privat & Semi-Privat (K-12 & Program Lanjutan: CPNS, BUMN, S2/S3, TOEFL, Penulisan Ilmiah) - Paham Konsep Dasar hingga Siap Berprestasi",
   icons: {
     icon: [
-      { url: "/images/logo-sahabat-belajar.png", type: "image/png" },
-      { url: "/favicon.ico" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/images/logo-sahabat-belajar.png", sizes: "350x333", type: "image/png" },
     ],
     apple: [
-      { url: "/images/logo-sahabat-belajar.png", sizes: "180x180", type: "image/png" },
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
+    shortcut: "/favicon.ico",
   },
 };
 
