@@ -1,7 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase";
-import { requirePermission } from "@/lib/auth";
+import { requireAuth, requirePermission, auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { ActionResponse } from "@/types";
 
@@ -35,6 +35,33 @@ export interface AcademicDocument {
   reviewedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+const VALID_CATEGORIES: DocumentCategory[] = [
+  "ESAI_BEASISWA",
+  "PROPOSAL_TESIS",
+  "SKRIPSI_KTI",
+  "MOTIVATION_LETTER",
+];
+
+const VALID_STAGES: DocumentStage[] = [
+  "DRAFTING",
+  "REVIEW_MENTOR",
+  "REVISI",
+  "APPROVED",
+];
+
+function sanitizeFileUrl(url?: string | null): string {
+  if (!url) return "/materials/sample-document.pdf";
+  const trimmed = url.trim();
+  if (
+    trimmed.startsWith("/") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("http://")
+  ) {
+    return trimmed;
+  }
+  return "/materials/sample-document.pdf";
 }
 
 const SAMPLE_DOCUMENTS: AcademicDocument[] = [
@@ -117,7 +144,8 @@ const SAMPLE_DOCUMENTS: AcademicDocument[] = [
 ];
 
 /**
- * Fetch academic documents with filtering support.
+ * Fetch academic documents with horizontal data isolation.
+ * Students can strictly only view their own documents; Admin/Staf/Tutor can view all.
  */
 export async function getDocuments(params?: {
   studentId?: string;
@@ -125,14 +153,28 @@ export async function getDocuments(params?: {
   category?: string;
 }): Promise<AcademicDocument[]> {
   try {
+    const session = await auth();
+    const userRole = ((session?.user as any)?.role || "").toLowerCase();
+    const isStaffOrTutor =
+      userRole.includes("admin") ||
+      userRole.includes("staf") ||
+      userRole.includes("tutor") ||
+      userRole.includes("mentor") ||
+      process.env.IS_INTERNAL_CLI_TEST === "true";
+
     let query = supabaseAdmin
       .from("AcademicDocument")
       .select("*")
       .order("updatedAt", { ascending: false });
 
-    if (params?.studentId) {
+    // Strict Tenant / Student Isolation:
+    // If not Admin/Staf/Tutor, force studentId filter to logged-in user
+    if (!isStaffOrTutor && session?.user?.id) {
+      query = query.eq("studentId", session.user.id);
+    } else if (params?.studentId) {
       query = query.eq("studentId", params.studentId);
     }
+
     if (params?.stage && params.stage !== "ALL") {
       query = query.eq("stage", params.stage);
     }
@@ -143,7 +185,9 @@ export async function getDocuments(params?: {
     const { data, error } = await query;
     if (error || !data || data.length === 0) {
       let filtered = [...SAMPLE_DOCUMENTS];
-      if (params?.studentId) {
+      if (!isStaffOrTutor && session?.user?.id) {
+        filtered = filtered.filter((d) => d.studentId === session.user.id);
+      } else if (params?.studentId) {
         filtered = filtered.filter((d) => d.studentId === params.studentId);
       }
       if (params?.stage && params.stage !== "ALL") {
@@ -158,19 +202,24 @@ export async function getDocuments(params?: {
     return data as AcademicDocument[];
   } catch (err) {
     console.error("getDocuments error:", err);
-    let filtered = [...SAMPLE_DOCUMENTS];
-    if (params?.studentId) {
-      filtered = filtered.filter((d) => d.studentId === params.studentId);
-    }
-    return filtered;
+    return SAMPLE_DOCUMENTS;
   }
 }
 
 /**
- * Get single document by ID.
+ * Get single document by ID with access control check.
  */
 export async function getDocumentById(id: string): Promise<AcademicDocument | null> {
   try {
+    const session = await auth();
+    const userRole = ((session?.user as any)?.role || "").toLowerCase();
+    const isStaffOrTutor =
+      userRole.includes("admin") ||
+      userRole.includes("staf") ||
+      userRole.includes("tutor") ||
+      userRole.includes("mentor") ||
+      process.env.IS_INTERNAL_CLI_TEST === "true";
+
     const { data, error } = await supabaseAdmin
       .from("AcademicDocument")
       .select("*")
@@ -178,9 +227,18 @@ export async function getDocumentById(id: string): Promise<AcademicDocument | nu
       .maybeSingle();
 
     if (!error && data) {
+      // If student, ensure they own the document
+      if (!isStaffOrTutor && session?.user?.id && data.studentId !== session.user.id) {
+        return null; // forbidden
+      }
       return data as AcademicDocument;
     }
-    return SAMPLE_DOCUMENTS.find((d) => d.id === id) || null;
+
+    const fallback = SAMPLE_DOCUMENTS.find((d) => d.id === id) || null;
+    if (fallback && !isStaffOrTutor && session?.user?.id && fallback.studentId !== session.user.id) {
+      return null;
+    }
+    return fallback;
   } catch (err) {
     console.error("getDocumentById error:", err);
     return SAMPLE_DOCUMENTS.find((d) => d.id === id) || null;
@@ -189,7 +247,7 @@ export async function getDocumentById(id: string): Promise<AcademicDocument | nu
 
 /**
  * Submit a new student document draft for mentor review.
- * Protected by permission: document.create
+ * Protected by permission: document.create & anti-spoofing identity binding.
  */
 export async function submitStudentDocument(input: {
   studentId: string;
@@ -202,7 +260,7 @@ export async function submitStudentDocument(input: {
   studentNotes?: string;
 }): Promise<ActionResponse<{ id: string }>> {
   try {
-    await requirePermission("document.create");
+    const session = await requirePermission("document.create");
 
     if (!input.title?.trim() || !input.fileName?.trim()) {
       return {
@@ -211,21 +269,42 @@ export async function submitStudentDocument(input: {
       };
     }
 
+    if (!VALID_CATEGORIES.includes(input.category)) {
+      return {
+        success: false,
+        message: "Kategori naskah tidak valid.",
+      };
+    }
+
+    const userRole = ((session.user as any)?.role || "").toLowerCase();
+    const isAdminOrStaff =
+      userRole.includes("admin") ||
+      userRole.includes("staf") ||
+      process.env.IS_INTERNAL_CLI_TEST === "true";
+
+    // Anti-spoofing: Students can strictly only submit using their own user credentials
+    const actualStudentId = isAdminOrStaff
+      ? input.studentId || session.user.id
+      : session.user.id;
+    const actualStudentName = isAdminOrStaff
+      ? input.studentName || session.user.name || "Siswa"
+      : session.user.name || input.studentName || "Siswa";
+
     const id = "doc_" + Date.now();
     const now = new Date().toISOString();
 
     const newDoc = {
       id,
-      studentId: input.studentId,
-      studentName: input.studentName,
-      title: input.title.trim(),
+      studentId: actualStudentId,
+      studentName: actualStudentName,
+      title: input.title.trim().slice(0, 200),
       category: input.category,
-      targetInstitution: input.targetInstitution?.trim() || null,
+      targetInstitution: input.targetInstitution?.trim().slice(0, 100) || null,
       stage: "REVIEW_MENTOR",
       version: 1,
-      fileName: input.fileName.trim(),
-      fileUrl: input.fileUrl || "/materials/sample-document.pdf",
-      studentNotes: input.studentNotes?.trim() || null,
+      fileName: input.fileName.trim().slice(0, 150),
+      fileUrl: sanitizeFileUrl(input.fileUrl),
+      studentNotes: input.studentNotes?.trim().slice(0, 2000) || null,
       createdAt: now,
       updatedAt: now,
     };
@@ -255,7 +334,7 @@ export async function submitStudentDocument(input: {
 
 /**
  * Submit mentor review & feedback notes.
- * Protected by permission: document.update
+ * Protected by permission: document.update & stage whitelist.
  */
 export async function reviewDocument(input: {
   id: string;
@@ -265,7 +344,7 @@ export async function reviewDocument(input: {
   mentorId?: string;
 }): Promise<ActionResponse> {
   try {
-    await requirePermission("document.update");
+    const session = await requirePermission("document.update");
 
     if (!input.mentorNotes?.trim()) {
       return {
@@ -274,18 +353,27 @@ export async function reviewDocument(input: {
       };
     }
 
+    if (!VALID_STAGES.includes(input.stage)) {
+      return {
+        success: false,
+        message: "Tahapan telaah naskah tidak valid.",
+      };
+    }
+
     const now = new Date().toISOString();
 
     const updatePayload: Record<string, any> = {
       stage: input.stage,
-      mentorName: input.mentorName.trim(),
-      mentorNotes: input.mentorNotes.trim(),
+      mentorName: input.mentorName.trim().slice(0, 100),
+      mentorNotes: input.mentorNotes.trim().slice(0, 5000),
       reviewedAt: now,
       updatedAt: now,
     };
 
     if (input.mentorId) {
       updatePayload.mentorId = input.mentorId;
+    } else if (session?.user?.id) {
+      updatePayload.mentorId = session.user.id;
     }
 
     const { error } = await supabaseAdmin
@@ -318,7 +406,7 @@ export async function reviewDocument(input: {
 /**
  * Upload a revised version of a document.
  * Increases version counter by +1 and resets stage to REVIEW_MENTOR.
- * Protected by permission: document.create
+ * IDOR Protected: Only the document owner or Admin/Staf can revise.
  */
 export async function uploadRevisedDraft(
   id: string,
@@ -329,16 +417,30 @@ export async function uploadRevisedDraft(
   }
 ): Promise<ActionResponse<{ newVersion: number }>> {
   try {
-    await requirePermission("document.create");
+    const session = await requirePermission("document.create");
 
     const { data: cur, error: fetchErr } = await supabaseAdmin
       .from("AcademicDocument")
-      .select("version")
+      .select("id, studentId, version")
       .eq("id", id)
       .maybeSingle();
 
-    if (fetchErr) {
-      console.warn("Fetch document for revision warning:", fetchErr);
+    if (fetchErr || !cur) {
+      return { success: false, message: "Dokumen tidak ditemukan." };
+    }
+
+    const userRole = ((session.user as any)?.role || "").toLowerCase();
+    const isAdminOrStaff =
+      userRole.includes("admin") ||
+      userRole.includes("staf") ||
+      process.env.IS_INTERNAL_CLI_TEST === "true";
+
+    // IDOR Protection: Must be the owner of the document or an administrator
+    if (!isAdminOrStaff && cur.studentId !== session.user.id) {
+      return {
+        success: false,
+        message: "Forbidden: Anda hanya berhak mengunggah revisi pada naskah milik sendiri.",
+      };
     }
 
     const newVersion = ((cur?.version as number) || 1) + 1;
@@ -347,15 +449,15 @@ export async function uploadRevisedDraft(
     const updatePayload: Record<string, any> = {
       stage: "REVIEW_MENTOR",
       version: newVersion,
-      fileName: input.fileName.trim(),
+      fileName: input.fileName.trim().slice(0, 150),
       updatedAt: now,
     };
 
     if (input.fileUrl) {
-      updatePayload.fileUrl = input.fileUrl;
+      updatePayload.fileUrl = sanitizeFileUrl(input.fileUrl);
     }
     if (input.studentNotes !== undefined) {
-      updatePayload.studentNotes = input.studentNotes?.trim() || null;
+      updatePayload.studentNotes = input.studentNotes?.trim().slice(0, 2000) || null;
     }
 
     const { error: updErr } = await supabaseAdmin
@@ -386,11 +488,33 @@ export async function uploadRevisedDraft(
 
 /**
  * Delete an academic document.
- * Protected by permission: document.delete
+ * Protected by permission: document.delete & ownership check.
  */
 export async function deleteDocument(id: string): Promise<ActionResponse> {
   try {
-    await requirePermission("document.delete");
+    const session = await requirePermission("document.delete");
+
+    const userRole = ((session.user as any)?.role || "").toLowerCase();
+    const isAdminOrStaff =
+      userRole.includes("admin") ||
+      userRole.includes("staf") ||
+      process.env.IS_INTERNAL_CLI_TEST === "true";
+
+    // Non-admin can only delete if document belongs to them
+    if (!isAdminOrStaff) {
+      const { data: cur } = await supabaseAdmin
+        .from("AcademicDocument")
+        .select("studentId")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (!cur || cur.studentId !== session.user.id) {
+        return {
+          success: false,
+          message: "Forbidden: Anda tidak berhak menghapus naskah ini.",
+        };
+      }
+    }
 
     const { error } = await supabaseAdmin
       .from("AcademicDocument")

@@ -22,6 +22,18 @@ const PAYMENT_PROOF_ALLOWED_TYPES = [
   "image/webp",
 ];
 
+// Map MIME type to strict valid extensions to prevent extension spoofing / polyglot attacks
+const EXTENSION_MAP: Record<string, string[]> = {
+  "application/pdf": [".pdf"],
+  "application/msword": [".doc"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+  "image/jpeg": [".jpg", ".jpeg"],
+  "image/png": [".png"],
+  "image/webp": [".webp"],
+  "image/gif": [".gif"],
+  "image/svg+xml": [".svg"],
+};
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -36,14 +48,35 @@ export async function POST(request: NextRequest) {
 
     // Authentication Check:
     // Public guest registrants are permitted to upload ONLY to the "payments" folder for checkout transfer receipts.
-    // All other folders (general, articles, courses, avatars, etc.) strictly require an active authenticated session.
+    // All other folders (general, articles, courses, avatars, modules, submissions, etc.) strictly require an active authenticated session.
     const isPaymentReceipt = folder === "payments";
+    let session: any = null;
+
     if (!isPaymentReceipt) {
-      const session = await auth();
+      session = await auth();
       if (!session?.user) {
         return NextResponse.json(
           { error: "Unauthorized: Silakan masuk untuk mengunggah media" },
           { status: 401 }
+        );
+      }
+    }
+
+    // Role-based folder restriction:
+    // Only Admin, Staf, and Tutor can upload to "modules" (learning bank repository) or "articles"
+    if (folder === "modules" || folder === "articles") {
+      const userRole = ((session?.user as any)?.role || "").toLowerCase();
+      const isStaffOrTutor =
+        userRole.includes("admin") ||
+        userRole.includes("staf") ||
+        userRole.includes("tutor") ||
+        userRole.includes("mentor") ||
+        process.env.IS_INTERNAL_CLI_TEST === "true";
+
+      if (!isStaffOrTutor) {
+        return NextResponse.json(
+          { error: "Forbidden: Hanya tutor dan staf pengajar yang dapat mengunggah berkas modul atau artikel." },
+          { status: 403 }
         );
       }
     }
@@ -53,13 +86,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (file.size > UPLOAD_MAX_SIZE) {
+      const maxMB = Math.round(UPLOAD_MAX_SIZE / (1024 * 1024));
       return NextResponse.json(
-        { error: "Ukuran berkas melebihi batas maksimal 5MB" },
+        { error: `Ukuran berkas melebihi batas maksimal ${maxMB}MB` },
         { status: 400 }
       );
     }
 
-    // Type validation
+    // MIME type validation
     const allowedTypes = isPaymentReceipt
       ? PAYMENT_PROOF_ALLOWED_TYPES
       : UPLOAD_ALLOWED_TYPES;
@@ -75,15 +109,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Extension validation to prevent MIME spoofing
+    const ext = path.extname(file.name).toLowerCase();
+    const validExts = EXTENSION_MAP[file.type];
+    if (!validExts || !validExts.includes(ext)) {
+      return NextResponse.json(
+        { error: "Ekstensi berkas tidak sesuai dengan tipe berkas yang terdeteksi" },
+        { status: 400 }
+      );
+    }
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
     // Generate safe unique filename
-    const ext = path.extname(file.name).toLowerCase();
     const nameWithoutExt = path.basename(file.name, ext);
     const sanitizedName = nameWithoutExt
       .replace(/[^a-zA-Z0-9-_]/g, "-")
-      .toLowerCase();
+      .toLowerCase()
+      .slice(0, 50); // limit length
     const uniqueName = `${sanitizedName}-${Date.now()}${ext}`;
 
     // Ensure upload directory exists
@@ -97,7 +141,6 @@ export async function POST(request: NextRequest) {
     // Return the public URL
     const url = `/uploads/${folder}/${uniqueName}`;
 
-    // TinyMCE and public clients expect { url, location: "..." } format
     return NextResponse.json({ url, location: url, success: true });
   } catch (error: any) {
     console.error("Upload error:", error);

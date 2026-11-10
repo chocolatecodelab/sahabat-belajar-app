@@ -29,6 +29,28 @@ export interface LearningMaterial {
   createdAt: string;
 }
 
+const VALID_PROGRAM_CATEGORIES: ProgramCategory[] = [
+  "K12",
+  "CPNS_BUMN",
+  "UTBK_SNBT",
+  "TOEFL_IELTS",
+  "S2_BEASISWA",
+  "PENULISAN_ILMIAH",
+];
+
+function sanitizeFileUrl(url?: string | null): string {
+  if (!url) return "/materials/sample-document.pdf";
+  const trimmed = url.trim();
+  if (
+    trimmed.startsWith("/") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("http://")
+  ) {
+    return trimmed;
+  }
+  return "/materials/sample-document.pdf";
+}
+
 const SAMPLE_FALLBACK_MATERIALS: LearningMaterial[] = [
   {
     id: "mat_cpns_01",
@@ -201,17 +223,24 @@ export async function createLearningMaterial(input: {
       };
     }
 
+    if (!VALID_PROGRAM_CATEGORIES.includes(input.programCategory)) {
+      return {
+        success: false,
+        message: "Kategori program belajar tidak valid.",
+      };
+    }
+
     const id = "mat_" + Date.now();
     const newMat = {
       id,
-      title: input.title.trim(),
+      title: input.title.trim().slice(0, 200),
       programCategory: input.programCategory,
-      subject: input.subject.trim(),
-      description: input.description?.trim() || null,
-      fileUrl: input.fileUrl || "/materials/sample-document.pdf",
-      fileName: input.fileName.trim() || `${input.title.replace(/\s+/g, "_")}.pdf`,
-      fileSize: input.fileSize || "2.0 MB",
-      authorTutor: input.authorTutor?.trim() || "Tim Akademik Sahabat Belajar",
+      subject: input.subject.trim().slice(0, 100),
+      description: input.description?.trim().slice(0, 2000) || null,
+      fileUrl: sanitizeFileUrl(input.fileUrl),
+      fileName: input.fileName.trim().slice(0, 150) || `${input.title.replace(/\s+/g, "_")}.pdf`,
+      fileSize: input.fileSize?.slice(0, 20) || "2.0 MB",
+      authorTutor: input.authorTutor?.trim().slice(0, 100) || "Tim Akademik Sahabat Belajar",
       downloadCount: 0,
       isPublished: true,
       createdAt: new Date().toISOString(),
@@ -264,15 +293,20 @@ export async function updateLearningMaterial(
       updatedAt: new Date().toISOString(),
     };
 
-    if (input.title !== undefined) updatePayload.title = input.title.trim();
-    if (input.programCategory !== undefined) updatePayload.programCategory = input.programCategory;
-    if (input.subject !== undefined) updatePayload.subject = input.subject.trim();
-    if (input.description !== undefined) updatePayload.description = input.description?.trim() || null;
-    if (input.fileUrl !== undefined) updatePayload.fileUrl = input.fileUrl;
-    if (input.fileName !== undefined) updatePayload.fileName = input.fileName.trim();
-    if (input.fileSize !== undefined) updatePayload.fileSize = input.fileSize;
-    if (input.authorTutor !== undefined) updatePayload.authorTutor = input.authorTutor.trim();
-    if (input.isPublished !== undefined) updatePayload.isPublished = input.isPublished;
+    if (input.title !== undefined) updatePayload.title = input.title.trim().slice(0, 200);
+    if (input.programCategory !== undefined) {
+      if (!VALID_PROGRAM_CATEGORIES.includes(input.programCategory)) {
+        return { success: false, message: "Kategori program tidak valid." };
+      }
+      updatePayload.programCategory = input.programCategory;
+    }
+    if (input.subject !== undefined) updatePayload.subject = input.subject.trim().slice(0, 100);
+    if (input.description !== undefined) updatePayload.description = input.description?.trim().slice(0, 2000) || null;
+    if (input.fileUrl !== undefined) updatePayload.fileUrl = sanitizeFileUrl(input.fileUrl);
+    if (input.fileName !== undefined) updatePayload.fileName = input.fileName.trim().slice(0, 150);
+    if (input.fileSize !== undefined) updatePayload.fileSize = input.fileSize.slice(0, 20);
+    if (input.authorTutor !== undefined) updatePayload.authorTutor = input.authorTutor.trim().slice(0, 100);
+    if (input.isPublished !== undefined) updatePayload.isPublished = Boolean(input.isPublished);
 
     const { error } = await supabaseAdmin
       .from("LearningMaterial")
@@ -335,14 +369,18 @@ export async function trackMaterialDownload(
   id: string
 ): Promise<ActionResponse<{ downloadCount: number }>> {
   try {
+    if (!id || typeof id !== "string") {
+      return { success: false, message: "ID materi tidak valid." };
+    }
+
     const { data: cur, error: fetchErr } = await supabaseAdmin
       .from("LearningMaterial")
-      .select("downloadCount")
+      .select("id, downloadCount")
       .eq("id", id)
       .maybeSingle();
 
-    if (fetchErr) {
-      console.warn("trackMaterialDownload fetch error:", fetchErr);
+    if (fetchErr || !cur) {
+      return { success: false, message: "Modul materi tidak ditemukan." };
     }
 
     const newCount = ((cur?.downloadCount as number) || 0) + 1;
