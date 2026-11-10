@@ -41,9 +41,11 @@ import { useToast } from "@/components/ui/Toast";
 export default function TutorPortalClient({
   initialData,
   currentTutorId,
+  isAdmin = false,
 }: {
   initialData: TutorPortalData;
   currentTutorId?: string;
+  isAdmin?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -149,18 +151,21 @@ export default function TutorPortalClient({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Tutor Switcher Dropdown */}
-            <select
-              value={tutor.id}
-              onChange={(e) => handleSwitchTutor(e.target.value)}
-              className="text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-[#D5DDEB] bg-[#F4F7FB] text-[#09408C] focus:outline-none focus:border-[#09408C] max-w-[150px] sm:max-w-none truncate"
-            >
-              {availableTutors.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
+            {/* Tutor Switcher Dropdown (UX-FLOW-002: Hanya tampilkan untuk Admin) */}
+            {isAdmin && (
+              <select
+                aria-label="Pilih profil tutor"
+                value={tutor.id}
+                onChange={(e) => handleSwitchTutor(e.target.value)}
+                className="text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-[#D5DDEB] bg-[#F4F7FB] text-[#09408C] focus:outline-none focus:border-[#09408C] max-w-[150px] sm:max-w-none truncate"
+              >
+                {availableTutors.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            )}
 
             <Link
               href="/dashboard/materi"
@@ -178,12 +183,24 @@ export default function TutorPortalClient({
               <span className="hidden sm:inline">Ruang Ujian</span>
             </Link>
 
-            <Link
-              href="/dashboard"
-              className="text-xs text-[#5B6882] hover:text-[#09408C] px-3 py-1.5 rounded-xl border border-[#D5DDEB] hover:bg-slate-50 transition-colors hidden sm:inline"
+            {isAdmin && (
+              <Link
+                href="/dashboard"
+                className="text-xs text-[#5B6882] hover:text-[#09408C] px-3 py-1.5 rounded-xl border border-[#D5DDEB] hover:bg-slate-50 transition-colors hidden sm:inline"
+              >
+                Admin
+              </Link>
+            )}
+
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="inline-flex items-center gap-1.5 text-xs text-[#5B6882] hover:text-[#B4381F] px-3 py-1.5 rounded-xl border border-[#D5DDEB] hover:border-[#B4381F]/30 hover:bg-[#FBE9E5] transition-colors cursor-pointer"
+              aria-label="Keluar dari akun"
             >
-              Admin
-            </Link>
+              <LogOut size={13} />
+              <span className="hidden sm:inline">Keluar</span>
+            </button>
           </div>
         </div>
       </header>
@@ -198,8 +215,8 @@ export default function TutorPortalClient({
                 <span className="text-xs bg-white/20 text-white px-2.5 py-0.5 rounded-full font-semibold">
                   Tutor Sahabat Belajar
                 </span>
-                <span className="text-xs text-[#9AC1E2] font-semibold bg-white/10 px-2.5 py-0.5 rounded-full">
-                  Tarif: Rp {tutor.ratePerSession.toLocaleString("id-ID")} / 90 Mnt (BR-7)
+                <span className="text-xs text-[#9AC1E2] font-semibold bg-white/10 px-2.5 py-0.5 rounded-full tabular-nums">
+                  Tarif Honor: Rp {tutor.ratePerSession.toLocaleString("id-ID")} / Sesi (90 Menit)
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-heading font-bold text-white">
@@ -213,13 +230,13 @@ export default function TutorPortalClient({
             <div className="flex items-center gap-3">
               <div className="bg-white/10 backdrop-blur-xs border border-white/20 rounded-2xl p-3.5 text-center min-w-[110px]">
                 <div className="text-[11px] text-white/80 uppercase font-semibold">Sesi Selesai</div>
-                <div className="text-2xl font-bold font-heading text-white">
+                <div className="text-2xl font-bold font-heading text-white tabular-nums">
                   {financialSummary.sessionsThisMonth}
                 </div>
               </div>
               <div className="bg-white/10 backdrop-blur-xs border border-white/20 rounded-2xl p-3.5 text-center min-w-[140px]">
                 <div className="text-[11px] text-white/80 uppercase font-semibold">Honor Berjalan</div>
-                <div className="text-lg font-bold font-heading text-[#9AC1E2]">
+                <div className="text-lg font-bold font-heading text-[#9AC1E2] tabular-nums">
                   Rp {(financialSummary.totalHonorThisMonth / 1000).toFixed(0)}k
                 </div>
               </div>
@@ -277,7 +294,7 @@ export default function TutorPortalClient({
                   Sesi Bimbingan Hari Ini ({todaySessions.length})
                 </h3>
                 <span className="text-xs font-semibold text-[#5B6882]">
-                  Durasi Standar 90 Menit (BR-5)
+                  Durasi Standar 90 Menit
                 </span>
               </div>
 
@@ -572,7 +589,7 @@ export default function TutorPortalClient({
               {/* Financial KPI Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                 <div className="bg-[#F4F7FB] p-4 rounded-2xl border border-[#D5DDEB]">
-                  <div className="text-[11px] text-[#5B6882] font-semibold">Tarif Honor Anda (BR-7)</div>
+                  <div className="text-[11px] text-[#5B6882] font-semibold">Tarif Honor Anda</div>
                   <div className="text-xl font-black text-[#09408C] font-heading mt-1">
                     Rp {financialSummary.ratePerSession.toLocaleString("id-ID")}
                   </div>
@@ -768,7 +785,7 @@ export default function TutorPortalClient({
                     <span>
                       {isSubmittingJournal
                         ? "Menyimpan & Memotong Kuota..."
-                        : "Tandai Selesai & Potong Kuota (BR-1)"}
+                        : "Tandai Selesai & Potong Kuota"}
                     </span>
                   </button>
                 </div>

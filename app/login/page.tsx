@@ -33,15 +33,16 @@ function LoginFormInner() {
       if (result?.error) {
         setError("Email atau password tidak sesuai. Pastikan email dan password terdaftar.");
       } else {
-        // Fetch session to determine role-based redirection
+        // Fetch session to determine role-based redirection (UX-FLOW-001)
         const session = await getSession();
         const userRole = (session?.user as any)?.role || "Siswa";
+        const roleLower = userRole.toLowerCase();
+        const isTutor = roleLower.includes("tutor") || roleLower.includes("pengajar");
         const isStaff = [
           "Super Admin",
           "Admin",
           "Staf",
-          "Tutor",
-        ].includes(userRole);
+        ].includes(userRole) || roleLower.includes("admin") || roleLower.includes("staf");
 
         // Security Hardening: Sanitize callbackUrl to prevent Phishing Open Redirect
         const isSafeCallback =
@@ -54,11 +55,13 @@ function LoginFormInner() {
 
         if (isSafeCallback) {
           // If a non-staff student attempts to access /dashboard, redirect to student portal
-          if (!isStaff && callbackUrl.startsWith("/dashboard")) {
+          if (!isStaff && !isTutor && callbackUrl.startsWith("/dashboard")) {
             router.push("/portal");
           } else {
             router.push(callbackUrl);
           }
+        } else if (isTutor && !isStaff) {
+          router.push("/tutor");
         } else if (isStaff) {
           router.push("/dashboard");
         } else {

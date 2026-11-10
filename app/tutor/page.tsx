@@ -31,17 +31,18 @@ export default async function TutorPortalPage({
   }
 
   const resolvedParams = searchParams ? await searchParams : {};
-  // BR-7: Jika bukan admin, kunci requestedTutorId hanya ke ID tutor yang login
+  // BR-7 (QA-FUNC-002): Jika bukan admin, kunci requestedTutorId hanya ke ID tutor yang login (jangan izinkan override via query param)
   const requestedTutorId = isAdmin
     ? (resolvedParams.tutorId || "tut_demo_01")
-    : (resolvedParams.tutorId || "tut_demo_01");
+    : undefined;
 
   const res = await getTutorPortalData(requestedTutorId);
 
   return (
     <TutorPortalClient
       initialData={res.data!}
-      currentTutorId={requestedTutorId}
+      currentTutorId={res.data?.tutor?.id || requestedTutorId || "tut_demo_01"}
+      isAdmin={isAdmin}
     />
   );
 }

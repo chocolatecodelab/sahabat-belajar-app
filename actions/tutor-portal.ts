@@ -301,17 +301,17 @@ export async function getTutorPortalData(targetTutorId?: string): Promise<Action
 
     let requestedId = targetTutorId || "tut_demo_01";
 
-    // BR-7: Kunci akses ke profil tutor sendiri jika bukan Admin
+    // BR-7 (QA-FUNC-002): Kunci akses ke profil tutor sendiri jika bukan Admin (cegah IDOR via targetTutorId)
     if (isTutor && !isAdmin) {
+      const userEmail = (session.user.email || "").trim().toLowerCase();
       const { data: linkedTutor } = await supabaseAdmin
         .from("Tutor")
         .select("id")
-        .eq("userId", session.user.id)
+        .or(`userId.eq.${session.user.id}${userEmail ? `,email.eq.${userEmail}` : ""}`)
+        .limit(1)
         .maybeSingle();
 
-      if (linkedTutor) {
-        requestedId = linkedTutor.id;
-      }
+      requestedId = linkedTutor ? linkedTutor.id : "tut_demo_01";
     }
 
     // 1. Try to fetch from Supabase
@@ -473,7 +473,7 @@ export async function submitTutorJournalQuick(input: {
 
     return {
       success: true,
-      message: "Jurnal bimbingan berhasil disimpan! Sesi ditandai TERLAKSANA dan kuota siswa terpotong 1 (BR-1).",
+      message: "Jurnal bimbingan berhasil disimpan! Sesi ditandai TERLAKSANA dan kuota siswa terpotong 1.",
     };
   } catch (error: any) {
     return {

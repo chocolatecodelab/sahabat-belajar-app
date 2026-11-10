@@ -1,388 +1,43 @@
 [
   {
-    "id": "notif_1791433315697_w9dpt",
-    "channel": "EMAIL",
-    "recipient": "peserta.audit@example.com",
-    "recipientName": "Peserta Riset Audit",
-    "event": "MONTHLY_REPORT",
-    "subject": "[BIAS RISTEK] e-Rapor Kemajuan Riset Bulan Oktober 2026 Telah Terbit - RAPOR-202610-4171",
-    "message": "\n        <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">\n          <div style=\"background-color: #001847; padding: 24px; text-align: center; color: #ffffff;\">\n            <h2 style=\"margin: 0; font-size: 20px; font-weight: 700;\">BIAS RISTEK</h2>\n            <p style=\"margin: 4px 0 0; font-size: 13px; color: #fdbc13;\">e-Rapor Kemajuan Riset Bulanan</p>\n          </div>\n          <div style=\"padding: 24px;\">\n            <p>Halo <strong>Peserta Riset Audit</strong>,</p>\n            <p>Dokumen resmi e-Rapor Kemajuan Riset Anda periode <strong>Oktober 2026</strong> telah terbit:</p>\n            \n            <div style=\"background-color: #f8f9ff; border: 1px solid #d5e3fc; padding: 18px; border-radius: 8px; margin: 16px 0;\">\n              <p style=\"margin: 0 0 8px;\"><strong>Nomor Rapor:</strong> <span style=\"font-family: monospace; font-weight: 700; color: #001847;\">RAPOR-202610-4171</span></p>\n              <p style=\"margin: 0 0 8px;\"><strong>Program Kursus:</strong> Mentorship Intensif Publikasi Scopus Q1</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Tutor Pembimbing:</strong> Dr. Ir. Hendra Gunawan, M.Sc.</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Skor Evaluasi:</strong> <span style=\"font-size: 16px; font-weight: 700; color: #7a5900;\">90 / 100</span></p>\n              <p style=\"margin: 0;\"><strong>Status Capaian:</strong> <span style=\"background-color: #fef9c3; color: #7a5900; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;\">SANGAT BAIK (EXCELLENT / SCOPUS READY)</span></p>\n            </div>\n\n            <p style=\"text-align: center; margin: 24px 0;\">\n              <a href=\"http://localhost:3000/rapor/RAPOR-202610-4171\" style=\"background-color: #001847; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 700; display: inline-block;\">Lihat & Unduh e-Rapor Resmi</a>\n            </p>\n            <p style=\"font-size: 12px; color: #64748b; text-align: center;\">Tautan dokumen resmi: <a href=\"http://localhost:3000/rapor/RAPOR-202610-4171\">http://localhost:3000/rapor/RAPOR-202610-4171</a></p>\n          </div>\n        </div>\n      ",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:55.697Z"
-  },
-  {
-    "id": "notif_1791433315030_qk0rg",
-    "channel": "EMAIL",
-    "recipient": "peserta.audit@example.com",
-    "recipientName": "Peserta Riset Audit",
-    "event": "SESSION_EVALUATION",
-    "subject": "[BIAS RISTEK] Lembar Evaluasi Sesi Ke-1 oleh Tim Mentor BIAS RISTEK",
-    "message": "\n        <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">\n          <div style=\"background-color: #001847; padding: 24px; text-align: center; color: #ffffff;\">\n            <h2 style=\"margin: 0; font-size: 20px; font-weight: 700;\">BIAS RISTEK</h2>\n            <p style=\"margin: 4px 0 0; font-size: 13px; color: #fdbc13;\">Evaluasi Sesi Bimbingan Ke-1</p>\n          </div>\n          <div style=\"padding: 24px;\">\n            <p>Halo <strong>Peserta Riset Audit</strong>,</p>\n            <p>Mentor <strong>Tim Mentor BIAS RISTEK</strong> baru saja menerbitkan lembar evaluasi untuk sesi bimbingan riset privat Anda:</p>\n            \n            <div style=\"background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;\">\n              <p style=\"margin: 0 0 6px;\"><strong>Status Naskah:</strong> Bab 3: Metode Penelitian Kuantitatif</p>\n              <p style=\"margin: 0 0 6px;\"><strong>Rerata Skor Sesi:</strong> <span style=\"font-size: 16px; font-weight: 700; color: #001847;\">90/100</span></p>\n              <ul style=\"margin: 4px 0 10px; padding-left: 20px; font-size: 13px; color: #475569;\">\n                <li>Skor Metodologi Penelitian: 90/100</li>\n                <li>Skor Sistematika Penulisan: 88/100</li>\n                <li>Skor Pengolahan Data: 92/100</li>\n              </ul>\n              <p style=\"margin: 0 0 6px;\"><strong>Tindakan Perbaikan (Action Items):</strong></p>\n              <div style=\"background-color: #ffffff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px;\">Sebarkan ke 30 responden uji coba (pilot study) untuk uji reliabilitas Cronbach Alpha.</div>\n              <p style=\"margin: 12px 0 6px;\"><strong>Catatan Mentor:</strong></p>\n              <blockquote style=\"margin: 0; padding: 10px; background-color: #ffffff; border-left: 3px solid #fdbc13; font-style: italic; font-size: 13px;\">\"Instrumen kuesioner sudah sangat representatif mewakili seluruh indikator variabel.\"</blockquote>\n            </div>\n\n            <p style=\"text-align: center; margin: 24px 0;\">\n              <a href=\"http://localhost:3000/belajar\" style=\"background-color: #001847; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;\">Buka Ruang Belajar</a>\n            </p>\n          </div>\n        </div>\n      ",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:55.030Z"
-  },
-  {
-    "id": "notif_1791433306071_42013",
-    "channel": "EMAIL",
-    "recipient": "audit.peserta.1791432508835@example.com",
-    "recipientName": "Peserta Uji Audit Admin",
-    "event": "SUBMISSION_REVIEWED",
-    "subject": "[BIAS RISTEK] Review Tugas: Draf Artikel Jurnal Scopus Q2 - Bab 1-3 (DISETUJUI / LULUS)",
-    "message": "<h2>Review Draf Naskah Selesai</h2>\n<p>Halo <strong>Peserta Uji Audit Admin</strong>,</p>\n<p>Mentor telah selesai meninjau draf tugas naskah Anda pada program <strong>Junior Researcher Class</strong>.</p>\n<ul>\n  <li><strong>Judul Tugas:</strong> Draf Artikel Jurnal Scopus Q2 - Bab 1-3</li>\n  <li><strong>Status:</strong> <strong>DISETUJUI / LULUS</strong></li>\n  <li><strong>Nilai Evaluasi:</strong> 92/100 / 100</li>\n</ul>\n<div style=\"background:#f8fafc;border-left:4px solid #001847;padding:12px 16px;margin:16px 0;\">\n  <strong>Catatan Mentor:</strong><br />\n  <em>Argumentasi hipotesis sangat kokoh. Lanjutkan ke pengujian outer model di Bab 4.</em>\n</div>\n<p><a href=\"http://localhost:3000/belajar/junior-researcher-class\" style=\"display:inline-block;padding:10px 20px;background:#001847;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;\">Buka Ruang Belajar & Tugas</a></p>\n<p>Salam riset,<br /><strong>Mentor Riset BIAS RISTEK</strong></p>",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:46.071Z"
-  },
-  {
-    "id": "notif_1791433304264_e1565",
+    "id": "notif_sb_sim_01",
     "channel": "WHATSAPP",
-    "recipient": "6281234567899",
-    "recipientName": "Mahasiswa Bertanya Admin",
-    "event": "HUMAN_HANDOFF_STUDENT",
-    "message": "Halo *Mahasiswa Bertanya Admin*,\n\nPertanyaan Anda telah kami teruskan ke *Konsultan Akademik Senior BIAS RISTEK* 🧑‍🏫\n\n📋 *No. Tiket Bantuan:* TIKET-202610-3604\n⏳ *Status:* Menunggu Konsultan Manusia\n🤖 *Catatan:* Bot auto-reply sementara dinonaktifkan agar percakapan ditangani langsung oleh staf kami.\n\nStaf kami akan segera membalas di chat ini dalam beberapa saat, atau Anda dapat langsung menghubungi layanan prioritas:\n👉 https://wa.me/087777659482?text=Halo%20Admin%2C%20saya%20dengan%20Tiket%20TIKET-202610-3604%20(Mahasiswa%20Bertanya%20Admin)%20ingin%20melanjutkan%20konsultasi.\n\nTerima kasih atas kesabaran Anda,\n*Tim Konsultan BIAS RISTEK*",
+    "recipient": "6281298765432",
+    "recipientName": "Orang Tua Ahmad Fauzi",
+    "event": "LOW_QUOTA_ALERT",
+    "message": "Halo Ahmad Fauzi, informasi jadwal & kuota bimbingan Anda di *Sahabat Belajar*! 📅\n\n📌 *Program:* Paket 10 Sesi Privat SMA & UTBK\n📝 *Agenda / Sesi:* Peringatan Kuota Paket Bimbingan (8/10 Sesi Terpakai)\n📊 *Status:* *HAMPIR HABIS (Sisa 2 Sesi)* (Info Kuota: Sisa 2 dari 10 Sesi)\n\n💬 *Catatan Akademik:*\n\"Kuota belajar ananda Ahmad Fauzi saat ini tersisa 2 pertemuan. Silakan melakukan perpanjangan paket melalui Portal Siswa/Orang Tua agar jadwal bimbingan rutin bersama tutor tidak terputus.\"\n\nPantau jadwal lengkap, tautan Zoom/Meet, dan sisa kuota di Portal Siswa:\n🔗 http://localhost:3000/portal\n\nSemangat belajar!\n*Tim Akademik Sahabat Belajar*",
     "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:44.264Z"
+    "sentAt": "2026-11-10T21:40:00.000Z"
   },
   {
-    "id": "notif_1791433303865_mti56",
-    "channel": "WHATSAPP",
-    "recipient": "6287777659482",
-    "recipientName": "Admin CS BIAS RISTEK",
-    "event": "HUMAN_HANDOFF_ADMIN",
-    "message": "🚨 *ESKALASI HUMAN HANDOFF CS!* 🚨\n\n📌 *Tiket:* TIKET-202610-3604\n👤 *Pengguna:* Mahasiswa Bertanya Admin\n📱 *Nomor WA:* +6281234567899\n📁 *Kategori:* KONSULTASI_RISET\n⚡ *Pemicu:* COMPLEX_RESEARCH_TOPIC\n\n📝 *Ringkasan Kendala:*\n\"Konsultasi judul disertasi S3 dengan mentor pakar\"\n\n💬 *Pesan Terakhir:*\n\"Saya mau konsultasi judul disertasi S3 saya apakah ada mentor pakar?\"\n\n👉 Buka Dashboard CS: http://localhost:3000/dashboard/support\n👉 Chat Pelanggan: https://wa.me/6281234567899",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:43.865Z"
-  },
-  {
-    "id": "notif_1791433303256_bg4lz",
-    "channel": "WHATSAPP",
-    "recipient": "6281211110001",
-    "recipientName": "Dr. techn. Budi Rahardjo, S.T., M.T.",
-    "event": "TUTOR_CONFIRMED",
-    "message": "Yth. Dr. techn. Budi Rahardjo, S.T., M.T.,\n\nTerima kasih! Jadwal bimbingan bersama Peserta Uji Penjadwalan pada 2026-10-10T04:21:41.234Z pukul 19:30 - 21:00 WIB telah RESMI TERKUNCI di sistem.\n\nTautan Host Zoom Anda:\nhttps://zoom.us/s/9050585543?pwd=BIAS71EZGE\n\nPengingat sesi akan dikirimkan kembali pada H-1 jam sebelum bimbingan dimulai.",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:43.256Z"
-  },
-  {
-    "id": "notif_1791433302977_eaee9",
-    "channel": "EMAIL",
-    "recipient": "peserta.audit@example.com",
-    "recipientName": "Peserta Uji Penjadwalan",
-    "event": "MENTORSHIP_CONFIRMED",
-    "subject": "[BIAS RISTEK] Jadwal Bimbingan Terkonfirmasi bersama Dr. techn. Budi Rahardjo, S.T., M.T.",
-    "message": "\n        <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">\n          <div style=\"background-color: #001847; padding: 24px; text-align: center; color: #ffffff;\">\n            <h2 style=\"margin: 0; font-size: 20px; font-weight: 700;\">BIAS RISTEK</h2>\n            <p style=\"margin: 4px 0 0; font-size: 13px; color: #fdbc13;\">Jadwal Bimbingan Riset Terkonfirmasi</p>\n          </div>\n          <div style=\"padding: 24px;\">\n            <p>Halo <strong>Peserta Uji Penjadwalan</strong>,</p>\n            <p>Sesi bimbingan riset privat 1-on-1 Anda telah disetujui dan dijadwalkan bersama mentor pakar kami:</p>\n            <div style=\"background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;\">\n              <p style=\"margin: 0 0 8px;\"><strong>Mentor:</strong> Dr. techn. Budi Rahardjo, S.T., M.T. (Doktor Bidang Teknik Elektro & Informatika)</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Afiliasi:</strong> Institut Teknologi Bandung (ITB)</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Topik:</strong> Analisis Bibliometrik Scopus</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Waktu Sesi:</strong> 2026-10-10T04:21:41.234Z, Pukul 19:30 - 21:00 WIB</p>\n            </div>\n            <p style=\"text-align: center; margin: 24px 0;\">\n              <a href=\"https://zoom.us/j/9050585543?pwd=BIAS71EZGE\" style=\"background-color: #001847; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;\">Masuk Ruang Zoom Bimbingan</a>\n            </p>\n            <p style=\"font-size: 13px; color: #64748b;\">Link Zoom: <a href=\"https://zoom.us/j/9050585543?pwd=BIAS71EZGE\">https://zoom.us/j/9050585543?pwd=BIAS71EZGE</a></p>\n          </div>\n        </div>\n      ",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:42.977Z"
-  },
-  {
-    "id": "notif_1791433302588_vzax5",
+    "id": "notif_sb_sim_02",
     "channel": "WHATSAPP",
     "recipient": "6281234567891",
-    "recipientName": "Peserta Uji Penjadwalan",
-    "event": "MENTORSHIP_CONFIRMED",
-    "message": "Halo Peserta Uji Penjadwalan, kabar gembira!\n\nJadwal bimbingan privat riset Anda telah TERKONFIRMASI oleh Tim Pakar BIAS RISTEK:\n\n👨‍🏫 Tutor Pendamping: Dr. techn. Budi Rahardjo, S.T., M.T. (Doktor Bidang Teknik Elektro & Informatika)\n🏛️ Instansi: Institut Teknologi Bandung (ITB)\n🔬 Topik Bahasan: Analisis Bibliometrik Scopus\n📅 Waktu Sesi: 2026-10-10T04:21:41.234Z, Pukul 19:30 - 21:00 WIB\n\n🔗 Tautan Ruang Zoom Bimbingan:\nhttps://zoom.us/j/9050585543?pwd=BIAS71EZGE\n\nSilakan persiapkan draf naskah atau kendala olah data Anda sebelum sesi dimulai. Sampai jumpa di ruang bimbingan!",
+    "recipientName": "Hendra Wijaya, M.Pd.",
+    "event": "TUTOR_SESSION_ASSIGNED",
+    "message": "Halo *Hendra Wijaya, M.Pd.*, terdapat jadwal mengajar baru di *Sahabat Belajar*! 👨‍🏫\n\n📌 *Program:* Persiapan UTBK-SNBT & Matematika SMA (PRIVAT)\n👥 *Siswa:* Ahmad Fauzi\n📅 *Hari/Tanggal:* Rabu, 11 November 2026\n⏰ *Waktu:* 16.00 - 17.30 WIB (90 Menit)\n📍 *Mode:* Online via Zoom/Meet: https://meet.google.com/sb-utbk-ahmad\n\nBuka Portal Tutor untuk detail sesi & pengisian absensi:\n🔗 http://localhost:3000/tutor",
     "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:42.589Z"
+    "sentAt": "2026-11-10T21:35:00.000Z"
   },
   {
-    "id": "notif_1791433302012_kkgss",
+    "id": "notif_sb_sim_03",
     "channel": "EMAIL",
-    "recipient": "budi.rahardjo@biasristek.id",
-    "recipientName": "Dr. techn. Budi Rahardjo, S.T., M.T.",
-    "event": "TUTOR_BOOKING_PROPOSED",
-    "subject": "[BIAS RISTEK] Usulan Bimbingan Riset: Peserta Uji Penjadwalan",
-    "message": "\n        <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">\n          <div style=\"background-color: #001847; padding: 24px; text-align: center; color: #ffffff;\">\n            <h2 style=\"margin: 0; font-size: 20px; font-weight: 700;\">BIAS RISTEK</h2>\n            <p style=\"margin: 4px 0 0; font-size: 13px; color: #fdbc13;\">Konfirmasi Penugasan Bimbingan Riset</p>\n          </div>\n          <div style=\"padding: 24px;\">\n            <p>Yth. <strong>Dr. techn. Budi Rahardjo, S.T., M.T.</strong>,</p>\n            <p>Koordinator akademik BIAS RISTEK mengusulkan penugasan bimbingan privat 1-on-1 baru yang sesuai dengan bidang keahlian Anda:</p>\n            <div style=\"background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;\">\n              <p style=\"margin: 0 0 8px;\"><strong>Nama Peneliti:</strong> Peserta Uji Penjadwalan</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Instansi:</strong> Universitas Gadjah Mada (S2 Magister)</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Topik Riset:</strong> Analisis Bibliometrik Scopus</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Software / Metode:</strong> VOSviewer</p>\n              <p style=\"margin: 0;\"><strong>Jadwal Sesi:</strong> 2026-10-10T04:21:41.234Z, Pukul 19:30 - 21:00 WIB</p>\n            </div>\n            <p style=\"text-align: center; margin: 24px 0 12px;\">\n              <a href=\"http://localhost:3000/tutor/konfirmasi/7bb5b3c66193cc019d3de93d3492e313?action=ACCEPT\" style=\"background-color: #001847; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block; margin-right: 8px;\">Terima Bimbingan</a>\n              <a href=\"http://localhost:3000/tutor/konfirmasi/7bb5b3c66193cc019d3de93d3492e313?action=DECLINE\" style=\"background-color: #e2e8f0; color: #475569; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;\">Berhalangan / Reschedule</a>\n            </p>\n          </div>\n        </div>\n      ",
+    "recipient": "ahmad.fauzi@simulasi.sahabatbelajar.id",
+    "recipientName": "Ahmad Fauzi",
+    "event": "SESSION_SCHEDULED",
+    "subject": "[Sahabat Belajar] Jadwal Sesi Bimbingan Baru — Rabu, 11 November 2026 (16.00 - 17.30 WIB)",
+    "message": "<h2>Informasi Jadwal Sesi & Status Kuota Bimbingan</h2>\n<p>Halo <strong>Ahmad Fauzi</strong>,</p>\n<p>Berikut pembaruan jadwal sesi bimbingan atau status kuota paket belajar Anda pada program <strong>Persiapan UTBK-SNBT & Matematika SMA</strong>:</p>\n<ul>\n  <li><strong>Rincian Sesi / Paket:</strong> Sesi PRIVAT bersama Hendra Wijaya, M.Pd. (Rabu, 11 November 2026, 16.00 - 17.30 WIB)</li>\n  <li><strong>Status:</strong> <strong>TERJADWAL (90 Menit)</strong></li>\n  <li><strong>Sisa Kuota / Capaian:</strong> ONLINE</li>\n</ul>\n<div style=\"background:#F4F7FB;border-left:4px solid #09408C;padding:12px 16px;margin:16px 0;\">\n  <strong>Detail / Catatan Akademik:</strong><br />\n  <em>Online via Zoom/Meet: https://meet.google.com/sb-utbk-ahmad</em>\n</div>\n<p><a href=\"http://localhost:3000/portal\" style=\"display:inline-block;padding:10px 20px;background:#09408C;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;\">Buka Portal Siswa</a></p>\n<p>Salam hangat,<br /><strong>Tim Akademik Sahabat Belajar</strong></p>",
     "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:42.012Z"
+    "sentAt": "2026-11-10T21:34:55.000Z"
   },
   {
-    "id": "notif_1791433301579_7334b",
+    "id": "notif_sb_sim_04",
     "channel": "WHATSAPP",
-    "recipient": "6281211110001",
-    "recipientName": "Dr. techn. Budi Rahardjo, S.T., M.T.",
-    "event": "TUTOR_BOOKING_PROPOSED",
-    "message": "Yth. Dr. techn. Budi Rahardjo, S.T., M.T.,\n\nTerdapat usulan penugasan bimbingan privat 1-on-1 baru dari BIAS RISTEK:\n\n👤 Mahasiswa/Peneliti: Peserta Uji Penjadwalan (Universitas Gadjah Mada, S2 Magister)\n🔬 Topik Riset: Analisis Bibliometrik Scopus\n🛠️ Metodologi / Software: VOSviewer\n📅 Jadwal Diusulkan: 2026-10-10T04:21:41.234Z, Pukul 19:30 - 21:00 WIB\n\nMohon konfirmasi ketersediaan Anda melalui tautan 1-klik di bawah ini:\n👉 TERIMA JADWAL: http://localhost:3000/tutor/konfirmasi/7bb5b3c66193cc019d3de93d3492e313?action=ACCEPT\n👉 BERHALANGAN / RESCHEDULE: http://localhost:3000/tutor/konfirmasi/7bb5b3c66193cc019d3de93d3492e313?action=DECLINE\n\nDetail lengkap bimbingan: http://localhost:3000/tutor/konfirmasi/7bb5b3c66193cc019d3de93d3492e313\n\nTerima kasih atas dedikasi akademik Anda bersama BIAS RISTEK.",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:41.579Z"
-  },
-  {
-    "id": "notif_1791433301243_k57pv",
-    "channel": "WHATSAPP",
-    "recipient": "6281234567891",
-    "recipientName": "Peserta Uji Audit Admin",
+    "recipient": "6281298765432",
+    "recipientName": "Orang Tua Ahmad Fauzi",
     "event": "PAYMENT_VERIFIED",
-    "message": "Halo Peserta Uji Audit Admin, kabar gembira! 🎉\n\nPembayaran untuk program *Program Uji Coba Audit Admin* (Invoice: reg_1791433298498_yrggz) telah *BERHASIL DIVERIFIKASI*.\n\nAkun Ruang Belajar (LMS) Anda telah aktif:\n📧 *Email Login:* audit.peserta.1791433298360@example.com\n🔑 *Password:* Gunakan nomor WhatsApp Anda (atau yang didaftarkan)\n🌐 *Masuk ke Ruang Belajar:* http://localhost:3000/belajar/audit-kursus-1791433297658\n\nSelamat belajar dan semoga sukses dalam publikasi riset Anda!\n\nSalam,\n*Tim Akademik BIAS RISTEK*",
+    "message": "Halo Ahmad Fauzi, kabar gembira! 🎉\n\nPembayaran paket bimbingan *Paket 10 Sesi Privat SMA & UTBK (Rp 1.400.000)* (Ref: PAY_DEMO_01) telah *BERHASIL DIVERIFIKASI*.\n\nKuota belajar dan akses Portal Siswa Anda telah aktif:\n📧 *Email Akun:* ahmad.fauzi@simulasi.sahabatbelajar.id\n🌐 *Buka Portal Siswa & Jadwal:* http://localhost:3000/portal\n\nSelamat belajar bersama tutor terbaik kami, dari paham konsep dasar hingga siap berprestasi!\n\nSalam,\n*Tim Akademik Sahabat Belajar*",
     "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:41.243Z"
-  },
-  {
-    "id": "notif_1791433299689_mys0x",
-    "channel": "WHATSAPP",
-    "recipient": "6287777659482",
-    "recipientName": "Admin BIAS RISTEK",
-    "event": "ADMIN_ALERT_INVOICE",
-    "message": "🚨 *PESANAN BARU MASUK!* 🧾\n\nNama: Peserta Uji Audit Admin\nProgram: Program Uji Coba Audit Admin\nTotal: Rp 500.177\nInvoice: INV-202610-5870\n\nLihat di Dashboard: http://localhost:3000/dashboard/pendaftaran",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:39.689Z"
-  },
-  {
-    "id": "notif_1791433299396_5iwc0",
-    "channel": "EMAIL",
-    "recipient": "audit.peserta.1791433298360@example.com",
-    "recipientName": "Peserta Uji Audit Admin",
-    "event": "INVOICE_CREATED",
-    "subject": "[BIAS RISTEK] Rincian Tagihan Pendaftaran - INV-202610-5870",
-    "message": "<h2>Pendaftaran Program Riset BIAS RISTEK</h2>\n<p>Halo <strong>Peserta Uji Audit Admin</strong>,</p>\n<p>Terima kasih telah mendaftar pada program <strong>Program Uji Coba Audit Admin</strong> di BIAS RISTEK.</p>\n<hr />\n<h3>Rincian Tagihan:</h3>\n<ul>\n  <li><strong>Nomor Invoice:</strong> INV-202610-5870</li>\n  <li><strong>Total Tagihan:</strong> Rp 500.177 (termasuk kode unik 177)</li>\n  <li><strong>Metode Pembayaran:</strong> BANK_TRANSFER</li>\n</ul>\n<p>Silakan lakukan pembayaran sesuai nominal di atas dan unggah bukti transfer melalui halaman tracking invoice:</p>\n<p><a href=\"http://localhost:3000/pembayaran/sukses?inv=INV-202610-5870\" style=\"display:inline-block;padding:10px 20px;background:#001847;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;\">Lihat Rincian & Konfirmasi Pembayaran</a></p>\n<p>Salam hangat,<br /><strong>Tim Akademik BIAS RISTEK</strong></p>",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:39.396Z"
-  },
-  {
-    "id": "notif_1791433299048_iizq5",
-    "channel": "WHATSAPP",
-    "recipient": "6281234567891",
-    "recipientName": "Peserta Uji Audit Admin",
-    "event": "INVOICE_CREATED",
-    "message": "Halo Peserta Uji Audit Admin, terima kasih telah mendaftar di *BIAS RISTEK*! 🔬\n\nBerikut rincian tagihan pendaftaran Anda:\n📌 *Program:* Program Uji Coba Audit Admin\n🧾 *No. Invoice:* INV-202610-5870\n💰 *Total Tagihan:* Rp 500.177\n💳 *Metode:* BANK_TRANSFER (Kode Unik: 177)\n\nSilakan lakukan transfer dan konfirmasi pembayaran melalui tautan berikut:\n🔗 http://localhost:3000/pembayaran/sukses?inv=INV-202610-5870\n\nSalam hangat,\n*Tim Akademik BIAS RISTEK*",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:39.048Z"
-  },
-  {
-    "id": "notif_1791433261075_ynafe",
-    "channel": "EMAIL",
-    "recipient": "peserta.audit@example.com",
-    "recipientName": "Peserta Riset Audit",
-    "event": "MONTHLY_REPORT",
-    "subject": "[BIAS RISTEK] e-Rapor Kemajuan Riset Bulan Oktober 2026 Telah Terbit - RAPOR-202610-7808",
-    "message": "\n        <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">\n          <div style=\"background-color: #001847; padding: 24px; text-align: center; color: #ffffff;\">\n            <h2 style=\"margin: 0; font-size: 20px; font-weight: 700;\">BIAS RISTEK</h2>\n            <p style=\"margin: 4px 0 0; font-size: 13px; color: #fdbc13;\">e-Rapor Kemajuan Riset Bulanan</p>\n          </div>\n          <div style=\"padding: 24px;\">\n            <p>Halo <strong>Peserta Riset Audit</strong>,</p>\n            <p>Dokumen resmi e-Rapor Kemajuan Riset Anda periode <strong>Oktober 2026</strong> telah terbit:</p>\n            \n            <div style=\"background-color: #f8f9ff; border: 1px solid #d5e3fc; padding: 18px; border-radius: 8px; margin: 16px 0;\">\n              <p style=\"margin: 0 0 8px;\"><strong>Nomor Rapor:</strong> <span style=\"font-family: monospace; font-weight: 700; color: #001847;\">RAPOR-202610-7808</span></p>\n              <p style=\"margin: 0 0 8px;\"><strong>Program Kursus:</strong> Mentorship Intensif Publikasi Scopus Q1</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Tutor Pembimbing:</strong> Dr. Ir. Hendra Gunawan, M.Sc.</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Skor Evaluasi:</strong> <span style=\"font-size: 16px; font-weight: 700; color: #7a5900;\">90 / 100</span></p>\n              <p style=\"margin: 0;\"><strong>Status Capaian:</strong> <span style=\"background-color: #fef9c3; color: #7a5900; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;\">SANGAT BAIK (EXCELLENT / SCOPUS READY)</span></p>\n            </div>\n\n            <p style=\"text-align: center; margin: 24px 0;\">\n              <a href=\"http://localhost:3000/rapor/RAPOR-202610-7808\" style=\"background-color: #001847; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 700; display: inline-block;\">Lihat & Unduh e-Rapor Resmi</a>\n            </p>\n            <p style=\"font-size: 12px; color: #64748b; text-align: center;\">Tautan dokumen resmi: <a href=\"http://localhost:3000/rapor/RAPOR-202610-7808\">http://localhost:3000/rapor/RAPOR-202610-7808</a></p>\n          </div>\n        </div>\n      ",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:01.075Z"
-  },
-  {
-    "id": "notif_1791433260659_7eazc",
-    "channel": "EMAIL",
-    "recipient": "peserta.audit@example.com",
-    "recipientName": "Peserta Riset Audit",
-    "event": "SESSION_EVALUATION",
-    "subject": "[BIAS RISTEK] Lembar Evaluasi Sesi Ke-1 oleh Tim Mentor BIAS RISTEK",
-    "message": "\n        <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">\n          <div style=\"background-color: #001847; padding: 24px; text-align: center; color: #ffffff;\">\n            <h2 style=\"margin: 0; font-size: 20px; font-weight: 700;\">BIAS RISTEK</h2>\n            <p style=\"margin: 4px 0 0; font-size: 13px; color: #fdbc13;\">Evaluasi Sesi Bimbingan Ke-1</p>\n          </div>\n          <div style=\"padding: 24px;\">\n            <p>Halo <strong>Peserta Riset Audit</strong>,</p>\n            <p>Mentor <strong>Tim Mentor BIAS RISTEK</strong> baru saja menerbitkan lembar evaluasi untuk sesi bimbingan riset privat Anda:</p>\n            \n            <div style=\"background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;\">\n              <p style=\"margin: 0 0 6px;\"><strong>Status Naskah:</strong> Bab 3: Metode Penelitian Kuantitatif</p>\n              <p style=\"margin: 0 0 6px;\"><strong>Rerata Skor Sesi:</strong> <span style=\"font-size: 16px; font-weight: 700; color: #001847;\">90/100</span></p>\n              <ul style=\"margin: 4px 0 10px; padding-left: 20px; font-size: 13px; color: #475569;\">\n                <li>Skor Metodologi Penelitian: 90/100</li>\n                <li>Skor Sistematika Penulisan: 88/100</li>\n                <li>Skor Pengolahan Data: 92/100</li>\n              </ul>\n              <p style=\"margin: 0 0 6px;\"><strong>Tindakan Perbaikan (Action Items):</strong></p>\n              <div style=\"background-color: #ffffff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px;\">Sebarkan ke 30 responden uji coba (pilot study) untuk uji reliabilitas Cronbach Alpha.</div>\n              <p style=\"margin: 12px 0 6px;\"><strong>Catatan Mentor:</strong></p>\n              <blockquote style=\"margin: 0; padding: 10px; background-color: #ffffff; border-left: 3px solid #fdbc13; font-style: italic; font-size: 13px;\">\"Instrumen kuesioner sudah sangat representatif mewakili seluruh indikator variabel.\"</blockquote>\n            </div>\n\n            <p style=\"text-align: center; margin: 24px 0;\">\n              <a href=\"http://localhost:3000/belajar\" style=\"background-color: #001847; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;\">Buka Ruang Belajar</a>\n            </p>\n          </div>\n        </div>\n      ",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:21:00.659Z"
-  },
-  {
-    "id": "notif_1791433252882_0evx1",
-    "channel": "WHATSAPP",
-    "recipient": "6281234567899",
-    "recipientName": "Mahasiswa Bertanya Admin",
-    "event": "HUMAN_HANDOFF_STUDENT",
-    "message": "Halo *Mahasiswa Bertanya Admin*,\n\nPertanyaan Anda telah kami teruskan ke *Konsultan Akademik Senior BIAS RISTEK* 🧑‍🏫\n\n📋 *No. Tiket Bantuan:* TIKET-202610-1245\n⏳ *Status:* Menunggu Konsultan Manusia\n🤖 *Catatan:* Bot auto-reply sementara dinonaktifkan agar percakapan ditangani langsung oleh staf kami.\n\nStaf kami akan segera membalas di chat ini dalam beberapa saat, atau Anda dapat langsung menghubungi layanan prioritas:\n👉 https://wa.me/087777659482?text=Halo%20Admin%2C%20saya%20dengan%20Tiket%20TIKET-202610-1245%20(Mahasiswa%20Bertanya%20Admin)%20ingin%20melanjutkan%20konsultasi.\n\nTerima kasih atas kesabaran Anda,\n*Tim Konsultan BIAS RISTEK*",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:20:52.882Z"
-  },
-  {
-    "id": "notif_1791433252562_m88nt",
-    "channel": "WHATSAPP",
-    "recipient": "6287777659482",
-    "recipientName": "Admin CS BIAS RISTEK",
-    "event": "HUMAN_HANDOFF_ADMIN",
-    "message": "🚨 *ESKALASI HUMAN HANDOFF CS!* 🚨\n\n📌 *Tiket:* TIKET-202610-1245\n👤 *Pengguna:* Mahasiswa Bertanya Admin\n📱 *Nomor WA:* +6281234567899\n📁 *Kategori:* KONSULTASI_RISET\n⚡ *Pemicu:* COMPLEX_RESEARCH_TOPIC\n\n📝 *Ringkasan Kendala:*\n\"Konsultasi judul disertasi S3 dengan mentor pakar\"\n\n💬 *Pesan Terakhir:*\n\"Saya mau konsultasi judul disertasi S3 saya apakah ada mentor pakar?\"\n\n👉 Buka Dashboard CS: http://localhost:3000/dashboard/support\n👉 Chat Pelanggan: https://wa.me/6281234567899",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:20:52.562Z"
-  },
-  {
-    "id": "notif_1791433251934_gqhgo",
-    "channel": "WHATSAPP",
-    "recipient": "6281211110001",
-    "recipientName": "Dr. techn. Budi Rahardjo, S.T., M.T.",
-    "event": "TUTOR_CONFIRMED",
-    "message": "Yth. Dr. techn. Budi Rahardjo, S.T., M.T.,\n\nTerima kasih! Jadwal bimbingan bersama Peserta Uji Penjadwalan pada 2026-10-10T04:20:49.472Z pukul 19:30 - 21:00 WIB telah RESMI TERKUNCI di sistem.\n\nTautan Host Zoom Anda:\nhttps://zoom.us/s/9147998987?pwd=BIASPM9A0E\n\nPengingat sesi akan dikirimkan kembali pada H-1 jam sebelum bimbingan dimulai.",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:20:51.934Z"
-  },
-  {
-    "id": "notif_1791433251598_8g2yf",
-    "channel": "EMAIL",
-    "recipient": "peserta.audit@example.com",
-    "recipientName": "Peserta Uji Penjadwalan",
-    "event": "MENTORSHIP_CONFIRMED",
-    "subject": "[BIAS RISTEK] Jadwal Bimbingan Terkonfirmasi bersama Dr. techn. Budi Rahardjo, S.T., M.T.",
-    "message": "\n        <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">\n          <div style=\"background-color: #001847; padding: 24px; text-align: center; color: #ffffff;\">\n            <h2 style=\"margin: 0; font-size: 20px; font-weight: 700;\">BIAS RISTEK</h2>\n            <p style=\"margin: 4px 0 0; font-size: 13px; color: #fdbc13;\">Jadwal Bimbingan Riset Terkonfirmasi</p>\n          </div>\n          <div style=\"padding: 24px;\">\n            <p>Halo <strong>Peserta Uji Penjadwalan</strong>,</p>\n            <p>Sesi bimbingan riset privat 1-on-1 Anda telah disetujui dan dijadwalkan bersama mentor pakar kami:</p>\n            <div style=\"background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;\">\n              <p style=\"margin: 0 0 8px;\"><strong>Mentor:</strong> Dr. techn. Budi Rahardjo, S.T., M.T. (Doktor Bidang Teknik Elektro & Informatika)</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Afiliasi:</strong> Institut Teknologi Bandung (ITB)</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Topik:</strong> Analisis Bibliometrik Scopus</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Waktu Sesi:</strong> 2026-10-10T04:20:49.472Z, Pukul 19:30 - 21:00 WIB</p>\n            </div>\n            <p style=\"text-align: center; margin: 24px 0;\">\n              <a href=\"https://zoom.us/j/9147998987?pwd=BIASPM9A0E\" style=\"background-color: #001847; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;\">Masuk Ruang Zoom Bimbingan</a>\n            </p>\n            <p style=\"font-size: 13px; color: #64748b;\">Link Zoom: <a href=\"https://zoom.us/j/9147998987?pwd=BIASPM9A0E\">https://zoom.us/j/9147998987?pwd=BIASPM9A0E</a></p>\n          </div>\n        </div>\n      ",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:20:51.598Z"
-  },
-  {
-    "id": "notif_1791433251311_avlb3",
-    "channel": "WHATSAPP",
-    "recipient": "6281234567891",
-    "recipientName": "Peserta Uji Penjadwalan",
-    "event": "MENTORSHIP_CONFIRMED",
-    "message": "Halo Peserta Uji Penjadwalan, kabar gembira!\n\nJadwal bimbingan privat riset Anda telah TERKONFIRMASI oleh Tim Pakar BIAS RISTEK:\n\n👨‍🏫 Tutor Pendamping: Dr. techn. Budi Rahardjo, S.T., M.T. (Doktor Bidang Teknik Elektro & Informatika)\n🏛️ Instansi: Institut Teknologi Bandung (ITB)\n🔬 Topik Bahasan: Analisis Bibliometrik Scopus\n📅 Waktu Sesi: 2026-10-10T04:20:49.472Z, Pukul 19:30 - 21:00 WIB\n\n🔗 Tautan Ruang Zoom Bimbingan:\nhttps://zoom.us/j/9147998987?pwd=BIASPM9A0E\n\nSilakan persiapkan draf naskah atau kendala olah data Anda sebelum sesi dimulai. Sampai jumpa di ruang bimbingan!",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:20:51.312Z"
-  },
-  {
-    "id": "notif_1791433250619_qqthj",
-    "channel": "EMAIL",
-    "recipient": "budi.rahardjo@biasristek.id",
-    "recipientName": "Dr. techn. Budi Rahardjo, S.T., M.T.",
-    "event": "TUTOR_BOOKING_PROPOSED",
-    "subject": "[BIAS RISTEK] Usulan Bimbingan Riset: Peserta Uji Penjadwalan",
-    "message": "\n        <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">\n          <div style=\"background-color: #001847; padding: 24px; text-align: center; color: #ffffff;\">\n            <h2 style=\"margin: 0; font-size: 20px; font-weight: 700;\">BIAS RISTEK</h2>\n            <p style=\"margin: 4px 0 0; font-size: 13px; color: #fdbc13;\">Konfirmasi Penugasan Bimbingan Riset</p>\n          </div>\n          <div style=\"padding: 24px;\">\n            <p>Yth. <strong>Dr. techn. Budi Rahardjo, S.T., M.T.</strong>,</p>\n            <p>Koordinator akademik BIAS RISTEK mengusulkan penugasan bimbingan privat 1-on-1 baru yang sesuai dengan bidang keahlian Anda:</p>\n            <div style=\"background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;\">\n              <p style=\"margin: 0 0 8px;\"><strong>Nama Peneliti:</strong> Peserta Uji Penjadwalan</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Instansi:</strong> Universitas Gadjah Mada (S2 Magister)</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Topik Riset:</strong> Analisis Bibliometrik Scopus</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Software / Metode:</strong> VOSviewer</p>\n              <p style=\"margin: 0;\"><strong>Jadwal Sesi:</strong> 2026-10-10T04:20:49.472Z, Pukul 19:30 - 21:00 WIB</p>\n            </div>\n            <p style=\"text-align: center; margin: 24px 0 12px;\">\n              <a href=\"http://localhost:3000/tutor/konfirmasi/2c2327ca52cc0badbc6f230525a3d0d2?action=ACCEPT\" style=\"background-color: #001847; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block; margin-right: 8px;\">Terima Bimbingan</a>\n              <a href=\"http://localhost:3000/tutor/konfirmasi/2c2327ca52cc0badbc6f230525a3d0d2?action=DECLINE\" style=\"background-color: #e2e8f0; color: #475569; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;\">Berhalangan / Reschedule</a>\n            </p>\n          </div>\n        </div>\n      ",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:20:50.619Z"
-  },
-  {
-    "id": "notif_1791433249966_kobgp",
-    "channel": "WHATSAPP",
-    "recipient": "6281211110001",
-    "recipientName": "Dr. techn. Budi Rahardjo, S.T., M.T.",
-    "event": "TUTOR_BOOKING_PROPOSED",
-    "message": "Yth. Dr. techn. Budi Rahardjo, S.T., M.T.,\n\nTerdapat usulan penugasan bimbingan privat 1-on-1 baru dari BIAS RISTEK:\n\n👤 Mahasiswa/Peneliti: Peserta Uji Penjadwalan (Universitas Gadjah Mada, S2 Magister)\n🔬 Topik Riset: Analisis Bibliometrik Scopus\n🛠️ Metodologi / Software: VOSviewer\n📅 Jadwal Diusulkan: 2026-10-10T04:20:49.472Z, Pukul 19:30 - 21:00 WIB\n\nMohon konfirmasi ketersediaan Anda melalui tautan 1-klik di bawah ini:\n👉 TERIMA JADWAL: http://localhost:3000/tutor/konfirmasi/2c2327ca52cc0badbc6f230525a3d0d2?action=ACCEPT\n👉 BERHALANGAN / RESCHEDULE: http://localhost:3000/tutor/konfirmasi/2c2327ca52cc0badbc6f230525a3d0d2?action=DECLINE\n\nDetail lengkap bimbingan: http://localhost:3000/tutor/konfirmasi/2c2327ca52cc0badbc6f230525a3d0d2\n\nTerima kasih atas dedikasi akademik Anda bersama BIAS RISTEK.",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:20:49.966Z"
-  },
-  {
-    "id": "notif_1791433249478_xc5zt",
-    "channel": "WHATSAPP",
-    "recipient": "6281234567891",
-    "recipientName": "Peserta Uji Audit Admin",
-    "event": "PAYMENT_VERIFIED",
-    "message": "Halo Peserta Uji Audit Admin, kabar gembira! 🎉\n\nPembayaran untuk program *Program Uji Coba Audit Admin* (Invoice: reg_1791433246873_7hy5e) telah *BERHASIL DIVERIFIKASI*.\n\nAkun Ruang Belajar (LMS) Anda telah aktif:\n📧 *Email Login:* audit.peserta.1791433246735@example.com\n🔑 *Password:* Gunakan nomor WhatsApp Anda (atau yang didaftarkan)\n🌐 *Masuk ke Ruang Belajar:* http://localhost:3000/belajar/audit-kursus-1791433245882\n\nSelamat belajar dan semoga sukses dalam publikasi riset Anda!\n\nSalam,\n*Tim Akademik BIAS RISTEK*",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:20:49.478Z"
-  },
-  {
-    "id": "notif_1791433248090_88dl7",
-    "channel": "WHATSAPP",
-    "recipient": "6287777659482",
-    "recipientName": "Admin BIAS RISTEK",
-    "event": "ADMIN_ALERT_INVOICE",
-    "message": "🚨 *PESANAN BARU MASUK!* 🧾\n\nNama: Peserta Uji Audit Admin\nProgram: Program Uji Coba Audit Admin\nTotal: Rp 500.725\nInvoice: INV-202610-5725\n\nLihat di Dashboard: http://localhost:3000/dashboard/pendaftaran",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:20:48.090Z"
-  },
-  {
-    "id": "notif_1791433247756_2ctrs",
-    "channel": "EMAIL",
-    "recipient": "audit.peserta.1791433246735@example.com",
-    "recipientName": "Peserta Uji Audit Admin",
-    "event": "INVOICE_CREATED",
-    "subject": "[BIAS RISTEK] Rincian Tagihan Pendaftaran - INV-202610-5725",
-    "message": "<h2>Pendaftaran Program Riset BIAS RISTEK</h2>\n<p>Halo <strong>Peserta Uji Audit Admin</strong>,</p>\n<p>Terima kasih telah mendaftar pada program <strong>Program Uji Coba Audit Admin</strong> di BIAS RISTEK.</p>\n<hr />\n<h3>Rincian Tagihan:</h3>\n<ul>\n  <li><strong>Nomor Invoice:</strong> INV-202610-5725</li>\n  <li><strong>Total Tagihan:</strong> Rp 500.725 (termasuk kode unik 725)</li>\n  <li><strong>Metode Pembayaran:</strong> BANK_TRANSFER</li>\n</ul>\n<p>Silakan lakukan pembayaran sesuai nominal di atas dan unggah bukti transfer melalui halaman tracking invoice:</p>\n<p><a href=\"http://localhost:3000/pembayaran/sukses?inv=INV-202610-5725\" style=\"display:inline-block;padding:10px 20px;background:#001847;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;\">Lihat Rincian & Konfirmasi Pembayaran</a></p>\n<p>Salam hangat,<br /><strong>Tim Akademik BIAS RISTEK</strong></p>",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:20:47.756Z"
-  },
-  {
-    "id": "notif_1791433247345_uljx9",
-    "channel": "WHATSAPP",
-    "recipient": "6281234567891",
-    "recipientName": "Peserta Uji Audit Admin",
-    "event": "INVOICE_CREATED",
-    "message": "Halo Peserta Uji Audit Admin, terima kasih telah mendaftar di *BIAS RISTEK*! 🔬\n\nBerikut rincian tagihan pendaftaran Anda:\n📌 *Program:* Program Uji Coba Audit Admin\n🧾 *No. Invoice:* INV-202610-5725\n💰 *Total Tagihan:* Rp 500.725\n💳 *Metode:* BANK_TRANSFER (Kode Unik: 725)\n\nSilakan lakukan transfer dan konfirmasi pembayaran melalui tautan berikut:\n🔗 http://localhost:3000/pembayaran/sukses?inv=INV-202610-5725\n\nSalam hangat,\n*Tim Akademik BIAS RISTEK*",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:20:47.345Z"
-  },
-  {
-    "id": "notif_1791433096195_5sr46",
-    "channel": "EMAIL",
-    "recipient": "peserta.audit@example.com",
-    "recipientName": "Peserta Riset Audit",
-    "event": "MONTHLY_REPORT",
-    "subject": "[BIAS RISTEK] e-Rapor Kemajuan Riset Bulan Oktober 2026 Telah Terbit - RAPOR-202610-4890",
-    "message": "\n        <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">\n          <div style=\"background-color: #001847; padding: 24px; text-align: center; color: #ffffff;\">\n            <h2 style=\"margin: 0; font-size: 20px; font-weight: 700;\">BIAS RISTEK</h2>\n            <p style=\"margin: 4px 0 0; font-size: 13px; color: #fdbc13;\">e-Rapor Kemajuan Riset Bulanan</p>\n          </div>\n          <div style=\"padding: 24px;\">\n            <p>Halo <strong>Peserta Riset Audit</strong>,</p>\n            <p>Dokumen resmi e-Rapor Kemajuan Riset Anda periode <strong>Oktober 2026</strong> telah terbit:</p>\n            \n            <div style=\"background-color: #f8f9ff; border: 1px solid #d5e3fc; padding: 18px; border-radius: 8px; margin: 16px 0;\">\n              <p style=\"margin: 0 0 8px;\"><strong>Nomor Rapor:</strong> <span style=\"font-family: monospace; font-weight: 700; color: #001847;\">RAPOR-202610-4890</span></p>\n              <p style=\"margin: 0 0 8px;\"><strong>Program Kursus:</strong> Mentorship Intensif Publikasi Scopus Q1</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Tutor Pembimbing:</strong> Dr. Ir. Hendra Gunawan, M.Sc.</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Skor Evaluasi:</strong> <span style=\"font-size: 16px; font-weight: 700; color: #7a5900;\">90 / 100</span></p>\n              <p style=\"margin: 0;\"><strong>Status Capaian:</strong> <span style=\"background-color: #fef9c3; color: #7a5900; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;\">SANGAT BAIK (EXCELLENT / SCOPUS READY)</span></p>\n            </div>\n\n            <p style=\"text-align: center; margin: 24px 0;\">\n              <a href=\"http://localhost:3000/rapor/RAPOR-202610-4890\" style=\"background-color: #001847; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 700; display: inline-block;\">Lihat & Unduh e-Rapor Resmi</a>\n            </p>\n            <p style=\"font-size: 12px; color: #64748b; text-align: center;\">Tautan dokumen resmi: <a href=\"http://localhost:3000/rapor/RAPOR-202610-4890\">http://localhost:3000/rapor/RAPOR-202610-4890</a></p>\n          </div>\n        </div>\n      ",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:18:16.195Z"
-  },
-  {
-    "id": "notif_1791433095681_g1009",
-    "channel": "EMAIL",
-    "recipient": "peserta.audit@example.com",
-    "recipientName": "Peserta Riset Audit",
-    "event": "SESSION_EVALUATION",
-    "subject": "[BIAS RISTEK] Lembar Evaluasi Sesi Ke-1 oleh Tim Mentor BIAS RISTEK",
-    "message": "\n        <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">\n          <div style=\"background-color: #001847; padding: 24px; text-align: center; color: #ffffff;\">\n            <h2 style=\"margin: 0; font-size: 20px; font-weight: 700;\">BIAS RISTEK</h2>\n            <p style=\"margin: 4px 0 0; font-size: 13px; color: #fdbc13;\">Evaluasi Sesi Bimbingan Ke-1</p>\n          </div>\n          <div style=\"padding: 24px;\">\n            <p>Halo <strong>Peserta Riset Audit</strong>,</p>\n            <p>Mentor <strong>Tim Mentor BIAS RISTEK</strong> baru saja menerbitkan lembar evaluasi untuk sesi bimbingan riset privat Anda:</p>\n            \n            <div style=\"background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;\">\n              <p style=\"margin: 0 0 6px;\"><strong>Status Naskah:</strong> Bab 3: Metode Penelitian Kuantitatif</p>\n              <p style=\"margin: 0 0 6px;\"><strong>Rerata Skor Sesi:</strong> <span style=\"font-size: 16px; font-weight: 700; color: #001847;\">90/100</span></p>\n              <ul style=\"margin: 4px 0 10px; padding-left: 20px; font-size: 13px; color: #475569;\">\n                <li>Skor Metodologi Penelitian: 90/100</li>\n                <li>Skor Sistematika Penulisan: 88/100</li>\n                <li>Skor Pengolahan Data: 92/100</li>\n              </ul>\n              <p style=\"margin: 0 0 6px;\"><strong>Tindakan Perbaikan (Action Items):</strong></p>\n              <div style=\"background-color: #ffffff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px;\">Sebarkan ke 30 responden uji coba (pilot study) untuk uji reliabilitas Cronbach Alpha.</div>\n              <p style=\"margin: 12px 0 6px;\"><strong>Catatan Mentor:</strong></p>\n              <blockquote style=\"margin: 0; padding: 10px; background-color: #ffffff; border-left: 3px solid #fdbc13; font-style: italic; font-size: 13px;\">\"Instrumen kuesioner sudah sangat representatif mewakili seluruh indikator variabel.\"</blockquote>\n            </div>\n\n            <p style=\"text-align: center; margin: 24px 0;\">\n              <a href=\"http://localhost:3000/belajar\" style=\"background-color: #001847; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;\">Buka Ruang Belajar</a>\n            </p>\n          </div>\n        </div>\n      ",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:18:15.681Z"
-  },
-  {
-    "id": "notif_1791433089686_lspyc",
-    "channel": "EMAIL",
-    "recipient": "audit.peserta.1791432508835@example.com",
-    "recipientName": "Peserta Uji Audit Admin",
-    "event": "SUBMISSION_REVIEWED",
-    "subject": "[BIAS RISTEK] Review Tugas: Draf Artikel Jurnal Scopus Q2 - Bab 1-3 (DISETUJUI / LULUS)",
-    "message": "<h2>Review Draf Naskah Selesai</h2>\n<p>Halo <strong>Peserta Uji Audit Admin</strong>,</p>\n<p>Mentor telah selesai meninjau draf tugas naskah Anda pada program <strong>Junior Researcher Class</strong>.</p>\n<ul>\n  <li><strong>Judul Tugas:</strong> Draf Artikel Jurnal Scopus Q2 - Bab 1-3</li>\n  <li><strong>Status:</strong> <strong>DISETUJUI / LULUS</strong></li>\n  <li><strong>Nilai Evaluasi:</strong> 92/100 / 100</li>\n</ul>\n<div style=\"background:#f8fafc;border-left:4px solid #001847;padding:12px 16px;margin:16px 0;\">\n  <strong>Catatan Mentor:</strong><br />\n  <em>Argumentasi hipotesis sangat kokoh. Lanjutkan ke pengujian outer model di Bab 4.</em>\n</div>\n<p><a href=\"http://localhost:3000/belajar/junior-researcher-class\" style=\"display:inline-block;padding:10px 20px;background:#001847;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;\">Buka Ruang Belajar & Tugas</a></p>\n<p>Salam riset,<br /><strong>Mentor Riset BIAS RISTEK</strong></p>",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:18:09.686Z"
-  },
-  {
-    "id": "notif_1791433088630_66zy8",
-    "channel": "WHATSAPP",
-    "recipient": "6281234567899",
-    "recipientName": "Mahasiswa Bertanya Admin",
-    "event": "HUMAN_HANDOFF_STUDENT",
-    "message": "Halo *Mahasiswa Bertanya Admin*,\n\nPertanyaan Anda telah kami teruskan ke *Konsultan Akademik Senior BIAS RISTEK* 🧑‍🏫\n\n📋 *No. Tiket Bantuan:* TIKET-202610-9257\n⏳ *Status:* Menunggu Konsultan Manusia\n🤖 *Catatan:* Bot auto-reply sementara dinonaktifkan agar percakapan ditangani langsung oleh staf kami.\n\nStaf kami akan segera membalas di chat ini dalam beberapa saat, atau Anda dapat langsung menghubungi layanan prioritas:\n👉 https://wa.me/087777659482?text=Halo%20Admin%2C%20saya%20dengan%20Tiket%20TIKET-202610-9257%20(Mahasiswa%20Bertanya%20Admin)%20ingin%20melanjutkan%20konsultasi.\n\nTerima kasih atas kesabaran Anda,\n*Tim Konsultan BIAS RISTEK*",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:18:08.630Z"
-  },
-  {
-    "id": "notif_1791433088214_qgyjo",
-    "channel": "WHATSAPP",
-    "recipient": "6287777659482",
-    "recipientName": "Admin CS BIAS RISTEK",
-    "event": "HUMAN_HANDOFF_ADMIN",
-    "message": "🚨 *ESKALASI HUMAN HANDOFF CS!* 🚨\n\n📌 *Tiket:* TIKET-202610-9257\n👤 *Pengguna:* Mahasiswa Bertanya Admin\n📱 *Nomor WA:* +6281234567899\n📁 *Kategori:* KONSULTASI_RISET\n⚡ *Pemicu:* COMPLEX_RESEARCH_TOPIC\n\n📝 *Ringkasan Kendala:*\n\"Konsultasi judul disertasi S3 dengan mentor pakar\"\n\n💬 *Pesan Terakhir:*\n\"Saya mau konsultasi judul disertasi S3 saya apakah ada mentor pakar?\"\n\n👉 Buka Dashboard CS: http://localhost:3000/dashboard/support\n👉 Chat Pelanggan: https://wa.me/6281234567899",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:18:08.214Z"
-  },
-  {
-    "id": "notif_1791433087201_lhozz",
-    "channel": "WHATSAPP",
-    "recipient": "6281211110001",
-    "recipientName": "Dr. techn. Budi Rahardjo, S.T., M.T.",
-    "event": "TUTOR_CONFIRMED",
-    "message": "Yth. Dr. techn. Budi Rahardjo, S.T., M.T.,\n\nTerima kasih! Jadwal bimbingan bersama Peserta Uji Penjadwalan pada 2026-10-10T04:18:04.753Z pukul 19:30 - 21:00 WIB telah RESMI TERKUNCI di sistem.\n\nTautan Host Zoom Anda:\nhttps://zoom.us/s/9308615133?pwd=BIAS7FPZ2Y\n\nPengingat sesi akan dikirimkan kembali pada H-1 jam sebelum bimbingan dimulai.",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:18:07.201Z"
-  },
-  {
-    "id": "notif_1791433086910_myzou",
-    "channel": "EMAIL",
-    "recipient": "peserta.audit@example.com",
-    "recipientName": "Peserta Uji Penjadwalan",
-    "event": "MENTORSHIP_CONFIRMED",
-    "subject": "[BIAS RISTEK] Jadwal Bimbingan Terkonfirmasi bersama Dr. techn. Budi Rahardjo, S.T., M.T.",
-    "message": "\n        <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">\n          <div style=\"background-color: #001847; padding: 24px; text-align: center; color: #ffffff;\">\n            <h2 style=\"margin: 0; font-size: 20px; font-weight: 700;\">BIAS RISTEK</h2>\n            <p style=\"margin: 4px 0 0; font-size: 13px; color: #fdbc13;\">Jadwal Bimbingan Riset Terkonfirmasi</p>\n          </div>\n          <div style=\"padding: 24px;\">\n            <p>Halo <strong>Peserta Uji Penjadwalan</strong>,</p>\n            <p>Sesi bimbingan riset privat 1-on-1 Anda telah disetujui dan dijadwalkan bersama mentor pakar kami:</p>\n            <div style=\"background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;\">\n              <p style=\"margin: 0 0 8px;\"><strong>Mentor:</strong> Dr. techn. Budi Rahardjo, S.T., M.T. (Doktor Bidang Teknik Elektro & Informatika)</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Afiliasi:</strong> Institut Teknologi Bandung (ITB)</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Topik:</strong> Analisis Bibliometrik Scopus</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Waktu Sesi:</strong> 2026-10-10T04:18:04.753Z, Pukul 19:30 - 21:00 WIB</p>\n            </div>\n            <p style=\"text-align: center; margin: 24px 0;\">\n              <a href=\"https://zoom.us/j/9308615133?pwd=BIAS7FPZ2Y\" style=\"background-color: #001847; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;\">Masuk Ruang Zoom Bimbingan</a>\n            </p>\n            <p style=\"font-size: 13px; color: #64748b;\">Link Zoom: <a href=\"https://zoom.us/j/9308615133?pwd=BIAS7FPZ2Y\">https://zoom.us/j/9308615133?pwd=BIAS7FPZ2Y</a></p>\n          </div>\n        </div>\n      ",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:18:06.910Z"
-  },
-  {
-    "id": "notif_1791433086630_enppy",
-    "channel": "WHATSAPP",
-    "recipient": "6281234567891",
-    "recipientName": "Peserta Uji Penjadwalan",
-    "event": "MENTORSHIP_CONFIRMED",
-    "message": "Halo Peserta Uji Penjadwalan, kabar gembira!\n\nJadwal bimbingan privat riset Anda telah TERKONFIRMASI oleh Tim Pakar BIAS RISTEK:\n\n👨‍🏫 Tutor Pendamping: Dr. techn. Budi Rahardjo, S.T., M.T. (Doktor Bidang Teknik Elektro & Informatika)\n🏛️ Instansi: Institut Teknologi Bandung (ITB)\n🔬 Topik Bahasan: Analisis Bibliometrik Scopus\n📅 Waktu Sesi: 2026-10-10T04:18:04.753Z, Pukul 19:30 - 21:00 WIB\n\n🔗 Tautan Ruang Zoom Bimbingan:\nhttps://zoom.us/j/9308615133?pwd=BIAS7FPZ2Y\n\nSilakan persiapkan draf naskah atau kendala olah data Anda sebelum sesi dimulai. Sampai jumpa di ruang bimbingan!",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:18:06.630Z"
-  },
-  {
-    "id": "notif_1791433085886_5n825",
-    "channel": "EMAIL",
-    "recipient": "budi.rahardjo@biasristek.id",
-    "recipientName": "Dr. techn. Budi Rahardjo, S.T., M.T.",
-    "event": "TUTOR_BOOKING_PROPOSED",
-    "subject": "[BIAS RISTEK] Usulan Bimbingan Riset: Peserta Uji Penjadwalan",
-    "message": "\n        <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">\n          <div style=\"background-color: #001847; padding: 24px; text-align: center; color: #ffffff;\">\n            <h2 style=\"margin: 0; font-size: 20px; font-weight: 700;\">BIAS RISTEK</h2>\n            <p style=\"margin: 4px 0 0; font-size: 13px; color: #fdbc13;\">Konfirmasi Penugasan Bimbingan Riset</p>\n          </div>\n          <div style=\"padding: 24px;\">\n            <p>Yth. <strong>Dr. techn. Budi Rahardjo, S.T., M.T.</strong>,</p>\n            <p>Koordinator akademik BIAS RISTEK mengusulkan penugasan bimbingan privat 1-on-1 baru yang sesuai dengan bidang keahlian Anda:</p>\n            <div style=\"background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;\">\n              <p style=\"margin: 0 0 8px;\"><strong>Nama Peneliti:</strong> Peserta Uji Penjadwalan</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Instansi:</strong> Universitas Gadjah Mada (S2 Magister)</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Topik Riset:</strong> Analisis Bibliometrik Scopus</p>\n              <p style=\"margin: 0 0 8px;\"><strong>Software / Metode:</strong> VOSviewer</p>\n              <p style=\"margin: 0;\"><strong>Jadwal Sesi:</strong> 2026-10-10T04:18:04.753Z, Pukul 19:30 - 21:00 WIB</p>\n            </div>\n            <p style=\"text-align: center; margin: 24px 0 12px;\">\n              <a href=\"http://localhost:3000/tutor/konfirmasi/ad1e70c96bc374a97c63a9bab7078bdc?action=ACCEPT\" style=\"background-color: #001847; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block; margin-right: 8px;\">Terima Bimbingan</a>\n              <a href=\"http://localhost:3000/tutor/konfirmasi/ad1e70c96bc374a97c63a9bab7078bdc?action=DECLINE\" style=\"background-color: #e2e8f0; color: #475569; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;\">Berhalangan / Reschedule</a>\n            </p>\n          </div>\n        </div>\n      ",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:18:05.886Z"
-  },
-  {
-    "id": "notif_1791433085514_8qu00",
-    "channel": "WHATSAPP",
-    "recipient": "6281211110001",
-    "recipientName": "Dr. techn. Budi Rahardjo, S.T., M.T.",
-    "event": "TUTOR_BOOKING_PROPOSED",
-    "message": "Yth. Dr. techn. Budi Rahardjo, S.T., M.T.,\n\nTerdapat usulan penugasan bimbingan privat 1-on-1 baru dari BIAS RISTEK:\n\n👤 Mahasiswa/Peneliti: Peserta Uji Penjadwalan (Universitas Gadjah Mada, S2 Magister)\n🔬 Topik Riset: Analisis Bibliometrik Scopus\n🛠️ Metodologi / Software: VOSviewer\n📅 Jadwal Diusulkan: 2026-10-10T04:18:04.753Z, Pukul 19:30 - 21:00 WIB\n\nMohon konfirmasi ketersediaan Anda melalui tautan 1-klik di bawah ini:\n👉 TERIMA JADWAL: http://localhost:3000/tutor/konfirmasi/ad1e70c96bc374a97c63a9bab7078bdc?action=ACCEPT\n👉 BERHALANGAN / RESCHEDULE: http://localhost:3000/tutor/konfirmasi/ad1e70c96bc374a97c63a9bab7078bdc?action=DECLINE\n\nDetail lengkap bimbingan: http://localhost:3000/tutor/konfirmasi/ad1e70c96bc374a97c63a9bab7078bdc\n\nTerima kasih atas dedikasi akademik Anda bersama BIAS RISTEK.",
-    "status": "SIMULATED",
-    "sentAt": "2026-10-08T04:18:05.514Z"
+    "sentAt": "2026-11-10T21:30:00.000Z"
   }
 ]

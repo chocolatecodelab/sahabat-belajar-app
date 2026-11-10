@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { PayoutStatus } from "@prisma/client";
-import { auth } from "@/lib/auth";
+import { auth, requireAdminOnly } from "@/lib/auth";
 
 export async function calculateTutorPayout(input: {
   tutorId: string;
@@ -149,6 +149,7 @@ export async function updatePayoutStatus(
   status: PayoutStatus
 ): Promise<ActionResponse> {
   try {
+    await requireAdminOnly();
     const now = new Date().toISOString();
     const updateData: any = {
       status,

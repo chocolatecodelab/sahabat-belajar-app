@@ -10,6 +10,10 @@ import {
   sendWhatsApp,
   sendEmail,
   renderTemplate,
+  notifyLeadRegistered,
+  notifySessionScheduled,
+  notifyLowQuotaAlert,
+  notifyPackagePaymentVerified,
   type NotificationSettingsData,
   type NotificationLogItem,
   type WhatsAppProvider,
@@ -52,7 +56,9 @@ export async function updateNotificationSettingsAction(formData: FormData): Prom
     const emailSmtpPass = (formData.get("emailSmtpPass") as string) || "";
     const emailResendApiKey = (formData.get("emailResendApiKey") as string) || "";
     const emailSenderName = (formData.get("emailSenderName") as string) || "Sahabat Belajar Akademik";
-    const emailSenderAddress = (formData.get("emailSenderAddress") as string) || "no-reply@sahabatbelajar.id";
+    const emailSenderAddress = (formData.get("emailSenderAddress") as string) || "halo@sahabatbelajar.id";
+    const testOverridePhone = (formData.get("testOverridePhone") as string) || "";
+    const testOverrideEmail = (formData.get("testOverrideEmail") as string) || "";
 
     // Event Toggles
     const waEnabled_invoiceCreated = formData.get("waEnabled_invoiceCreated") === "true";
@@ -91,6 +97,8 @@ export async function updateNotificationSettingsAction(formData: FormData): Prom
       emailResendApiKey,
       emailSenderName,
       emailSenderAddress,
+      testOverridePhone,
+      testOverrideEmail,
       waEnabled_invoiceCreated,
       waEnabled_paymentVerified,
       waEnabled_submissionReviewed,
@@ -196,5 +204,106 @@ export async function clearNotificationLogsAction(): Promise<ActionResponse> {
     return { success: true, message: "Riwayat log notifikasi berhasil dibersihkan" };
   } catch (err: any) {
     return { success: false, message: err?.message || "Gagal membersihkan log" };
+  }
+}
+
+/**
+ * 6. Simulasikan Pemicu Operasional Otomatis (Untuk Pengujian Saat Nomor WA & Email Masih Dummy)
+ */
+export async function simulateOperationalTriggerAction(
+  triggerType: "LEAD_REGISTERED" | "SESSION_SCHEDULED" | "LOW_QUOTA_ALERT" | "PAYMENT_VERIFIED"
+): Promise<ActionResponse> {
+  await requireAuth();
+  try {
+    if (triggerType === "LEAD_REGISTERED") {
+      await notifyLeadRegistered({
+        leadId: `lead_sim_${Date.now()}`,
+        name: "Rizky Pratama (Dummy Lead)",
+        phone: "081299887766",
+        email: "rizky.dummy@simulasi.sahabatbelajar.id",
+        programInterest: "UTBK-SNBT & Masuk PTN",
+        level: "SMA Kelas 12",
+        classModel: "PRIVAT",
+        learningMode: "ONLINE",
+      });
+      safeRevalidatePath("/dashboard/pengaturan/notifikasi");
+      return {
+        success: true,
+        message: "Simulasi Pendaftaran Lead Baru berhasil dipicu (WA + Email Siswa & Alert Admin tercatat di Log)!",
+      };
+    }
+
+    if (triggerType === "SESSION_SCHEDULED") {
+      const tomorrow16 = new Date(Date.now() + 86400000);
+      tomorrow16.setHours(16, 0, 0, 0);
+      const tomorrow1730 = new Date(tomorrow16.getTime() + 90 * 60 * 1000);
+
+      await notifySessionScheduled({
+        sessionId: `sess_sim_${Date.now()}`,
+        programName: "Persiapan UTBK-SNBT & Matematika SMA",
+        classType: "PRIVAT",
+        mode: "ONLINE",
+        startAt: tomorrow16,
+        endAt: tomorrow1730,
+        meetingLink: "https://meet.google.com/sb-utbk-ahmad",
+        tutorName: "Hendra Wijaya, M.Pd.",
+        tutorPhone: "081234567891",
+        students: [
+          {
+            name: "Ahmad Fauzi",
+            parentPhone: "081298765432",
+            email: "ahmad.fauzi@simulasi.sahabatbelajar.id",
+          },
+        ],
+      });
+      safeRevalidatePath("/dashboard/pengaturan/notifikasi");
+      return {
+        success: true,
+        message: "Simulasi Sesi Bimbingan Dijadwalkan berhasil dipicu (WA + Email Siswa & WA Tutor tercatat di Log)!",
+      };
+    }
+
+    if (triggerType === "LOW_QUOTA_ALERT") {
+      await notifyLowQuotaAlert({
+        studentName: "Ahmad Fauzi",
+        parentPhone: "081298765432",
+        studentEmail: "ortu.ahmad@simulasi.sahabatbelajar.id",
+        packageName: "Paket 10 Sesi Privat SMA & UTBK",
+        quotaTotal: 10,
+        quotaUsed: 8,
+        quotaRemaining: 2,
+      });
+      safeRevalidatePath("/dashboard/pengaturan/notifikasi");
+      return {
+        success: true,
+        message: "Simulasi Peringatan Kuota Kritis (Sisa 2 Sesi) berhasil dipicu (WA + Email Orang Tua tercatat di Log)!",
+      };
+    }
+
+    if (triggerType === "PAYMENT_VERIFIED") {
+      await notifyPackagePaymentVerified({
+        paymentId: `pay_sim_${Date.now()}`,
+        studentName: "Ahmad Fauzi",
+        parentPhone: "081298765432",
+        studentEmail: "ortu.ahmad@simulasi.sahabatbelajar.id",
+        packageName: "Paket 10 Sesi Privat SMA & UTBK",
+        amount: 1400000,
+        method: "TRANSFER_BANK (BCA)",
+        status: "LUNAS",
+        quotaTotal: 10,
+      });
+      safeRevalidatePath("/dashboard/pengaturan/notifikasi");
+      return {
+        success: true,
+        message: "Simulasi Verifikasi Pembayaran Paket Lunas berhasil dipicu (WA + Email Bukti Lunas tercatat di Log)!",
+      };
+    }
+
+    return { success: false, message: "Tipe pemicu tidak dikenali." };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err?.message || "Gagal menjalankan simulasi pemicu otomatis.",
+    };
   }
 }

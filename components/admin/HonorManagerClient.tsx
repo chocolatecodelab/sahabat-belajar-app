@@ -27,6 +27,7 @@ export default function HonorManagerClient({
   const [payouts, setPayouts] = useState(initialPayouts);
   const [showCalcModal, setShowCalcModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [updatingPayoutId, setUpdatingPayoutId] = useState<string | null>(null);
 
   // Form states
   const [tutorId, setTutorId] = useState(tutors[0]?.id || "");
@@ -65,7 +66,9 @@ export default function HonorManagerClient({
   };
 
   const handleUpdateStatus = async (id: string, status: PayoutStatus) => {
+    setUpdatingPayoutId(id);
     const res = await updatePayoutStatus(id, status);
+    setUpdatingPayoutId(null);
     if (res.success) {
       toast.success("Status Diperbarui", "Status pembayaran honor berhasil diubah.");
       setPayouts((prev) =>
@@ -110,13 +113,13 @@ export default function HonorManagerClient({
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-xs font-bold border border-[#9AC1E2] mb-2">
             <Trophy size={14} />
-            <span>Fase 1: MVP Operasional (Modul E - Honor Tutor)</span>
+            <span>Manajemen Keuangan & Honor Pengajar</span>
           </div>
           <h1 className="text-2xl font-bold text-[#09408C] font-display">
             Rekap Honor Tutor
           </h1>
           <p className="text-sm text-[#5B6882] mt-0.5">
-            Perhitungan honor otomatis berdasarkan sesi terlaksana (BR-6) dan ekspor laporan periode.
+            Perhitungan honor otomatis berdasarkan sesi terlaksana dan ekspor laporan periode.
           </p>
         </div>
 
@@ -249,15 +252,20 @@ export default function HonorManagerClient({
                       <td className="py-3.5 px-4 text-right">
                         {!isPaid && (
                           <button
+                            disabled={updatingPayoutId === p.id}
                             onClick={() =>
                               handleUpdateStatus(
                                 p.id,
                                 p.status === "DRAFT" ? "DISETUJUI" : "DIBAYAR"
                               )
                             }
-                            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-[#09408C] text-white hover:bg-[#0E3571] transition-colors"
+                            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-[#09408C] text-white hover:bg-[#0E3571] transition-colors disabled:opacity-50"
                           >
-                            {p.status === "DRAFT" ? "Setujui" : "Tandai Dibayar"}
+                            {updatingPayoutId === p.id
+                              ? "Memproses..."
+                              : p.status === "DRAFT"
+                              ? "Setujui"
+                              : "Tandai Dibayar"}
                           </button>
                         )}
                       </td>

@@ -53,6 +53,10 @@ export interface NotificationSettingsData {
   template_email_submissionReviewed: string;
   template_email_certificateIssued: string;
 
+  // Sandbox / Dummy Testing Override
+  testOverridePhone?: string;
+  testOverrideEmail?: string;
+
   updatedAt?: string;
 }
 
@@ -88,8 +92,10 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettingsData = {
   emailSmtpUser: "",
   emailSmtpPass: "",
   emailResendApiKey: "",
-  emailSenderName: "BIAS RISTEK Akademik",
-  emailSenderAddress: "no-reply@biasristek.id",
+  emailSenderName: "Sahabat Belajar Akademik",
+  emailSenderAddress: "halo@sahabatbelajar.id",
+  testOverridePhone: "",
+  testOverrideEmail: "",
 
   waEnabled_invoiceCreated: true,
   waEnabled_paymentVerified: true,
@@ -102,110 +108,108 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettingsData = {
   emailEnabled_certificateIssued: true,
 
   // WhatsApp Templates
-  template_wa_invoiceCreated: `Halo {{student_name}}, terima kasih telah mendaftar di *BIAS RISTEK*! 🔬
+  template_wa_invoiceCreated: `Halo {{student_name}}, terima kasih telah mendaftar di *Sahabat Belajar* (#BersamaSahabat)! 📚
 
-Berikut rincian tagihan pendaftaran Anda:
-📌 *Program:* {{course_title}}
-🧾 *No. Invoice:* {{invoice_number}}
-💰 *Total Tagihan:* {{total_amount}}
-💳 *Metode:* {{payment_method}} (Kode Unik: {{unique_code}})
+Berikut rincian pendaftaran & tagihan paket bimbingan Anda:
+📌 *Program / Paket:* {{course_title}}
+🧾 *No. Tagihan:* {{invoice_number}}
+💰 *Total Investasi:* {{total_amount}}
+💳 *Metode Pembayaran:* {{payment_method}}
 
-Silakan lakukan transfer dan konfirmasi pembayaran melalui tautan berikut:
+Silakan lakukan pembayaran atau hubungi Konsultan Akademik kami melalui tautan berikut:
 🔗 {{invoice_url}}
 
 Salam hangat,
-*Tim Akademik BIAS RISTEK*`,
+*Tim Akademik Sahabat Belajar*`,
 
   template_wa_paymentVerified: `Halo {{student_name}}, kabar gembira! 🎉
 
-Pembayaran untuk program *{{course_title}}* (Invoice: {{invoice_number}}) telah *BERHASIL DIVERIFIKASI*.
+Pembayaran paket bimbingan *{{course_title}}* (Ref: {{invoice_number}}) telah *BERHASIL DIVERIFIKASI*.
 
-Akun Ruang Belajar (LMS) Anda telah aktif:
-📧 *Email Login:* {{login_email}}
-🔑 *Password:* Gunakan nomor WhatsApp Anda (atau yang didaftarkan)
-🌐 *Masuk ke Ruang Belajar:* {{classroom_url}}
+Kuota belajar dan akses Portal Siswa Anda telah aktif:
+📧 *Email Akun:* {{login_email}}
+🌐 *Buka Portal Siswa & Jadwal:* {{classroom_url}}
 
-Selamat belajar dan semoga sukses dalam publikasi riset Anda!
+Selamat belajar bersama tutor terbaik kami, dari paham konsep dasar hingga siap berprestasi!
 
 Salam,
-*Tim Akademik BIAS RISTEK*`,
+*Tim Akademik Sahabat Belajar*`,
 
-  template_wa_submissionReviewed: `Halo {{student_name}}, draf naskah Anda telah direview oleh Mentor! 📑
+  template_wa_submissionReviewed: `Halo {{student_name}}, informasi jadwal & kuota bimbingan Anda di *Sahabat Belajar*! 📅
 
 📌 *Program:* {{course_title}}
-📝 *Tugas:* {{task_title}}
-📊 *Status:* *{{status}}* (Nilai: {{score}})
+📝 *Agenda / Sesi:* {{task_title}}
+📊 *Status:* *{{status}}* (Info Kuota: {{score}})
 
-💬 *Catatan Mentor:*
+💬 *Catatan Akademik:*
 "{{mentor_feedback}}"
 
-Silakan periksa detail masukan dan tindak lanjuti revisi Anda di Ruang Belajar:
+Pantau jadwal lengkap, tautan Zoom/Meet, dan sisa kuota di Portal Siswa:
 🔗 {{classroom_url}}
 
-Semangat berkarya!
-*Mentor Riset BIAS RISTEK*`,
+Semangat belajar!
+*Tim Akademik Sahabat Belajar*`,
 
-  template_wa_certificateIssued: `Selamat {{student_name}}! 🎓✨
+  template_wa_certificateIssued: `Halo {{student_name}}! 🎓✨
 
-Anda telah berhasil menyelesaikan seluruh rangkaian program *{{course_title}}*. 
+Rapor Evaluasi & Hasil Belajar untuk program *{{course_title}}* telah diterbitkan.
 
-E-Sertifikat Resmi *{{total_hours}}* Anda telah diterbitkan:
-📜 *Kode Sertifikat:* {{certificate_code}}
-🔍 *Validasi & Unduh E-Sertifikat:* {{certificate_url}}
+📜 *Kode Dokumen:* {{certificate_code}}
+⏱️ *Durasi Bimbingan:* {{total_hours}}
+🔍 *Lihat Rapor & Grafik Perkembangan:* {{certificate_url}}
 
-Sertifikat ini dapat dicantumkan pada portofolio akademik dan divalidasi keasliannya secara online.
+Terima kasih telah mempercayakan pendampingan akademik bersama Sahabat Belajar.
 
 Salam hormat,
-*Direktur Akademik BIAS RISTEK*`,
+*Tim Akademik Sahabat Belajar*`,
 
   // Email Templates
-  template_email_invoiceCreated: `<h2>Pendaftaran Program Riset BIAS RISTEK</h2>
+  template_email_invoiceCreated: `<h2>Konfirmasi Pendaftaran & Tagihan Paket — Sahabat Belajar</h2>
 <p>Halo <strong>{{student_name}}</strong>,</p>
-<p>Terima kasih telah mendaftar pada program <strong>{{course_title}}</strong> di BIAS RISTEK.</p>
+<p>Terima kasih telah mendaftar pada program bimbingan <strong>{{course_title}}</strong> di Sahabat Belajar (<em>Comprehensive Academic Solution</em>).</p>
 <hr />
-<h3>Rincian Tagihan:</h3>
+<h3>Rincian Pendaftaran & Tagihan:</h3>
 <ul>
-  <li><strong>Nomor Invoice:</strong> {{invoice_number}}</li>
-  <li><strong>Total Tagihan:</strong> {{total_amount}} (termasuk kode unik {{unique_code}})</li>
+  <li><strong>Nomor Referensi:</strong> {{invoice_number}}</li>
+  <li><strong>Total Tagihan:</strong> {{total_amount}}</li>
   <li><strong>Metode Pembayaran:</strong> {{payment_method}}</li>
 </ul>
-<p>Silakan lakukan pembayaran sesuai nominal di atas dan unggah bukti transfer melalui halaman tracking invoice:</p>
-<p><a href="{{invoice_url}}" style="display:inline-block;padding:10px 20px;background:#001847;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">Lihat Rincian & Konfirmasi Pembayaran</a></p>
-<p>Salam hangat,<br /><strong>Tim Akademik BIAS RISTEK</strong></p>`,
+<p>Silakan unggah bukti pembayaran atau pantau status paket belajar Anda melalui Portal Siswa:</p>
+<p><a href="{{invoice_url}}" style="display:inline-block;padding:10px 20px;background:#09408C;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Buka Portal Siswa & Tagihan</a></p>
+<p>Salam hangat,<br /><strong>Tim Akademik Sahabat Belajar</strong></p>`,
 
-  template_email_paymentVerified: `<h2>Pembayaran Diverifikasi & Akses LMS Aktif</h2>
+  template_email_paymentVerified: `<h2>Pembayaran Diverifikasi & Kuota Bimbingan Aktif</h2>
 <p>Halo <strong>{{student_name}}</strong>,</p>
-<p>Pembayaran Anda untuk program <strong>{{course_title}}</strong> telah berhasil kami verifikasi.</p>
-<p>Akun digital Anda telah aktif dan dapat langsung mengakses seluruh video, materi presentasi, dan modul riset:</p>
+<p>Pembayaran Anda untuk paket bimbingan <strong>{{course_title}}</strong> telah berhasil kami verifikasi.</p>
+<p>Paket belajar dan kuota sesi (90 menit/pertemuan) Anda kini telah aktif:</p>
 <ul>
-  <li><strong>Email Login:</strong> {{login_email}}</li>
-  <li><strong>Ruang Belajar:</strong> <a href="{{classroom_url}}">{{classroom_url}}</a></li>
+  <li><strong>Referensi Pembayaran:</strong> {{invoice_number}}</li>
+  <li><strong>Portal Siswa & Orang Tua:</strong> <a href="{{classroom_url}}">{{classroom_url}}</a></li>
 </ul>
-<p><a href="{{login_url}}" style="display:inline-block;padding:10px 20px;background:#001847;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">Masuk ke Ruang Belajar</a></p>
-<p>Selamat belajar dan semoga sukses mencapai target publikasi Anda!<br /><strong>Tim Akademik BIAS RISTEK</strong></p>`,
+<p><a href="{{login_url}}" style="display:inline-block;padding:10px 20px;background:#09408C;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Masuk ke Portal Siswa</a></p>
+<p>Selamat belajar!<br /><strong>Tim Akademik Sahabat Belajar</strong></p>`,
 
-  template_email_submissionReviewed: `<h2>Review Draf Naskah Selesai</h2>
+  template_email_submissionReviewed: `<h2>Informasi Jadwal Sesi & Status Kuota Bimbingan</h2>
 <p>Halo <strong>{{student_name}}</strong>,</p>
-<p>Mentor telah selesai meninjau draf tugas naskah Anda pada program <strong>{{course_title}}</strong>.</p>
+<p>Berikut pembaruan jadwal sesi bimbingan atau status kuota paket belajar Anda pada program <strong>{{course_title}}</strong>:</p>
 <ul>
-  <li><strong>Judul Tugas:</strong> {{task_title}}</li>
+  <li><strong>Rincian Sesi / Paket:</strong> {{task_title}}</li>
   <li><strong>Status:</strong> <strong>{{status}}</strong></li>
-  <li><strong>Nilai Evaluasi:</strong> {{score}} / 100</li>
+  <li><strong>Sisa Kuota / Capaian:</strong> {{score}}</li>
 </ul>
-<div style="background:#f8fafc;border-left:4px solid #001847;padding:12px 16px;margin:16px 0;">
-  <strong>Catatan Mentor:</strong><br />
+<div style="background:#F4F7FB;border-left:4px solid #09408C;padding:12px 16px;margin:16px 0;">
+  <strong>Detail / Catatan Akademik:</strong><br />
   <em>{{mentor_feedback}}</em>
 </div>
-<p><a href="{{classroom_url}}" style="display:inline-block;padding:10px 20px;background:#001847;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">Buka Ruang Belajar & Tugas</a></p>
-<p>Salam riset,<br /><strong>Mentor Riset BIAS RISTEK</strong></p>`,
+<p><a href="{{classroom_url}}" style="display:inline-block;padding:10px 20px;background:#09408C;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Buka Portal Siswa</a></p>
+<p>Salam hangat,<br /><strong>Tim Akademik Sahabat Belajar</strong></p>`,
 
-  template_email_certificateIssued: `<h2>Selamat! E-Sertifikat Resmi 32 JP Telah Terbit</h2>
+  template_email_certificateIssued: `<h2>Laporan Evaluasi & Perkembangan Belajar Siswa</h2>
 <p>Halo <strong>{{student_name}}</strong>,</p>
-<p>Selamat atas kelulusan dan penyelesaian seluruh kurikulum program <strong>{{course_title}}</strong> di BIAS RISTEK!</p>
-<p>E-Sertifikat resmi berbobot <strong>{{total_hours}}</strong> telah diterbitkan dengan nomor seri:</p>
-<h3 style="color:#001847;letter-spacing:1px;">{{certificate_code}}</h3>
-<p><a href="{{certificate_url}}" style="display:inline-block;padding:10px 20px;background:#001847;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">Lihat & Unduh E-Sertifikat</a></p>
-<p>Sertifikat ini dapat divalidasi keasliannya oleh institusi/kampus secara publik melalui tautan di atas.<br /><strong>Direktur Akademik BIAS RISTEK</strong></p>`,
+<p>Laporan hasil evaluasi belajar dan simulasi ujian pada program <strong>{{course_title}}</strong> telah diperbarui.</p>
+<p>Nomor Referensi Laporan: <strong style="color:#09408C;">{{certificate_code}}</strong> ({{total_hours}})</p>
+<p><a href="{{certificate_url}}" style="display:inline-block;padding:10px 20px;background:#09408C;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Lihat Rapor & Grafik Performa</a></p>
+<p>Salam hormat,<br /><strong>Tim Akademik Sahabat Belajar</strong></p>`,
 };
 
 // ==========================================
@@ -372,13 +376,18 @@ export async function sendWhatsApp(
   recipientName?: string
 ): Promise<{ success: boolean; status: "SENT" | "SIMULATED" | "FAILED"; message: string }> {
   const settings = await readNotificationSettings();
-  const phone = sanitizePhoneNumber(targetPhone);
+  const effectiveTarget = settings.testOverridePhone?.trim() || targetPhone;
+  const phone = sanitizePhoneNumber(effectiveTarget);
+  const displayRecipientName =
+    settings.testOverridePhone?.trim() && settings.testOverridePhone.trim() !== targetPhone
+      ? `${recipientName || "Pengguna"} (Redirect dari ${targetPhone})`
+      : recipientName;
 
   if (!phone || phone.length < 8) {
     await recordNotificationLog({
       channel: "WHATSAPP",
       recipient: targetPhone,
-      recipientName,
+      recipientName: displayRecipientName,
       event,
       message,
       status: "FAILED",
@@ -389,11 +398,11 @@ export async function sendWhatsApp(
 
   // 1. Simulated Mode
   if (settings.whatsappProvider === "SIMULATED" || !settings.whatsappApiToken) {
-    console.log(`\n📱 [WHATSAPP SIMULATED] To: ${phone} (${recipientName || "User"})\n${message}\n`);
+    console.log(`\n📱 [WHATSAPP SIMULATED] To: ${phone} (${displayRecipientName || "User"})\n${message}\n`);
     await recordNotificationLog({
       channel: "WHATSAPP",
       recipient: phone,
-      recipientName,
+      recipientName: displayRecipientName,
       event,
       message,
       status: "SIMULATED",
@@ -572,7 +581,12 @@ export async function sendEmail(
   recipientName?: string
 ): Promise<{ success: boolean; status: "SENT" | "SIMULATED" | "FAILED"; message: string }> {
   const settings = await readNotificationSettings();
-  const email = (targetEmail || "").trim().toLowerCase();
+  const effectiveEmail = settings.testOverrideEmail?.trim() || targetEmail;
+  const email = (effectiveEmail || "").trim().toLowerCase();
+  const displayRecipientName =
+    settings.testOverrideEmail?.trim() && settings.testOverrideEmail.trim() !== targetEmail
+      ? `${recipientName || "Pengguna"} (Redirect dari ${targetEmail})`
+      : recipientName;
 
   if (!email || !email.includes("@")) {
     await recordNotificationLog({
@@ -602,7 +616,7 @@ export async function sendEmail(
     await recordNotificationLog({
       channel: "EMAIL",
       recipient: email,
-      recipientName,
+      recipientName: displayRecipientName,
       event,
       subject,
       message: htmlContent,
@@ -1252,10 +1266,252 @@ export async function notifyHumanHandoffEscalated(payload: {
           </div>
         </div>
       `;
-      await sendEmail(payload.customerEmail, `[BIAS RISTEK] Tiket Konsultasi #${payload.ticketNumber} Telah Diteruskan ke Konsultan Senior`, emailHtml, "HUMAN_HANDOFF_STUDENT", payload.customerName);
+      await sendEmail(payload.customerEmail, `[Sahabat Belajar] Tiket Konsultasi #${payload.ticketNumber} Telah Diteruskan ke Konsultan Senior`, emailHtml, "HUMAN_HANDOFF_STUDENT", payload.customerName);
     }
   } catch (err) {
     console.error("notifyHumanHandoffEscalated error:", err);
+  }
+}
+
+// ==========================================
+// SAHABAT BELAJAR OPERATIONAL DISPATCHERS
+// ==========================================
+
+function buildDummyEmail(name: string, fallbackEmail?: string | null): string {
+  if (fallbackEmail && fallbackEmail.includes("@")) return fallbackEmail.trim().toLowerCase();
+  const slug = (name || "siswa")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ".")
+    .replace(/^\.+|\.+$/g, "");
+  return `${slug || "siswa"}@simulasi.sahabatbelajar.id`;
+}
+
+/**
+ * SB-1. Event: LEAD_REGISTERED (Pendaftaran / Konsultasi Baru dari Website Publik)
+ */
+export async function notifyLeadRegistered(payload: {
+  leadId: string;
+  name: string;
+  phone: string;
+  email?: string | null;
+  programInterest?: string | null;
+  level?: string | null;
+  classModel?: string | null;
+  learningMode?: string | null;
+}) {
+  try {
+    const settings = await readNotificationSettings();
+    const siteUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const programLabel = payload.programInterest || "Bimbingan Belajar Reguler";
+    const modeLabel = `${payload.classModel || "PRIVAT"} (${payload.learningMode || "ONLINE"})`;
+    const targetEmail = buildDummyEmail(payload.name, payload.email);
+
+    const variables = {
+      student_name: payload.name,
+      course_title: `${programLabel} — Jenjang ${payload.level || "Umum"}`,
+      invoice_number: payload.leadId.toUpperCase().slice(0, 14),
+      total_amount: "Konsultasi & Placement Awal Gratis",
+      unique_code: 0,
+      payment_method: modeLabel,
+      invoice_url: `${siteUrl}/portal`,
+    };
+
+    if (settings.waEnabled_invoiceCreated && payload.phone) {
+      const text = renderTemplate(settings.template_wa_invoiceCreated, variables);
+      await sendWhatsApp(payload.phone, text, "LEAD_REGISTERED", payload.name);
+    }
+
+    if (settings.emailEnabled_invoiceCreated && targetEmail) {
+      const html = renderTemplate(settings.template_email_invoiceCreated, variables);
+      await sendEmail(
+        targetEmail,
+        `[Sahabat Belajar] Konfirmasi Pendaftaran & Konsultasi — ${payload.name}`,
+        html,
+        "LEAD_REGISTERED",
+        payload.name
+      );
+    }
+
+    if (settings.whatsappAdminNumber) {
+      const adminAlert = `🔔 *PENDAFTAR BARU (LEAD WEBSITE)*\n\n👤 *Nama:* ${payload.name}\n📱 *WhatsApp:* ${payload.phone}\n🎓 *Program:* ${programLabel} (${payload.level || "-"})\n🏫 *Model Kelas:* ${modeLabel}\n\nSegera tindak lanjuti di Dashboard Admin: ${siteUrl}/dashboard/leads`;
+      await sendWhatsApp(settings.whatsappAdminNumber, adminAlert, "ADMIN_LEAD_ALERT", "Admin Sahabat Belajar");
+    }
+  } catch (err) {
+    console.error("notifyLeadRegistered error:", err);
+  }
+}
+
+/**
+ * SB-2. Event: SESSION_SCHEDULED (Sesi Bimbingan Baru Dijadwalkan ke Siswa & Tutor)
+ */
+export async function notifySessionScheduled(payload: {
+  sessionId: string;
+  programName: string;
+  classType: string;
+  mode: string;
+  startAt: string | Date;
+  endAt: string | Date;
+  meetingLink?: string | null;
+  address?: string | null;
+  tutorName: string;
+  tutorPhone?: string | null;
+  students: Array<{ name: string; parentPhone?: string | null; email?: string | null }>;
+}) {
+  try {
+    const settings = await readNotificationSettings();
+    const siteUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const startDate = new Date(payload.startAt);
+    const endDate = new Date(payload.endAt);
+    const dateStr = startDate.toLocaleDateString("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const timeStr = `${startDate.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} - ${endDate.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB`;
+    const locationInfo =
+      payload.mode === "ONLINE"
+        ? `Online via Zoom/Meet: ${payload.meetingLink || "Link menyusul di Portal Siswa"}`
+        : `Home Visit: ${payload.address || "Sesuai alamat siswa"}`;
+
+    // 1. Kirim ke masing-masing Siswa / Orang Tua
+    for (const student of payload.students) {
+      const phone = student.parentPhone || "081200000000";
+      const targetEmail = buildDummyEmail(student.name, student.email);
+
+      const variables = {
+        student_name: student.name,
+        course_title: payload.programName,
+        task_title: `Sesi ${payload.classType} bersama ${payload.tutorName} (${dateStr}, ${timeStr})`,
+        status: "TERJADWAL (90 Menit)",
+        score: payload.mode,
+        mentor_feedback: locationInfo,
+        classroom_url: `${siteUrl}/portal`,
+      };
+
+      if (settings.waEnabled_submissionReviewed) {
+        const waText = renderTemplate(settings.template_wa_submissionReviewed, variables);
+        await sendWhatsApp(phone, waText, "SESSION_SCHEDULED", `${student.name} (Orang Tua/Siswa)`);
+      }
+
+      if (settings.emailEnabled_submissionReviewed) {
+        const html = renderTemplate(settings.template_email_submissionReviewed, variables);
+        await sendEmail(
+          targetEmail,
+          `[Sahabat Belajar] Jadwal Sesi Bimbingan Baru — ${dateStr} (${timeStr})`,
+          html,
+          "SESSION_SCHEDULED",
+          student.name
+        );
+      }
+    }
+
+    // 2. Kirim ke Tutor Pengajar
+    if (payload.tutorPhone && settings.waEnabled_submissionReviewed) {
+      const studentNames = payload.students.map((s) => s.name).join(", ");
+      const tutorWa = `Halo *${payload.tutorName}*, terdapat jadwal mengajar baru di *Sahabat Belajar*! 👨‍🏫\n\n📌 *Program:* ${payload.programName} (${payload.classType})\n👥 *Siswa:* ${studentNames}\n📅 *Hari/Tanggal:* ${dateStr}\n⏰ *Waktu:* ${timeStr} (90 Menit)\n📍 *Mode:* ${locationInfo}\n\nBuka Portal Tutor untuk detail sesi & pengisian absensi:\n🔗 ${siteUrl}/tutor`;
+      await sendWhatsApp(payload.tutorPhone, tutorWa, "TUTOR_SESSION_ASSIGNED", payload.tutorName);
+    }
+  } catch (err) {
+    console.error("notifySessionScheduled error:", err);
+  }
+}
+
+/**
+ * SB-3. Event: LOW_QUOTA_ALERT (Peringatan Kuota Kritis <= 2 Sesi atau Habis)
+ */
+export async function notifyLowQuotaAlert(payload: {
+  studentName: string;
+  parentPhone?: string | null;
+  studentEmail?: string | null;
+  packageName: string;
+  quotaTotal: number;
+  quotaUsed: number;
+  quotaRemaining: number;
+}) {
+  try {
+    const settings = await readNotificationSettings();
+    const siteUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const phone = payload.parentPhone || "081200000000";
+    const targetEmail = buildDummyEmail(payload.studentName, payload.studentEmail);
+    const statusLabel = payload.quotaRemaining <= 0 ? "KUOTA HABIS (0 Sesi)" : `HAMPIR HABIS (Sisa ${payload.quotaRemaining} Sesi)`;
+
+    const variables = {
+      student_name: payload.studentName,
+      course_title: payload.packageName,
+      task_title: `Peringatan Kuota Paket Bimbingan (${payload.quotaUsed}/${payload.quotaTotal} Sesi Terpakai)`,
+      status: statusLabel,
+      score: `Sisa ${payload.quotaRemaining} dari ${payload.quotaTotal} Sesi`,
+      mentor_feedback: `Kuota belajar ananda ${payload.studentName} saat ini tersisa ${payload.quotaRemaining} pertemuan. Silakan melakukan perpanjangan paket melalui Portal Siswa/Orang Tua agar jadwal bimbingan rutin bersama tutor tidak terputus.`,
+      classroom_url: `${siteUrl}/portal`,
+    };
+
+    if (settings.waEnabled_submissionReviewed) {
+      const waText = renderTemplate(settings.template_wa_submissionReviewed, variables);
+      await sendWhatsApp(phone, waText, "LOW_QUOTA_ALERT", `Orang Tua ${payload.studentName}`);
+    }
+
+    if (settings.emailEnabled_submissionReviewed) {
+      const html = renderTemplate(settings.template_email_submissionReviewed, variables);
+      await sendEmail(
+        targetEmail,
+        `[Sahabat Belajar] Pengingat Kuota Bimbingan ${payload.studentName} (${statusLabel})`,
+        html,
+        "LOW_QUOTA_ALERT",
+        `Orang Tua ${payload.studentName}`
+      );
+    }
+  } catch (err) {
+    console.error("notifyLowQuotaAlert error:", err);
+  }
+}
+
+/**
+ * SB-4. Event: PACKAGE_PAYMENT_VERIFIED (Pembayaran Paket Bimbingan Dicatat / Lunas)
+ */
+export async function notifyPackagePaymentVerified(payload: {
+  paymentId: string;
+  studentName: string;
+  parentPhone?: string | null;
+  studentEmail?: string | null;
+  packageName: string;
+  amount: number;
+  method: string;
+  status: string;
+  quotaTotal?: number;
+}) {
+  try {
+    const settings = await readNotificationSettings();
+    const siteUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const phone = payload.parentPhone || "081200000000";
+    const targetEmail = buildDummyEmail(payload.studentName, payload.studentEmail);
+
+    const variables = {
+      student_name: payload.studentName,
+      course_title: `${payload.packageName} (${formatRupiah(payload.amount)})`,
+      invoice_number: payload.paymentId.toUpperCase().slice(0, 14),
+      login_email: targetEmail,
+      login_url: `${siteUrl}/portal`,
+      classroom_url: `${siteUrl}/portal`,
+    };
+
+    if (settings.waEnabled_paymentVerified) {
+      const waText = renderTemplate(settings.template_wa_paymentVerified, variables);
+      await sendWhatsApp(phone, waText, "PAYMENT_VERIFIED", `Orang Tua ${payload.studentName}`);
+    }
+
+    if (settings.emailEnabled_paymentVerified) {
+      const html = renderTemplate(settings.template_email_paymentVerified, variables);
+      await sendEmail(
+        targetEmail,
+        `[Sahabat Belajar] Bukti Pembayaran Paket ${payload.packageName} Diverifikasi (${formatRupiah(payload.amount)})`,
+        html,
+        "PAYMENT_VERIFIED",
+        `Orang Tua ${payload.studentName}`
+      );
+    }
+  } catch (err) {
+    console.error("notifyPackagePaymentVerified error:", err);
   }
 }
 

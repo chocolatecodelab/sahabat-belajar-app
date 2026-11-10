@@ -28,6 +28,7 @@ import {
   sendTestNotificationAction,
   getNotificationLogsAction,
   clearNotificationLogsAction,
+  simulateOperationalTriggerAction,
 } from "@/actions/notifikasi";
 import type {
   NotificationSettingsData,
@@ -68,6 +69,10 @@ export default function NotificationSettingsClient({
   const [testingEmail, setTestingEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string } | null>(null);
 
+  // Simulator Pemicu Operasional (Dummy Number/Email Testing)
+  const [simulatingTrigger, setSimulatingTrigger] = useState<string | null>(null);
+  const [simTriggerMessage, setSimTriggerMessage] = useState<string | null>(null);
+
   // Log preview modal
   const [selectedLog, setSelectedLog] = useState<NotificationLogItem | null>(null);
   const [logFilterChannel, setLogFilterChannel] = useState("ALL");
@@ -99,6 +104,8 @@ export default function NotificationSettingsClient({
     formData.set("emailResendApiKey", settings.emailResendApiKey || "");
     formData.set("emailSenderName", settings.emailSenderName || "");
     formData.set("emailSenderAddress", settings.emailSenderAddress || "");
+    formData.set("testOverridePhone", settings.testOverridePhone || "");
+    formData.set("testOverrideEmail", settings.testOverrideEmail || "");
 
     // Event Toggles
     formData.set("waEnabled_invoiceCreated", String(settings.waEnabled_invoiceCreated));
@@ -194,6 +201,19 @@ export default function NotificationSettingsClient({
     setLogs([]);
   };
 
+  // Simulasikan Pemicu Operasional (Dummy Mode)
+  const handleSimulateTrigger = async (
+    triggerType: "LEAD_REGISTERED" | "SESSION_SCHEDULED" | "LOW_QUOTA_ALERT" | "PAYMENT_VERIFIED"
+  ) => {
+    setSimulatingTrigger(triggerType);
+    setSimTriggerMessage(null);
+    const res = await simulateOperationalTriggerAction(triggerType);
+    setSimulatingTrigger(null);
+    setSimTriggerMessage(res.message || null);
+    await refreshLogs();
+    setActiveTab("logs");
+  };
+
   // Dynamic Variable tags list for active template
   const getAvailableVariables = () => {
     switch (activeTemplateEvent) {
@@ -250,10 +270,10 @@ export default function NotificationSettingsClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-headline-lg flex items-center gap-3" style={{ color: "var(--color-on-surface)" }}>
+          <h1 className="text-xl font-bold font-display text-[#0A2650] flex items-center gap-3">
             <MessageSquare size={26} className="text-[#09408C]" /> Notifikasi & Gateway Omnichannel
           </h1>
-          <p className="text-body-md mt-1 text-gray-600">
+          <p className="text-xs mt-1 text-[#5B6882]">
             Kelola gateway pengiriman pesan otomatis via WhatsApp dan Email Transaksional
           </p>
         </div>
@@ -262,13 +282,12 @@ export default function NotificationSettingsClient({
           type="button"
           onClick={() => handleSaveSettings()}
           disabled={saving}
-          className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-label-lg font-bold text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 cursor-pointer"
-          style={{ background: "var(--color-primary)" }}
+          className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-[#09408C] hover:bg-[#0E3571] text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 cursor-pointer"
         >
           {saving ? (
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
-            <Save size={18} />
+            <Save size={16} />
           )}
           <span>{saving ? "Menyimpan..." : "Simpan Perubahan"}</span>
         </button>
@@ -276,34 +295,34 @@ export default function NotificationSettingsClient({
 
       {/* Global Alerts */}
       {saveSuccess && (
-        <div className="flex items-center gap-2.5 p-4 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm font-semibold shadow-xs animate-fade-in">
-          <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
+        <div className="flex items-center gap-2.5 p-4 rounded-xl bg-[#E3F4EC] text-[#1F6F4A] border border-[#1F6F4A]/20 text-xs font-semibold shadow-xs animate-fade-in">
+          <CheckCircle2 size={18} className="text-[#1F6F4A] shrink-0" />
           <span>Pengaturan gateway dan template notifikasi berhasil disimpan & siap digunakan!</span>
         </div>
       )}
 
       {saveError && (
-        <div className="flex items-center gap-2.5 p-4 rounded-xl bg-red-50 text-red-800 border border-red-200 text-sm font-semibold shadow-xs animate-fade-in">
-          <AlertCircle size={20} className="text-red-600 shrink-0" />
+        <div className="flex items-center gap-2.5 p-4 rounded-xl bg-[#FBE9E5] text-[#B4381F] border border-[#B4381F]/20 text-xs font-semibold shadow-xs animate-fade-in">
+          <AlertCircle size={18} className="text-[#B4381F] shrink-0" />
           <span>{saveError}</span>
         </div>
       )}
 
       {/* Tab Navigation */}
-      <div className="flex flex-wrap items-center gap-2 border-b pb-2" style={{ borderColor: "var(--color-outline-variant)" }}>
+      <div className="flex flex-wrap items-center gap-2 border-b border-[#D5DDEB] pb-2">
         <button
           type="button"
           onClick={() => setActiveTab("whatsapp")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
             activeTab === "whatsapp"
-              ? "bg-[#001847] text-white shadow-xs"
-              : "text-gray-600 hover:text-black hover:bg-gray-100"
+              ? "bg-[#09408C] text-white shadow-xs"
+              : "text-[#5B6882] hover:text-[#1B2A41] hover:bg-[#EAF1FA]"
           }`}
         >
-          <MessageSquare size={16} />
+          <MessageSquare size={15} />
           <span>WhatsApp Gateway</span>
-          <span className={`px-1.5 py-0.5 rounded-full text-3xs font-black uppercase ${
-            settings.whatsappProvider === "SIMULATED" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+            settings.whatsappProvider === "SIMULATED" ? "bg-[#F5B82E]/25 text-[#1B2A41]" : "bg-[#E3F4EC] text-[#1F6F4A]"
           }`}>
             {settings.whatsappProvider}
           </span>
@@ -312,16 +331,16 @@ export default function NotificationSettingsClient({
         <button
           type="button"
           onClick={() => setActiveTab("email")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
             activeTab === "email"
-              ? "bg-[#001847] text-white shadow-xs"
-              : "text-gray-600 hover:text-black hover:bg-gray-100"
+              ? "bg-[#09408C] text-white shadow-xs"
+              : "text-[#5B6882] hover:text-[#1B2A41] hover:bg-[#EAF1FA]"
           }`}
         >
-          <Mail size={16} />
+          <Mail size={15} />
           <span>Email Transaksional</span>
-          <span className={`px-1.5 py-0.5 rounded-full text-3xs font-black uppercase ${
-            settings.emailProvider === "SIMULATED" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+            settings.emailProvider === "SIMULATED" ? "bg-[#F5B82E]/25 text-[#1B2A41]" : "bg-[#EAF1FA] text-[#09408C]"
           }`}>
             {settings.emailProvider}
           </span>
@@ -330,13 +349,13 @@ export default function NotificationSettingsClient({
         <button
           type="button"
           onClick={() => setActiveTab("templates")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
             activeTab === "templates"
-              ? "bg-[#001847] text-white shadow-xs"
-              : "text-gray-600 hover:text-black hover:bg-gray-100"
+              ? "bg-[#09408C] text-white shadow-xs"
+              : "text-[#5B6882] hover:text-[#1B2A41] hover:bg-[#EAF1FA]"
           }`}
         >
-          <FileCode size={16} />
+          <FileCode size={15} />
           <span>Template Pesan & Pemicu</span>
         </button>
 
@@ -346,10 +365,10 @@ export default function NotificationSettingsClient({
             setActiveTab("logs");
             refreshLogs();
           }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
             activeTab === "logs"
-              ? "bg-[#001847] text-white shadow-xs"
-              : "text-gray-600 hover:text-black hover:bg-gray-100"
+              ? "bg-[#09408C] text-white shadow-xs"
+              : "text-[#5B6882] hover:text-[#1B2A41] hover:bg-[#EAF1FA]"
           }`}
         >
           <History size={16} />
@@ -358,6 +377,111 @@ export default function NotificationSettingsClient({
             {logs.length}
           </span>
         </button>
+      </div>
+
+      {/* ==========================================
+          PANEL SIMULASI & OVERRIDE DATA DUMMY
+      ========================================== */}
+      <div className="bg-[#EAF1FA] rounded-2xl p-5 border border-[#9AC1E2] space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#09408C] text-white text-[10px] font-bold uppercase tracking-wider mb-1.5">
+              <Zap size={11} />
+              <span>Sandbox & Dummy Contact Mode Aktif</span>
+            </div>
+            <h2 className="text-sm sm:text-base font-bold text-[#09408C] font-display">
+              Simulasi Pemicu Otomatis & Pengalihan Kontak Dummy
+            </h2>
+            <p className="text-xs text-[#1B2A41]/80 mt-0.5">
+              Karena nomor WhatsApp dan email siswa/tutor saat ini masih menggunakan data dummy, seluruh notifikasi otomatis tercatat aman di <strong>Riwayat Log Notifikasi</strong> (dan dapat dibuka via tombol <em>Buka WA Web</em>) tanpa mengirim pesan ke nomor asing. Anda juga dapat mengisi nomor/email pengujian di bawah jika ingin mengalihkan seluruh notifikasi dummy ke kontak Anda sendiri.
+            </p>
+          </div>
+        </div>
+
+        {/* Optional Override Inputs */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white p-4 rounded-xl border border-[#D5DDEB]">
+          <div>
+            <label htmlFor="override-test-phone" className="block text-xs font-bold text-[#1B2A41] mb-1">
+              Nomor WA Redirect Pengujian (Opsional — Kosongkan untuk Simulasi Murni)
+            </label>
+            <input
+              id="override-test-phone"
+              type="tel"
+              value={settings.testOverridePhone || ""}
+              onChange={(e) => setSettings({ ...settings, testOverridePhone: e.target.value })}
+              placeholder="Contoh: 0812xxxx (Semua WA siswa dummy akan dialihkan ke nomor ini)"
+              className="w-full px-3.5 py-2 rounded-xl border border-[#D5DDEB] text-xs focus-ring bg-[#F4F7FB] focus:bg-white"
+            />
+          </div>
+          <div>
+            <label htmlFor="override-test-email" className="block text-xs font-bold text-[#1B2A41] mb-1">
+              Email Redirect Pengujian (Opsional — Kosongkan untuk Simulasi Murni)
+            </label>
+            <input
+              id="override-test-email"
+              type="email"
+              value={settings.testOverrideEmail || ""}
+              onChange={(e) => setSettings({ ...settings, testOverrideEmail: e.target.value })}
+              placeholder="Contoh: nama@email.com (Semua Email siswa dummy dialihkan ke sini)"
+              className="w-full px-3.5 py-2 rounded-xl border border-[#D5DDEB] text-xs focus-ring bg-[#F4F7FB] focus:bg-white"
+            />
+          </div>
+        </div>
+
+        {/* 1-Click Trigger Simulator Buttons */}
+        <div className="space-y-2">
+          <div className="text-xs font-bold text-[#09408C]">
+            Uji Coba 1-Klik Pemicu Otomatis (Langsung Mencatat WA & Email ke Riwayat Log):
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            <button
+              type="button"
+              disabled={simulatingTrigger !== null}
+              onClick={() => handleSimulateTrigger("LEAD_REGISTERED")}
+              className="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#09408C] text-[#09408C] hover:text-white border border-[#9AC1E2] text-xs font-bold transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
+            >
+              <span>1. Simulasi Lead Baru</span>
+              <Send size={13} className="shrink-0" />
+            </button>
+
+            <button
+              type="button"
+              disabled={simulatingTrigger !== null}
+              onClick={() => handleSimulateTrigger("SESSION_SCHEDULED")}
+              className="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#09408C] text-[#09408C] hover:text-white border border-[#9AC1E2] text-xs font-bold transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
+            >
+              <span>2. Simulasi Jadwal Sesi</span>
+              <Send size={13} className="shrink-0" />
+            </button>
+
+            <button
+              type="button"
+              disabled={simulatingTrigger !== null}
+              onClick={() => handleSimulateTrigger("LOW_QUOTA_ALERT")}
+              className="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#09408C] text-[#09408C] hover:text-white border border-[#9AC1E2] text-xs font-bold transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
+            >
+              <span>3. Simulasi Kuota ≤ 2 Sesi</span>
+              <Send size={13} className="shrink-0" />
+            </button>
+
+            <button
+              type="button"
+              disabled={simulatingTrigger !== null}
+              onClick={() => handleSimulateTrigger("PAYMENT_VERIFIED")}
+              className="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#09408C] text-[#09408C] hover:text-white border border-[#9AC1E2] text-xs font-bold transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
+            >
+              <span>4. Simulasi Bayar Lunas</span>
+              <Send size={13} className="shrink-0" />
+            </button>
+          </div>
+
+          {simTriggerMessage && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-[#E3F4EC] text-[#1F6F4A] border border-[#1F6F4A]/20 text-xs font-semibold">
+              <CheckCircle2 size={15} className="shrink-0" />
+              <span>{simTriggerMessage}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ==========================================
@@ -770,7 +894,7 @@ export default function NotificationSettingsClient({
                     type="email"
                     value={settings.emailSenderAddress}
                     onChange={(e) => setSettings({ ...settings, emailSenderAddress: e.target.value })}
-                    placeholder="no-reply@biasristek.id"
+                    placeholder="halo@sahabatbelajar.id"
                     className="w-full px-4 py-2.5 rounded-xl border text-body-sm focus-ring bg-gray-50 focus:bg-white"
                     style={{ borderColor: "var(--color-outline-variant)" }}
                   />
@@ -854,13 +978,13 @@ export default function NotificationSettingsClient({
               onClick={() => setActiveTemplateEvent("invoiceCreated")}
               className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
                 activeTemplateEvent === "invoiceCreated"
-                  ? "border-[#001847] bg-blue-50/60 shadow-xs"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  ? "border-[#09408C] bg-[#EAF1FA] shadow-xs"
+                  : "border-[#D5DDEB] bg-white hover:border-[#9AC1E2]"
               }`}
             >
-              <span className="block text-2xs font-bold text-blue-900 uppercase">Event 1</span>
-              <span className="font-bold text-sm text-gray-900 block mt-0.5">Pendaftaran Baru (Invoice)</span>
-              <span className="text-3xs text-gray-500 block mt-1">Tagihan & Rekening Pembayaran</span>
+              <span className="block text-2xs font-bold text-[#09408C] uppercase">Event 1</span>
+              <span className="font-bold text-sm text-[#1B2A41] block mt-0.5">Pendaftaran & Lead Baru</span>
+              <span className="text-3xs text-[#5B6882] block mt-1">Sambutan Calon Siswa & Tagihan</span>
             </button>
 
             <button
@@ -868,13 +992,13 @@ export default function NotificationSettingsClient({
               onClick={() => setActiveTemplateEvent("paymentVerified")}
               className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
                 activeTemplateEvent === "paymentVerified"
-                  ? "border-[#001847] bg-blue-50/60 shadow-xs"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  ? "border-[#09408C] bg-[#EAF1FA] shadow-xs"
+                  : "border-[#D5DDEB] bg-white hover:border-[#9AC1E2]"
               }`}
             >
-              <span className="block text-2xs font-bold text-emerald-700 uppercase">Event 2</span>
-              <span className="font-bold text-sm text-gray-900 block mt-0.5">Pembayaran Diverifikasi</span>
-              <span className="text-3xs text-gray-500 block mt-1">Aktivasi Akun & Ruang Belajar</span>
+              <span className="block text-2xs font-bold text-[#1F6F4A] uppercase">Event 2</span>
+              <span className="font-bold text-sm text-[#1B2A41] block mt-0.5">Pembayaran Paket Lunas</span>
+              <span className="text-3xs text-[#5B6882] block mt-1">Aktivasi Kuota & Portal Siswa</span>
             </button>
 
             <button
@@ -882,13 +1006,13 @@ export default function NotificationSettingsClient({
               onClick={() => setActiveTemplateEvent("submissionReviewed")}
               className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
                 activeTemplateEvent === "submissionReviewed"
-                  ? "border-[#001847] bg-blue-50/60 shadow-xs"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  ? "border-[#09408C] bg-[#EAF1FA] shadow-xs"
+                  : "border-[#D5DDEB] bg-white hover:border-[#9AC1E2]"
               }`}
             >
-              <span className="block text-2xs font-bold text-purple-700 uppercase">Event 3</span>
-              <span className="font-bold text-sm text-gray-900 block mt-0.5">Review Draf Naskah</span>
-              <span className="text-3xs text-gray-500 block mt-1">Skor Nilai & Masukan Mentor</span>
+              <span className="block text-2xs font-bold text-[#295897] uppercase">Event 3</span>
+              <span className="font-bold text-sm text-[#1B2A41] block mt-0.5">Jadwal Sesi & Kuota Kritis</span>
+              <span className="text-3xs text-[#5B6882] block mt-1">Notifikasi Sesi Baru & Sisa ≤ 2 Sesi</span>
             </button>
 
             <button
@@ -896,13 +1020,13 @@ export default function NotificationSettingsClient({
               onClick={() => setActiveTemplateEvent("certificateIssued")}
               className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
                 activeTemplateEvent === "certificateIssued"
-                  ? "border-[#001847] bg-blue-50/60 shadow-xs"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  ? "border-[#09408C] bg-[#EAF1FA] shadow-xs"
+                  : "border-[#D5DDEB] bg-white hover:border-[#9AC1E2]"
               }`}
             >
-              <span className="block text-2xs font-bold text-amber-700 uppercase">Event 4</span>
-              <span className="font-bold text-sm text-gray-900 block mt-0.5">E-Sertifikat 32 JP Terbit</span>
-              <span className="text-3xs text-gray-500 block mt-1">Kelulusan & Validasi Publik</span>
+              <span className="block text-2xs font-bold text-[#B45309] uppercase">Event 4</span>
+              <span className="font-bold text-sm text-[#1B2A41] block mt-0.5">Rapor Evaluasi Belajar</span>
+              <span className="text-3xs text-[#5B6882] block mt-1">Hasil Tryout/CAT & Perkembangan</span>
             </button>
           </div>
 
@@ -1153,14 +1277,28 @@ export default function NotificationSettingsClient({
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedLog(log)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#EAF1FA] hover:bg-[#D5DDEB] text-[#09408C] font-bold text-xs transition-colors cursor-pointer"
-                        >
-                          <Eye size={12} />
-                          <span>Lihat Pesan</span>
-                        </button>
+                        <div className="inline-flex items-center justify-end gap-1.5">
+                          {log.channel === "WHATSAPP" && (
+                            <a
+                              href={`https://wa.me/${log.recipient}?text=${encodeURIComponent(log.message)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#E3F4EC] hover:bg-[#c8ead9] text-[#1F6F4A] font-bold text-xs transition-colors"
+                              title="Buka pesan ini di WhatsApp Web / Aplikasi"
+                            >
+                              <ExternalLink size={12} />
+                              <span>Buka WA</span>
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedLog(log)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#EAF1FA] hover:bg-[#D5DDEB] text-[#09408C] font-bold text-xs transition-colors cursor-pointer"
+                          >
+                            <Eye size={12} />
+                            <span>Lihat Pesan</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

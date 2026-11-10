@@ -526,8 +526,8 @@ export default function ExamSimulationClient({
               </div>
             </div>
 
-            {/* Navigation & Controls */}
-            <div className="mt-8 pt-5 border-t border-[#D5DDEB] flex flex-wrap items-center justify-between gap-3">
+            {/* Navigation & Controls (UX-RESP-001: Sticky bottom on mobile for thumb ergonomics) */}
+            <div className="mt-8 pt-4 pb-2 sm:pb-0 border-t border-[#D5DDEB] flex flex-wrap items-center justify-between gap-3 sticky bottom-0 sm:static bg-white/95 backdrop-blur-xs z-20">
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}

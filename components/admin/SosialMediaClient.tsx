@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Share2, Plus, Edit, Trash2, X, ExternalLink, Code } from "lucide-react";
 import { InstagramIcon, FacebookIcon, TwitterIcon, YoutubeIcon } from "@/components/ui/SocialIcons";
 import { getSocialMedia, createSocialMedia, updateSocialMedia, deleteSocialMedia } from "@/actions/tampilan";
+import { useToast } from "@/components/ui/Toast";
 
 type SocialItem = {
   id: string;
@@ -25,6 +26,7 @@ const PLATFORMS = [
 
 export default function SosialMediaClient({ items: initial }: { items: SocialItem[] }) {
   const router = useRouter();
+  const toast = useToast();
   const [items, setItems] = useState<SocialItem[]>(initial);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<SocialItem | null>(null);
@@ -34,6 +36,14 @@ export default function SosialMediaClient({ items: initial }: { items: SocialIte
   useEffect(() => {
     setItems(initial);
   }, [initial]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowModal(false);
+    };
+    if (showModal) window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showModal]);
 
   // Form State
   const [platform, setPlatform] = useState("instagram");
@@ -92,15 +102,15 @@ export default function SosialMediaClient({ items: initial }: { items: SocialIte
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Hapus akun sosial media ini?")) return;
     const result = await deleteSocialMedia(id);
     if (result.success) {
+      toast.success("Akun Dihapus", "Akun sosial media berhasil dihapus.");
       setItems((prev) => prev.filter((i) => i.id !== id));
       const updated = await getSocialMedia();
       setItems(updated);
       router.refresh();
     } else {
-      alert(result.message || "Gagal menghapus sosial media");
+      toast.error("Gagal Menghapus", result.message || "Gagal menghapus sosial media");
     }
   };
 
@@ -181,10 +191,10 @@ export default function SosialMediaClient({ items: initial }: { items: SocialIte
                   </td>
                   <td className="px-4 py-3.5 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      <button onClick={() => openEdit(item)} className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#EAF1FA] text-[#09408C] transition-colors">
+                      <button onClick={() => openEdit(item)} aria-label={`Edit akun ${item.platform} ${item.username}`} title="Edit Akun" className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#EAF1FA] text-[#09408C] transition-colors">
                         <Edit size={14} />
                       </button>
-                      <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#FBE9E5] hover:border-[#B4381F]/30 text-[#B4381F] transition-colors">
+                      <button onClick={() => handleDelete(item.id)} aria-label={`Hapus akun ${item.platform} ${item.username}`} title="Hapus Akun" className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#FBE9E5] hover:border-[#B4381F]/30 text-[#B4381F] transition-colors">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -198,25 +208,25 @@ export default function SosialMediaClient({ items: initial }: { items: SocialIte
 
       {/* Modal CRUD Sosial Media */}
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4" onClick={() => setShowModal(false)}>
-          <div className="elevation-2 rounded-2xl p-6 w-full max-w-lg mx-4" style={{ background: "var(--color-surface-container-lowest)" }} onClick={(e) => e.stopPropagation()}>
+        <div role="dialog" aria-modal="true" aria-labelledby="modal-sosmed-title" className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A2650]/50 backdrop-blur-xs p-4" onClick={() => setShowModal(false)}>
+          <div className="bg-white border border-[#D5DDEB] rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-headline-md" style={{ color: "var(--color-on-surface)" }}>
+              <h2 id="modal-sosmed-title" className="text-base font-bold font-display text-[#0A2650]">
                 {editing ? "Edit Sosial Media" : "Tambah Akun Sosial Media"}
               </h2>
-              <button onClick={() => setShowModal(false)} className="p-1 rounded-lg hover:bg-black/5"><X size={20} /></button>
+              <button onClick={() => setShowModal(false)} aria-label="Tutup dialog" className="p-1.5 rounded-xl text-[#5B6882] hover:bg-[#F4F7FB]"><X size={18} /></button>
             </div>
 
-            {error && <div className="p-3 rounded-lg mb-4 text-body-sm bg-red-50 text-red-700">{error}</div>}
+            {error && <div className="p-3 rounded-xl mb-4 text-xs bg-[#FBE9E5] text-[#B4381F] font-semibold">{error}</div>}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-label-lg block mb-1.5" style={{ color: "var(--color-on-surface-variant)" }}>Platform</label>
+                <label htmlFor="sosmed-platform" className="text-xs font-semibold text-[#1B2A41] block mb-1.5">Platform</label>
                 <select
+                  id="sosmed-platform"
                   value={platform}
                   onChange={(e) => setPlatform(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border text-body-sm focus-ring"
-                  style={{ borderColor: "var(--color-outline-variant)" }}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] bg-white focus:outline-none focus:border-[#09408C]"
                 >
                   <option value="instagram">Instagram</option>
                   <option value="facebook">Facebook</option>
@@ -226,28 +236,28 @@ export default function SosialMediaClient({ items: initial }: { items: SocialIte
               </div>
 
               <div>
-                <label className="text-label-lg block mb-1.5" style={{ color: "var(--color-on-surface-variant)" }}>Username / Handle</label>
+                <label htmlFor="sosmed-username" className="text-xs font-semibold text-[#1B2A41] block mb-1.5">Username / Handle</label>
                 <input
+                  id="sosmed-username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Contoh: labterpadu_ulm"
+                  placeholder="Contoh: sahabatbelajar.id"
                   required
-                  className="w-full px-4 py-2.5 rounded-lg border text-body-sm focus-ring"
-                  style={{ borderColor: "var(--color-outline-variant)" }}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus:outline-none focus:border-[#09408C]"
                 />
               </div>
 
               <div>
-                <label className="text-label-lg block mb-1.5" style={{ color: "var(--color-on-surface-variant)" }}>URL Profil Lengkap</label>
+                <label htmlFor="sosmed-url" className="text-xs font-semibold text-[#1B2A41] block mb-1.5">URL Profil Lengkap</label>
                 <input
+                  id="sosmed-url"
                   type="url"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://instagram.com/labterpadu_ulm"
+                  placeholder="https://instagram.com/sahabatbelajar.id"
                   required
-                  className="w-full px-4 py-2.5 rounded-lg border text-body-sm focus-ring"
-                  style={{ borderColor: "var(--color-outline-variant)" }}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus:outline-none focus:border-[#09408C]"
                 />
               </div>
 

@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { LeadStatus } from "@prisma/client";
+import { requireStaffOrAdmin } from "@/lib/auth";
+import { notifyLeadRegistered } from "@/lib/notifications";
 
 export type PublicLeadInput = {
   name: string;
@@ -56,7 +58,20 @@ export async function createPublicLead(
 
     if (error) throw error;
 
+    // Trigger otomatis notifikasi WA & Email Transaksional (Mode Simulasi / Gateway)
+    await notifyLeadRegistered({
+      leadId: lead.id,
+      name: input.name.trim(),
+      phone: cleanPhone,
+      email: input.email ? input.email.trim().toLowerCase() : null,
+      programInterest: input.programInterest || null,
+      level: input.level || null,
+      classModel: input.classModel || "PRIVAT",
+      learningMode: input.learningMode || "ONLINE",
+    });
+
     revalidatePath("/dashboard/lead");
+    revalidatePath("/dashboard/pengaturan/notifikasi");
 
     return {
       success: true,
@@ -79,6 +94,7 @@ export async function getLeads(params?: {
   perPage?: number;
 }) {
   try {
+    await requireStaffOrAdmin();
     const page = params?.page || 1;
     const perPage = params?.perPage || 15;
     const from = (page - 1) * perPage;
@@ -125,6 +141,7 @@ export async function updateLeadStatus(
   notes?: string
 ): Promise<ActionResponse> {
   try {
+    await requireStaffOrAdmin();
     const updateData: any = {
       status,
       updatedAt: new Date().toISOString(),
@@ -158,6 +175,7 @@ export async function updateLeadStatus(
 
 export async function deleteLead(id: string): Promise<ActionResponse> {
   try {
+    await requireStaffOrAdmin();
     const { error } = await supabaseAdmin.from("Lead").delete().eq("id", id);
     if (error) throw error;
 

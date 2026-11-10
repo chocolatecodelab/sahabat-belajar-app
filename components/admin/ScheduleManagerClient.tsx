@@ -137,7 +137,7 @@ export default function ScheduleManagerClient({
         setSelectedStudentIds((prev) => prev.filter((s) => s !== id));
       } else {
         if (selectedStudentIds.length >= 5) {
-          toast.warning("Kelas semi-privat maksimal 5 peserta (BR-3).");
+          toast.warning("Kelas semi-privat maksimal 5 peserta.");
           return;
         }
         setSelectedStudentIds((prev) => [...prev, id]);
@@ -207,7 +207,7 @@ export default function ScheduleManagerClient({
     setSessionToComplete(null);
 
     if (res.success) {
-      toast.success(res.message, "Status Terlaksana & Kuota Terpotong (BR-1)");
+      toast.success(res.message, "Status Terlaksana & Kuota Terpotong");
       setSessions((prev) =>
         prev.map((s) => (s.id === session.id ? { ...s, status: "TERLAKSANA" } : s))
       );
@@ -736,12 +736,12 @@ export default function ScheduleManagerClient({
                       </div>
                     </div>
 
-                    {/* Desktop Weekly Schedule Table (Hidden on small mobile) */}
-                    <div className="hidden sm:block overflow-x-auto">
-                      <table className="w-full text-xs text-center border-collapse">
+                    {/* Responsive Weekly Schedule Table (QA-RESP-002: Accessible via horizontal scroll on mobile too) */}
+                    <div className="block overflow-x-auto">
+                      <table className="w-full min-w-[640px] text-xs text-center border-collapse">
                         <thead>
                           <tr className="border-b border-[#D5DDEB] bg-[#F4F7FB]">
-                            <th className="py-2.5 px-3 text-left font-bold text-[#5B6882] text-[11px] w-28">
+                            <th className="py-2.5 px-3 text-left font-bold text-[#5B6882] text-[11px] w-28 sticky left-0 bg-[#F4F7FB] z-10">
                               Slot Waktu
                             </th>
                             {DAYS_OF_WEEK.map((d) => (
@@ -841,7 +841,7 @@ export default function ScheduleManagerClient({
                   <span>Mesin Pencari Tutor Cerdas (Auto-Match Engine)</span>
                 </h3>
                 <p className="text-xs text-[#5B6882]">
-                  Sistem otomatis menganalisis kesesuaian kurikulum/keahlian, slot luang tutor, dan pencegahan bentrok jadwal (BR-2).
+                  Sistem otomatis menganalisis kesesuaian kurikulum/keahlian, slot luang tutor, dan pencegahan bentrok jadwal.
                 </p>
               </div>
 
@@ -1262,7 +1262,7 @@ export default function ScheduleManagerClient({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label htmlFor="create-end-time" className="text-xs font-bold text-[#1B2A41]">
-                      Selesai (BR-5) *
+                      Selesai *
                     </label>
                     <button
                       type="button"

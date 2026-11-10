@@ -93,6 +93,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             "menu.read", "menu.update",
             "settings.read", "settings.update"
           ];
+        } else if (roleName.toLowerCase().includes("staf") && permissions.length === 0) {
+          // BR-7: Staf mendapat akses operasional pendaftaran, siswa, jadwal, paket & pembayaran (tanpa akses honor/tarif tutor)
+          permissions = [
+            "dashboard.read",
+            "lead.read", "lead.manage",
+            "student.read", "student.manage",
+            "tutor.read",
+            "schedule.read", "schedule.manage",
+            "package.read", "package.manage",
+            "payment.read", "payment.manage",
+            "material.read", "exam.read", "document.read",
+          ];
         }
 
         return {
@@ -233,6 +245,39 @@ export async function requireAdminOnly() {
 
   if (!isSuperAdmin && !isAdmin) {
     throw new Error("Forbidden: Akses hanya diizinkan untuk Administrator (BR-7)");
+  }
+  return session;
+}
+
+/**
+ * Require Staff or Admin access for core operational management (Lead, Siswa, Jadwal, Pembayaran)
+ */
+export async function requireStaffOrAdmin() {
+  const session = await requireAuth();
+  const userRole = ((session.user as any).role || "").toLowerCase();
+  const isSuperAdmin = userRole.includes("super");
+  const isAdmin = userRole.includes("admin");
+  const isStaff = userRole.includes("staf") || userRole.includes("staff") || userRole.includes("operasional");
+
+  if (!isSuperAdmin && !isAdmin && !isStaff) {
+    throw new Error("Forbidden: Akses hanya diizinkan untuk Staf Operasional dan Administrator");
+  }
+  return session;
+}
+
+/**
+ * Require Staff, Tutor, or Admin access (e.g. for viewing/updating session attendance & journals)
+ */
+export async function requireOperationalOrTutor() {
+  const session = await requireAuth();
+  const userRole = ((session.user as any).role || "").toLowerCase();
+  const isSuperAdmin = userRole.includes("super");
+  const isAdmin = userRole.includes("admin");
+  const isStaff = userRole.includes("staf") || userRole.includes("staff") || userRole.includes("operasional");
+  const isTutor = userRole.includes("tutor") || userRole.includes("mentor") || userRole.includes("pengajar");
+
+  if (!isSuperAdmin && !isAdmin && !isStaff && !isTutor) {
+    throw new Error("Forbidden: Akses hanya diizinkan untuk Tutor, Staf, dan Administrator");
   }
   return session;
 }

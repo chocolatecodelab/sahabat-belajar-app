@@ -38,6 +38,19 @@
   --color-danger: #b4381f;
   --color-danger-bg: #fbe9e5;
 
+  /* Legacy CMS & Settings Token Mapping to DESIGN.md */
+  --color-outline-variant: #d5ddeb;
+  --color-outline: #5b6882;
+  --color-on-surface: #1b2a41;
+  --color-on-surface-variant: #5b6882;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f4f7fb;
+  --color-secondary-container: #eaf1fa;
+  --color-on-secondary-container: #09408c;
+  --color-error: #b4381f;
+  --color-error-container: #fbe9e5;
+  --color-on-error-container: #b4381f;
+
   /* Background & Foreground */
   --color-background: #f4f7fb;
   --color-foreground: #1b2a41;
@@ -259,4 +272,19 @@ h6,
   color: var(--sb-navy-700);
   margin-top: 1.5em;
   margin-bottom: 0.5em;
+}
+
+/* ============================
+   PRINT COMPATIBILITY (QA-COMP-001)
+   ============================ */
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    background: #ffffff !important;
+  }
 }

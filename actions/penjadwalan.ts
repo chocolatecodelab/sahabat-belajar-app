@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { SessionStatus, AttendanceStatus } from "@prisma/client";
+import { requireStaffOrAdmin, requireOperationalOrTutor } from "@/lib/auth";
+import { notifySessionScheduled, notifyLowQuotaAlert } from "@/lib/notifications";
 
 export type CreateSessionInput = {
   tutorId: string;
@@ -22,6 +24,7 @@ export async function createSession(
   input: CreateSessionInput
 ): Promise<ActionResponse<{ sessionIds: string[] }>> {
   try {
+    await requireStaffOrAdmin();
     const startDate = new Date(input.startAt);
     const endDate = new Date(input.endAt);
 
@@ -42,7 +45,7 @@ export async function createSession(
     if (input.studentIds.length > 5) {
       return {
         success: false,
-        message: "Kelas semi-privat maksimal 5 peserta. Peserta ke-6 ditolak (BR-3).",
+        message: "Kelas semi-privat maksimal 5 peserta. Peserta ke-6 ditolak.",
       };
     }
 
@@ -68,52 +71,45 @@ export async function createSession(
         const tutorName = (tutorConflicts[0] as any).tutor?.name || "Tutor";
         return {
           success: false,
-          message: `Bentrok jadwal! Tutor ${tutorName} sudah memiliki sesi lain pada rentang waktu tersebut (BR-2).`,
+          message: `Bentrok jadwal! Tutor ${tutorName} sudah memiliki sesi lain pada rentang waktu tersebut.`,
         };
       }
 
-      // BR-2: Deteksi Bentrok Jadwal Siswa
-      for (const studentId of input.studentIds) {
-        const { data: studentConflicts } = await supabaseAdmin
-          .from("SessionParticipant")
-          .select("id, student:Student(name), session:Session(startAt, endAt, status)")
-          .eq("studentId", studentId)
-          .limit(10);
+      // BR-2: Deteksi Bentrok Jadwal Siswa (Batch Query Tanpa Limit 10 - QA-FUNC-004 & QA-PERF-001)
+      const { data: studentConflicts } = await supabaseAdmin
+        .from("SessionParticipant")
+        .select("id, studentId, student:Student(name), session:Session!inner(id, startAt, endAt, status)")
+        .in("studentId", input.studentIds)
+        .neq("session.status", "DIBATALKAN")
+        .lt("session.startAt", currentEnd.toISOString())
+        .gt("session.endAt", currentStart.toISOString())
+        .limit(1);
 
-        const hasConflict = (studentConflicts || []).some((sc: any) => {
-          if (!sc.session || sc.session.status === "DIBATALKAN") return false;
-          const sStart = new Date(sc.session.startAt).getTime();
-          const sEnd = new Date(sc.session.endAt).getTime();
-          return sStart < currentEnd.getTime() && sEnd > currentStart.getTime();
-        });
-
-        if (hasConflict) {
-          return {
-            success: false,
-            message: `Bentrok jadwal! Salah satu siswa sudah memiliki sesi lain pada jam tersebut (BR-2).`,
-          };
-        }
+      if (studentConflicts && studentConflicts.length > 0) {
+        const studentName = (studentConflicts[0] as any).student?.name || "Salah satu siswa";
+        return {
+          success: false,
+          message: `Bentrok jadwal! ${studentName} sudah memiliki sesi lain pada jam tersebut.`,
+        };
       }
 
-      // Cari paket aktif untuk masing-masing siswa
-      const participantData = await Promise.all(
-        input.studentIds.map(async (studentId) => {
-          const { data: activePkgs } = await supabaseAdmin
-            .from("StudentPackage")
-            .select("id")
-            .eq("studentId", studentId)
-            .in("status", ["AKTIF", "HAMPIR_HABIS"])
-            .order("createdAt", { ascending: false })
-            .limit(1);
+      // Cari paket aktif untuk masing-masing siswa secara batch (QA-PERF-001)
+      const { data: allActivePkgs } = await supabaseAdmin
+        .from("StudentPackage")
+        .select("id, studentId, createdAt")
+        .in("studentId", input.studentIds)
+        .in("status", ["AKTIF", "HAMPIR_HABIS"])
+        .order("createdAt", { ascending: false });
 
-          return {
-            studentId,
-            studentPackageId: activePkgs?.[0]?.id || null,
-            attendance: "HADIR",
-            quotaDeducted: false,
-          };
-        })
-      );
+      const participantData = input.studentIds.map((studentId) => {
+        const matchedPkg = (allActivePkgs || []).find((pkg: any) => pkg.studentId === studentId);
+        return {
+          studentId,
+          studentPackageId: matchedPkg?.id || null,
+          attendance: "HADIR",
+          quotaDeducted: false,
+        };
+      });
 
       const now = new Date().toISOString();
       const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
@@ -154,7 +150,37 @@ export async function createSession(
       createdSessionIds.push(session.id);
     }
 
+    // Trigger otomatis notifikasi WA & Email jadwal sesi baru ke Siswa/Ortu & Tutor
+    try {
+      const [{ data: tutorInfo }, { data: programInfo }, { data: studentsInfo }] = await Promise.all([
+        supabaseAdmin.from("Tutor").select("name, phone").eq("id", input.tutorId).maybeSingle(),
+        supabaseAdmin.from("Program").select("name").eq("id", input.programId).maybeSingle(),
+        supabaseAdmin.from("Student").select("name, parentPhone").in("id", input.studentIds),
+      ]);
+
+      await notifySessionScheduled({
+        sessionId: createdSessionIds[0] || "sess_new",
+        programName: programInfo?.name || "Program Bimbingan Belajar",
+        classType: input.classType,
+        mode: input.mode,
+        startAt: startDate,
+        endAt: endDate,
+        meetingLink: input.meetingLink || null,
+        address: input.address || null,
+        tutorName: tutorInfo?.name || "Tutor Sahabat Belajar",
+        tutorPhone: tutorInfo?.phone || null,
+        students: (studentsInfo || []).map((s: any) => ({
+          name: s.name,
+          parentPhone: s.parentPhone,
+          email: null,
+        })),
+      });
+    } catch (notifErr) {
+      console.error("createSession notification trigger error:", notifErr);
+    }
+
     revalidatePath("/dashboard/jadwal");
+    revalidatePath("/dashboard/pengaturan/notifikasi");
     revalidatePath("/dashboard");
 
     return {
@@ -182,6 +208,7 @@ export async function getSessions(params?: {
   status?: SessionStatus;
 }) {
   try {
+    await requireOperationalOrTutor();
     let query = supabaseAdmin
       .from("Session")
       .select(`
@@ -195,7 +222,8 @@ export async function getSessions(params?: {
         ),
         journal:SessionJournal(*)
       `)
-      .order("startAt", { ascending: true });
+      .order("startAt", { ascending: true })
+      .limit(250);
 
     if (params?.status) {
       query = query.eq("status", params.status);
@@ -213,7 +241,9 @@ export async function getSessions(params?: {
     const { data: sessions, error } = await query;
     if (error) throw error;
 
-    if (!sessions || sessions.length === 0) {
+    // QA-REGR-001: Hanya kembalikan sesi demo jika tidak ada filter spesifik yang sedang aktif
+    const hasActiveFilter = Boolean(params?.status || params?.tutorId || params?.studentId);
+    if ((!sessions || sessions.length === 0) && !hasActiveFilter) {
       const today14 = new Date(new Date().setHours(14, 0, 0, 0)).toISOString();
       const today1530 = new Date(new Date().setHours(15, 30, 0, 0)).toISOString();
       const today16 = new Date(new Date().setHours(16, 0, 0, 0)).toISOString();
@@ -288,6 +318,7 @@ export async function updateSessionStatus(
   cancelReason?: string
 ): Promise<ActionResponse> {
   try {
+    await requireOperationalOrTutor();
     const { data: session, error: sessErr } = await supabaseAdmin
       .from("Session")
       .select("*, participants:SessionParticipant(*)")
@@ -345,6 +376,27 @@ export async function updateSessionStatus(
                 quotaDeducted: true,
               })
               .eq("id", p.id);
+
+            // Trigger otomatis peringatan kuota kritis jika sisa kuota <= 2 sesi atau habis
+            const quotaRemaining = Math.max(0, currentPkg.quotaTotal - newQuotaUsed);
+            if (quotaRemaining <= 2) {
+              try {
+                const [{ data: stInfo }, { data: pkgInfo }] = await Promise.all([
+                  supabaseAdmin.from("Student").select("name, parentPhone").eq("id", p.studentId).maybeSingle(),
+                  supabaseAdmin.from("Package").select("name").eq("id", currentPkg.packageId).maybeSingle(),
+                ]);
+                await notifyLowQuotaAlert({
+                  studentName: stInfo?.name || "Siswa Sahabat Belajar",
+                  parentPhone: stInfo?.parentPhone || null,
+                  packageName: pkgInfo?.name || "Paket Bimbingan Belajar",
+                  quotaTotal: currentPkg.quotaTotal,
+                  quotaUsed: newQuotaUsed,
+                  quotaRemaining,
+                });
+              } catch (lowQuotaErr) {
+                console.error("lowQuotaAlert trigger error:", lowQuotaErr);
+              }
+            }
           }
         }
       }
@@ -412,6 +464,7 @@ export async function saveSessionJournal(
   }
 ): Promise<ActionResponse> {
   try {
+    await requireOperationalOrTutor();
     const now = new Date().toISOString();
     const journalId = 'jnl_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 

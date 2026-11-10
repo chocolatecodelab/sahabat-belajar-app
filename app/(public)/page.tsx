@@ -440,7 +440,7 @@ export default function HomePage() {
             Pilihan Paket Bimbingan Belajar
           </h2>
           <p className="text-xs sm:text-sm text-[#5B6882] mt-1.5">
-            Durasi standar <strong>90 menit per pertemuan</strong>. Kuota berkurang hanya jika sesi terlaksana (BR-1).
+            Durasi standar <strong>90 menit per pertemuan</strong>. Kuota berkurang hanya jika sesi terlaksana.
           </p>
         </div>
 

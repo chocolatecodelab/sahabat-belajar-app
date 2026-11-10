@@ -469,10 +469,25 @@ export async function getStudentPortalData(
       },
     ];
 
-    const siblings: SiblingStudent[] = [
-      { id: "student_01", name: "Ahmad Fauzi", level: "Kelas 12 SMA" },
-      { id: "std_demo_01", name: "Rian Hendro", level: "Alumni / CPNS" },
+    // Query dynamic siblings sharing the same parentPhone (QA-FUNC-005)
+    let siblings: SiblingStudent[] = [
+      { id: student.id, name: student.name, level: student.level },
     ];
+    if (student.parentPhone) {
+      const { data: siblingRows } = await supabaseAdmin
+        .from("Student")
+        .select("id, name, level")
+        .eq("parentPhone", student.parentPhone)
+        .order("createdAt", { ascending: true });
+
+      if (siblingRows && siblingRows.length > 0) {
+        siblings = siblingRows.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          level: s.level,
+        }));
+      }
+    }
 
     return {
       success: true,
@@ -512,20 +527,57 @@ export async function submitStudentPaymentConfirmation(input: {
   notes?: string;
 }): Promise<ActionResponse> {
   try {
-    // Record into Payments table or fallback
-    const id = "pay_conf_" + Date.now();
-    try {
-      await supabaseAdmin.from("Payment").insert([
-        {
-          id,
-          amount: input.amount,
-          method: input.bankDestination,
-          status: "MENUNGGU_VERIFIKASI",
-          notes: `Konfirmasi Mandiri Siswa: ${input.studentName} (${input.packageName}). Pengirim: ${input.senderAccountName}. Catatan: ${input.notes || "-"}`,
-        },
-      ]);
-    } catch (e) {
-      console.warn("Save payment confirmation fallback:", e);
+    if (!input.amount || input.amount <= 0) {
+      return {
+        success: false,
+        message: "Nominal pembayaran harus lebih besar dari Rp 0.",
+      };
+    }
+
+    const now = new Date().toISOString();
+    const id = `pay_conf_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+    // Cari studentPackageId milik siswa di database (atau fallback ke paket terbaru di DB jika akun demo)
+    let targetStudentPackageId: string | null = null;
+    const { data: studentPkg } = await supabaseAdmin
+      .from("StudentPackage")
+      .select("id")
+      .eq("studentId", input.studentId)
+      .order("createdAt", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (studentPkg?.id) {
+      targetStudentPackageId = studentPkg.id;
+    } else {
+      const { data: anyPkg } = await supabaseAdmin
+        .from("StudentPackage")
+        .select("id")
+        .order("createdAt", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      targetStudentPackageId = anyPkg?.id || null;
+    }
+
+    if (targetStudentPackageId) {
+      const { error: insertErr } = await supabaseAdmin.from("Payment").insert({
+        id,
+        studentPackageId: targetStudentPackageId,
+        amount: input.amount,
+        paidAt: now,
+        method: input.bankDestination || "TRANSFER_BANK",
+        status: "BELUM", // QA-FUNC-003: Valid enum PaymentStatus (BELUM | SEBAGIAN | LUNAS)
+        notes: `[MENUNGGU VERIFIKASI] Konfirmasi Mandiri Siswa: ${input.studentName} (${input.packageName}). Pengirim: ${input.senderAccountName}. Catatan: ${input.notes || "-"}`,
+        updatedAt: now,
+      });
+
+      if (insertErr) {
+        console.error("submitStudentPaymentConfirmation DB error:", insertErr);
+        return {
+          success: false,
+          message: "Gagal menyimpan data konfirmasi pembayaran ke server.",
+        };
+      }
     }
 
     revalidatePath("/portal");

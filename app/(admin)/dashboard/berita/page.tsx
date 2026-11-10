@@ -103,7 +103,7 @@ export default async function BeritaPage(props: BeritaPageProps) {
                 <tr key={article.id} className="hover:bg-[#EAF1FA]/50 transition-colors">
                   <td className="px-4 py-3.5">
                     {article.featuredImage ? (
-                      <img src={article.featuredImage} alt="" className="w-16 h-10 rounded-xl object-cover border border-[#D5DDEB]" />
+                      <img src={article.featuredImage} alt={article.title} loading="lazy" decoding="async" className="w-16 h-10 rounded-xl object-cover border border-[#D5DDEB]" />
                     ) : (
                       <div className="w-16 h-10 rounded-xl flex items-center justify-center bg-[#F4F7FB] border border-[#D5DDEB]">
                         <Newspaper size={16} className="text-[#5B6882]" />
@@ -133,7 +133,7 @@ export default async function BeritaPage(props: BeritaPageProps) {
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center justify-end gap-1.5">
-                      <Link href={`/dashboard/berita/${article.id}/edit`} className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#EAF1FA] text-[#09408C] transition-colors">
+                      <Link href={`/dashboard/berita/${article.id}/edit`} aria-label={`Edit artikel ${article.title}`} title="Edit Artikel" className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#EAF1FA] text-[#09408C] transition-colors">
                         <Edit size={14} />
                       </Link>
                       <form action={handleDelete}>
@@ -149,15 +149,14 @@ export default async function BeritaPage(props: BeritaPageProps) {
         </table>
 
         {result.meta.totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t" style={{ borderColor: "var(--color-outline-variant)" }}>
-            <p className="text-body-sm" style={{ color: "var(--color-outline)" }}>
+          <div className="flex items-center justify-between px-5 py-3 border-t border-[#D5DDEB]">
+            <p className="text-xs text-[#5B6882] tabular-nums">
               {(result.meta.page - 1) * result.meta.perPage + 1}-{Math.min(result.meta.page * result.meta.perPage, result.meta.total)} dari {result.meta.total}
             </p>
             <div className="flex gap-1">
               {Array.from({ length: result.meta.totalPages }, (_, i) => (
                 <Link key={i + 1} href={`/dashboard/berita?page=${i + 1}${search ? `&search=${search}` : ""}${status !== "ALL" ? `&status=${status}` : ""}${categoryId ? `&categoryId=${categoryId}` : ""}`}
-                  className={`px-3 py-1.5 rounded-lg text-body-sm transition-colors ${result.meta.page === i + 1 ? "text-white" : "hover:bg-black/5"}`}
-                  style={result.meta.page === i + 1 ? { background: "var(--color-primary)" } : { color: "var(--color-on-surface-variant)" }}>
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold tabular-nums transition-colors ${result.meta.page === i + 1 ? "bg-[#09408C] text-white" : "text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#09408C]"}`}>
                   {i + 1}
                 </Link>
               ))}

@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { PaymentStatus, StudentPackageStatus } from "@prisma/client";
+import { requireStaffOrAdmin } from "@/lib/auth";
+import { notifyPackagePaymentVerified } from "@/lib/notifications";
 
 export async function assignPackageToStudent(input: {
   studentId: string;
@@ -12,6 +14,7 @@ export async function assignPackageToStudent(input: {
   endDate?: Date | string;
 }): Promise<ActionResponse<{ studentPackageId: string }>> {
   try {
+    await requireStaffOrAdmin();
     const { data: pkg, error: pkgErr } = await supabaseAdmin
       .from("Package")
       .select("*")
@@ -74,6 +77,7 @@ export async function recordManualPayment(input: {
   notes?: string;
 }): Promise<ActionResponse<{ paymentId: string }>> {
   try {
+    await requireStaffOrAdmin();
     if (!input.amount || input.amount <= 0) {
       return { success: false, message: "Nominal pembayaran harus lebih besar dari 0." };
     }
@@ -100,8 +104,34 @@ export async function recordManualPayment(input: {
 
     if (error) throw error;
 
+    // Trigger otomatis notifikasi WA & Email saat pembayaran dicatat LUNAS / SEBAGIAN
+    try {
+      const { data: spDetail } = await supabaseAdmin
+        .from("StudentPackage")
+        .select("quotaTotal, student:Student(name, parentPhone), package:Package(name)")
+        .eq("id", input.studentPackageId)
+        .maybeSingle();
+
+      const studentObj: any = Array.isArray(spDetail?.student) ? spDetail?.student[0] : spDetail?.student;
+      const packageObj: any = Array.isArray(spDetail?.package) ? spDetail?.package[0] : spDetail?.package;
+
+      await notifyPackagePaymentVerified({
+        paymentId: payment.id,
+        studentName: studentObj?.name || "Siswa Sahabat Belajar",
+        parentPhone: studentObj?.parentPhone || null,
+        packageName: packageObj?.name || "Paket Bimbingan Belajar",
+        amount: input.amount,
+        method: input.method || "TRANSFER_BANK",
+        status: input.status || "LUNAS",
+        quotaTotal: spDetail?.quotaTotal,
+      });
+    } catch (notifErr) {
+      console.error("recordManualPayment notification error:", notifErr);
+    }
+
     revalidatePath("/dashboard/pembayaran");
     revalidatePath("/dashboard/paket");
+    revalidatePath("/dashboard/pengaturan/notifikasi");
 
     return {
       success: true,
@@ -119,6 +149,7 @@ export async function getStudentPackages(params?: {
   status?: StudentPackageStatus;
 }) {
   try {
+    await requireStaffOrAdmin();
     let query = supabaseAdmin
       .from("StudentPackage")
       .select(`
@@ -127,7 +158,8 @@ export async function getStudentPackages(params?: {
         package:Package(*),
         payments:Payment(*)
       `)
-      .order("createdAt", { ascending: false });
+      .order("createdAt", { ascending: false })
+      .limit(250);
 
     if (params?.studentId) query = query.eq("studentId", params.studentId);
     if (params?.status) query = query.eq("status", params.status);
@@ -146,6 +178,7 @@ export async function getPayments(params?: {
   status?: PaymentStatus;
 }) {
   try {
+    await requireStaffOrAdmin();
     let query = supabaseAdmin
       .from("Payment")
       .select(`
@@ -156,7 +189,8 @@ export async function getPayments(params?: {
           package:Package(id, name, price)
         )
       `)
-      .order("paidAt", { ascending: false });
+      .order("paidAt", { ascending: false })
+      .limit(250);
 
     if (params?.status) query = query.eq("status", params.status);
 
@@ -214,11 +248,13 @@ export async function getPaymentAccounts(activeOnly?: boolean): Promise<PaymentA
 }
 
 export async function upsertPaymentAccount(data: FormData | any): Promise<ActionResponse> {
+  await requireStaffOrAdmin();
   revalidatePath("/dashboard/pengaturan/pembayaran");
   return { success: true, message: "Rekening pembayaran berhasil disimpan." };
 }
 
 export async function deletePaymentAccount(id: string): Promise<ActionResponse> {
+  await requireStaffOrAdmin();
   revalidatePath("/dashboard/pengaturan/pembayaran");
   return { success: true, message: "Rekening pembayaran berhasil dihapus." };
 }

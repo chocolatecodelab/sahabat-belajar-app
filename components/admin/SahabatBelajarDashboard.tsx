@@ -90,7 +90,7 @@ export default function SahabatBelajarDashboard({
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#09408C] text-white hover:bg-[#0E3571] text-xs font-bold transition-colors shadow-xs"
           >
             <Plus size={15} />
-            <span>+ Jadwalkan Sesi</span>
+            <span>Jadwalkan Sesi</span>
           </Link>
           <Link
             href="/dashboard/pembayaran"
@@ -152,7 +152,7 @@ export default function SahabatBelajarDashboard({
             Privat 1-on-1 & Semi-Privat Aktif
           </div>
           <p className="text-[11px] text-[#5B6882] mt-2 pt-2 border-t border-[#D5DDEB]/60">
-            Kapasitas semi-privat maksimal 5 siswa (BR-3)
+            Kapasitas kelas semi-privat maks. 5 siswa
           </p>
         </div>
 
@@ -174,7 +174,7 @@ export default function SahabatBelajarDashboard({
             Total {data.todaySessionsCount * 1.5} jam bimbingan
           </div>
           <p className="text-[11px] text-[#5B6882] mt-2 pt-2 border-t border-[#D5DDEB]/60">
-            Standar durasi 90 menit per sesi (BR-5)
+            Standar durasi 90 menit per sesi
           </p>
         </div>
 
@@ -421,7 +421,7 @@ export default function SahabatBelajarDashboard({
             <div className="flex items-center justify-between">
               <h3 className="font-heading font-bold text-sm text-[#09408C] flex items-center gap-2">
                 <AlertCircle size={16} className="text-[#B45309]" />
-                <span>Peringatan Kuota Siswa (BR-4)</span>
+                <span>Peringatan Kuota Siswa</span>
               </h3>
               <span className="text-[10px] bg-[#FEF7E6] text-[#B45309] font-bold px-2 py-0.5 rounded-full">
                 Sisa ≤ 2 Sesi

@@ -618,7 +618,7 @@ export default function RoleClient({ roles: initialRoles, allPermissions }: Role
                                   </span>
                                   {isSensitiveModule && (
                                     <span className="text-[9px] font-bold uppercase tracking-wider text-[#B45309] bg-[#FEF7E6] px-1.5 py-0.5 rounded-md border border-[#F5B82E]">
-                                      Sensitif (BR-7)
+                                      Data Sensitif
                                     </span>
                                   )}
                                 </h4>

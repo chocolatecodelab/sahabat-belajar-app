@@ -104,10 +104,11 @@ export default function PublicLeadForm() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+          <label htmlFor="lead-name" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
             Nama Lengkap Anda / Siswa *
           </label>
           <input
+            id="lead-name"
             type="text"
             required
             placeholder="Contoh: Nabil Ramadhan"
@@ -118,11 +119,12 @@ export default function PublicLeadForm() {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+          <label htmlFor="lead-phone" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
             Nomor WhatsApp Aktif *
           </label>
           <input
-            type="text"
+            id="lead-phone"
+            type="tel"
             required
             placeholder="Contoh: 08123456789"
             value={phone}
@@ -132,12 +134,29 @@ export default function PublicLeadForm() {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+          <label htmlFor="lead-program" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
             Program Bimbingan yang Diminati
           </label>
           <select
+            id="lead-program"
             value={programInterest}
-            onChange={(e) => setProgramInterest(e.target.value)}
+            onChange={(e) => {
+              const selectedProg = e.target.value;
+              setProgramInterest(selectedProg);
+              // UX-FORM-001: Smart Default Synchronization antara Program & Jenjang
+              if (selectedProg === "K-12 (SD/SMP/SMA)") {
+                setLevel("SMA");
+              } else if (selectedProg === "Persiapan CPNS / BUMN / PPPK") {
+                setLevel("Umum / Fresh Graduate");
+              } else if (
+                selectedProg === "Persiapan S2 / S3 & Beasiswa" ||
+                selectedProg === "Kepenulisan Ilmiah & Skripsi/Tesis"
+              ) {
+                setLevel("Kuliah (S1/S2)");
+              } else if (selectedProg === "TOEFL & IELTS Preparation") {
+                setLevel("Kuliah (S1/S2)");
+              }
+            }}
             className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
           >
             <option value="K-12 (SD/SMP/SMA)">Bimbel K-12 (SD, SMP, SMA)</option>
@@ -149,10 +168,11 @@ export default function PublicLeadForm() {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+          <label htmlFor="lead-level" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
             Jenjang Pendidikan Saat Ini
           </label>
           <select
+            id="lead-level"
             value={level}
             onChange={(e) => setLevel(e.target.value)}
             className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
@@ -166,10 +186,11 @@ export default function PublicLeadForm() {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+          <label htmlFor="lead-class-model" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
             Model Kelas
           </label>
           <select
+            id="lead-class-model"
             value={classModel}
             onChange={(e) => setClassModel(e.target.value)}
             className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
@@ -180,10 +201,11 @@ export default function PublicLeadForm() {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+          <label htmlFor="lead-learning-mode" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
             Metode Pembelajaran
           </label>
           <select
+            id="lead-learning-mode"
             value={learningMode}
             onChange={(e) => setLearningMode(e.target.value)}
             className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
@@ -195,10 +217,11 @@ export default function PublicLeadForm() {
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+        <label htmlFor="lead-notes" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
           Keluhan Belajar / Target yang Ingin Dicapai (Opsional)
         </label>
         <textarea
+          id="lead-notes"
           rows={3}
           placeholder="Misal: Kesulitan memahami rumus fisika dasar, ingin persiapan UTBK / tes SKD CPNS bulan depan..."
           value={notes}
@@ -211,10 +234,10 @@ export default function PublicLeadForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-3.5 px-6 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full py-3.5 px-6 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           <Send size={16} />
-          <span>{isSubmitting ? "Mengirim Pendaftaran..." : "Kirim Formulir Pendaftaran"}</span>
+          <span>{isSubmitting ? "Mengirim Pendaftaran..." : "Daftar & Konsultasi Gratis Sekarang"}</span>
         </button>
         <p className="text-[11px] text-[#5B6882] text-center mt-2">
           Privasi Anda terjamin. Data hanya digunakan untuk kebutuhan koordinasi bimbingan Sahabat Belajar.

@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { StudentStatus } from "@prisma/client";
+import { requireStaffOrAdmin } from "@/lib/auth";
 
 export type StudentInput = {
   name: string;
@@ -24,6 +25,7 @@ export async function getStudents(params?: {
   perPage?: number;
 }) {
   try {
+    await requireStaffOrAdmin();
     const page = params?.page || 1;
     const perPage = params?.perPage || 15;
     const from = (page - 1) * perPage;
@@ -75,6 +77,7 @@ export async function getStudents(params?: {
 
 export async function createStudent(input: StudentInput): Promise<ActionResponse<{ id: string }>> {
   try {
+    await requireStaffOrAdmin();
     if (!input.name || !input.level) {
       return {
         success: false,
@@ -129,6 +132,7 @@ export async function createStudent(input: StudentInput): Promise<ActionResponse
 
 export async function convertLeadToStudent(leadId: string): Promise<ActionResponse<{ id: string }>> {
   try {
+    await requireStaffOrAdmin();
     const { data: lead, error: leadError } = await supabaseAdmin
       .from("Lead")
       .select("*")
@@ -202,6 +206,7 @@ export async function updateStudent(
   input: Partial<StudentInput>
 ): Promise<ActionResponse> {
   try {
+    await requireStaffOrAdmin();
     const updateData: any = { updatedAt: new Date().toISOString() };
     if (input.name) updateData.name = input.name.trim();
     if (input.level) updateData.level = input.level;
@@ -234,6 +239,7 @@ export async function updateStudent(
 
 export async function deleteStudent(id: string): Promise<ActionResponse> {
   try {
+    await requireStaffOrAdmin();
     const { error } = await supabaseAdmin.from("Student").delete().eq("id", id);
     if (error) throw error;
 
@@ -260,25 +266,33 @@ export async function importStudentsFromCsv(
   }>
 ): Promise<ActionResponse<{ importedCount: number }>> {
   try {
-    let importedCount = 0;
+    await requireStaffOrAdmin();
     const now = new Date().toISOString();
-    for (const row of rows) {
-      if (!row.name || !row.level) continue;
-
-      const studentId = 'student_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
-      const { error } = await supabaseAdmin.from("Student").insert({
-        id: studentId,
+    const validRows = rows
+      .filter((row) => row.name && row.level)
+      .map((row, idx) => ({
+        id: `student_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 7)}`,
         name: row.name.trim(),
         level: row.level.trim(),
         school: row.school?.trim() || null,
         parentName: row.parentName?.trim() || null,
         parentPhone: row.parentPhone?.trim() || null,
         parentConsentAt: row.parentPhone ? now : null,
-        status: "AKTIF",
+        status: "AKTIF" as const,
         updatedAt: now,
-      });
-      if (!error) importedCount++;
+      }));
+
+    if (validRows.length === 0) {
+      return {
+        success: false,
+        message: "Tidak ada baris data siswa yang valid untuk diimpor.",
+      };
     }
+
+    const { error } = await supabaseAdmin.from("Student").insert(validRows);
+    if (error) throw error;
+
+    const importedCount = validRows.length;
 
     revalidatePath("/dashboard/siswa");
 

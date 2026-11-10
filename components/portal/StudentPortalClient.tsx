@@ -102,7 +102,10 @@ export default function StudentPortalClient({
   const [selectedMaterialCategory, setSelectedMaterialCategory] =
     useState<ProgramCategory>(isK12 ? "K12" : isCPNS ? "CPNS_BUMN" : isAdvancedProgram ? "S2_BEASISWA" : "ALL");
 
+  const [switchingStudentId, setSwitchingStudentId] = useState<string | null>(null);
+
   useEffect(() => {
+    setSwitchingStudentId(null);
     if (isK12) {
       setSelectedExamCategory("RECOMMENDED_K12");
       setSelectedMaterialCategory("K12");
@@ -177,6 +180,8 @@ export default function StudentPortalClient({
   } = initialData;
 
   const handleSwitchStudent = (id: string) => {
+    if (id === student.id) return;
+    setSwitchingStudentId(id);
     router.push(`/portal?studentId=${id}`);
   };
 
@@ -343,18 +348,20 @@ export default function StudentPortalClient({
               </span>
               {siblings.map((sib) => {
                 const isActive = sib.id === student.id;
+                const isSwitching = switchingStudentId === sib.id;
                 return (
                   <button
                     key={sib.id}
                     onClick={() => handleSwitchStudent(sib.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                    disabled={Boolean(switchingStudentId)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 disabled:opacity-70 ${
                       isActive
                         ? "bg-[#09408C] text-white shadow-2xs"
                         : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#09408C] border border-[#D5DDEB]"
                     }`}
                   >
-                    <GraduationCap size={13} />
-                    <span>{sib.name}</span>
+                    <GraduationCap size={13} className={isSwitching ? "animate-spin" : ""} />
+                    <span>{isSwitching ? `Memuat ${sib.name}...` : sib.name}</span>
                     <span className="text-[10px] opacity-80">({sib.level})</span>
                   </button>
                 );
@@ -457,6 +464,7 @@ export default function StudentPortalClient({
                 onClick={() => {
                   setSelectedExamCategory("RECOMMENDED_K12");
                   setActiveTab("ujian");
+                  document.getElementById("portal-tabs-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
                 className="shrink-0 px-3.5 py-2 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
               >
@@ -486,6 +494,7 @@ export default function StudentPortalClient({
                 onClick={() => {
                   setSelectedExamCategory("RECOMMENDED_CPNS");
                   setActiveTab("ujian");
+                  document.getElementById("portal-tabs-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
                 className="shrink-0 px-3.5 py-2 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
               >
@@ -525,6 +534,7 @@ export default function StudentPortalClient({
               onClick={() => {
                 setSelectedMaterialCategory(isK12 ? "K12" : isCPNS ? "CPNS_BUMN" : "ALL");
                 setActiveTab("materi");
+                document.getElementById("portal-tabs-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
               className="shrink-0 px-3.5 py-2 rounded-xl bg-[#1F6F4A] hover:bg-[#155337] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
             >
@@ -626,63 +636,70 @@ export default function StudentPortalClient({
           </div>
         </div>
 
-        {/* Tab Navigation (5 Tabs) */}
-        <div className="flex items-center gap-2 border-b border-[#D5DDEB] pt-2 overflow-x-auto no-scrollbar">
-          <button
-            onClick={() => setActiveTab("overview")}
-            className={`pb-3 px-3.5 text-sm font-heading font-semibold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "overview"
-                ? "border-[#09408C] text-[#09408C]"
-                : "border-transparent text-[#5B6882] hover:text-[#1B2A41]"
-            }`}
-          >
-            <Calendar size={16} />
-            Jadwal Sesi Mendatang ({upcomingSessions.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("history")}
-            className={`pb-3 px-3.5 text-sm font-heading font-semibold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "history"
-                ? "border-[#09408C] text-[#09408C]"
-                : "border-transparent text-[#5B6882] hover:text-[#1B2A41]"
-            }`}
-          >
-            <CheckCircle2 size={16} />
-            Riwayat Sesi & Catatan Guru ({pastSessions.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("ujian")}
-            className={`pb-3 px-3.5 text-sm font-heading font-semibold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "ujian"
-                ? "border-[#09408C] text-[#09408C]"
-                : "border-transparent text-[#5B6882] hover:text-[#1B2A41]"
-            }`}
-          >
-            <Award size={16} />
-            Ruang Ujian & CAT ({availableExams.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("materi")}
-            className={`pb-3 px-3.5 text-sm font-heading font-semibold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "materi"
-                ? "border-[#09408C] text-[#09408C]"
-                : "border-transparent text-[#5B6882] hover:text-[#1B2A41]"
-            }`}
-          >
-            <BookOpen size={16} />
-            Bank Modul & Materi ({materials.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("tagihan")}
-            className={`pb-3 px-3.5 text-sm font-heading font-semibold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "tagihan"
-                ? "border-[#09408C] text-[#09408C]"
-                : "border-transparent text-[#5B6882] hover:text-[#1B2A41]"
-            }`}
-          >
-            <CreditCard size={16} />
-            Tagihan & Kwitansi ({invoices.length})
-          </button>
+        {/* Sticky Tab Navigation (5 Tabs - UX-IA-001) */}
+        <div
+          id="portal-tabs-anchor"
+          className="sticky top-16 z-30 bg-[#F4F7FB]/95 backdrop-blur-md pt-2 pb-1 -mx-4 px-4 border-b border-[#D5DDEB]"
+        >
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`pb-2.5 px-3.5 text-xs sm:text-sm font-heading font-semibold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "overview"
+                  ? "border-[#09408C] text-[#09408C]"
+                  : "border-transparent text-[#5B6882] hover:text-[#1B2A41]"
+              }`}
+            >
+              <Calendar size={15} />
+              <span>Jadwal Sesi Mendatang ({upcomingSessions.length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("history")}
+              className={`pb-2.5 px-3.5 text-xs sm:text-sm font-heading font-semibold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "history"
+                  ? "border-[#09408C] text-[#09408C]"
+                  : "border-transparent text-[#5B6882] hover:text-[#1B2A41]"
+              }`}
+            >
+              <CheckCircle2 size={15} />
+              <span>Riwayat Sesi & Catatan Tutor ({pastSessions.length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("ujian")}
+              className={`pb-2.5 px-3.5 text-xs sm:text-sm font-heading font-semibold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "ujian"
+                  ? "border-[#09408C] text-[#09408C]"
+                  : "border-transparent text-[#5B6882] hover:text-[#1B2A41]"
+              }`}
+            >
+              <Award size={15} />
+              <span>
+                {isK12 ? "Ruang Tryout & Evaluasi" : "Ruang Ujian & CAT"} ({filteredExams.length})
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab("materi")}
+              className={`pb-2.5 px-3.5 text-xs sm:text-sm font-heading font-semibold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "materi"
+                  ? "border-[#09408C] text-[#09408C]"
+                  : "border-transparent text-[#5B6882] hover:text-[#1B2A41]"
+              }`}
+            >
+              <BookOpen size={15} />
+              <span>Bank Modul & Materi ({materials.length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("tagihan")}
+              className={`pb-2.5 px-3.5 text-xs sm:text-sm font-heading font-semibold transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "tagihan"
+                  ? "border-[#09408C] text-[#09408C]"
+                  : "border-transparent text-[#5B6882] hover:text-[#1B2A41]"
+              }`}
+            >
+              <CreditCard size={15} />
+              <span>Tagihan & Kwitansi ({invoices.length})</span>
+            </button>
+          </div>
         </div>
 
         {/* Tab 1: Jadwal Sesi Mendatang */}
