@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Clock,
   CheckCircle2,
@@ -345,8 +346,15 @@ export default function ExamSimulationClient({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Left: Brand & Exam Title */}
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#09408C] text-white flex items-center justify-center font-bold font-display shrink-0 text-sm shadow-xs">
-              SB
+            <div className="w-9 h-9 rounded-xl bg-white p-0.5 border border-[#D5DDEB] flex items-center justify-center shrink-0 shadow-xs">
+              <Image
+                src="/images/logo-sahabat-belajar.png"
+                alt="Sahabat Belajar"
+                width={36}
+                height={36}
+                className="w-full h-full object-contain"
+                priority
+              />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">

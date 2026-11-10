@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Award,
   CheckCircle2,
@@ -223,13 +224,24 @@ export default function ExamResultClient({
         {/* Print-Only Official Report Header */}
         <div className="hidden print:block border-b-2 border-[#09408C] pb-4 mb-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-[#09408C] font-display">
-                SAHABAT BELAJAR
-              </h1>
-              <p className="text-xs text-[#5B6882]">
-                Comprehensive Academic Solution • Bimbel Privat & Semi-Privat
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white p-0.5 border border-[#D5DDEB] flex items-center justify-center shrink-0">
+                <Image
+                  src="/images/logo-sahabat-belajar.png"
+                  alt="Sahabat Belajar"
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-[#09408C] font-display">
+                  SAHABAT BELAJAR
+                </h1>
+                <p className="text-xs text-[#5B6882]">
+                  Comprehensive Academic Solution • Bimbel Privat & Semi-Privat
+                </p>
+              </div>
             </div>
             <div className="text-right text-xs">
               <div className="font-bold text-[#09408C]">LEMBAR HASIL SIMULASI CAT</div>

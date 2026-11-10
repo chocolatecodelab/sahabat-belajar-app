@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   CreditCard,
   Plus,
@@ -253,9 +254,15 @@ export default function PaymentManagerClient({
             {/* Receipt Printable Card */}
             <div id="kwitansi-print" className="border-2 border-[#09408C] rounded-2xl p-6 space-y-5 bg-white">
               <div className="flex items-center justify-between border-b border-[#D5DDEB] pb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-[#09408C] flex items-center justify-center text-white font-heading font-bold text-lg">
-                    SB
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-white p-0.5 border border-[#D5DDEB] flex items-center justify-center shadow-xs shrink-0">
+                    <Image
+                      src="/images/logo-sahabat-belajar.png"
+                      alt="Sahabat Belajar"
+                      width={44}
+                      height={44}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                   <div>
                     <h3 className="font-heading font-bold text-base text-[#09408C] leading-tight">

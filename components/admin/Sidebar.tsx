@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import NextImage from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -160,8 +161,14 @@ export default function Sidebar({
             className="flex items-center gap-2.5"
           >
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#09408c] font-bold text-base shadow-sm">
-                SB
+              <div className="w-9 h-9 rounded-xl bg-white p-0.5 flex items-center justify-center shadow-sm shrink-0">
+                <NextImage
+                  src="/images/logo-sahabat-belajar.png"
+                  alt="Logo Sahabat Belajar"
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-white tracking-tight leading-tight text-base font-display">Sahabat Belajar</span>
@@ -174,8 +181,14 @@ export default function Sidebar({
             href="/dashboard"
             className="flex items-center justify-center w-full"
           >
-            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#09408c] font-bold text-base shadow-sm">
-              SB
+            <div className="w-9 h-9 rounded-xl bg-white p-0.5 flex items-center justify-center shadow-sm shrink-0">
+              <NextImage
+                src="/images/logo-sahabat-belajar.png"
+                alt="Logo Sahabat Belajar"
+                width={36}
+                height={36}
+                className="w-full h-full object-contain"
+              />
             </div>
           </Link>
         )}

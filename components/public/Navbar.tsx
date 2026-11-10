@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Menu,
   X,
@@ -36,9 +37,16 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-18 lg:h-20 gap-4">
           {/* Logo & Brand Identity */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="w-10 h-10 rounded-xl bg-[#09408C] text-white flex items-center justify-center font-heading font-bold text-lg shadow-xs group-hover:bg-[#0E3571] transition-colors shrink-0">
-              SB
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0 group">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white p-0.5 flex items-center justify-center shadow-xs border border-[#D5DDEB] group-hover:border-[#9AC1E2] transition-colors shrink-0">
+              <Image
+                src="/images/logo-sahabat-belajar.png"
+                alt="Logo Sahabat Belajar"
+                width={44}
+                height={44}
+                className="w-full h-full object-contain"
+                priority
+              />
             </div>
             <div className="flex flex-col min-w-0">
               <span className="font-heading font-bold text-base sm:text-lg text-[#09408C] tracking-tight leading-tight whitespace-nowrap">

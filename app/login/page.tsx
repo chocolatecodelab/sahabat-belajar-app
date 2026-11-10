@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Eye, EyeOff, LogIn, AlertCircle, BookOpen, Info, ArrowLeft } from "lucide-react";
 
 function LoginFormInner() {
@@ -87,8 +88,15 @@ function LoginFormInner() {
             href="/"
             className="inline-flex items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-sm border border-[#D5DDEB] mb-4 transition-transform hover:scale-105"
           >
-            <div className="w-10 h-10 rounded-xl bg-[#09408C] flex items-center justify-center text-white font-heading font-bold text-lg shadow-sm">
-              SB
+            <div className="w-12 h-12 rounded-xl bg-white p-0.5 flex items-center justify-center shrink-0">
+              <Image
+                src="/images/logo-sahabat-belajar.png"
+                alt="Sahabat Belajar"
+                width={48}
+                height={48}
+                className="w-full h-full object-contain"
+                priority
+              />
             </div>
             <div className="text-left">
               <span className="font-heading font-bold text-base text-[#09408C] block leading-tight">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Mail, Phone, MapPin, Heart, Sparkles } from "lucide-react";
 
 export default function Footer() {
@@ -8,9 +9,15 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Brand Col */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-white text-[#09408C] flex items-center justify-center font-bold text-lg shadow-sm">
-                SB
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-white p-1 flex items-center justify-center shadow-sm shrink-0">
+                <Image
+                  src="/images/logo-sahabat-belajar.png"
+                  alt="Logo Sahabat Belajar"
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <span className="font-bold text-lg text-white font-display block">
