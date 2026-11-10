@@ -869,3 +869,340 @@ export async function getExamSessionResult(sessionId: string): Promise<StudentEx
     return SAMPLE_SESSIONS[sessionId] || null;
   }
 }
+
+export async function toggleExamStatus(id: string): Promise<ActionResponse<{ isActive: boolean }>> {
+  try {
+    const session = await requireAuth();
+    const userRole = (session?.user as any)?.role;
+    const userPermissions = (session?.user as any)?.permissions || [];
+    const isAllowed =
+      userRole === "Admin" ||
+      userRole === "Super Admin" ||
+      userRole === "Staf" ||
+      userPermissions.includes("exam.update") ||
+      userPermissions.includes("exam.manage");
+
+    if (!isAllowed) {
+      return { success: false, message: "Akses ditolak: Anda tidak memiliki izin mengubah status paket ujian." };
+    }
+
+    // Get current state
+    const { data: currentExam } = await supabaseAdmin
+      .from("Exam")
+      .select("isActive")
+      .eq("id", id)
+      .maybeSingle();
+
+    let newStatus = true;
+    if (currentExam) {
+      newStatus = !currentExam.isActive;
+    } else {
+      const fallback = SAMPLE_EXAMS.find((e) => e.id === id);
+      if (fallback) {
+        newStatus = !fallback.isActive;
+      }
+    }
+
+    const { error } = await supabaseAdmin
+      .from("Exam")
+      .update({ isActive: newStatus, updatedAt: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) {
+      console.warn("Supabase toggleExamStatus warning:", error.message);
+    }
+
+    const idx = SAMPLE_EXAMS.findIndex((e) => e.id === id);
+    if (idx !== -1) {
+      SAMPLE_EXAMS[idx].isActive = newStatus;
+    }
+
+    revalidatePath("/dashboard/ujian");
+    revalidatePath("/portal");
+    return {
+      success: true,
+      message: `Status paket ujian berhasil diubah menjadi ${newStatus ? "Aktif" : "Draf"}.`,
+      data: { isActive: newStatus },
+    };
+  } catch (error: any) {
+    return { success: false, message: error.message || "Gagal mengubah status ujian" };
+  }
+}
+
+export async function duplicateExam(id: string): Promise<ActionResponse<{ id: string }>> {
+  try {
+    const session = await requireAuth();
+    const userRole = (session?.user as any)?.role;
+    const userPermissions = (session?.user as any)?.permissions || [];
+    const isAllowed =
+      userRole === "Admin" ||
+      userRole === "Super Admin" ||
+      userRole === "Staf" ||
+      userPermissions.includes("exam.create") ||
+      userPermissions.includes("exam.manage");
+
+    if (!isAllowed) {
+      return { success: false, message: "Akses ditolak: Anda tidak memiliki izin menduplikasi paket ujian." };
+    }
+
+    const sourceExam = await getExamById(id);
+    if (!sourceExam) {
+      return { success: false, message: "Paket ujian sumber tidak ditemukan." };
+    }
+
+    const newId = "exam_" + Date.now();
+    const newTitle = `Salinan - ${sourceExam.title}`.slice(0, 200);
+
+    const { error: insertExamError } = await supabaseAdmin.from("Exam").insert([
+      {
+        id: newId,
+        title: newTitle,
+        description: sourceExam.description || null,
+        category: sourceExam.category,
+        durationMinutes: sourceExam.durationMinutes,
+        passingGrade: sourceExam.passingGrade,
+        totalQuestions: sourceExam.questions?.length || 0,
+        isActive: false, // Default to draft for duplicated exams
+      },
+    ]);
+
+    if (insertExamError) {
+      console.warn("Supabase duplicateExam insert warning:", insertExamError.message);
+    }
+
+    const clonedQuestions: ExamQuestion[] = [];
+    if (sourceExam.questions && sourceExam.questions.length > 0) {
+      const qInserts = sourceExam.questions.map((q, idx) => {
+        const qId = `q_${Date.now()}_${idx + 1}`;
+        const newQ: ExamQuestion = {
+          id: qId,
+          examId: newId,
+          questionNumber: q.questionNumber || idx + 1,
+          section: q.section,
+          questionText: q.questionText,
+          image: q.image,
+          options: q.options,
+          correctKey: q.correctKey,
+          points: q.points,
+          explanation: q.explanation,
+        };
+        clonedQuestions.push(newQ);
+        return newQ;
+      });
+
+      const { error: insertQuestionsError } = await supabaseAdmin
+        .from("ExamQuestion")
+        .insert(qInserts);
+
+      if (insertQuestionsError) {
+        console.warn("Supabase duplicate questions warning:", insertQuestionsError.message);
+      }
+    }
+
+    // In-memory fallback
+    SAMPLE_EXAMS.unshift({
+      id: newId,
+      title: newTitle,
+      description: sourceExam.description || null,
+      category: sourceExam.category,
+      durationMinutes: sourceExam.durationMinutes,
+      passingGrade: sourceExam.passingGrade,
+      totalQuestions: clonedQuestions.length,
+      isActive: false,
+      createdAt: new Date().toISOString(),
+    });
+    SAMPLE_QUESTIONS[newId] = clonedQuestions;
+
+    revalidatePath("/dashboard/ujian");
+    revalidatePath("/portal");
+    return {
+      success: true,
+      message: `Paket ujian berhasil diduplikasi menjadi "${newTitle}" (${clonedQuestions.length} butir soal disalin).`,
+      data: { id: newId },
+    };
+  } catch (error: any) {
+    return { success: false, message: error.message || "Gagal menduplikasi paket ujian" };
+  }
+}
+
+export async function duplicateExamQuestion(
+  id: string,
+  examId: string
+): Promise<ActionResponse<{ id: string }>> {
+  try {
+    const session = await requireAuth();
+    const userRole = (session?.user as any)?.role;
+    const userPermissions = (session?.user as any)?.permissions || [];
+    const isAllowed =
+      userRole === "Admin" ||
+      userRole === "Super Admin" ||
+      userRole === "Staf" ||
+      userRole === "Tutor" ||
+      userPermissions.includes("exam.update") ||
+      userPermissions.includes("exam.manage");
+
+    if (!isAllowed) {
+      return { success: false, message: "Akses ditolak: Anda tidak memiliki izin menduplikasi butir soal." };
+    }
+
+    // Fetch source question
+    let sourceQ: ExamQuestion | null = null;
+    const { data: dbQ } = await supabaseAdmin
+      .from("ExamQuestion")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (dbQ) {
+      sourceQ = dbQ as ExamQuestion;
+    } else if (SAMPLE_QUESTIONS[examId]) {
+      sourceQ = SAMPLE_QUESTIONS[examId].find((q) => q.id === id) || null;
+    }
+
+    if (!sourceQ) {
+      return { success: false, message: "Soal sumber tidak ditemukan." };
+    }
+
+    const { data: countData } = await supabaseAdmin
+      .from("ExamQuestion")
+      .select("id")
+      .eq("examId", examId);
+
+    const questionNumber = (countData?.length || SAMPLE_QUESTIONS[examId]?.length || 0) + 1;
+    const newQId = `q_${Date.now()}`;
+
+    const newQuestionRecord = {
+      id: newQId,
+      examId,
+      questionNumber,
+      section: sourceQ.section,
+      questionText: `${sourceQ.questionText} (Salinan)`,
+      options: sourceQ.options,
+      correctKey: sourceQ.correctKey,
+      points: sourceQ.points,
+      explanation: sourceQ.explanation,
+    };
+
+    const { error } = await supabaseAdmin.from("ExamQuestion").insert([newQuestionRecord]);
+    if (error) {
+      console.warn("Supabase duplicateExamQuestion warning:", error.message);
+    }
+
+    await supabaseAdmin
+      .from("Exam")
+      .update({ totalQuestions: questionNumber })
+      .eq("id", examId);
+
+    if (!SAMPLE_QUESTIONS[examId]) {
+      SAMPLE_QUESTIONS[examId] = [];
+    }
+    SAMPLE_QUESTIONS[examId].push(newQuestionRecord);
+
+    const examIdx = SAMPLE_EXAMS.findIndex((e) => e.id === examId);
+    if (examIdx !== -1) {
+      SAMPLE_EXAMS[examIdx].totalQuestions = questionNumber;
+    }
+
+    revalidatePath(`/dashboard/ujian/${examId}`);
+    return {
+      success: true,
+      message: `Soal berhasil diduplikasi menjadi nomor ${questionNumber}.`,
+      data: { id: newQId },
+    };
+  } catch (error: any) {
+    return { success: false, message: error.message || "Gagal menduplikasi butir soal" };
+  }
+}
+
+export async function bulkImportExamQuestions(
+  examId: string,
+  rawQuestions: Array<{
+    section?: string;
+    questionText: string;
+    options: QuestionOption[];
+    correctKey: string;
+    points?: number;
+    explanation?: string;
+  }>
+): Promise<ActionResponse<{ count: number }>> {
+  try {
+    const session = await requireAuth();
+    const userRole = (session?.user as any)?.role;
+    const userPermissions = (session?.user as any)?.permissions || [];
+    const isAllowed =
+      userRole === "Admin" ||
+      userRole === "Super Admin" ||
+      userRole === "Staf" ||
+      userRole === "Tutor" ||
+      userPermissions.includes("exam.update") ||
+      userPermissions.includes("exam.manage");
+
+    if (!isAllowed) {
+      return { success: false, message: "Akses ditolak: Anda tidak memiliki izin mengimpor butir soal." };
+    }
+
+    if (!Array.isArray(rawQuestions) || rawQuestions.length === 0) {
+      return { success: false, message: "Data soal impor kosong atau tidak valid." };
+    }
+
+    const { data: countData } = await supabaseAdmin
+      .from("ExamQuestion")
+      .select("id")
+      .eq("examId", examId);
+
+    let startNum = (countData?.length || SAMPLE_QUESTIONS[examId]?.length || 0);
+
+    const validInserts: ExamQuestion[] = [];
+    for (let i = 0; i < rawQuestions.length; i++) {
+      const q = rawQuestions[i];
+      if (!q.questionText || !q.questionText.trim()) continue;
+      if (!q.options || q.options.length < 2) continue;
+
+      startNum++;
+      validInserts.push({
+        id: `q_${Date.now()}_${i + 1}`,
+        examId,
+        questionNumber: startNum,
+        section: q.section?.trim() || null,
+        questionText: q.questionText.trim(),
+        options: q.options,
+        correctKey: (q.correctKey || "A").trim().toUpperCase(),
+        points: Math.max(1, Number(q.points) || 5),
+        explanation: q.explanation?.trim() || null,
+      });
+    }
+
+    if (validInserts.length === 0) {
+      return { success: false, message: "Tidak ada soal yang valid untuk diimpor. Pastikan format teks soal dan opsi terisi." };
+    }
+
+    const { error } = await supabaseAdmin.from("ExamQuestion").insert(validInserts);
+    if (error) {
+      console.warn("Supabase bulkImportExamQuestions warning:", error.message);
+    }
+
+    await supabaseAdmin
+      .from("Exam")
+      .update({ totalQuestions: startNum })
+      .eq("id", examId);
+
+    if (!SAMPLE_QUESTIONS[examId]) {
+      SAMPLE_QUESTIONS[examId] = [];
+    }
+    SAMPLE_QUESTIONS[examId].push(...validInserts);
+
+    const examIdx = SAMPLE_EXAMS.findIndex((e) => e.id === examId);
+    if (examIdx !== -1) {
+      SAMPLE_EXAMS[examIdx].totalQuestions = startNum;
+    }
+
+    revalidatePath(`/dashboard/ujian/${examId}`);
+    return {
+      success: true,
+      message: `Berhasil mengimpor ${validInserts.length} butir soal ke dalam paket ujian.`,
+      data: { count: validInserts.length },
+    };
+  } catch (error: any) {
+    return { success: false, message: error.message || "Gagal mengimpor butir soal" };
+  }
+}

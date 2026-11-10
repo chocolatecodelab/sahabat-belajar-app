@@ -16,9 +16,22 @@ import {
   Layers,
   Sparkles,
   Filter,
+  Search,
+  Copy,
+  FileUp,
+  Download,
+  RefreshCw,
+  FileText,
+  Check,
 } from "lucide-react";
 import type { ExamItem, ExamQuestion, QuestionOption } from "@/actions/ujian";
-import { createExamQuestion, updateExamQuestion, deleteExamQuestion } from "@/actions/ujian";
+import {
+  createExamQuestion,
+  updateExamQuestion,
+  deleteExamQuestion,
+  duplicateExamQuestion,
+  bulkImportExamQuestions,
+} from "@/actions/ujian";
 import { useToast } from "@/components/ui/Toast";
 
 export default function ExamDetailClient({
@@ -30,21 +43,33 @@ export default function ExamDetailClient({
   const [questions, setQuestions] = useState<ExamQuestion[]>(
     exam.questions || []
   );
+  const [search, setSearch] = useState("");
+  const [activeSectionFilter, setActiveSectionFilter] = useState("ALL");
+  
+  // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<ExamQuestion | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeSectionFilter, setActiveSectionFilter] = useState("ALL");
+  
+  // Import Batch modal state
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importJsonText, setImportJsonText] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+
+  // Duplicating state
+  const [duplicatingQId, setDuplicatingQId] = useState<string | null>(null);
 
   // Escape key listener to close modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isModalOpen) {
-        setIsModalOpen(false);
+      if (e.key === "Escape") {
+        if (isModalOpen) setIsModalOpen(false);
+        if (isImportModalOpen) setIsImportModalOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isModalOpen]);
+  }, [isModalOpen, isImportModalOpen]);
 
   // Form state
   const [questionText, setQuestionText] = useState("");
@@ -83,10 +108,32 @@ export default function ExamDetailClient({
 
   const uniqueSections = Object.keys(sectionsCount);
 
+  // Filtered Questions by Search and Section
   const filteredQuestions = useMemo(() => {
-    if (activeSectionFilter === "ALL") return questions;
-    return questions.filter((q) => q.section === activeSectionFilter);
-  }, [questions, activeSectionFilter]);
+    return questions.filter((q) => {
+      const matchSection =
+        activeSectionFilter === "ALL" || (q.section || "Umum") === activeSectionFilter;
+      const qLower = search.toLowerCase();
+      const matchSearch =
+        !search ||
+        q.questionText.toLowerCase().includes(qLower) ||
+        (q.explanation && q.explanation.toLowerCase().includes(qLower)) ||
+        q.options.some((opt) => opt.text.toLowerCase().includes(qLower)) ||
+        (q.section && q.section.toLowerCase().includes(qLower));
+      return matchSection && matchSearch;
+    });
+  }, [questions, activeSectionFilter, search]);
+
+  // Total Max Score Possible
+  const maxScorePossible = useMemo(() => {
+    return questions.reduce((acc, q) => {
+      if (q.section?.toUpperCase().includes("TKP")) {
+        const maxOpt = Math.max(...q.options.map((o) => o.points || 0), 5);
+        return acc + maxOpt;
+      }
+      return acc + (q.points || 5);
+    }, 0);
+  }, [questions]);
 
   const openCreateModal = () => {
     setEditingQuestion(null);
@@ -226,6 +273,30 @@ export default function ExamDetailClient({
     }
   };
 
+  // 1-Click Duplicate Question
+  const handleDuplicateQuestion = async (q: ExamQuestion) => {
+    setDuplicatingQId(q.id);
+    const res = await duplicateExamQuestion(q.id, exam.id);
+    setDuplicatingQId(null);
+
+    if (res.success && res.data) {
+      const nextNumber = questions.length + 1;
+      const duplicatedQ: ExamQuestion = {
+        ...q,
+        id: res.data.id,
+        questionNumber: nextNumber,
+        questionText: `${q.questionText} (Salinan)`,
+      };
+      setQuestions([...questions, duplicatedQ]);
+      toast.success(
+        "Soal Diduplikasi",
+        `Soal berhasil diduplikasi menjadi butir soal nomor ${nextNumber}.`
+      );
+    } else {
+      toast.error("Gagal Menduplikasi", res.message);
+    }
+  };
+
   const handleDeleteQuestion = async (qId: string, qNum: number) => {
     if (!confirm(`Hapus butir soal nomor ${qNum}?`)) return;
 
@@ -238,6 +309,63 @@ export default function ExamDetailClient({
     }
   };
 
+  // Handle Bulk Import
+  const handleBulkImport = async () => {
+    if (!importJsonText.trim()) {
+      toast.warning("JSON Kosong", "Harap tempel data JSON butir soal terlebih dahulu.");
+      return;
+    }
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(importJsonText);
+    } catch (err: any) {
+      toast.error("Format JSON Tidak Valid", "Pastikan format JSON sudah sesuai sintaks array.");
+      return;
+    }
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      toast.warning("Data Kosong", "JSON harus berupa array daftar soal.");
+      return;
+    }
+
+    setIsImporting(true);
+    const res = await bulkImportExamQuestions(exam.id, parsed);
+    setIsImporting(false);
+
+    if (res.success) {
+      toast.success("Impor Berhasil", res.message);
+      setIsImportModalOpen(false);
+      setImportJsonText("");
+      // Refresh page to load freshly added questions
+      window.location.reload();
+    } else {
+      toast.error("Gagal Impor Soal", res.message);
+    }
+  };
+
+  // Sample JSON Template for Import
+  const sampleImportJson = JSON.stringify(
+    [
+      {
+        section: "TWK (Nasionalisme)",
+        questionText: "Contoh teks pertanyaan nomor 1...",
+        options: [
+          { key: "A", text: "Opsi jawaban A" },
+          { key: "B", text: "Opsi jawaban B" },
+          { key: "C", text: "Opsi jawaban C" },
+          { key: "D", text: "Opsi jawaban D" },
+          { key: "E", text: "Opsi jawaban E" },
+        ],
+        correctKey: "A",
+        points: 5,
+        explanation: "Pembahasan konsep dasar mengapa A benar...",
+      },
+    ],
+    null,
+    2
+  );
+
   return (
     <div className="space-y-6">
       {/* Back Button & Header */}
@@ -248,35 +376,54 @@ export default function ExamDetailClient({
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5B6882] hover:text-[#09408C] mb-2 transition-colors"
           >
             <ArrowLeft size={14} />
-            <span>Kembali ke Paket Ujian</span>
+            <span>Kembali ke Daftar Paket Ujian</span>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-0.5 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]">
               {exam.category.replace("_", " ")}
             </span>
             <span className="text-xs text-[#5B6882]">
               ID: {exam.id}
             </span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                exam.isActive
+                  ? "bg-[#E3F4EC] text-[#1F6F4A]"
+                  : "bg-[#F4F7FB] text-[#5B6882] border border-[#D5DDEB]"
+              }`}
+            >
+              {exam.isActive ? "Status: Aktif" : "Status: Draf"}
+            </span>
           </div>
 
           <h1 className="text-2xl font-bold text-[#09408C] font-display mt-1">
             {exam.title}
           </h1>
-          <p className="text-xs sm:text-sm text-[#5B6882] mt-1 max-w-3xl">
-            {exam.description || "Bank soal dan simulasi ujian CAT digital Sahabat Belajar."}
+          <p className="text-xs sm:text-sm text-[#5B6882] mt-1 max-w-3xl leading-relaxed">
+            {exam.description || "Bank kisi-kisi soal dan simulasi ujian CAT digital Sahabat Belajar."}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <Link
             href={`/portal/ujian/${exam.id}`}
             target="_blank"
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#D5DDEB] text-[#09408C] text-xs font-semibold hover:bg-[#EAF1FA] transition-colors"
+            title="Uji coba tampilan ujian CAT di sisi siswa"
           >
             <ExternalLink size={14} />
-            <span>Uji Coba CAT</span>
+            <span>Simulasi Siswa</span>
           </Link>
+
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#09408C] text-[#09408C] text-xs font-semibold hover:bg-[#EAF1FA] transition-colors"
+            title="Impor batch soal via format JSON"
+          >
+            <FileUp size={14} />
+            <span>Impor Batch</span>
+          </button>
 
           <button
             onClick={openCreateModal}
@@ -288,12 +435,12 @@ export default function ExamDetailClient({
         </div>
       </div>
 
-      {/* Overview Cards */}
+      {/* Overview Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-white p-4 rounded-2xl border border-[#D5DDEB] shadow-2xs">
           <div className="text-[11px] text-[#5B6882] font-medium flex items-center gap-1">
             <Clock size={13} className="text-[#09408C]" />
-            <span>Durasi Ujian</span>
+            <span>Durasi Timer</span>
           </div>
           <div className="text-xl font-bold text-[#09408C] font-display mt-1">
             {exam.durationMinutes} Menit
@@ -306,14 +453,14 @@ export default function ExamDetailClient({
             <span>Passing Grade</span>
           </div>
           <div className="text-xl font-bold text-[#1F6F4A] font-display mt-1">
-            {exam.passingGrade}
+            {exam.passingGrade} Poin
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-[#D5DDEB] shadow-2xs">
           <div className="text-[11px] text-[#5B6882] font-medium flex items-center gap-1">
             <BookOpen size={13} className="text-[#295897]" />
-            <span>Jumlah Soal</span>
+            <span>Jumlah Butir Soal</span>
           </div>
           <div className="text-xl font-bold text-[#1B2A41] font-display mt-1">
             {questions.length} Butir
@@ -323,74 +470,108 @@ export default function ExamDetailClient({
         <div className="bg-white p-4 rounded-2xl border border-[#D5DDEB] shadow-2xs">
           <div className="text-[11px] text-[#5B6882] font-medium flex items-center gap-1">
             <Layers size={13} className="text-[#0CC0DF]" />
-            <span>Sub-Materi / Sesi</span>
+            <span>Total Skor Maksimal</span>
           </div>
-          <div className="text-xs font-bold text-[#09408C] mt-2 flex flex-wrap gap-1">
-            {Object.keys(sectionsCount).length > 0 ? (
-              Object.entries(sectionsCount).map(([sec, count]) => (
-                <span
-                  key={sec}
-                  className="px-2 py-0.5 rounded-md bg-[#F4F7FB] border border-[#D5DDEB] text-[10px]"
-                >
-                  {sec}: {count}
-                </span>
-              ))
-            ) : (
-              <span className="text-[#5B6882] text-xs">Belum ada soal</span>
-            )}
+          <div className="text-xl font-bold text-[#09408C] font-display mt-1">
+            {maxScorePossible} Poin
           </div>
         </div>
       </div>
 
-      {/* Question Bank List */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h2 className="text-base font-bold text-[#09408C] font-display flex items-center gap-2">
-            <span>Daftar Butir Soal & Kunci Jawaban</span>
-            <span className="px-2 py-0.5 rounded-full bg-[#EAF1FA] text-xs font-bold text-[#09408C]">
-              {filteredQuestions.length} dari {questions.length} Soal
-            </span>
-          </h2>
+      {/* Question Bank Search & Filter Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-[#D5DDEB] shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-2.5 text-[#5B6882]" />
+            <input
+              type="text"
+              placeholder="Cari butir soal berdasarkan kata kunci teks, pilihan opsi, atau materi..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+            />
+          </div>
 
-          {/* Section Filter Pills */}
-          {uniqueSections.length > 1 && (
-            <div className="flex flex-wrap items-center gap-1">
-              <button
-                onClick={() => setActiveSectionFilter("ALL")}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                  activeSectionFilter === "ALL"
-                    ? "bg-[#09408C] text-white"
-                    : "bg-white border border-[#D5DDEB] text-[#5B6882] hover:bg-[#F4F7FB]"
-                }`}
-              >
-                Semua ({questions.length})
-              </button>
-              {uniqueSections.map((sec) => (
-                <button
-                  key={sec}
-                  onClick={() => setActiveSectionFilter(sec)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                    activeSectionFilter === sec
-                      ? "bg-[#09408C] text-white"
-                      : "bg-white border border-[#D5DDEB] text-[#5B6882] hover:bg-[#F4F7FB]"
-                  }`}
-                >
-                  {sec} ({sectionsCount[sec]})
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#5B6882] font-semibold shrink-0">
+              Menampilkan {filteredQuestions.length} dari {questions.length} Soal
+            </span>
+          </div>
         </div>
 
-        {filteredQuestions.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-[#D5DDEB]">
-            <HelpCircle size={40} className="mx-auto text-[#9AC1E2] mb-3" />
-            <h3 className="text-base font-bold text-[#1B2A41]">
-              Belum ada soal pada kategori ini
-            </h3>
-            <p className="text-xs text-[#5B6882] mt-1 max-w-md mx-auto">
-              Mulai masukkan butir soal pilihan ganda A-E beserta kunci jawaban dan pembahasan konsep dasar.
-            </p>
+        {/* Section Filter Pills */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-[#D5DDEB]/60">
+          <button
+            onClick={() => setActiveSectionFilter("ALL")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              activeSectionFilter === "ALL"
+                ? "bg-[#09408C] text-white shadow-xs"
+                : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#09408C]"
+            }`}
+          >
+            <span>Semua Sub-Materi</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                activeSectionFilter === "ALL"
+                  ? "bg-white/20 text-white"
+                  : "bg-[#D5DDEB]/60 text-[#5B6882]"
+              }`}
+            >
+              {questions.length}
+            </span>
+          </button>
+
+          {uniqueSections.map((sec) => {
+            const isSelected = activeSectionFilter === sec;
+            const count = sectionsCount[sec] || 0;
+            return (
+              <button
+                key={sec}
+                onClick={() => setActiveSectionFilter(sec)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  isSelected
+                    ? "bg-[#09408C] text-white shadow-xs"
+                    : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#09408C]"
+                }`}
+              >
+                <span>{sec}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    isSelected
+                      ? "bg-white/20 text-white"
+                      : "bg-[#D5DDEB]/60 text-[#5B6882]"
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Question Cards List */}
+      {filteredQuestions.length === 0 ? (
+        <div className="bg-white rounded-3xl p-12 text-center border border-[#D5DDEB]">
+          <HelpCircle size={40} className="mx-auto text-[#9AC1E2] mb-3" />
+          <h3 className="text-base font-bold text-[#1B2A41]">
+            {search
+              ? `Tidak ditemukan soal yang memuat "${search}"`
+              : "Belum ada butir soal pada kategori ini"}
+          </h3>
+          <p className="text-xs text-[#5B6882] mt-1 max-w-md mx-auto">
+            {search
+              ? "Coba gunakan kata kunci lain atau bersihkan pencarian untuk melihat semua butir soal."
+              : "Mulai masukkan butir soal pilihan ganda A-E beserta kunci jawaban dan pembahasan konsep dasar Sahabat Belajar."}
+          </p>
+          {search ? (
+            <button
+              onClick={() => setSearch("")}
+              className="mt-4 px-4 py-2 rounded-xl bg-[#EAF1FA] text-[#09408C] text-xs font-bold hover:bg-[#9AC1E2]/30 transition-colors"
+            >
+              Reset Pencarian
+            </button>
+          ) : (
             <button
               onClick={openCreateModal}
               className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571]"
@@ -398,107 +579,122 @@ export default function ExamDetailClient({
               <Plus size={16} />
               <span>Tambah Soal Pertama</span>
             </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredQuestions.map((q, idx) => (
-              <div
-                key={q.id || idx}
-                className="bg-white rounded-2xl border border-[#D5DDEB] p-5 shadow-xs hover:border-[#9AC1E2] transition-colors group"
-              >
-                {/* Header Soal */}
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="w-7 h-7 rounded-lg bg-[#09408C] text-white font-bold text-xs flex items-center justify-center shrink-0">
-                      {q.questionNumber || idx + 1}
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredQuestions.map((q, idx) => (
+            <div
+              key={q.id || idx}
+              className="bg-white rounded-2xl border border-[#D5DDEB] p-5 shadow-xs hover:border-[#9AC1E2] transition-colors group"
+            >
+              {/* Header Soal */}
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="w-7 h-7 rounded-lg bg-[#09408C] text-white font-bold text-xs flex items-center justify-center shrink-0">
+                    {q.questionNumber || idx + 1}
+                  </span>
+                  {q.section && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#F4F7FB] border border-[#D5DDEB] text-[11px] font-semibold text-[#09408C]">
+                      {q.section}
                     </span>
-                    {q.section && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#F4F7FB] border border-[#D5DDEB] text-[11px] font-semibold text-[#09408C]">
-                        {q.section}
-                      </span>
-                    )}
-                    <span className="text-[11px] font-semibold text-[#1F6F4A] bg-[#E3F4EC] px-2 py-0.5 rounded-md">
-                      Bobot: {q.points || 5} Poin
-                    </span>
-                    <span className="text-xs font-bold text-[#1F6F4A] flex items-center gap-1 ml-1">
-                      <CheckCircle2 size={13} />
-                      <span>Kunci: {q.correctKey}</span>
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => openEditModal(q)}
-                      className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
-                      title="Edit Butir Soal"
-                    >
-                      <Edit3 size={15} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteQuestion(q.id, q.questionNumber || idx + 1)}
-                      className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
-                      title="Hapus Butir Soal"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
+                  )}
+                  <span className="text-[11px] font-semibold text-[#1F6F4A] bg-[#E3F4EC] px-2 py-0.5 rounded-md">
+                    Bobot: {q.points || 5} Poin
+                  </span>
+                  <span className="text-xs font-bold text-[#1F6F4A] flex items-center gap-1 ml-1">
+                    <CheckCircle2 size={13} />
+                    <span>Kunci: {q.correctKey}</span>
+                  </span>
                 </div>
 
-                {/* Question Text */}
-                <p className="text-xs sm:text-sm text-[#1B2A41] leading-relaxed whitespace-pre-line font-medium mb-4">
-                  {q.questionText}
-                </p>
+                <div className="flex items-center gap-1">
+                  {/* Clone Question Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleDuplicateQuestion(q)}
+                    disabled={duplicatingQId === q.id}
+                    className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                    title="Duplikasi Butir Soal Ini"
+                  >
+                    {duplicatingQId === q.id ? (
+                      <RefreshCw size={15} className="animate-spin text-[#09408C]" />
+                    ) : (
+                      <Copy size={15} />
+                    )}
+                  </button>
 
-                {/* Options List */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-                  {q.options.map((opt) => {
-                    const isCorrect = opt.key === q.correctKey;
-                    return (
-                      <div
-                        key={opt.key}
-                        className={`p-2.5 rounded-xl border text-xs flex items-start gap-2.5 transition-colors ${
+                  <button
+                    onClick={() => openEditModal(q)}
+                    className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                    title="Edit Butir Soal"
+                  >
+                    <Edit3 size={15} />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteQuestion(q.id, q.questionNumber || idx + 1)}
+                    className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
+                    title="Hapus Butir Soal"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Question Text */}
+              <p className="text-xs sm:text-sm text-[#1B2A41] leading-relaxed whitespace-pre-line font-medium mb-4">
+                {q.questionText}
+              </p>
+
+              {/* Options List */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                {q.options.map((opt) => {
+                  const isCorrect = opt.key === q.correctKey;
+                  return (
+                    <div
+                      key={opt.key}
+                      className={`p-2.5 rounded-xl border text-xs flex items-start gap-2.5 transition-colors ${
+                        isCorrect
+                          ? "bg-[#E3F4EC]/60 border-[#1F6F4A] text-[#1F6F4A] font-semibold"
+                          : "bg-[#F4F7FB]/50 border-[#D5DDEB] text-[#1B2A41]"
+                      }`}
+                    >
+                      <span
+                        className={`w-5 h-5 rounded-md text-[11px] font-bold flex items-center justify-center shrink-0 ${
                           isCorrect
-                            ? "bg-[#E3F4EC]/60 border-[#1F6F4A] text-[#1F6F4A] font-semibold"
-                            : "bg-[#F4F7FB]/50 border-[#D5DDEB] text-[#1B2A41]"
+                            ? "bg-[#1F6F4A] text-white"
+                            : "bg-[#D5DDEB] text-[#5B6882]"
                         }`}
                       >
-                        <span
-                          className={`w-5 h-5 rounded-md text-[11px] font-bold flex items-center justify-center shrink-0 ${
-                            isCorrect
-                              ? "bg-[#1F6F4A] text-white"
-                              : "bg-[#D5DDEB] text-[#5B6882]"
-                          }`}
-                        >
-                          {opt.key}
+                        {opt.key}
+                      </span>
+                      <span className="flex-1 leading-snug">{opt.text}</span>
+                      {opt.points !== undefined && (
+                        <span className="text-[10px] text-[#5B6882] bg-white px-1.5 py-0.5 rounded border border-[#D5DDEB]">
+                          {opt.points} pt
                         </span>
-                        <span className="flex-1 leading-snug">{opt.text}</span>
-                        {opt.points !== undefined && (
-                          <span className="text-[10px] text-[#5B6882] bg-white px-1.5 py-0.5 rounded border border-[#D5DDEB]">
-                            {opt.points} pt
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Pembahasan Konseptual */}
-                {q.explanation && (
-                  <div className="bg-[#EAF1FA]/60 rounded-xl p-3 border border-[#9AC1E2]/40 text-xs text-[#09408C]">
-                    <div className="font-bold flex items-center gap-1.5 mb-1 text-[11px] uppercase tracking-wide">
-                      <Sparkles size={13} className="text-[#09408C]" />
-                      <span>Pembahasan Konsep Dasar (Sahabat Belajar):</span>
+                      )}
                     </div>
-                    <p className="leading-relaxed text-[#1B2A41]">
-                      {q.explanation}
-                    </p>
-                  </div>
-                )}
+                  );
+                })}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+
+              {/* Pembahasan Konseptual */}
+              {q.explanation && (
+                <div className="bg-[#EAF1FA]/60 rounded-xl p-3 border border-[#9AC1E2]/40 text-xs text-[#09408C]">
+                  <div className="font-bold flex items-center gap-1.5 mb-1 text-[11px] uppercase tracking-wide">
+                    <Sparkles size={13} className="text-[#09408C]" />
+                    <span>Pembahasan Konsep Dasar (Sahabat Belajar):</span>
+                  </div>
+                  <p className="leading-relaxed text-[#1B2A41]">
+                    {q.explanation}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Modal Tambah / Edit Soal */}
       {isModalOpen && (
@@ -538,6 +734,7 @@ export default function ExamDetailClient({
                     id="q-points-input"
                     type="number"
                     required
+                    min={1}
                     value={points}
                     onChange={(e) => setPoints(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
@@ -563,7 +760,7 @@ export default function ExamDetailClient({
               {/* Pilihan Jawaban */}
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-[#1B2A41]">
-                  Pilihan Jawaban (A s.d E)
+                  Pilihan Jawaban (A s.d E) {isTKP && "(dengan skala poin 1-5)"}
                 </label>
 
                 <div className="flex items-center gap-2">
@@ -745,6 +942,76 @@ export default function ExamDetailClient({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Impor Batch Soal (JSON) */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-xl border border-[#D5DDEB] space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-bold text-[#09408C] font-display flex items-center gap-2">
+                  <FileUp size={20} />
+                  <span>Impor Batch Butir Soal (JSON)</span>
+                </h3>
+                <p className="text-xs text-[#5B6882] mt-0.5">
+                  Tempel data soal dalam format array JSON untuk menambahkan banyak soal sekaligus.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setImportJsonText(sampleImportJson)}
+                className="px-3 py-1.5 rounded-xl bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold hover:bg-[#9AC1E2]/30 transition-colors shrink-0"
+              >
+                Gunakan Contoh Format
+              </button>
+            </div>
+
+            <div>
+              <label htmlFor="import-json-area" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                Data JSON Soal *
+              </label>
+              <textarea
+                id="import-json-area"
+                rows={10}
+                required
+                placeholder={sampleImportJson}
+                value={importJsonText}
+                onChange={(e) => setImportJsonText(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-[#D5DDEB] focus-ring bg-[#F4F7FB]/50"
+              />
+            </div>
+
+            <div className="pt-3 border-t border-[#D5DDEB] flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#5B6882] hover:bg-[#F4F7FB]"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkImport}
+                disabled={isImporting}
+                className="px-5 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isImporting ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" />
+                    <span>Mengimpor...</span>
+                  </>
+                ) : (
+                  <>
+                    <FileUp size={14} />
+                    <span>Mulai Impor Soal</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

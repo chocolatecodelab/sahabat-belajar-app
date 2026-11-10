@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Award,
@@ -16,11 +16,25 @@ import {
   AlertCircle,
   Edit3,
   Trash2,
-  Layers,
   TrendingUp,
+  Copy,
+  Share2,
+  Check,
+  ExternalLink,
+  SlidersHorizontal,
+  ArrowUpDown,
+  RefreshCw,
+  Eye,
+  MessageCircle,
 } from "lucide-react";
 import type { ExamItem } from "@/actions/ujian";
-import { createExam, updateExam, deleteExam } from "@/actions/ujian";
+import {
+  createExam,
+  updateExam,
+  deleteExam,
+  toggleExamStatus,
+  duplicateExam,
+} from "@/actions/ujian";
 import { useToast } from "@/components/ui/Toast";
 
 export default function ExamManagerClient({
@@ -32,9 +46,17 @@ export default function ExamManagerClient({
   const [exams, setExams] = useState<ExamItem[]>(initialExams);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "DRAFT">("ALL");
+  const [sortBy, setSortBy] = useState<
+    "NEWEST" | "GRADE_DESC" | "GRADE_ASC" | "DURATION_DESC" | "DURATION_ASC" | "QUESTIONS_DESC" | "TITLE_ASC"
+  >("NEWEST");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<ExamItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Escape key listener to close modal
   useEffect(() => {
@@ -63,20 +85,56 @@ export default function ExamManagerClient({
     { key: "KEDINASAN", label: "Sekolah Kedinasan" },
   ];
 
+  // Dynamic Category Counts
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: exams.length };
+    categories.forEach((c) => {
+      if (c.key !== "ALL") {
+        counts[c.key] = exams.filter((e) => e.category === c.key).length;
+      }
+    });
+    return counts;
+  }, [exams]);
+
+  const activeCount = useMemo(() => exams.filter((e) => e.isActive).length, [exams]);
+  const draftCount = useMemo(() => exams.filter((e) => !e.isActive).length, [exams]);
+
   // Quick Stats
   const totalQuestionsAll = exams.reduce((acc, e) => acc + (e.totalQuestions || 0), 0);
-  const avgPassingGrade = exams.length > 0
-    ? Math.round(exams.reduce((acc, e) => acc + (e.passingGrade || 0), 0) / exams.length)
-    : 0;
+  const avgPassingGrade =
+    exams.length > 0
+      ? Math.round(exams.reduce((acc, e) => acc + (e.passingGrade || 0), 0) / exams.length)
+      : 0;
 
-  const filteredExams = exams.filter((e) => {
-    const matchCategory =
-      selectedCategory === "ALL" || e.category === selectedCategory;
-    const matchSearch =
-      e.title.toLowerCase().includes(search.toLowerCase()) ||
-      (e.description && e.description.toLowerCase().includes(search.toLowerCase()));
-    return matchCategory && matchSearch;
-  });
+  // Filtered and Sorted Exams
+  const filteredAndSortedExams = useMemo(() => {
+    let list = exams.filter((e) => {
+      const matchCategory = selectedCategory === "ALL" || e.category === selectedCategory;
+      const matchStatus =
+        statusFilter === "ALL" ||
+        (statusFilter === "ACTIVE" && e.isActive) ||
+        (statusFilter === "DRAFT" && !e.isActive);
+      const matchSearch =
+        e.title.toLowerCase().includes(search.toLowerCase()) ||
+        (e.description && e.description.toLowerCase().includes(search.toLowerCase()));
+      return matchCategory && matchStatus && matchSearch;
+    });
+
+    list.sort((a, b) => {
+      if (sortBy === "NEWEST") {
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      }
+      if (sortBy === "GRADE_DESC") return (b.passingGrade || 0) - (a.passingGrade || 0);
+      if (sortBy === "GRADE_ASC") return (a.passingGrade || 0) - (b.passingGrade || 0);
+      if (sortBy === "DURATION_DESC") return (b.durationMinutes || 0) - (a.durationMinutes || 0);
+      if (sortBy === "DURATION_ASC") return (a.durationMinutes || 0) - (b.durationMinutes || 0);
+      if (sortBy === "QUESTIONS_DESC") return (b.totalQuestions || 0) - (a.totalQuestions || 0);
+      if (sortBy === "TITLE_ASC") return a.title.localeCompare(b.title);
+      return 0;
+    });
+
+    return list;
+  }, [exams, selectedCategory, statusFilter, search, sortBy]);
 
   const openCreateModal = () => {
     setEditingExam(null);
@@ -165,8 +223,76 @@ export default function ExamManagerClient({
     }
   };
 
+  // 1-Click Status Toggle
+  const handleToggleStatus = async (exam: ExamItem) => {
+    setTogglingId(exam.id);
+    const res = await toggleExamStatus(exam.id);
+    setTogglingId(null);
+
+    if (res.success && res.data) {
+      setExams(
+        exams.map((e) =>
+          e.id === exam.id ? { ...e, isActive: res.data!.isActive } : e
+        )
+      );
+      toast.success(
+        "Status Diubah",
+        `Paket "${exam.title}" sekarang berstatus ${res.data.isActive ? "Aktif (Dapat Dikerjakan Siswa)" : "Draf (Disembunyikan)"}.`
+      );
+    } else {
+      toast.error("Gagal Mengubah Status", res.message);
+    }
+  };
+
+  // Duplicate Exam
+  const handleDuplicate = async (exam: ExamItem) => {
+    setDuplicatingId(exam.id);
+    const res = await duplicateExam(exam.id);
+    setDuplicatingId(null);
+
+    if (res.success && res.data) {
+      const clonedTitle = `Salinan - ${exam.title}`;
+      const newExam: ExamItem = {
+        ...exam,
+        id: res.data.id,
+        title: clonedTitle,
+        isActive: false,
+        createdAt: new Date().toISOString(),
+      };
+      setExams([newExam, ...exams]);
+      toast.success(
+        "Paket Diduplikasi",
+        `Paket baru "${clonedTitle}" berhasil dibuat sebagai Draf.`
+      );
+    } else {
+      toast.error("Gagal Menduplikasi", res.message);
+    }
+  };
+
+  // Copy Link
+  const handleCopyLink = (examId: string, examTitle: string) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const examUrl = `${origin}/portal/ujian/${examId}`;
+    navigator.clipboard.writeText(examUrl);
+    setCopiedId(examId);
+    setTimeout(() => setCopiedId(null), 2500);
+    toast.success("Tautan Disalin", `Tautan ujian "${examTitle}" siap dibagikan ke siswa.`);
+  };
+
+  // Share via WhatsApp
+  const handleShareWA = (exam: ExamItem) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const examUrl = `${origin}/portal/ujian/${exam.id}`;
+    const text = `Halo! Yuk ikuti *${exam.title}* di Sahabat Belajar.\n\n⏱ Durasi: ${exam.durationMinutes} Menit\n🎯 Passing Grade: ${exam.passingGrade}\n📝 Jumlah Soal: ${exam.totalQuestions} Butir\n\nAkses simulasi CAT sekarang di:\n${examUrl}\n\n#BersamaSahabat #SahabatBelajar`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
   const handleDelete = async (id: string, examTitle: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus paket "${examTitle}"? Semua butir soal di dalamnya juga akan terhapus.`)) {
+    if (
+      !confirm(
+        `Apakah Anda yakin ingin menghapus paket "${examTitle}"? Semua butir soal di dalamnya juga akan terhapus.`
+      )
+    ) {
       return;
     }
 
@@ -192,7 +318,7 @@ export default function ExamManagerClient({
             Paket Ujian & Simulasi CAT
           </h1>
           <p className="text-sm text-[#5B6882] mt-0.5">
-            Kelola paket tryout, kisi-kisi soal, durasi waktu ujian, dan passing grade kelulusan.
+            Kelola paket tryout digital, kisi-kisi bank soal, durasi waktu timer, dan ambang batas kelulusan (passing grade).
           </p>
         </div>
 
@@ -205,38 +331,16 @@ export default function ExamManagerClient({
         </button>
       </div>
 
-      {/* Roadmap Phase 2 Notice Banner */}
-      <div className="bg-[#EAF1FA]/80 border border-[#9AC1E2] rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-[#09408C]">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-xl bg-white text-[#09408C] shadow-2xs shrink-0 mt-0.5">
-            <Sparkles size={18} />
-          </div>
-          <div>
-            <div className="font-bold text-sm text-[#09408C]">
-              Pratinjau Interaktif — Roadmap Fase 2 (Simulasi CAT & Tryout Online)
-            </div>
-            <p className="text-[#5B6882] mt-0.5 leading-relaxed">
-              Modul ini menyajikan prototipe mesin tryout komputer (CAT CPNS SKD, UTBK-SNBT, dan TOEFL) sesuai spesifikasi PRD Modul F. Seluruh butir soal, passing grade, timer, dan skoring dapat dicoba secara interaktif.
-            </p>
-          </div>
-        </div>
-        <div className="shrink-0 flex items-center gap-2">
-          <span className="px-3 py-1 rounded-full bg-[#09408C] text-white font-bold text-[11px]">
-            Preview Aktif
-          </span>
-        </div>
-      </div>
-
       {/* Top Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-2xs flex items-center justify-between">
           <div>
             <div className="text-xs text-[#5B6882] font-semibold">Total Paket Ujian</div>
             <div className="text-2xl font-bold text-[#09408C] font-display mt-0.5">
               {exams.length} Paket
             </div>
-            <div className="text-[11px] text-[#1F6F4A] mt-1 font-medium">
-              Semua aktif & dapat disimulasikan
+            <div className="text-[11px] text-[#295897] mt-1 font-medium">
+              {activeCount} Aktif • {draftCount} Draf
             </div>
           </div>
           <div className="w-11 h-11 rounded-xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center">
@@ -273,74 +377,227 @@ export default function ExamManagerClient({
             <TrendingUp size={22} />
           </div>
         </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-2xs flex items-center justify-between">
+          <div>
+            <div className="text-xs text-[#5B6882] font-semibold">Status Simulasi CAT</div>
+            <div className="text-2xl font-bold text-[#09408C] font-display mt-0.5">
+              Siap Uji
+            </div>
+            <div className="text-[11px] text-[#1F6F4A] mt-1 font-medium">
+              Timer & skoring otomatis aktif
+            </div>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center">
+            <Sparkles size={22} />
+          </div>
+        </div>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-[#D5DDEB] shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
-        {/* Search */}
-        <div className="relative w-full md:w-80">
-          <Search size={16} className="absolute left-3 top-2.5 text-[#5B6882]" />
-          <input
-            type="text"
-            placeholder="Cari judul tryout atau simulasi..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white"
-          />
+      {/* Filter, Search & Sort Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-[#D5DDEB] shadow-xs space-y-3">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-2.5 text-[#5B6882]" />
+            <input
+              type="text"
+              placeholder="Cari judul tryout, kategori, atau topik materi..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Status Filter */}
+            <div className="inline-flex rounded-xl bg-[#F4F7FB] p-1 border border-[#D5DDEB] text-xs">
+              <button
+                type="button"
+                onClick={() => setStatusFilter("ALL")}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                  statusFilter === "ALL"
+                    ? "bg-white text-[#09408C] shadow-2xs"
+                    : "text-[#5B6882] hover:text-[#09408C]"
+                }`}
+              >
+                Semua ({exams.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("ACTIVE")}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                  statusFilter === "ACTIVE"
+                    ? "bg-white text-[#1F6F4A] shadow-2xs"
+                    : "text-[#5B6882] hover:text-[#1F6F4A]"
+                }`}
+              >
+                Aktif ({activeCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("DRAFT")}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                  statusFilter === "DRAFT"
+                    ? "bg-white text-[#5B6882] shadow-2xs"
+                    : "text-[#5B6882] hover:text-[#1B2A41]"
+                }`}
+              >
+                Draf ({draftCount})
+              </button>
+            </div>
+
+            {/* Sorting Dropdown */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-[#D5DDEB] bg-white text-xs">
+              <ArrowUpDown size={13} className="text-[#5B6882]" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-transparent text-[#1B2A41] font-medium outline-hidden cursor-pointer"
+              >
+                <option value="NEWEST">Terbaru Dibuat</option>
+                <option value="GRADE_DESC">Passing Grade Tertinggi</option>
+                <option value="GRADE_ASC">Passing Grade Terendah</option>
+                <option value="DURATION_DESC">Durasi Terlama</option>
+                <option value="DURATION_ASC">Durasi Tercepat</option>
+                <option value="QUESTIONS_DESC">Jumlah Soal Terbanyak</option>
+                <option value="TITLE_ASC">Judul A - Z</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        {/* Category Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-          {categories.map((c) => (
-            <button
-              key={c.key}
-              onClick={() => setSelectedCategory(c.key)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                selectedCategory === c.key
-                  ? "bg-[#09408C] text-white shadow-xs font-bold"
-                  : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#09408C]"
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
+        {/* Category Filter Pills with Counter Badges */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-[#D5DDEB]/60">
+          {categories.map((c) => {
+            const count = categoryCounts[c.key] || 0;
+            const isSelected = selectedCategory === c.key;
+            return (
+              <button
+                key={c.key}
+                onClick={() => setSelectedCategory(c.key)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 ${
+                  isSelected
+                    ? "bg-[#09408C] text-white shadow-xs font-bold"
+                    : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#09408C]"
+                }`}
+              >
+                <span>{c.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    isSelected
+                      ? "bg-white/20 text-white"
+                      : "bg-[#D5DDEB]/60 text-[#5B6882]"
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Grid of Exams */}
-      {filteredExams.length === 0 ? (
+      {filteredAndSortedExams.length === 0 ? (
         <div className="bg-white rounded-3xl p-12 text-center border border-[#D5DDEB]">
           <FileQuestion size={40} className="mx-auto text-[#9AC1E2] mb-3" />
           <h3 className="text-base font-bold text-[#1B2A41]">
-            Tidak ada paket ujian
+            Tidak ada paket ujian yang cocok
           </h3>
-          <p className="text-xs text-[#5B6882] mt-1">
-            Belum ada paket ujian untuk kategori ini. Klik tombol di atas untuk membuat paket baru.
+          <p className="text-xs text-[#5B6882] mt-1 max-w-md mx-auto">
+            {search
+              ? `Tidak ditemukan paket ujian dengan kata kunci "${search}". Coba kata kunci lain atau reset filter.`
+              : "Belum ada paket ujian untuk kategori ini. Klik tombol di atas untuk membuat paket baru."}
           </p>
+          {(search || selectedCategory !== "ALL" || statusFilter !== "ALL") && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setSelectedCategory("ALL");
+                setStatusFilter("ALL");
+              }}
+              className="mt-4 px-4 py-2 rounded-xl bg-[#EAF1FA] text-[#09408C] text-xs font-bold hover:bg-[#9AC1E2]/30 transition-colors"
+            >
+              Reset Semua Filter
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredExams.map((exam) => (
+          {filteredAndSortedExams.map((exam) => (
             <div
               key={exam.id}
-              className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs hover:border-[#09408C] hover:shadow-md transition-all flex flex-col justify-between group"
+              className={`bg-white rounded-3xl border p-6 shadow-xs transition-all flex flex-col justify-between group hover:shadow-md ${
+                exam.isActive
+                  ? "border-[#D5DDEB] hover:border-[#09408C]"
+                  : "border-dashed border-[#D5DDEB] opacity-90 hover:border-[#5B6882]"
+              }`}
             >
               <div>
-                {/* Badge Category, Edit & Delete */}
+                {/* Top Badge: Category, Status Toggle & Action Menu */}
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="px-2.5 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]/60">
-                    {exam.category.replace("_", " ")}
-                  </span>
-                  
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="px-2.5 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]/60">
+                      {exam.category.replace("_", " ")}
+                    </span>
+
+                    {/* 1-Click Status Pill */}
                     <button
+                      type="button"
+                      onClick={() => handleToggleStatus(exam)}
+                      disabled={togglingId === exam.id}
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        exam.isActive
+                          ? "bg-[#E3F4EC] text-[#1F6F4A] hover:bg-[#1F6F4A] hover:text-white"
+                          : "bg-[#F4F7FB] text-[#5B6882] border border-[#D5DDEB] hover:bg-[#09408C] hover:text-white"
+                      }`}
+                      title="Klik untuk mengubah status Aktif / Draf"
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          exam.isActive ? "bg-[#1F6F4A]" : "bg-[#5B6882]"
+                        }`}
+                      />
+                      <span>
+                        {togglingId === exam.id
+                          ? "Memproses..."
+                          : exam.isActive
+                          ? "Aktif"
+                          : "Draf"}
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-0.5">
+                    {/* Duplicate button */}
+                    <button
+                      type="button"
+                      onClick={() => handleDuplicate(exam)}
+                      disabled={duplicatingId === exam.id}
+                      className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                      title="Duplikasi Paket Ujian & Soal"
+                    >
+                      {duplicatingId === exam.id ? (
+                        <RefreshCw size={14} className="animate-spin text-[#09408C]" />
+                      ) : (
+                        <Copy size={14} />
+                      )}
+                    </button>
+
+                    {/* Edit button */}
+                    <button
+                      type="button"
                       onClick={() => openEditModal(exam)}
                       className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
                       title="Edit Pengaturan Paket"
                     >
                       <Edit3 size={14} />
                     </button>
+
+                    {/* Delete button */}
                     <button
+                      type="button"
                       onClick={() => handleDelete(exam.id, exam.title)}
                       className="p-1.5 rounded-lg text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
                       title="Hapus Paket Ujian"
@@ -350,11 +607,11 @@ export default function ExamManagerClient({
                   </div>
                 </div>
 
-                <h3 className="font-bold text-base text-[#1B2A41] font-display leading-snug">
+                <h3 className="font-bold text-base text-[#1B2A41] font-display leading-snug group-hover:text-[#09408C] transition-colors">
                   {exam.title}
                 </h3>
                 <p className="text-xs text-[#5B6882] mt-2 line-clamp-2 leading-relaxed">
-                  {exam.description || "Simulasi tryout dengan sistem penilaian otomatis."}
+                  {exam.description || "Simulasi tryout dengan sistem penilaian otomatis dan pembahasan konseptual."}
                 </p>
 
                 {/* Specs */}
@@ -384,23 +641,59 @@ export default function ExamManagerClient({
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-5 pt-4 border-t border-[#D5DDEB] flex items-center justify-between gap-2">
-                <Link
-                  href={`/dashboard/ujian/${exam.id}`}
-                  className="px-3 py-2 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors flex items-center gap-1"
-                >
-                  <BookOpen size={14} />
-                  <span>Kelola Butir Soal</span>
-                </Link>
+              <div className="mt-5 pt-4 border-t border-[#D5DDEB] space-y-2">
+                {/* Secondary Actions: Copy Link & WA */}
+                <div className="flex items-center justify-between gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleCopyLink(exam.id, exam.title)}
+                    className="flex-1 py-1.5 px-2 rounded-lg border border-[#D5DDEB] text-[11px] font-semibold text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors flex items-center justify-center gap-1"
+                    title="Salin tautan ujian untuk dibagikan"
+                  >
+                    {copiedId === exam.id ? (
+                      <>
+                        <Check size={12} className="text-[#1F6F4A]" />
+                        <span className="text-[#1F6F4A]">Tersalin!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Share2 size={12} />
+                        <span>Salin Link</span>
+                      </>
+                    )}
+                  </button>
 
-                <Link
-                  href={`/portal/ujian/${exam.id}`}
-                  target="_blank"
-                  className="px-3 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1 shadow-xs"
-                >
-                  <span>Simulasi CAT</span>
-                  <ArrowRight size={14} />
-                </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleShareWA(exam)}
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-[#E3F4EC] text-[11px] font-semibold text-[#1F6F4A] hover:bg-[#1F6F4A] hover:text-white transition-colors flex items-center justify-center gap-1"
+                    title="Bagikan info simulasi ujian ke WhatsApp siswa"
+                  >
+                    <MessageCircle size={12} />
+                    <span>Kirim WA</span>
+                  </button>
+                </div>
+
+                {/* Primary Actions: Manage Questions & Test CAT */}
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <Link
+                    href={`/dashboard/ujian/${exam.id}`}
+                    className="flex-1 px-3 py-2 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <BookOpen size={14} />
+                    <span>Kelola Soal ({exam.totalQuestions})</span>
+                  </Link>
+
+                  <Link
+                    href={`/portal/ujian/${exam.id}`}
+                    target="_blank"
+                    className="px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-xs"
+                    title="Buka simulasi CAT di tab baru"
+                  >
+                    <span>Coba CAT</span>
+                    <ExternalLink size={13} />
+                  </Link>
+                </div>
               </div>
             </div>
           ))}
@@ -416,7 +709,7 @@ export default function ExamManagerClient({
                 {editingExam ? "Edit Paket Ujian" : "Buat Paket Ujian Baru"}
               </h3>
               <p className="text-xs text-[#5B6882] mt-0.5">
-                Konfigurasi durasi, passing grade, dan kategori bimbingan.
+                Konfigurasi durasi pengerjaan, passing grade kelulusan, dan kategori bimbingan.
               </p>
             </div>
 
@@ -429,7 +722,7 @@ export default function ExamManagerClient({
                   id="exam-title-input"
                   type="text"
                   required
-                  placeholder="Contoh: Simulasi CAT SKD CPNS 2026 - Paket 2"
+                  placeholder="Contoh: Simulasi CAT SKD CPNS 2026 - Paket Prediksi Akurat"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
@@ -463,8 +756,8 @@ export default function ExamManagerClient({
                     id="exam-duration-input"
                     type="number"
                     required
-                    min={10}
-                    max={300}
+                    min={5}
+                    max={360}
                     value={durationMinutes}
                     onChange={(e) => setDurationMinutes(e.target.value)}
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
@@ -480,6 +773,7 @@ export default function ExamManagerClient({
                   id="exam-passing-input"
                   type="number"
                   required
+                  min={0}
                   value={passingGrade}
                   onChange={(e) => setPassingGrade(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
@@ -493,7 +787,7 @@ export default function ExamManagerClient({
                 <textarea
                   id="exam-desc-input"
                   rows={3}
-                  placeholder="Petunjuk pengerjaan dan kisi-kisi topik..."
+                  placeholder="Petunjuk pengerjaan, aturan penilaian, dan kisi-kisi topik..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
@@ -513,7 +807,11 @@ export default function ExamManagerClient({
                   disabled={isSubmitting}
                   className="px-5 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] disabled:opacity-50"
                 >
-                  {isSubmitting ? "Menyimpan..." : editingExam ? "Perbarui Paket Ujian" : "Simpan Paket Ujian"}
+                  {isSubmitting
+                    ? "Menyimpan..."
+                    : editingExam
+                    ? "Perbarui Paket Ujian"
+                    : "Simpan Paket Ujian"}
                 </button>
               </div>
             </form>
