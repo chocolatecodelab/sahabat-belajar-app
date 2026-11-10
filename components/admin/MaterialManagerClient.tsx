@@ -19,6 +19,8 @@ import {
   Eye,
   EyeOff,
   Layers,
+  X,
+  RotateCcw,
 } from "lucide-react";
 import type { LearningMaterial, ProgramCategory } from "@/actions/materi";
 import {
@@ -40,13 +42,14 @@ export default function MaterialManagerClient({
   const [selectedCat, setSelectedCat] = useState("ALL");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<LearningMaterial | null>(null);
+  const [previewMaterial, setPreviewMaterial] = useState<LearningMaterial | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   // Form State (for both create & edit)
   const [title, setTitle] = useState("");
   const [programCategory, setProgramCategory] = useState<
-    "K12" | "CPNS_BUMN" | "UTBK_SNBT" | "TOEFL_IELTS" | "S2_BEASISWA"
+    "K12" | "CPNS_BUMN" | "UTBK_SNBT" | "TOEFL_IELTS" | "S2_BEASISWA" | "PENULISAN_ILMIAH"
   >("CPNS_BUMN");
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
@@ -63,6 +66,7 @@ export default function MaterialManagerClient({
     { key: "TOEFL_IELTS", label: "TOEFL / IELTS" },
     { key: "K12", label: "Bimbel K-12" },
     { key: "S2_BEASISWA", label: "S2 & Beasiswa" },
+    { key: "PENULISAN_ILMIAH", label: "Kepenulisan Ilmiah" },
   ];
 
   const filteredMaterials = materials.filter((mat) => {
@@ -301,7 +305,7 @@ export default function MaterialManagerClient({
               Sinkronisasi Langsung ke Portal Siswa & Orang Tua
             </div>
             <p className="text-[#5B6882] mt-0.5 leading-relaxed">
-              Seluruh modul yang diunggah di sini tersimpan di database cloud Supabase dan otomatis dapat diunduh oleh siswa aktif di Portal Siswa pada tab <strong>Materi Belajar</strong>.
+              Seluruh modul yang diunggah di sini tersimpan di database cloud Supabase dan otomatis dapat diakses oleh siswa aktif pada tab <strong>Materi Belajar</strong>, lengkap dengan pembaca in-app PDF dan pelacakan unduhan.
             </p>
           </div>
         </div>
@@ -347,12 +351,12 @@ export default function MaterialManagerClient({
 
         <div className="bg-white p-5 rounded-2xl border border-[#D5DDEB] shadow-2xs flex items-center justify-between">
           <div>
-            <div className="text-xs text-[#5B6882] font-semibold">Kategori Program</div>
+            <div className="text-xs text-[#5B6882] font-semibold">Kategori Layanan</div>
             <div className="text-2xl font-bold text-[#1F6F4A] font-display mt-0.5">
-              5 Program
+              6 Program
             </div>
             <div className="text-[11px] text-[#5B6882] mt-1">
-              K-12, CPNS, UTBK, TOEFL, S2
+              K-12, CPNS, UTBK, TOEFL, S2, Karya Ilmiah
             </div>
           </div>
           <div className="w-11 h-11 rounded-xl bg-[#E3F4EC] text-[#1F6F4A] flex items-center justify-center">
@@ -388,6 +392,20 @@ export default function MaterialManagerClient({
               {c.label}
             </button>
           ))}
+
+          {(selectedCat !== "ALL" || search) && (
+            <button
+              onClick={() => {
+                setSelectedCat("ALL");
+                setSearch("");
+              }}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#B4381F] hover:bg-[#FBE9E5] transition-colors flex items-center gap-1"
+              title="Reset Filter"
+            >
+              <RotateCcw size={12} />
+              <span>Reset</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -398,9 +416,18 @@ export default function MaterialManagerClient({
           <h3 className="text-base font-bold text-[#1B2A41]">
             Tidak ada modul belajar
           </h3>
-          <p className="text-xs text-[#5B6882] mt-1">
-            Belum ada materi pembelajaran pada kategori ini. Klik &quot;Tambah Modul Baru&quot; untuk mengunggah.
+          <p className="text-xs text-[#5B6882] mt-1 mb-4">
+            Belum ada materi pembelajaran yang sesuai dengan filter pencarian.
           </p>
+          <button
+            onClick={() => {
+              setSelectedCat("ALL");
+              setSearch("");
+            }}
+            className="px-4 py-2 rounded-xl bg-[#EAF1FA] text-[#09408C] text-xs font-semibold hover:bg-[#D5DDEB] transition-colors"
+          >
+            Tampilkan Semua Modul
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -414,7 +441,7 @@ export default function MaterialManagerClient({
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-1.5">
                     <span className="px-2.5 py-0.5 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]/60">
-                      {mat.programCategory.replace("_", " ")}
+                      {mat.programCategory.replace(/_/g, " ")}
                     </span>
                     {!mat.isPublished && (
                       <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-semibold">
@@ -452,13 +479,24 @@ export default function MaterialManagerClient({
 
               {/* Actions */}
               <div className="mt-5 pt-4 border-t border-[#D5DDEB] flex items-center justify-between gap-2">
-                <button
-                  onClick={() => handleDownload(mat)}
-                  className="px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
-                >
-                  <Download size={14} />
-                  <span>Unduh Modul</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleDownload(mat)}
+                    className="px-3 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <Download size={14} />
+                    <span>Unduh</span>
+                  </button>
+
+                  <button
+                    onClick={() => setPreviewMaterial(mat)}
+                    className="px-3 py-2 rounded-xl bg-[#EAF1FA] text-[#09408C] text-xs font-semibold hover:bg-[#D5DDEB] transition-colors flex items-center gap-1"
+                    title="Pratinjau Modul"
+                  >
+                    <Eye size={14} />
+                    <span>Baca</span>
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-1">
                   <button
@@ -480,6 +518,66 @@ export default function MaterialManagerClient({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal Pratinjau Berkas PDF */}
+      {previewMaterial && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-4xl w-full h-[90vh] shadow-2xl border border-[#D5DDEB] flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-[#D5DDEB] flex items-center justify-between gap-3 bg-[#F4F7FB]/70">
+              <div className="flex items-center gap-3 truncate">
+                <div className="w-10 h-10 rounded-xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center shrink-0">
+                  <FileText size={20} />
+                </div>
+                <div className="truncate">
+                  <h3 className="text-sm sm:text-base font-bold text-[#09408C] font-display truncate">
+                    {previewMaterial.title}
+                  </h3>
+                  <div className="flex items-center gap-2 text-[11px] text-[#5B6882] mt-0.5">
+                    <span className="font-semibold text-[#295897]">{previewMaterial.subject}</span>
+                    <span>•</span>
+                    <span>{previewMaterial.fileName} ({previewMaterial.fileSize})</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={previewMaterial.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                  title="Buka di Tab Baru"
+                >
+                  <ExternalLink size={16} />
+                </a>
+                <button
+                  onClick={() => handleDownload(previewMaterial)}
+                  className="px-3.5 py-1.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
+                >
+                  <Download size={14} />
+                  <span>Unduh</span>
+                </button>
+                <button
+                  onClick={() => setPreviewMaterial(null)}
+                  className="p-2 rounded-xl text-[#5B6882] hover:text-[#1B2A41] hover:bg-[#EAF1FA] transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body: Embedded PDF Preview */}
+            <div className="flex-1 bg-slate-100 p-2 sm:p-4 overflow-hidden">
+              <iframe
+                src={`${previewMaterial.fileUrl}#toolbar=1`}
+                title={previewMaterial.title}
+                className="w-full h-full rounded-2xl bg-white border border-[#D5DDEB] shadow-inner"
+              />
+            </div>
+          </div>
         </div>
       )}
 
@@ -530,6 +628,7 @@ export default function MaterialManagerClient({
                     <option value="TOEFL_IELTS">TOEFL / IELTS</option>
                     <option value="K12">Bimbel K-12</option>
                     <option value="S2_BEASISWA">S2 & Beasiswa</option>
+                    <option value="PENULISAN_ILMIAH">Kepenulisan Ilmiah</option>
                   </select>
                 </div>
 

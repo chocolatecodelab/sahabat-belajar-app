@@ -11,12 +11,13 @@ export type ProgramCategory =
   | "CPNS_BUMN"
   | "UTBK_SNBT"
   | "TOEFL_IELTS"
-  | "S2_BEASISWA";
+  | "S2_BEASISWA"
+  | "PENULISAN_ILMIAH";
 
 export interface LearningMaterial {
   id: string;
   title: string;
-  programCategory: "K12" | "CPNS_BUMN" | "UTBK_SNBT" | "TOEFL_IELTS" | "S2_BEASISWA";
+  programCategory: "K12" | "CPNS_BUMN" | "UTBK_SNBT" | "TOEFL_IELTS" | "S2_BEASISWA" | "PENULISAN_ILMIAH";
   subject: string;
   description?: string | null;
   fileUrl: string;
@@ -113,6 +114,34 @@ const SAMPLE_FALLBACK_MATERIALS: LearningMaterial[] = [
     isPublished: true,
     createdAt: new Date(Date.now() - 86400000 * 22).toISOString(),
   },
+  {
+    id: "mat_ilmiah_01",
+    title: "Panduan Praktis Kepenulisan Artikel Ilmiah: Sistematika IMRAD, Parafrase Anti-Plagiarisme & Mendeley",
+    programCategory: "PENULISAN_ILMIAH",
+    subject: "Metodologi & Publikasi Ilmiah",
+    description: "Pedoman penyusunan manuskrip ilmiah berstandar SINTA dan Scopus, teknik sitasi otomatis dengan Mendeley/Zotero, serta strategi lolos uji turnitin.",
+    fileUrl: "/materials/panduan-kepenulisan-ilmiah.pdf",
+    fileName: "Panduan_Kepenulisan_Artikel_Ilmiah_SahabatBelajar.pdf",
+    fileSize: "3.8 MB",
+    authorTutor: "Tim Reviewer & Mentor Riset Sahabat Belajar",
+    downloadCount: 142,
+    isPublished: true,
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+  },
+  {
+    id: "mat_k12_smp_01",
+    title: "Pocket Book Rumus Cepat Matematika & IPA Terpadu SMP (Fase D Kurikulum Merdeka)",
+    programCategory: "K12",
+    subject: "MIPA SMP",
+    description: "Rangkuman konsep esensial aljabar, phytagoras, statistika, hukum newton, dan kelistrikan untuk persiapan asesmen sumatif & olimpiade sains.",
+    fileUrl: "/materials/pocket-book-mipa-smp.pdf",
+    fileName: "Pocket_Book_MIPA_SMP_FaseD.pdf",
+    fileSize: "2.1 MB",
+    authorTutor: "Tim Tutor MIPA Sahabat Belajar",
+    downloadCount: 218,
+    isPublished: true,
+    createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+  },
 ];
 
 /**
@@ -154,7 +183,7 @@ export async function getLearningMaterials(
  */
 export async function createLearningMaterial(input: {
   title: string;
-  programCategory: "K12" | "CPNS_BUMN" | "UTBK_SNBT" | "TOEFL_IELTS" | "S2_BEASISWA";
+  programCategory: "K12" | "CPNS_BUMN" | "UTBK_SNBT" | "TOEFL_IELTS" | "S2_BEASISWA" | "PENULISAN_ILMIAH";
   subject: string;
   description?: string;
   fileUrl?: string;
@@ -218,7 +247,7 @@ export async function updateLearningMaterial(
   id: string,
   input: {
     title?: string;
-    programCategory?: "K12" | "CPNS_BUMN" | "UTBK_SNBT" | "TOEFL_IELTS" | "S2_BEASISWA";
+    programCategory?: "K12" | "CPNS_BUMN" | "UTBK_SNBT" | "TOEFL_IELTS" | "S2_BEASISWA" | "PENULISAN_ILMIAH";
     subject?: string;
     description?: string;
     fileUrl?: string;

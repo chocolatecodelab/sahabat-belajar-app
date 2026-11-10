@@ -30,6 +30,7 @@ import {
   MessageCircle,
   ShieldCheck,
   Zap,
+  FolderOpen,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { formatTime, formatDate } from "@/lib/date";
@@ -154,6 +155,14 @@ export default function TutorPortalClient({
                 </option>
               ))}
             </select>
+
+            <Link
+              href="/dashboard/materi"
+              className="text-xs text-[#09408C] bg-[#EAF1FA] hover:bg-[#D5DDEB] px-3 py-1.5 rounded-xl border border-[#9AC1E2] transition-colors flex items-center gap-1.5 font-semibold"
+            >
+              <FolderOpen size={13} />
+              <span>Bank Modul</span>
+            </Link>
 
             <Link
               href="/dashboard"

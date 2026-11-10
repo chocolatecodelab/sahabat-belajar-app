@@ -36,6 +36,7 @@ import {
   Plus,
   ShieldCheck,
   Check,
+  Eye,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import type { StudentPortalData, StudentInvoice } from "@/actions/portal";
@@ -67,6 +68,8 @@ export default function StudentPortalClient({
   const [selectedMaterialCategory, setSelectedMaterialCategory] =
     useState<ProgramCategory>("ALL");
   const [materialSearch, setMaterialSearch] = useState("");
+  const [studentMaterials, setStudentMaterials] = useState<LearningMaterial[]>(materials);
+  const [previewMaterial, setPreviewMaterial] = useState<LearningMaterial | null>(null);
 
   // Invoice & Receipt State
   const [selectedReceipt, setSelectedReceipt] = useState<StudentInvoice | null>(null);
@@ -186,7 +189,7 @@ export default function StudentPortalClient({
   };
 
   // Filtered Materials
-  const filteredMaterials = materials.filter((m) => {
+  const filteredMaterials = studentMaterials.filter((m) => {
     const matchesCategory =
       selectedMaterialCategory === "ALL" || m.programCategory === selectedMaterialCategory;
     const matchesSearch =
@@ -199,6 +202,9 @@ export default function StudentPortalClient({
   const handleDownloadMaterial = (mat: LearningMaterial) => {
     try {
       trackMaterialDownload(mat.id);
+      setStudentMaterials((prev) =>
+        prev.map((m) => (m.id === mat.id ? { ...m, downloadCount: m.downloadCount + 1 } : m))
+      );
     } catch (e) {
       console.warn("Failed tracking download:", e);
     }
@@ -929,7 +935,8 @@ export default function StudentPortalClient({
                 { key: "UTBK_SNBT", label: "UTBK-SNBT" },
                 { key: "TOEFL_IELTS", label: "TOEFL & IELTS" },
                 { key: "S2_BEASISWA", label: "S2 & Beasiswa" },
-                { key: "K12", label: "K-12 (SD/SMP/SMA)" },
+                { key: "PENULISAN_ILMIAH", label: "Kepenulisan Ilmiah" },
+                { key: "K12", label: "Bimbel K-12" },
               ].map((c) => (
                 <button
                   key={c.key}
@@ -965,7 +972,7 @@ export default function StudentPortalClient({
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <span className="px-2.5 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]/60">
-                          {mat.programCategory.replace("_", " ")}
+                          {mat.programCategory.replace(/_/g, " ")}
                         </span>
                         <span className="text-[11px] text-[#5B6882] font-semibold bg-[#F4F7FB] px-2 py-0.5 rounded-full">
                           {mat.fileSize}
@@ -992,13 +999,20 @@ export default function StudentPortalClient({
                       </div>
                     </div>
 
-                    <div className="mt-5 pt-4 border-t border-[#D5DDEB]">
+                    <div className="mt-5 pt-4 border-t border-[#D5DDEB] grid grid-cols-2 gap-2">
                       <button
                         onClick={() => handleDownloadMaterial(mat)}
-                        className="w-full py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-bold hover:bg-[#0E3571] transition-colors flex items-center justify-center gap-2 shadow-xs"
+                        className="w-full py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-bold hover:bg-[#0E3571] transition-colors flex items-center justify-center gap-1.5 shadow-xs"
                       >
                         <Download size={14} />
-                        <span>Unduh Modul ({mat.fileSize})</span>
+                        <span>Unduh</span>
+                      </button>
+                      <button
+                        onClick={() => setPreviewMaterial(mat)}
+                        className="w-full py-2.5 rounded-xl bg-[#EAF1FA] text-[#09408C] text-xs font-bold hover:bg-[#D5DDEB] transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <Eye size={14} />
+                        <span>Baca Modul</span>
                       </button>
                     </div>
                   </div>
@@ -1371,6 +1385,66 @@ export default function StudentPortalClient({
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Pratinjau Berkas PDF untuk Siswa */}
+        {previewMaterial && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl max-w-4xl w-full h-[90vh] shadow-2xl border border-[#D5DDEB] flex flex-col overflow-hidden">
+              {/* Modal Header */}
+              <div className="p-4 sm:p-5 border-b border-[#D5DDEB] flex items-center justify-between gap-3 bg-[#F4F7FB]/70">
+                <div className="flex items-center gap-3 truncate">
+                  <div className="w-10 h-10 rounded-xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center shrink-0">
+                    <FileText size={20} />
+                  </div>
+                  <div className="truncate">
+                    <h3 className="text-sm sm:text-base font-bold text-[#09408C] font-heading truncate">
+                      {previewMaterial.title}
+                    </h3>
+                    <div className="flex items-center gap-2 text-[11px] text-[#5B6882] mt-0.5">
+                      <span className="font-semibold text-[#295897]">{previewMaterial.subject}</span>
+                      <span>•</span>
+                      <span>{previewMaterial.fileName} ({previewMaterial.fileSize})</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={previewMaterial.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-xl text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                    title="Buka di Tab Baru"
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                  <button
+                    onClick={() => handleDownloadMaterial(previewMaterial)}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <Download size={14} />
+                    <span>Unduh Modul</span>
+                  </button>
+                  <button
+                    onClick={() => setPreviewMaterial(null)}
+                    className="p-2 rounded-xl text-[#5B6882] hover:text-[#1B2A41] hover:bg-[#EAF1FA] transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Body: Embedded PDF Preview */}
+              <div className="flex-1 bg-slate-100 p-2 sm:p-4 overflow-hidden">
+                <iframe
+                  src={`${previewMaterial.fileUrl}#toolbar=1`}
+                  title={previewMaterial.title}
+                  className="w-full h-full rounded-2xl bg-white border border-[#D5DDEB] shadow-inner"
+                />
+              </div>
             </div>
           </div>
         )}
