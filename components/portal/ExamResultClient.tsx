@@ -18,6 +18,7 @@ import {
   Filter,
   Check,
   GraduationCap,
+  AlertCircle,
 } from "lucide-react";
 import type { ExamItem, ExamQuestion, StudentExamSession } from "@/actions/ujian";
 
@@ -36,7 +37,7 @@ export default function ExamResultClient({
   const [sessionData, setSessionData] = useState<{
     score: number;
     isPassed: boolean;
-    answers: Record<string, { selectedKey: string; isDoubtful?: boolean }>;
+    answers: Record<string, { selectedKey: string; isDoubtful?: boolean; pointsEarned?: number }>;
     durationSecondsUsed: number;
     submittedAt: string;
   } | null>(initialSession ? {
@@ -70,6 +71,21 @@ export default function ExamResultClient({
 
   const questions = exam.questions || [];
 
+  // Helper to determine points earned for each question
+  const getQuestionScore = (q: ExamQuestion, userAns?: string) => {
+    const isTKP = !!q.section?.includes("TKP") || q.options.some((o) => o.points !== undefined);
+    const savedAnswer = sessionData?.answers?.[q.id];
+    if (savedAnswer && typeof savedAnswer.pointsEarned === "number") {
+      return { pointsEarned: savedAnswer.pointsEarned, isTKP };
+    }
+    if (!userAns) return { pointsEarned: 0, isTKP };
+    if (isTKP) {
+      const opt = q.options.find((o) => o.key === userAns);
+      return { pointsEarned: opt?.points || 0, isTKP: true };
+    }
+    return { pointsEarned: userAns === q.correctKey ? (q.points || 5) : 0, isTKP: false };
+  };
+
   // Calculate detailed accuracy
   let totalCorrect = 0;
   let totalAnswered = 0;
@@ -78,7 +94,12 @@ export default function ExamResultClient({
     const userAns = sessionData?.answers?.[q.id]?.selectedKey;
     if (userAns) {
       totalAnswered++;
-      if (userAns === q.correctKey) {
+      const { pointsEarned, isTKP } = getQuestionScore(q, userAns);
+      if (isTKP) {
+        if (pointsEarned >= 4) {
+          totalCorrect++;
+        }
+      } else if (userAns === q.correctKey) {
         totalCorrect++;
       }
     }
@@ -101,9 +122,10 @@ export default function ExamResultClient({
     sectionBreakdown[sec].maxPoints += q.points || 5;
 
     const userAns = sessionData?.answers?.[q.id]?.selectedKey;
-    if (userAns === q.correctKey) {
+    const { pointsEarned, isTKP } = getQuestionScore(q, userAns);
+    sectionBreakdown[sec].earnedPoints += pointsEarned;
+    if ((isTKP && pointsEarned >= 4) || (!isTKP && userAns === q.correctKey)) {
       sectionBreakdown[sec].correct += 1;
-      sectionBreakdown[sec].earnedPoints += q.points || 5;
     }
   });
 
@@ -113,7 +135,8 @@ export default function ExamResultClient({
 
   const filteredQuestions = questions.filter((q) => {
     const userAns = sessionData?.answers?.[q.id]?.selectedKey;
-    const isCorrect = userAns === q.correctKey;
+    const { pointsEarned, isTKP } = getQuestionScore(q, userAns);
+    const isCorrect = isTKP ? pointsEarned >= 4 : userAns === q.correctKey;
 
     const matchStatus =
       filterMode === "ALL" ||
@@ -452,7 +475,8 @@ export default function ExamResultClient({
           <div className="space-y-4">
             {filteredQuestions.map((q, idx) => {
               const userAns = sessionData?.answers?.[q.id]?.selectedKey;
-              const isCorrect = userAns === q.correctKey;
+              const { pointsEarned, isTKP } = getQuestionScore(q, userAns);
+              const isCorrect = isTKP ? pointsEarned >= 4 : userAns === q.correctKey;
 
               return (
                 <div
@@ -474,7 +498,20 @@ export default function ExamResultClient({
 
                     <div className="flex items-center gap-2">
                       {userAns ? (
-                        isCorrect ? (
+                        isTKP ? (
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${
+                              pointsEarned === 5
+                                ? "bg-[#E3F4EC] text-[#1F6F4A] border-[#1F6F4A]/30"
+                                : pointsEarned >= 3
+                                ? "bg-[#FFF8E7] text-[#B45309] border-[#B45309]/30"
+                                : "bg-[#FBE9E5] text-[#B4381F] border-[#B4381F]/30"
+                            }`}
+                          >
+                            {pointsEarned >= 4 ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
+                            <span>Jawaban Anda: Opsi {userAns} (+{pointsEarned} Poin)</span>
+                          </span>
+                        ) : isCorrect ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#E3F4EC] text-[#1F6F4A] text-xs font-bold border border-[#1F6F4A]/30">
                             <CheckCircle2 size={13} />
                             <span>Jawaban Anda Benar (+{q.points || 5} Poin)</span>
@@ -501,13 +538,14 @@ export default function ExamResultClient({
                   {/* Options List */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {q.options.map((opt) => {
-                      const isCorrectKey = opt.key === q.correctKey;
+                      const isCorrectKey = !isTKP && opt.key === q.correctKey;
                       const isUserChoice = opt.key === userAns;
+                      const isBestTKP = isTKP && (opt.points === 5 || opt.key === q.correctKey);
 
                       let itemStyle = "bg-[#F4F7FB]/40 border-[#D5DDEB] text-[#1B2A41]";
-                      if (isCorrectKey) {
+                      if (isCorrectKey || isBestTKP) {
                         itemStyle = "bg-[#E3F4EC] border-[#1F6F4A] text-[#1F6F4A] font-semibold";
-                      } else if (isUserChoice && !isCorrectKey) {
+                      } else if (isUserChoice && !isCorrectKey && !isBestTKP) {
                         itemStyle = "bg-[#FBE9E5] border-[#B4381F] text-[#B4381F]";
                       }
 
@@ -518,7 +556,7 @@ export default function ExamResultClient({
                         >
                           <span
                             className={`w-5 h-5 rounded-md text-[11px] font-bold flex items-center justify-center shrink-0 ${
-                              isCorrectKey
+                              isCorrectKey || isBestTKP
                                 ? "bg-[#1F6F4A] text-white"
                                 : isUserChoice
                                 ? "bg-[#B4381F] text-white"
@@ -528,8 +566,13 @@ export default function ExamResultClient({
                             {opt.key}
                           </span>
                           <span className="leading-snug flex-1">{opt.text}</span>
+                          {opt.points !== undefined && (
+                            <span className="text-[10px] font-bold text-[#09408C] bg-white px-2 py-0.5 rounded-md border border-[#D5DDEB] shrink-0">
+                              {opt.points} Poin
+                            </span>
+                          )}
                           {isCorrectKey && (
-                            <span className="text-[10px] font-bold text-[#1F6F4A] bg-white px-2 py-0.5 rounded-md border border-[#1F6F4A]/30">
+                            <span className="text-[10px] font-bold text-[#1F6F4A] bg-white px-2 py-0.5 rounded-md border border-[#1F6F4A]/30 shrink-0">
                               Kunci Benar
                             </span>
                           )}

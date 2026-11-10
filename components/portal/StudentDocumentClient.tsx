@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   FileEdit,
@@ -60,6 +60,19 @@ export default function StudentDocumentClient({
 
   // Document Preview Modal State
   const [previewDoc, setPreviewDoc] = useState<AcademicDocument | null>(null);
+
+  // Keyboard Escape listener to dismiss any open modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (previewDoc) setPreviewDoc(null);
+        if (revisionDoc) setRevisionDoc(null);
+        if (isModalOpen) setIsModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [previewDoc, revisionDoc, isModalOpen]);
 
   const filteredDocs = documents.filter((doc) => {
     return stageFilter === "ALL" || doc.stage === stageFilter;
@@ -520,11 +533,44 @@ export default function StudentDocumentClient({
 
               <div className="flex-1 bg-slate-100 p-2 sm:p-4 overflow-hidden">
                 {previewDoc.fileUrl ? (
-                  <iframe
-                    src={`${previewDoc.fileUrl}#toolbar=1`}
-                    title={previewDoc.title}
-                    className="w-full h-full rounded-2xl bg-white border border-[#D5DDEB] shadow-inner"
-                  />
+                  previewDoc.fileName?.toLowerCase().endsWith(".pdf") || previewDoc.fileUrl?.toLowerCase().includes(".pdf") ? (
+                    <iframe
+                      src={`${previewDoc.fileUrl}#toolbar=1`}
+                      title={previewDoc.title}
+                      className="w-full h-full rounded-2xl bg-white border border-[#D5DDEB] shadow-inner"
+                    />
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-center p-6 bg-white rounded-2xl border border-[#D5DDEB]">
+                      <div className="w-16 h-16 rounded-2xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center mb-4 shadow-xs">
+                        <FileText size={32} />
+                      </div>
+                      <h4 className="text-base font-bold text-[#1B2A41] font-display">
+                        Format Berkas: {previewDoc.fileName?.split(".").pop()?.toUpperCase() || "DOCX"}
+                      </h4>
+                      <p className="text-xs text-[#5B6882] mt-1.5 max-w-md leading-relaxed">
+                        Browser tidak mendukung pratinjau inline untuk format dokumen Word (.docx / .doc). Silakan unduh berkas untuk membaca dan mengedit di Microsoft Word atau Google Docs.
+                      </p>
+                      <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                        <a
+                          href={previewDoc.fileUrl}
+                          download={previewDoc.fileName}
+                          className="px-5 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] flex items-center gap-2 shadow-xs transition-colors"
+                        >
+                          <Download size={15} />
+                          <span>Unduh Berkas {previewDoc.fileName}</span>
+                        </a>
+                        <a
+                          href={previewDoc.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2.5 rounded-xl border border-[#D5DDEB] text-[#09408C] text-xs font-semibold hover:bg-[#F4F7FB] flex items-center gap-1.5 transition-colors"
+                        >
+                          <ExternalLink size={14} />
+                          <span>Buka Tautan Berkas</span>
+                        </a>
+                      </div>
+                    </div>
+                  )
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center text-center p-6 text-[#5B6882]">
                     <FileText size={48} className="text-[#9AC1E2] mb-3" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -34,6 +34,17 @@ export default function ExamDetailClient({
   const [editingQuestion, setEditingQuestion] = useState<ExamQuestion | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeSectionFilter, setActiveSectionFilter] = useState("ALL");
+
+  // Escape key listener to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isModalOpen) {
+        setIsModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen]);
 
   // Form state
   const [questionText, setQuestionText] = useState("");

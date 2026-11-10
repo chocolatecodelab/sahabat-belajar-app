@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FolderOpen,
   Plus,
@@ -45,6 +45,18 @@ export default function MaterialManagerClient({
   const [previewMaterial, setPreviewMaterial] = useState<LearningMaterial | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Escape key listener to close modals
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (isModalOpen) setIsModalOpen(false);
+        if (previewMaterial) setPreviewMaterial(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen, previewMaterial]);
 
   // Form State (for both create & edit)
   const [title, setTitle] = useState("");

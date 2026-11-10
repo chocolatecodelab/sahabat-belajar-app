@@ -60,7 +60,7 @@ export default function ExamSimulationClient({
 
   // Restore previous answers from localStorage if available
   useEffect(() => {
-    const storageKey = `sb_exam_${exam.id}_answers`;
+    const storageKey = `sb_exam_${studentId}_${exam.id}_answers`;
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
@@ -69,14 +69,14 @@ export default function ExamSimulationClient({
         console.error("Failed to parse saved answers", e);
       }
     }
-  }, [exam.id]);
+  }, [exam.id, studentId]);
 
   // Persist answers
   const saveAnswers = (newAnswers: Record<string, AnswerState>) => {
     setAnswers(newAnswers);
     try {
       localStorage.setItem(
-        `sb_exam_${exam.id}_answers`,
+        `sb_exam_${studentId}_${exam.id}_answers`,
         JSON.stringify(newAnswers)
       );
     } catch (e) {}
@@ -84,7 +84,7 @@ export default function ExamSimulationClient({
 
   // Persistent cheat-proof timer
   useEffect(() => {
-    const timerStorageKey = `sb_exam_${exam.id}_targetEndTime`;
+    const timerStorageKey = `sb_exam_${studentId}_${exam.id}_targetEndTime`;
     let targetEndTime: number;
 
     const savedTarget = localStorage.getItem(timerStorageKey);
@@ -114,7 +114,7 @@ export default function ExamSimulationClient({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [exam.id, exam.durationMinutes]);
+  }, [exam.id, exam.durationMinutes, studentId]);
 
   // Prevent accidental navigation
   useEffect(() => {
@@ -172,6 +172,13 @@ export default function ExamSimulationClient({
   // Keyboard navigation shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (isSubmitModalOpen) setIsSubmitModalOpen(false);
+        if (isKeyboardModalOpen) setIsKeyboardModalOpen(false);
+        if (isDrawerOpen) setIsDrawerOpen(false);
+        return;
+      }
+
       if (
         isSubmitModalOpen ||
         isKeyboardModalOpen ||
@@ -198,7 +205,7 @@ export default function ExamSimulationClient({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentIndex, currentQ, answers, isSubmitModalOpen, isKeyboardModalOpen, questions.length]);
+  }, [currentIndex, currentQ, answers, isSubmitModalOpen, isKeyboardModalOpen, isDrawerOpen, questions.length]);
 
   // Section list
   const uniqueSections = useMemo(() => {
@@ -248,7 +255,11 @@ export default function ExamSimulationClient({
 
   const executeSubmit = async () => {
     setIsSubmitting(true);
-    const durationUsed = exam.durationMinutes * 60 - secondsRemaining;
+    const totalAllocatedSec = exam.durationMinutes * 60;
+    const durationUsed = Math.min(
+      totalAllocatedSec,
+      Math.max(1, totalAllocatedSec - Math.max(0, secondsRemaining))
+    );
 
     const res = await submitExamSession({
       examId: exam.id,
@@ -262,8 +273,8 @@ export default function ExamSimulationClient({
 
     if (res.success && res.data) {
       try {
-        localStorage.removeItem(`sb_exam_${exam.id}_answers`);
-        localStorage.removeItem(`sb_exam_${exam.id}_targetEndTime`);
+        localStorage.removeItem(`sb_exam_${studentId}_${exam.id}_answers`);
+        localStorage.removeItem(`sb_exam_${studentId}_${exam.id}_targetEndTime`);
       } catch (e) {}
 
       try {
@@ -745,6 +756,20 @@ export default function ExamSimulationClient({
                   </button>
                 );
               })}
+            </div>
+
+            {/* Mobile Drawer Submit Button */}
+            <div className="pt-3 border-t border-[#D5DDEB]">
+              <button
+                onClick={() => {
+                  setIsDrawerOpen(false);
+                  setIsSubmitModalOpen(true);
+                }}
+                className="w-full py-3 rounded-xl bg-[#09408C] text-white text-xs font-bold hover:bg-[#0E3571] transition-colors shadow-xs flex items-center justify-center gap-1.5"
+              >
+                <Send size={14} />
+                <span>Kumpulkan Ujian ({stats.answered}/{questions.length} Terjawab)</span>
+              </button>
             </div>
           </div>
         </div>
