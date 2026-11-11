@@ -104,10 +104,10 @@ export default function PackageManagerClient({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowAddPackageModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#D5DDEB] bg-white text-[#09408C] text-xs font-semibold hover:bg-[#EAF1FA] transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#D5DDEB] bg-white text-[#09408C] text-xs font-semibold hover:bg-[#EAF1FA] transition-colors cursor-pointer"
           >
             <Plus size={14} />
-            <span>+ Buat Paket Baru</span>
+            <span>Buat Paket Baru</span>
           </button>
           <button
             onClick={() => setShowAssignModal(true)}

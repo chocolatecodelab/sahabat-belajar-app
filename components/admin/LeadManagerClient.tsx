@@ -346,9 +346,10 @@ export default function LeadManagerClient({
                 <button
                   type="button"
                   onClick={() => handleConvertToStudent(selectedLead.id)}
-                  className="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] rounded-xl transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] rounded-xl transition-colors cursor-pointer"
                 >
-                  <UserPlus size={14} /> + Jadi Siswa
+                  <UserPlus size={14} />
+                  <span>Jadikan Siswa</span>
                 </button>
               ) : (
                 <div></div>

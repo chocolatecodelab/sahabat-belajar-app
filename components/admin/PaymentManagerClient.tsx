@@ -132,10 +132,10 @@ export default function PaymentManagerClient({
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs cursor-pointer"
           >
             <Plus size={14} />
-            <span>+ Catat Pembayaran Manual</span>
+            <span>Catat Pembayaran Manual</span>
           </button>
         </div>
       </div>

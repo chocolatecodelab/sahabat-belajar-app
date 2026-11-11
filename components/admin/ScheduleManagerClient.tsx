@@ -377,10 +377,10 @@ export default function ScheduleManagerClient({
               setConflictError(null);
               setShowCreateModal(true);
             }}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-bold hover:bg-[#0E3571] transition-colors shadow-2xs"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-bold hover:bg-[#0E3571] transition-colors shadow-2xs cursor-pointer"
           >
             <Plus size={14} />
-            <span>+ Jadwalkan Sesi</span>
+            <span>Jadwalkan Sesi</span>
           </button>
         </div>
       </div>
