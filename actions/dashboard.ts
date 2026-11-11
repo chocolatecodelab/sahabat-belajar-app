@@ -44,6 +44,7 @@ export type SahabatBelajarDashboardData = {
   actionItems: {
     lowQuotaStudents: Array<{
       id: string;
+      studentId?: string;
       studentName: string;
       parentPhone?: string | null;
       quotaRemaining: number;
@@ -52,6 +53,8 @@ export type SahabatBelajarDashboardData = {
     unpaidPayments: Array<{
       id: string;
       studentName: string;
+      parentPhone?: string | null;
+      studentPackageId?: string;
       amount: number;
       packageName: string;
     }>;
@@ -117,10 +120,11 @@ export async function getSahabatBelajarDashboardData(): Promise<SahabatBelajarDa
         .from("StudentPackage")
         .select(`
           id,
+          studentId,
           quotaTotal,
           quotaUsed,
           status,
-          student:Student(name, parentPhone),
+          student:Student(id, name, parentPhone),
           package:Package(name)
         `)
         .eq("status", "HAMPIR_HABIS")
@@ -141,7 +145,8 @@ export async function getSahabatBelajarDashboardData(): Promise<SahabatBelajarDa
           amount,
           status,
           studentPackage:StudentPackage(
-            student:Student(name),
+            id,
+            student:Student(id, name, parentPhone),
             package:Package(name)
           )
         `)
@@ -255,6 +260,7 @@ export async function getSahabatBelajarDashboardData(): Promise<SahabatBelajarDa
     // Low Quota Fallbacks
     let lowQuotaStudents = lowQuotaPackages.map((p: any) => ({
       id: p.id,
+      studentId: p.student?.id || p.studentId,
       studentName: p.student?.name || "Siswa",
       parentPhone: p.student?.parentPhone || null,
       quotaRemaining: Math.max(0, (p.quotaTotal || 0) - (p.quotaUsed || 0)),
@@ -265,6 +271,7 @@ export async function getSahabatBelajarDashboardData(): Promise<SahabatBelajarDa
       lowQuotaStudents = [
         {
           id: "lq_01",
+          studentId: "std_demo_dinda",
           studentName: "Dinda Kirana",
           parentPhone: "081311223344",
           quotaRemaining: 1,
@@ -272,10 +279,42 @@ export async function getSahabatBelajarDashboardData(): Promise<SahabatBelajarDa
         },
         {
           id: "lq_02",
+          studentId: "std_demo_02",
           studentName: "Budi Pratama",
           parentPhone: "081299887766",
           quotaRemaining: 2,
           packageName: "Paket Semi-Privat UTBK SNBT",
+        },
+      ];
+    }
+
+    // Unpaid Payments Fallbacks & Mapping
+    let mappedUnpaidPayments = unpaidPayments.map((pay: any) => ({
+      id: pay.id,
+      studentName: pay.studentPackage?.student?.name || "Siswa",
+      parentPhone: pay.studentPackage?.student?.parentPhone || null,
+      studentPackageId: pay.studentPackage?.id || pay.id,
+      amount: pay.amount || 0,
+      packageName: pay.studentPackage?.package?.name || "Paket Bimbingan",
+    }));
+
+    if (mappedUnpaidPayments.length === 0) {
+      mappedUnpaidPayments = [
+        {
+          id: "pay_pend_01",
+          studentName: "Budi Pratama",
+          parentPhone: "081299887766",
+          studentPackageId: "sp_demo_01",
+          amount: 1750000,
+          packageName: "Paket Semi-Privat UTBK SNBT 10 Sesi",
+        },
+        {
+          id: "pay_pend_02",
+          studentName: "Ahmad Fauzi",
+          parentPhone: "081298765432",
+          studentPackageId: "sp_demo_02",
+          amount: 1500000,
+          packageName: "Paket Privat CPNS & BUMN 10 Sesi",
         },
       ];
     }
@@ -327,12 +366,7 @@ export async function getSahabatBelajarDashboardData(): Promise<SahabatBelajarDa
       todaySessions,
       actionItems: {
         lowQuotaStudents,
-        unpaidPayments: unpaidPayments.map((pay: any) => ({
-          id: pay.id,
-          studentName: pay.studentPackage?.student?.name || "Siswa",
-          amount: pay.amount || 0,
-          packageName: pay.studentPackage?.package?.name || "Paket",
-        })),
+        unpaidPayments: mappedUnpaidPayments,
         newLeads: mappedLeads,
       },
     };

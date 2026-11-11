@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getPayments, getStudentPackages } from "@/actions/pembayaran";
 import PaymentManagerClient from "@/components/admin/PaymentManagerClient";
 
@@ -10,9 +11,11 @@ export default async function PembayaranPage() {
   ]);
 
   return (
-    <PaymentManagerClient
-      initialPayments={payments}
-      studentPackages={studentPackages}
-    />
+    <Suspense fallback={<div className="p-8 text-center text-sm text-[#5B6882]">Memuat manajemen pembayaran...</div>}>
+      <PaymentManagerClient
+        initialPayments={payments}
+        studentPackages={studentPackages}
+      />
+    </Suspense>
   );
 }

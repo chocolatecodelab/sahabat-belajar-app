@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   FileCheck,
   Plus,
@@ -25,6 +25,7 @@ export default function PackageManagerClient({
   students: any[];
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const [stPackages, setStPackages] = useState(studentPackages);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -36,6 +37,20 @@ export default function PackageManagerClient({
   const [packageId, setPackageId] = useState(
     programs[0]?.packages?.[0]?.id || ""
   );
+
+  useEffect(() => {
+    const paramStudentId = searchParams.get("studentId");
+    const paramAction = searchParams.get("action");
+    if (paramStudentId) {
+      const matched = students.find((s) => s.id === paramStudentId);
+      if (matched) {
+        setStudentId(matched.id);
+      }
+    }
+    if (paramAction === "assign" || paramStudentId) {
+      setShowAssignModal(true);
+    }
+  }, [searchParams, students]);
 
   // Create Package states
   const [progId, setProgId] = useState(programs[0]?.id || "");

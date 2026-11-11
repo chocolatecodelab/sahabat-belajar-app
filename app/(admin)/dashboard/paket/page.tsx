@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getPrograms } from "@/actions/program";
 import { getStudentPackages } from "@/actions/pembayaran";
 import { getStudents } from "@/actions/siswa";
@@ -13,10 +14,12 @@ export default async function PaketPage() {
   ]);
 
   return (
-    <PackageManagerClient
-      programs={programs}
-      studentPackages={studentPackages}
-      students={studentsRes.data}
-    />
+    <Suspense fallback={<div className="p-8 text-center text-sm text-[#5B6882]">Memuat manajemen paket...</div>}>
+      <PackageManagerClient
+        programs={programs}
+        studentPackages={studentPackages}
+        students={studentsRes.data}
+      />
+    </Suspense>
   );
 }

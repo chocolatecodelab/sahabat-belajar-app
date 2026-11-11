@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
   CreditCard,
@@ -30,6 +30,7 @@ export default function PaymentManagerClient({
   studentPackages: any[];
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const [payments, setPayments] = useState(initialPayments);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -45,6 +46,23 @@ export default function PaymentManagerClient({
   const [status, setStatus] = useState<PaymentStatus>("LUNAS");
   const [proofFile, setProofFile] = useState("");
   const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    const pkgId = searchParams.get("packageId");
+    const act = searchParams.get("action");
+    if (pkgId) {
+      const match = studentPackages.find((sp) => sp.id === pkgId);
+      if (match) {
+        setStudentPackageId(match.id);
+        if (match.package?.price) {
+          setAmount(String(match.package.price));
+        }
+      }
+    }
+    if (act === "record" || pkgId) {
+      setShowAddModal(true);
+    }
+  }, [searchParams, studentPackages]);
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -26,6 +26,7 @@ import {
   Printer,
   ChevronRight,
   ShieldCheck,
+  CreditCard,
 } from "lucide-react";
 import { formatTime, formatDate } from "@/lib/date";
 import type { SahabatBelajarDashboardData } from "@/actions/dashboard";
@@ -59,6 +60,15 @@ export default function SahabatBelajarDashboard({
     const formattedPhone = phone.startsWith("0") ? `62${phone.slice(1)}` : phone;
     const msg =
       `Halo Kak ${lead.name}! Terima kasih telah mendaftar di Sahabat Belajar untuk program *${lead.programInterest || "Bimbingan Belajar"}*. Ada yang bisa tim akademik kami bantu untuk rencana belajarnya? #BersamaSahabat`;
+    return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
+  };
+
+  // Helper WhatsApp generator for unpaid invoices (Friksi A1)
+  const getInvoiceWaUrl = (inv: (typeof data.actionItems.unpaidPayments)[0]) => {
+    const phone = (inv.parentPhone || "628123456789").replace(/[^0-9]/g, "");
+    const formattedPhone = phone.startsWith("0") ? `62${phone.slice(1)}` : phone;
+    const msg =
+      `Halo Bapak/Ibu wali dari ${inv.studentName}, kami dari Sahabat Belajar menginformasikan tagihan bimbingan untuk paket *${inv.packageName}* sebesar *Rp ${inv.amount.toLocaleString("id-ID")}*. Mohon konfirmasi bukti transfer jika sudah melakukan pembayaran agar sesi belajar tetap lancar. Terima kasih! #BersamaSahabat`;
     return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
   };
 
@@ -387,18 +397,42 @@ export default function SahabatBelajarDashboard({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                        {session.meetingLink && (
+                      <div className="flex items-center gap-2 self-end sm:self-center shrink-0 flex-wrap">
+                        {session.mode === "ONLINE" && (
+                          session.meetingLink ? (
+                            <a
+                              href={session.meetingLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 rounded-xl bg-[#0CC0DF]/10 text-[#09408C] text-xs font-bold hover:bg-[#0CC0DF]/20 transition-colors inline-flex items-center gap-1"
+                            >
+                              <Video size={13} />
+                              <span>Ruang Belajar</span>
+                            </a>
+                          ) : (
+                            <Link
+                              href="/dashboard/jadwal"
+                              className="px-2.5 py-1.5 rounded-xl bg-[#FBE9E5] text-[#B4381F] text-xs font-bold hover:bg-rose-100 transition-colors inline-flex items-center gap-1 border border-red-200"
+                              title="Tautan meeting belum diisi, klik untuk atur di jadwal"
+                            >
+                              <AlertCircle size={13} />
+                              <span>+ Atur Link</span>
+                            </Link>
+                          )
+                        )}
+
+                        {session.tutorPhone && (
                           <a
-                            href={session.meetingLink}
+                            href={`https://wa.me/${session.tutorPhone.replace(/[^0-9]/g, "")}?text=Halo%20${encodeURIComponent(session.tutorName)}%2C%20dari%20Admin%20Sahabat%20Belajar%20mengingatkan%20sesi%20bimbingan%20hari%20ini%20pukul%20${encodeURIComponent(startTime)}%20WIB.`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-3 py-1.5 rounded-xl bg-[#0CC0DF]/10 text-[#09408C] text-xs font-bold hover:bg-[#0CC0DF]/20 transition-colors inline-flex items-center gap-1"
+                            className="p-1.5 rounded-xl border border-[#D5DDEB] text-[#1F6F4A] hover:bg-[#E3F4EC] transition-colors"
+                            title={`Hubungi Tutor via WhatsApp (${session.tutorPhone})`}
                           >
-                            <Video size={13} />
-                            <span>Buka Ruang Belajar</span>
+                            <Phone size={13} />
                           </a>
                         )}
+
                         <Link
                           href="/dashboard/jadwal"
                           className="px-3 py-1.5 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
@@ -441,16 +475,27 @@ export default function SahabatBelajarDashboard({
                     </div>
                   </div>
 
-                  <a
-                    href={getRenewalWaUrl(item)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-2.5 py-1.5 bg-[#B45309] hover:bg-[#92400e] text-white font-bold rounded-xl text-[11px] shadow-2xs transition-colors shrink-0 flex items-center gap-1"
-                    title="Kirim penawaran perpanjangan paket ke WhatsApp wali murid"
-                  >
-                    <MessageCircle size={12} />
-                    <span>Top-Up WA</span>
-                  </a>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Link
+                      href={`/dashboard/paket?studentId=${item.studentId || item.id}&action=assign`}
+                      className="px-2.5 py-1.5 bg-[#09408C] hover:bg-[#0E3571] text-white font-bold rounded-xl text-[11px] shadow-2xs transition-colors flex items-center gap-1"
+                      title="Buka form penetapan paket perpanjangan untuk siswa ini"
+                    >
+                      <Plus size={11} />
+                      <span>Perpanjang</span>
+                    </Link>
+
+                    <a
+                      href={getRenewalWaUrl(item)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1.5 bg-[#B45309] hover:bg-[#92400e] text-white font-bold rounded-xl text-[11px] shadow-2xs transition-colors flex items-center gap-1"
+                      title="Kirim penawaran perpanjangan paket ke WhatsApp wali murid"
+                    >
+                      <MessageCircle size={12} />
+                      <span>Top-Up WA</span>
+                    </a>
+                  </div>
                 </div>
               ))}
 
@@ -458,6 +503,70 @@ export default function SahabatBelajarDashboard({
                 <div className="py-4 text-center text-xs text-[#5B6882]">
                   <CheckCircle2 size={20} className="mx-auto text-[#1F6F4A] mb-1" />
                   Semua kuota bimbingan siswa dalam kondisi aman.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Tagihan & Invoice Menunggu Pembayaran (Friksi A1) */}
+          <div className="bg-white rounded-2xl border border-[#D5DDEB] p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading font-bold text-sm text-[#09408C] flex items-center gap-2">
+                <CreditCard size={16} className="text-[#09408C]" />
+                <span>Tagihan Menunggu Pembayaran</span>
+              </h3>
+              <Link
+                href="/dashboard/pembayaran"
+                className="text-[11px] font-bold text-[#09408C] hover:underline"
+              >
+                Semua ({data.actionItems.unpaidPayments.length})
+              </Link>
+            </div>
+
+            <div className="space-y-2.5">
+              {data.actionItems.unpaidPayments.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="p-3 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB] text-xs flex items-center justify-between gap-2"
+                >
+                  <div className="space-y-0.5 max-w-[170px]">
+                    <div className="font-bold text-[#1B2A41] truncate">{inv.studentName}</div>
+                    <div className="text-[11px] text-[#09408C] font-semibold truncate">
+                      {inv.packageName}
+                    </div>
+                    <div className="text-[11px] font-bold text-[#B4381F] tabular-nums">
+                      Rp {inv.amount.toLocaleString("id-ID")}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Link
+                      href={`/dashboard/pembayaran?packageId=${inv.studentPackageId || inv.id}&action=record`}
+                      className="px-2.5 py-1.5 bg-[#09408C] hover:bg-[#0E3571] text-white font-bold rounded-xl text-[11px] shadow-2xs transition-colors flex items-center gap-1"
+                      title="Catat atau verifikasi pelunasan invoice ini"
+                    >
+                      <DollarSign size={11} />
+                      <span>Catat</span>
+                    </Link>
+
+                    <a
+                      href={getInvoiceWaUrl(inv)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2 py-1.5 border border-[#D5DDEB] hover:bg-slate-100 text-[#1F6F4A] font-bold rounded-xl text-[11px] transition-colors flex items-center gap-1"
+                      title="Kirim pengingat tagihan ke WhatsApp wali murid"
+                    >
+                      <MessageCircle size={11} />
+                      <span>WA</span>
+                    </a>
+                  </div>
+                </div>
+              ))}
+
+              {data.actionItems.unpaidPayments.length === 0 && (
+                <div className="py-4 text-center text-xs text-[#5B6882]">
+                  <CheckCircle2 size={20} className="mx-auto text-[#1F6F4A] mb-1" />
+                  Semua tagihan paket siswa telah berstatus lunas.
                 </div>
               )}
             </div>
