@@ -30,13 +30,28 @@ import {
   MessageCircle,
   ShieldCheck,
   FolderOpen,
+  Link2,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { formatTime, formatDate } from "@/lib/date";
 import type { TutorPortalData, TutorSessionItem } from "@/actions/tutor-portal";
-import { submitTutorJournalQuick } from "@/actions/tutor-portal";
+import { submitTutorJournalQuick, updateTutorMeetingLink } from "@/actions/tutor-portal";
 import { AttendanceStatus } from "@prisma/client";
 import { useToast } from "@/components/ui/Toast";
+
+function getRelativeDateInfo(dateStr: string) {
+  const target = new Date(dateStr);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const targetDay = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+  const diffDays = Math.round((targetDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return { label: "HARI INI", color: "bg-[#1F6F4A] text-white" };
+  if (diffDays === 1) return { label: "BESOK", color: "bg-[#09408C] text-white" };
+  if (diffDays === 2) return { label: "LUSA", color: "bg-[#295897] text-white" };
+  if (diffDays > 2 && diffDays <= 7) return { label: `${diffDays} HARI LAGI`, color: "bg-[#EAF1FA] text-[#09408C]" };
+  return { label: formatDate(dateStr), color: "bg-[#F4F7FB] text-[#5B6882]" };
+}
 
 export default function TutorPortalClient({
   initialData,
@@ -55,6 +70,11 @@ export default function TutorPortalClient({
   const [selectedSessionForJournal, setSelectedSessionForJournal] =
     useState<TutorSessionItem | null>(null);
   const [isSubmittingJournal, setIsSubmittingJournal] = useState(false);
+
+  // Meeting Link Modal State (UX-FLOW-TUTOR-001: Mandiri atur ruang belajar online)
+  const [sessionForLinkModal, setSessionForLinkModal] = useState<TutorSessionItem | null>(null);
+  const [meetingLinkInput, setMeetingLinkInput] = useState("");
+  const [isSavingLink, setIsSavingLink] = useState(false);
 
   // Form states
   const [topic, setTopic] = useState("");
@@ -118,6 +138,27 @@ export default function TutorPortalClient({
     if (res.success) {
       toast.success("Jurnal Tersimpan", res.message);
       setSelectedSessionForJournal(null);
+      router.refresh();
+    } else {
+      toast.error("Gagal Menyimpan", res.message);
+    }
+  };
+
+  const openMeetingLinkModal = (session: TutorSessionItem) => {
+    setSessionForLinkModal(session);
+    setMeetingLinkInput(session.meetingLink || "");
+  };
+
+  const handleSaveMeetingLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sessionForLinkModal) return;
+    setIsSavingLink(true);
+    const res = await updateTutorMeetingLink(sessionForLinkModal.id, meetingLinkInput);
+    setIsSavingLink(false);
+    if (res.success) {
+      toast.success("Tautan Ruang Belajar Diperbarui", res.message);
+      sessionForLinkModal.meetingLink = meetingLinkInput.trim() || null;
+      setSessionForLinkModal(null);
       router.refresh();
     } else {
       toast.error("Gagal Menyimpan", res.message);
@@ -369,14 +410,29 @@ export default function TutorPortalClient({
                           <div className="bg-[#F4F7FB] p-3 rounded-2xl border border-[#D5DDEB] space-y-1">
                             <span className="text-[#5B6882] block">Metode Belajar:</span>
                             {session.mode === "ONLINE" ? (
-                              <div>
+                              <div className="space-y-1.5">
                                 <div className="font-bold text-[#09408C] flex items-center gap-1 text-sm">
                                   <Video size={14} className="text-[#0CC0DF]" />
-                                  <span>Online (Zoom / Meet)</span>
+                                  <span>Online (Live Zoom / Meet)</span>
                                 </div>
-                                <span className="text-xs text-[#5B6882] block mt-0.5 leading-relaxed">
-                                  Buka tautan ruang belajar 5 menit sebelum sesi dimulai.
-                                </span>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {session.meetingLink ? (
+                                    <span className="text-[11px] text-[#1F6F4A] bg-[#E3F4EC] px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                                      <Check size={11} /> Tautan Aktif Siap Pakai
+                                    </span>
+                                  ) : (
+                                    <span className="text-[11px] text-[#B4381F] bg-[#FBE9E5] px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                                      <AlertCircle size={11} /> Tautan Belum Dimasukkan
+                                    </span>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => openMeetingLinkModal(session)}
+                                    className="text-[11px] text-[#09408C] hover:underline font-bold cursor-pointer"
+                                  >
+                                    {session.meetingLink ? "Ganti Tautan" : "+ Input Tautan"}
+                                  </button>
+                                </div>
                               </div>
                             ) : (
                               <div>
@@ -394,17 +450,41 @@ export default function TutorPortalClient({
 
                         {/* Action Buttons */}
                         <div className="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
-                          {session.mode === "ONLINE" && session.meetingLink && (
-                            <a
-                              href={session.meetingLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#0CC0DF]/15 hover:bg-[#0CC0DF]/25 text-[#09408C] text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                            >
-                              <Video size={14} />
-                              <span>Masuk Ruang Belajar (Zoom/Meet)</span>
-                              <ExternalLink size={12} />
-                            </a>
+                          {session.mode === "ONLINE" && (
+                            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                              {session.meetingLink ? (
+                                <>
+                                  <a
+                                    href={session.meetingLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2.5 rounded-xl bg-[#0CC0DF]/15 hover:bg-[#0CC0DF]/25 text-[#09408C] text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                                  >
+                                    <Video size={14} />
+                                    <span>Masuk Ruang Belajar</span>
+                                    <ExternalLink size={12} />
+                                  </a>
+                                  <button
+                                    type="button"
+                                    onClick={() => openMeetingLinkModal(session)}
+                                    className="px-3 py-2.5 rounded-xl border border-[#D5DDEB] hover:bg-[#F4F7FB] text-[#5B6882] hover:text-[#09408C] text-xs font-semibold transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                    title="Perbarui Tautan Zoom atau Google Meet"
+                                  >
+                                    <Link2 size={13} />
+                                    <span>Ubah Tautan</span>
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => openMeetingLinkModal(session)}
+                                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#FBE9E5] hover:bg-rose-100 text-[#B4381F] border border-red-200 text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                                >
+                                  <AlertCircle size={14} />
+                                  <span>+ Input Tautan Zoom / Google Meet</span>
+                                </button>
+                              )}
+                            </div>
                           )}
 
                           {session.mode === "HOME_VISIT" && session.address && (
@@ -421,7 +501,7 @@ export default function TutorPortalClient({
 
                           <button
                             onClick={() => openJournalModal(session)}
-                            className="w-full sm:w-auto ml-auto px-5 py-2.5 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+                            className="w-full sm:w-auto sm:ml-auto px-5 py-2.5 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                           >
                             <FileEdit size={14} />
                             <span>
@@ -439,32 +519,162 @@ export default function TutorPortalClient({
             {/* Sesi Mendatang */}
             {upcomingSessions.length > 0 && (
               <div className="space-y-3 pt-4 border-t border-[#D5DDEB]">
-                <h3 className="font-heading font-bold text-base text-[#1B2A41]">
-                  Jadwal Sesi Mendatang ({upcomingSessions.length})
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-heading font-bold text-base text-[#1B2A41]">
+                    Jadwal Sesi Mendatang ({upcomingSessions.length})
+                  </h3>
+                  <span className="text-xs text-[#5B6882]">
+                    Koordinasi & Persiapkan Materi Lebih Awal
+                  </span>
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {upcomingSessions.map((session) => (
-                    <div
-                      key={session.id}
-                      className="bg-white p-4 rounded-2xl border border-[#D5DDEB] space-y-2 text-xs shadow-2xs"
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-[#09408C]">
-                          {formatDate(session.startAt)}
-                        </span>
-                        <span className="text-[#5B6882]">
-                          {formatTime(session.startAt)} - {formatTime(session.endAt)} WIB
-                        </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {upcomingSessions.map((session) => {
+                    const relDate = getRelativeDateInfo(session.startAt);
+                    const startTime = formatTime(session.startAt);
+                    const endTime = formatTime(session.endAt);
+                    const firstStudent = session.students[0];
+
+                    return (
+                      <div
+                        key={session.id}
+                        className="bg-white p-5 rounded-3xl border border-[#D5DDEB] hover:border-[#09408C] transition-all space-y-3.5 shadow-xs text-xs flex flex-col justify-between"
+                      >
+                        <div className="space-y-3">
+                          {/* Top Row: Relative Badge, Date & Mode */}
+                          <div className="flex items-center justify-between gap-2 border-b border-[#D5DDEB] pb-2.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${relDate.color}`}>
+                                {relDate.label}
+                              </span>
+                              <span className="font-bold text-[#09408C] text-xs">
+                                {formatDate(session.startAt)}
+                              </span>
+                            </div>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                session.mode === "ONLINE"
+                                  ? "bg-[#0CC0DF]/15 text-[#09408C]"
+                                  : "bg-[#FEF7E6] text-[#B45309]"
+                              }`}
+                            >
+                              {session.mode === "ONLINE" ? "Online" : "Home Visit"}
+                            </span>
+                          </div>
+
+                          {/* Time & Class Type */}
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-[#1B2A41] bg-[#F4F7FB] px-2.5 py-1 rounded-lg">
+                              {startTime} - {endTime} WIB (90 Mnt)
+                            </span>
+                            <span className="text-[11px] font-semibold text-[#5B6882]">
+                              {session.classType === "PRIVAT" ? "Privat (1 Siswa)" : "Semi-Privat"}
+                            </span>
+                          </div>
+
+                          {/* Program & Students */}
+                          <div>
+                            <div className="font-bold text-sm text-[#1B2A41]">
+                              {session.programName}
+                            </div>
+                            <div className="text-[#5B6882] text-xs mt-0.5">
+                              Peserta: <strong className="text-[#1B2A41]">{session.students.map((st) => st.name).join(", ")}</strong>
+                            </div>
+                          </div>
+
+                          {/* Location / Meeting Details */}
+                          {session.mode === "HOME_VISIT" && session.address && (
+                            <div className="bg-[#F4F7FB] p-2.5 rounded-xl border border-[#D5DDEB] text-[11px] text-[#5B6882]">
+                              <span className="font-semibold text-[#1B2A41] block">Lokasi Home Visit:</span>
+                              {session.address}
+                            </div>
+                          )}
+
+                          {session.mode === "ONLINE" && (
+                            <div className="bg-[#F4F7FB] p-2.5 rounded-xl border border-[#D5DDEB] text-[11px]">
+                              <span className="font-semibold text-[#5B6882] block mb-1">Tautan Sesi:</span>
+                              {session.meetingLink ? (
+                                <span className="text-[#1F6F4A] font-semibold flex items-center gap-1">
+                                  <Check size={12} /> Siap: <span className="truncate max-w-[180px]">{session.meetingLink}</span>
+                                </span>
+                              ) : (
+                                <span className="text-[#5B6882] italic">
+                                  Belum diatur. Anda dapat memasukkan tautan sekarang.
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Card Actions Footer */}
+                        <div className="pt-2 border-t border-[#D5DDEB] flex items-center justify-between gap-2 flex-wrap">
+                          {firstStudent?.phone ? (
+                            <a
+                              href={`https://wa.me/${firstStudent.phone.replace(/[^0-9]/g, "")}?text=Halo%20${encodeURIComponent(firstStudent.name)}%2C%20saya%20${encodeURIComponent(tutor.name)}%20tutor%20Sahabat%20Belajar%20mengingatkan%20jadwal%20bimbingan%20pada%20${encodeURIComponent(formatDate(session.startAt))}%20pukul%20${encodeURIComponent(startTime)}%20WIB.`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 rounded-xl bg-[#E3F4EC] hover:bg-[#1F6F4A]/20 text-[#1F6F4A] text-[11px] font-bold transition-colors flex items-center gap-1"
+                            >
+                              <MessageCircle size={13} />
+                              <span>Chat Siswa / Wali</span>
+                            </a>
+                          ) : (
+                            <div />
+                          )}
+
+                          <div className="flex items-center gap-1.5">
+                            {session.mode === "ONLINE" && (
+                              <>
+                                {session.meetingLink ? (
+                                  <>
+                                    <a
+                                      href={session.meetingLink}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="px-3 py-1.5 rounded-xl bg-[#0CC0DF]/15 hover:bg-[#0CC0DF]/25 text-[#09408C] text-[11px] font-bold transition-colors flex items-center gap-1"
+                                      title="Masuk Ruang Belajar"
+                                    >
+                                      <Video size={13} />
+                                      <span>Masuk</span>
+                                    </a>
+                                    <button
+                                      type="button"
+                                      onClick={() => openMeetingLinkModal(session)}
+                                      className="px-2.5 py-1.5 rounded-xl border border-[#D5DDEB] hover:bg-slate-100 text-[#5B6882] text-[11px] font-semibold transition-colors cursor-pointer"
+                                      title="Ubah Tautan"
+                                    >
+                                      <Link2 size={12} />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => openMeetingLinkModal(session)}
+                                    className="px-3 py-1.5 rounded-xl bg-[#EAF1FA] hover:bg-[#09408C] hover:text-white text-[#09408C] text-[11px] font-bold transition-colors flex items-center gap-1 border border-[#9AC1E2] cursor-pointer"
+                                  >
+                                    <Link2 size={12} />
+                                    <span>+ Atur Tautan</span>
+                                  </button>
+                                )}
+                              </>
+                            )}
+
+                            {session.mode === "HOME_VISIT" && session.address && (
+                              <a
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(session.address)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1.5 rounded-xl bg-[#FEF7E6] hover:bg-amber-100 text-[#B45309] text-[11px] font-bold transition-colors flex items-center gap-1 border border-[#F5B82E]/40"
+                              >
+                                <Navigation size={12} />
+                                <span>Maps</span>
+                              </a>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="font-bold text-sm text-[#1B2A41]">
-                        {session.students.map((st) => st.name).join(", ")}
-                      </div>
-                      <div className="text-[#5B6882]">
-                        {session.programName} ({session.mode === "ONLINE" ? "Online" : "Home Visit"})
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -787,6 +997,91 @@ export default function TutorPortalClient({
                         ? "Menyimpan & Memotong Kuota..."
                         : "Tandai Selesai & Potong Kuota"}
                     </span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {/* Modal: Input / Perbarui Tautan Ruang Belajar Online (UX-FLOW-TUTOR-001) */}
+        {sessionForLinkModal && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#D5DDEB] space-y-4 relative">
+              <button
+                type="button"
+                onClick={() => setSessionForLinkModal(null)}
+                aria-label="Tutup dialog tautan"
+                className="absolute top-5 right-5 p-1.5 rounded-full text-[#5B6882] hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+
+              <div>
+                <span className="text-[10px] font-bold text-[#09408C] uppercase tracking-wider bg-[#EAF1FA] px-2.5 py-0.5 rounded-full">
+                  Tautan Ruang Belajar Mandiri
+                </span>
+                <h3 className="text-base font-heading font-bold text-[#1B2A41] mt-1.5">
+                  Atur Tautan Zoom / Google Meet
+                </h3>
+                <p className="text-xs text-[#5B6882] mt-0.5">
+                  Sesi: {sessionForLinkModal.programName} ({formatDate(sessionForLinkModal.startAt)} • {formatTime(sessionForLinkModal.startAt)} WIB)
+                </p>
+              </div>
+
+              <form onSubmit={handleSaveMeetingLink} className="space-y-4 text-xs">
+                <div>
+                  <label htmlFor="tutor-meeting-link-input" className="block font-semibold text-[#1B2A41] mb-1">
+                    URL Google Meet atau Zoom Room
+                  </label>
+                  <input
+                    id="tutor-meeting-link-input"
+                    type="url"
+                    placeholder="https://meet.google.com/xxx-xxxx-xxx atau https://us02web.zoom.us/..."
+                    value={meetingLinkInput}
+                    onChange={(e) => setMeetingLinkInput(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                  />
+                  <p className="text-[11px] text-[#5B6882] mt-1 leading-relaxed">
+                    Tautan ini akan langsung muncul dan dapat diklik oleh siswa di Portal Siswa mereka. Kosongkan jika ingin menghapus tautan.
+                  </p>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] text-[#5B6882] font-semibold block">Pintasan Cepat:</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setMeetingLinkInput("https://meet.google.com/new")}
+                      className="text-[11px] px-2.5 py-1 rounded-lg bg-[#EAF1FA] hover:bg-[#09408C] hover:text-white text-[#09408C] font-semibold transition-colors cursor-pointer"
+                    >
+                      Buka Google Meet Baru
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMeetingLinkInput("https://zoom.us/start/videomeeting")}
+                      className="text-[11px] px-2.5 py-1 rounded-lg bg-[#EAF1FA] hover:bg-[#09408C] hover:text-white text-[#09408C] font-semibold transition-colors cursor-pointer"
+                    >
+                      Buka Zoom Web
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-3 flex items-center justify-end gap-2 border-t border-[#D5DDEB]">
+                  <button
+                    type="button"
+                    onClick={() => setSessionForLinkModal(null)}
+                    className="px-4 py-2 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#5B6882] hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingLink}
+                    className="px-5 py-2 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-bold transition-colors shadow-xs flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  >
+                    <CheckCircle2 size={14} />
+                    <span>{isSavingLink ? "Menyimpan..." : "Simpan Tautan"}</span>
                   </button>
                 </div>
               </form>

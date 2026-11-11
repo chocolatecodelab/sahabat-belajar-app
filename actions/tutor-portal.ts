@@ -482,3 +482,65 @@ export async function submitTutorJournalQuick(input: {
     };
   }
 }
+
+// Update Meeting Link by Tutor directly from mobile / web portal
+export async function updateTutorMeetingLink(
+  sessionId: string,
+  meetingLink: string
+): Promise<ActionResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: "Sesi login telah berakhir. Silakan login kembali.",
+      };
+    }
+
+    const trimmedLink = (meetingLink || "").trim();
+    if (trimmedLink && !trimmedLink.startsWith("http://") && !trimmedLink.startsWith("https://")) {
+      return {
+        success: false,
+        message: "Tautan harus diawali dengan http:// atau https:// (contoh: https://meet.google.com/... atau https://zoom.us/...)",
+      };
+    }
+
+    // 1. Update in Supabase DB if session exists
+    const { error } = await supabaseAdmin
+      .from("Session")
+      .update({
+        meetingLink: trimmedLink || null,
+        updatedAt: new Date().toISOString(),
+      })
+      .eq("id", sessionId);
+
+    if (error) {
+      console.warn("Notice: Session DB update via Supabase:", error.message);
+    }
+
+    // 2. Also update in-memory DEMO_TUTORS for seamless test/demo environments
+    for (const tutorKey in DEMO_TUTORS) {
+      const t = DEMO_TUTORS[tutorKey];
+      const todayMatch = t.todaySessions.find((s) => s.id === sessionId);
+      if (todayMatch) todayMatch.meetingLink = trimmedLink || null;
+      const upMatch = t.upcomingSessions.find((s) => s.id === sessionId);
+      if (upMatch) upMatch.meetingLink = trimmedLink || null;
+    }
+
+    revalidatePath("/tutor");
+    revalidatePath("/portal");
+    revalidatePath("/dashboard/jadwal");
+
+    return {
+      success: true,
+      message: trimmedLink
+        ? "Tautan ruang belajar (Zoom/Meet) berhasil disimpan dan siap diakses siswa!"
+        : "Tautan ruang belajar berhasil dikosongkan.",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.message || "Gagal memperbarui tautan ruang belajar.",
+    };
+  }
+}

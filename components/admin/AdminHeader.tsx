@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, Menu, Globe, ExternalLink } from "lucide-react";
+import { ChevronRight, Menu, Globe, ExternalLink, GraduationCap } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useAdminSidebar } from "./AdminLayoutClient";
 
@@ -63,6 +63,9 @@ export default function AdminHeader() {
     .toUpperCase()
     .slice(0, 2);
 
+  const userRole = (((session?.user as any)?.role || "") as string).toLowerCase();
+  const isTutor = userRole.includes("tutor");
+
   return (
     <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-[#D5DDEB] sticky top-0 z-30 bg-white/95 backdrop-blur-md">
       {/* Left: Mobile Toggle & Breadcrumb */}
@@ -101,8 +104,20 @@ export default function AdminHeader() {
         </nav>
       </div>
 
-      {/* Right side: View Site & User Badge */}
+      {/* Right side: View Site, Tutor Portal & User Badge */}
       <div className="flex items-center gap-3">
+        {/* Quick Back to Tutor Portal (Eliminate Dead-End Navigation for Tutors) */}
+        {isTutor && (
+          <Link
+            href="/tutor"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#09408C] hover:bg-[#0E3571] transition-all shadow-xs ring-2 ring-[#09408C]/20"
+            title="Kembali ke Ruang Kerja Portal Tutor"
+          >
+            <GraduationCap size={15} />
+            <span>Portal Tutor</span>
+          </Link>
+        )}
+
         {/* Quick View Website Button */}
         <Link
           href="/"

@@ -311,6 +311,21 @@ export default function Sidebar({
         })}
       </nav>
 
+      {/* Quick link to Tutor Portal if Tutor */}
+      {userRole?.toLowerCase().includes("tutor") && (
+        <div className="px-3 pt-2">
+          <Link
+            href="/tutor"
+            onClick={() => setMobileOpen(false)}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-[#9ac1e2] hover:text-white transition-colors text-xs font-bold"
+            title={collapsed && !mobileOpen ? "Kembali ke Portal Mandiri Tutor" : undefined}
+          >
+            <GraduationCap size={18} className="shrink-0 text-[#9ac1e2]" />
+            {(!collapsed || mobileOpen) && <span>Portal Mandiri Tutor</span>}
+          </Link>
+        </div>
+      )}
+
       {/* Footer / Logout */}
       <div className="border-t border-white/10 p-3">
         <button
