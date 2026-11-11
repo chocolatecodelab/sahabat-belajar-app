@@ -243,6 +243,74 @@ export default function StudentPortalClient({
     return `https://wa.me/?text=${encodeURIComponent(text)}`;
   };
 
+  // Relative Date and Urgency Badges Generator (UX Friksi 2 & 3)
+  const getRelativeDateInfo = (dateStr: string) => {
+    const sessionDate = new Date(dateStr);
+    const now = new Date();
+
+    const isSameDay = (d1: Date, d2: Date) =>
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate();
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const isToday = isSameDay(sessionDate, now);
+    const isTomorrow = isSameDay(sessionDate, tomorrow);
+
+    const diffMinutes = Math.round((sessionDate.getTime() - now.getTime()) / (1000 * 60));
+
+    if (isToday) {
+      if (diffMinutes <= 0 && diffMinutes >= -90) {
+        return {
+          badgeText: "SEDANG BERLANGSUNG",
+          badgeClass: "bg-[#E3F4EC] text-[#1F6F4A] border-[#1F6F4A]/40 animate-pulse font-extrabold",
+          dayLabel: "Hari Ini",
+          isToday: true,
+          isStartingSoon: true,
+        };
+      }
+      if (diffMinutes > 0 && diffMinutes <= 60) {
+        return {
+          badgeText: `DIMULAI DALAM ${diffMinutes} MENIT`,
+          badgeClass: "bg-amber-100 text-amber-900 border-amber-300 animate-pulse font-extrabold",
+          dayLabel: "Hari Ini",
+          isToday: true,
+          isStartingSoon: true,
+        };
+      }
+      return {
+        badgeText: "HARI INI",
+        badgeClass: "bg-[#E3F4EC] text-[#1F6F4A] border-[#1F6F4A]/30 font-bold",
+        dayLabel: "Hari Ini",
+        isToday: true,
+        isStartingSoon: false,
+      };
+    }
+
+    if (isTomorrow) {
+      return {
+        badgeText: "BESOK",
+        badgeClass: "bg-[#EAF1FA] text-[#09408C] border-[#9AC1E2] font-bold",
+        dayLabel: "Besok",
+        isToday: false,
+        isStartingSoon: false,
+      };
+    }
+
+    return {
+      badgeText: formatDayDate(dateStr),
+      badgeClass: "bg-[#F4F7FB] text-[#5B6882] border-[#D5DDEB] font-medium",
+      dayLabel: formatDayDate(dateStr),
+      isToday: false,
+      isStartingSoon: false,
+    };
+  };
+
+  const nextSession = upcomingSessions.length > 0 ? upcomingSessions[0] : null;
+  const nextRelInfo = nextSession ? getRelativeDateInfo(nextSession.startAt) : null;
+
   // Filtered Materials
   const filteredMaterials = studentMaterials.filter((m) => {
     const matchesCategory =
@@ -412,6 +480,141 @@ export default function StudentPortalClient({
             </div>
           </div>
         </div>
+
+        {/* Sesi Bimbingan Terdekat (Hero Widget - Solusi Friksi 1, 2 & 3) */}
+        {nextSession && nextRelInfo ? (
+          <div className="bg-white rounded-3xl border-2 border-[#9AC1E2] p-5 sm:p-6 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
+            <div className="absolute top-0 right-0 w-36 h-36 bg-[#EAF1FA] rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative z-10">
+              <div className="space-y-2.5 flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider bg-[#09408C] text-white px-3 py-0.5 rounded-full shadow-2xs">
+                    Sesi Bimbingan Terdekat
+                  </span>
+                  <span className={`text-[11px] px-2.5 py-0.5 rounded-full border ${nextRelInfo.badgeClass}`}>
+                    {nextRelInfo.badgeText}
+                  </span>
+                  <span className="text-xs text-[#5B6882] font-medium">
+                    {formatDayDate(nextSession.startAt)} • {formatTime(nextSession.startAt)} - {formatTime(nextSession.endAt)} WIB
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-lg sm:text-xl font-heading font-bold text-[#09408C] tracking-tight">
+                    {nextSession.programName}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[#5B6882] mt-1.5">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <User size={14} className="text-[#09408C]" />
+                      <span>Tutor: <strong className="text-[#1B2A41]">{nextSession.tutorName}</strong></span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Clock size={14} className="text-[#09408C]" />
+                      <span>Durasi 90 Menit</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      {nextSession.mode === "ONLINE" ? (
+                        <>
+                          <Video size={14} className="text-blue-600" />
+                          <span className="font-semibold text-blue-700">Online (Live Zoom / Meet)</span>
+                        </>
+                      ) : (
+                        <>
+                          <MapPin size={14} className="text-emerald-600" />
+                          <span className="font-semibold text-emerald-700">Home Visit ({nextSession.address || "Rumah Siswa"})</span>
+                        </>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons for Next Session */}
+              <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-2.5 shrink-0">
+                {nextSession.mode === "ONLINE" ? (
+                  nextSession.meetingLink ? (
+                    <a
+                      href={nextSession.meetingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-5 py-3 rounded-xl bg-[#1F6F4A] hover:bg-[#165538] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+                    >
+                      <Video size={16} />
+                      <span>Masuk Ruang Belajar (Zoom/Meet)</span>
+                      <ExternalLink size={14} />
+                    </a>
+                  ) : (
+                    <div className="space-y-1.5 text-right w-full sm:w-auto">
+                      <div className="text-xs text-[#5B6882] bg-[#EAF1FA] px-3.5 py-2.5 rounded-xl border border-[#9AC1E2] text-center space-y-0.5">
+                        <span className="font-bold text-[#09408C] flex items-center justify-center gap-1.5">
+                          <Clock size={13} />
+                          <span>Tautan Kelas Siap Maksimal H-15 Menit</span>
+                        </span>
+                        <span className="text-[11px] text-[#5B6882] block">
+                          Tutor/Admin akan mengaktifkan tautan sebelum kelas dimulai.
+                        </span>
+                      </div>
+                      {nextRelInfo.isToday && (
+                        <a
+                          href={`https://wa.me/628123456789?text=${encodeURIComponent(
+                            `Halo Admin Sahabat Belajar, saya ${student.name} ingin konfirmasi tautan Zoom untuk sesi ${nextSession.programName} hari ini pukul ${formatTime(nextSession.startAt)} WIB. Terima kasih!`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-[#09408C] hover:underline w-full py-1"
+                        >
+                          <HelpCircle size={13} />
+                          <span>Tanya Admin via WhatsApp</span>
+                        </a>
+                      )}
+                    </div>
+                  )
+                ) : (
+                  <div className="text-xs text-[#5B6882] bg-[#E3F4EC] p-3 rounded-xl border border-[#1F6F4A]/20">
+                    <span className="font-bold text-[#1F6F4A] block">Home Visit (Tatap Muka)</span>
+                    <span>Tutor akan hadir di lokasi bimbingan.</span>
+                  </div>
+                )}
+
+                <a
+                  href={generateWaReminderUrl(nextSession)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-2 rounded-xl bg-[#EAF1FA] text-[#09408C] hover:bg-[#9AC1E2]/40 font-semibold text-xs border border-[#9AC1E2]/50 transition-colors flex items-center justify-center gap-1.5"
+                  title="Bagikan detail sesi ini ke WhatsApp siswa atau orang tua"
+                >
+                  <Share2 size={13} />
+                  <span>Kirim Pengingat ke WhatsApp</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-[#D5DDEB] p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center shrink-0">
+                <Calendar size={20} />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-[#1B2A41]">
+                  Belum Ada Sesi Bimbingan Terjadwal
+                </h4>
+                <p className="text-xs text-[#5B6882]">
+                  Admin & tutor siap mengatur jadwal belajar sesuai preferensi waktu Anda.
+                </p>
+              </div>
+            </div>
+            <a
+              href="https://wa.me/628123456789?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20ingin%20mengajukan%20jadwal%20bimbingan%20baru"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-bold transition-colors shrink-0 text-center shadow-2xs"
+            >
+              Ajukan Jadwal Sesi Baru
+            </a>
+          </div>
+        )}
 
         {/* Contextual Academic Program Highlights (Adaptive to K-12 vs CPNS vs S2/Beasiswa) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -731,6 +934,7 @@ export default function StudentPortalClient({
                 {upcomingSessions.map((session) => {
                   const formattedDate = formatDayDate(session.startAt);
                   const formattedTime = `${formatTime(session.startAt)} - ${formatTime(session.endAt)} WIB`;
+                  const relInfo = getRelativeDateInfo(session.startAt);
 
                   return (
                     <div
@@ -738,9 +942,14 @@ export default function StudentPortalClient({
                       className="bg-white rounded-2xl border border-[#D5DDEB] p-5 shadow-xs hover:border-[#9AC1E2] transition-all space-y-3"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#09408C] bg-[#EAF1FA] px-2.5 py-1 rounded-full">
-                          {session.programName}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-[#09408C] bg-[#EAF1FA] px-2.5 py-1 rounded-full">
+                            {session.programName}
+                          </span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full border ${relInfo.badgeClass}`}>
+                            {relInfo.badgeText}
+                          </span>
+                        </div>
                         <span className="text-xs font-semibold text-[#5B6882] flex items-center gap-1">
                           <Clock size={13} /> 90 Menit
                         </span>
@@ -782,13 +991,36 @@ export default function StudentPortalClient({
                               href={session.meetingLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#09408C] text-white font-medium text-xs hover:bg-[#0E3571] transition-colors shadow-xs"
+                              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1F6F4A] hover:bg-[#165538] text-white font-bold text-xs transition-colors shadow-2xs cursor-pointer"
                             >
-                              <Video size={14} /> Masuk Ruang Belajar (Zoom/Meet) <ExternalLink size={12} />
+                              <Video size={14} />
+                              <span>Masuk Ruang Belajar (Zoom/Meet)</span>
+                              <ExternalLink size={12} />
                             </a>
                           ) : (
-                            <div className="text-center py-2 text-xs text-[#5B6882] bg-slate-50 rounded-xl border border-dashed border-[#D5DDEB]">
-                              Tautan ruang belajar akan diaktifkan sebelum sesi dimulai
+                            <div className="text-xs text-[#5B6882] bg-[#EAF1FA]/60 p-3 rounded-xl border border-dashed border-[#9AC1E2] space-y-1 text-center">
+                              <div className="font-bold text-[#09408C] flex items-center justify-center gap-1.5">
+                                <Clock size={13} />
+                                <span>Tautan Kelas Siap Maksimal H-15 Menit</span>
+                              </div>
+                              <p className="text-[11px] text-[#5B6882]">
+                                Tautan ruang belajar akan diaktifkan oleh admin/tutor sebelum sesi dimulai.
+                              </p>
+                              {relInfo.isToday && (
+                                <div className="pt-0.5">
+                                  <a
+                                    href={`https://wa.me/628123456789?text=${encodeURIComponent(
+                                      `Halo Admin Sahabat Belajar, saya ${student.name} ingin konfirmasi link Zoom untuk sesi ${session.programName} hari ini pukul ${formatTime(session.startAt)} WIB. Terima kasih!`
+                                    )}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#09408C] hover:underline"
+                                  >
+                                    <HelpCircle size={12} />
+                                    <span>Tanya Admin via WhatsApp</span>
+                                  </a>
+                                </div>
+                              )}
                             </div>
                           )
                         ) : (
