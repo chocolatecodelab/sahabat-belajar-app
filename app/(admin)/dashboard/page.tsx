@@ -10,10 +10,15 @@ export default async function DashboardPage() {
     auth(),
   ]);
 
+  const roleLower = ((session?.user as any)?.role || "").toLowerCase();
+  const isAdmin = roleLower.includes("admin") || roleLower.includes("super");
+
   return (
     <SahabatBelajarDashboard
       data={data}
       userName={session?.user?.name || "Admin"}
+      userRole={(session?.user as any)?.role || (isAdmin ? "Admin" : "Staf")}
+      isAdmin={isAdmin}
     />
   );
 }

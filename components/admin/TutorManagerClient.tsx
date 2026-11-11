@@ -106,14 +106,16 @@ export default function TutorManagerClient({
           </p>
         </div>
 
-        <button
-          suppressHydrationWarning
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs"
-        >
-          <Plus size={14} />
-          <span>Tambah Tutor Baru</span>
-        </button>
+        {!isStaffViewer && (
+          <button
+            suppressHydrationWarning
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs cursor-pointer"
+          >
+            <Plus size={14} />
+            <span>Tambah Tutor Baru</span>
+          </button>
+        )}
       </div>
 
       {/* Search */}
@@ -182,8 +184,10 @@ export default function TutorManagerClient({
             <div className="mt-4 pt-3 border-t border-[#D5DDEB] flex items-center justify-between text-xs">
               <div>
                 <span className="text-[#5B6882]">Tarif Honor: </span>
-                {isStaffViewer ? (
-                  <span className="italic text-[#5B6882]">Dirahasiakan</span>
+                {isStaffViewer || !tutor.ratePerSession ? (
+                  <span className="italic text-[#5B6882] font-medium bg-[#F4F7FB] px-2 py-0.5 rounded-md">
+                    Dirahasiakan (Akses Terbatas Staf)
+                  </span>
                 ) : (
                   <span className="font-bold text-[#09408C] tabular-nums">
                     Rp {tutor.ratePerSession?.toLocaleString("id-ID")} / sesi

@@ -34,9 +34,13 @@ import type { SahabatBelajarDashboardData } from "@/actions/dashboard";
 export default function SahabatBelajarDashboard({
   data,
   userName = "Admin",
+  userRole = "Admin",
+  isAdmin = true,
 }: {
   data: SahabatBelajarDashboardData;
   userName?: string;
+  userRole?: string;
+  isAdmin?: boolean;
 }) {
   const [activeMetricTab, setActiveMetricTab] = useState<"OMSET" | "SESI">("OMSET");
 
@@ -79,7 +83,7 @@ export default function SahabatBelajarDashboard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-[11px] font-bold text-[#09408C] uppercase tracking-wider bg-[#EAF1FA] px-2.5 py-0.5 rounded-full border border-[#9AC1E2]">
-              Executive Command Center
+              {isAdmin ? "Executive Command Center" : "Pusat Operasional Staf"}
             </span>
             <span className="flex items-center gap-1 text-[11px] font-semibold text-[#1F6F4A] bg-[#E3F4EC] px-2.5 py-0.5 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1F6F4A] animate-pulse"></span>
@@ -140,7 +144,15 @@ export default function SahabatBelajarDashboard({
             </div>
           </div>
           <p className="text-[11px] text-[#5B6882] mt-2 pt-2 border-t border-[#D5DDEB]/60">
-            Estimasi honor tutor: <strong>Rp {data.monthlyTutorPayoutEstimate.toLocaleString("id-ID")}</strong>
+            {isAdmin ? (
+              <>
+                Estimasi honor tutor: <strong>Rp {data.monthlyTutorPayoutEstimate.toLocaleString("id-ID")}</strong>
+              </>
+            ) : (
+              <>
+                Total durasi bimbingan: <strong>{data.monthlyHoursTaught} Jam Pembelajaran</strong>
+              </>
+            )}
           </p>
         </div>
 
@@ -674,13 +686,23 @@ export default function SahabatBelajarDashboard({
                 <BookOpen size={15} className="text-[#9AC1E2]" />
                 <span className="font-semibold">Bank Modul</span>
               </Link>
-              <Link
-                href="/dashboard/honor"
-                className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors flex items-center gap-2"
-              >
-                <DollarSign size={15} className="text-[#9AC1E2]" />
-                <span className="font-semibold">Rekap Honor</span>
-              </Link>
+              {isAdmin ? (
+                <Link
+                  href="/dashboard/honor"
+                  className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors flex items-center gap-2"
+                >
+                  <DollarSign size={15} className="text-[#9AC1E2]" />
+                  <span className="font-semibold">Rekap Honor</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/dashboard/jadwal"
+                  className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors flex items-center gap-2"
+                >
+                  <Calendar size={15} className="text-[#9AC1E2]" />
+                  <span className="font-semibold">Kelola Jadwal</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>
