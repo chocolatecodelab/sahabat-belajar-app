@@ -193,21 +193,80 @@ export async function updateTutor(
   }
 }
 
+export async function toggleTutorStatus(
+  id: string,
+  status: TutorStatus
+): Promise<ActionResponse> {
+  try {
+    await requireAdminOnly();
+    const { error } = await supabaseAdmin
+      .from("Tutor")
+      .update({ status, updatedAt: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    revalidatePath("/dashboard/tutor");
+    return {
+      success: true,
+      message: `Status tutor berhasil diubah menjadi ${status}.`,
+    };
+  } catch (error: any) {
+    console.error("toggleTutorStatus error:", error);
+    return {
+      success: false,
+      message: "Gagal mengubah status tutor.",
+    };
+  }
+}
+
 export async function deleteTutor(id: string): Promise<ActionResponse> {
   try {
     await requireAdminOnly();
+
+    // 1. Cek apakah tutor memiliki riwayat sesi bimbingan (Session)
+    const { count: sessionCount } = await supabaseAdmin
+      .from("Session")
+      .select("*", { count: "exact", head: true })
+      .eq("tutorId", id);
+
+    // 2. Cek apakah tutor memiliki riwayat pembayaran honor (TutorPayout)
+    const { count: payoutCount } = await supabaseAdmin
+      .from("TutorPayout")
+      .select("*", { count: "exact", head: true })
+      .eq("tutorId", id);
+
+    if ((sessionCount && sessionCount > 0) || (payoutCount && payoutCount > 0)) {
+      // Soft Deactivate: lindungi riwayat honor (BR-6) dan jurnal bimbingan siswa
+      await supabaseAdmin
+        .from("Tutor")
+        .update({
+          status: "NONAKTIF",
+          updatedAt: new Date().toISOString(),
+        })
+        .eq("id", id);
+
+      revalidatePath("/dashboard/tutor");
+      return {
+        success: true,
+        message: `Tutor dinonaktifkan secara aman (soft delete) karena memiliki riwayat ${sessionCount || 0} sesi bimbingan dan ${payoutCount || 0} rekap honor.`,
+      };
+    }
+
+    // Hard delete jika belum pernah ada sesi atau pembayaran honor
     const { error } = await supabaseAdmin.from("Tutor").delete().eq("id", id);
     if (error) throw error;
 
     revalidatePath("/dashboard/tutor");
     return {
       success: true,
-      message: "Data tutor berhasil dihapus.",
+      message: "Data tutor berhasil dihapus permanen.",
     };
   } catch (error: any) {
+    console.error("deleteTutor error:", error);
     return {
       success: false,
-      message: "Gagal menghapus data tutor.",
+      message: error.message || "Gagal menghapus data tutor.",
     };
   }
 }

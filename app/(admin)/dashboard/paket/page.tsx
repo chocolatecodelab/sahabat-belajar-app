@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PaketPage() {
   const [programs, studentPackages, studentsRes] = await Promise.all([
-    getPrograms(),
+    getPrograms(true),
     getStudentPackages(),
     getStudents({ perPage: 100 }),
   ]);

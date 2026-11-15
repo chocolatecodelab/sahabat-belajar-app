@@ -237,21 +237,80 @@ export async function updateStudent(
   }
 }
 
+export async function toggleStudentStatus(
+  id: string,
+  status: StudentStatus
+): Promise<ActionResponse> {
+  try {
+    await requireStaffOrAdmin();
+    const { error } = await supabaseAdmin
+      .from("Student")
+      .update({ status, updatedAt: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    revalidatePath("/dashboard/siswa");
+    return {
+      success: true,
+      message: `Status siswa berhasil diubah menjadi ${status}.`,
+    };
+  } catch (error: any) {
+    console.error("toggleStudentStatus error:", error);
+    return {
+      success: false,
+      message: "Gagal mengubah status siswa.",
+    };
+  }
+}
+
 export async function deleteStudent(id: string): Promise<ActionResponse> {
   try {
     await requireStaffOrAdmin();
+
+    // 1. Cek apakah siswa memiliki paket bimbingan (StudentPackage)
+    const { count: pkgCount } = await supabaseAdmin
+      .from("StudentPackage")
+      .select("*", { count: "exact", head: true })
+      .eq("studentId", id);
+
+    // 2. Cek apakah siswa memiliki riwayat sesi pertemuan (SessionParticipant)
+    const { count: sessionCount } = await supabaseAdmin
+      .from("SessionParticipant")
+      .select("*", { count: "exact", head: true })
+      .eq("studentId", id);
+
+    if ((pkgCount && pkgCount > 0) || (sessionCount && sessionCount > 0)) {
+      // Soft Deactivate: lindungi data historis transaksi dan absensi belajar
+      await supabaseAdmin
+        .from("Student")
+        .update({
+          status: "NONAKTIF",
+          updatedAt: new Date().toISOString(),
+        })
+        .eq("id", id);
+
+      revalidatePath("/dashboard/siswa");
+      return {
+        success: true,
+        message: `Siswa dinonaktifkan secara aman (soft delete) karena memiliki riwayat ${pkgCount || 0} paket dan ${sessionCount || 0} sesi bimbingan.`,
+      };
+    }
+
+    // Hard delete jika siswa baru mendaftar dan belum memiliki riwayat paket/sesi
     const { error } = await supabaseAdmin.from("Student").delete().eq("id", id);
     if (error) throw error;
 
     revalidatePath("/dashboard/siswa");
     return {
       success: true,
-      message: "Data siswa berhasil dihapus.",
+      message: "Data siswa berhasil dihapus permanen.",
     };
   } catch (error: any) {
+    console.error("deleteStudent error:", error);
     return {
       success: false,
-      message: "Gagal menghapus data siswa.",
+      message: error.message || "Gagal menghapus data siswa.",
     };
   }
 }
