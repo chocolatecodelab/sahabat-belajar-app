@@ -159,8 +159,9 @@ export default function TutorManagerClient({
                   </div>
                 </div>
 
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#E3F4EC] text-[#1F6F4A] border border-[#A3E635]">
-                  {tutor.status}
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E3F4EC] text-[#1F6F4A] border border-[#1F6F4A]/25">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1F6F4A]" />
+                  <span>{tutor.status}</span>
                 </span>
               </div>
 
@@ -205,12 +206,20 @@ export default function TutorManagerClient({
 
       {/* Modal Tambah Tutor */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tutor-add-modal-title"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setShowAddModal(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+        >
           <form
             onSubmit={handleCreateTutor}
             className="bg-white rounded-2xl p-6 max-w-md w-full border border-[#D5DDEB] shadow-xl space-y-4"
           >
-            <h3 className="text-lg font-bold text-[#09408C] font-display">
+            <h3 id="tutor-add-modal-title" className="text-lg font-bold text-[#09408C] font-display">
               Tambah Profil Tutor
             </h3>
 
@@ -247,7 +256,7 @@ export default function TutorManagerClient({
 
               <div>
                 <label htmlFor="tutor-rate-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
-                  Tarif Honor per Sesi (Rp) *
+                  Tarif Honor per Sesi (Rp) <span className="text-[#B4381F]">(Wajib)</span>
                 </label>
                 <input
                   id="tutor-rate-input"
@@ -257,6 +266,11 @@ export default function TutorManagerClient({
                   onChange={(e) => setRatePerSession(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
                 />
+                {Number(ratePerSession) > 0 && (
+                  <p className="text-[11px] font-semibold text-[#09408C] mt-1 tabular-nums">
+                    Terbaca: Rp {Number(ratePerSession).toLocaleString("id-ID")} / sesi
+                  </p>
+                )}
               </div>
             </div>
 

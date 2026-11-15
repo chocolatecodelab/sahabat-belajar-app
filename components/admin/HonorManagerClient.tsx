@@ -66,6 +66,13 @@ export default function HonorManagerClient({
   };
 
   const handleUpdateStatus = async (id: string, status: PayoutStatus) => {
+    if (status === "DIBAYAR") {
+      const targetPayout = payouts.find((p) => p.id === id);
+      const confirmed = window.confirm(
+        `Apakah Anda yakin ingin menandai honor ${targetPayout?.tutor?.name || "Tutor"} sebesar Rp ${(targetPayout?.totalAmount || 0).toLocaleString("id-ID")} sebagai DIBAYAR? Status yang sudah dibayar akan dikunci.`
+      );
+      if (!confirmed) return;
+    }
     setUpdatingPayoutId(id);
     const res = await updatePayoutStatus(id, status);
     setUpdatingPayoutId(null);
@@ -187,8 +194,26 @@ export default function HonorManagerClient({
       {/* Table */}
       <div className="bg-white rounded-2xl border border-[#D5DDEB] shadow-xs overflow-hidden">
         {payouts.length === 0 ? (
-          <div className="p-12 text-center text-sm text-[#5B6882]">
-            Belum ada rekapitulasi honor tutor yang dibuat.
+          <div className="p-12 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#EAF1FA] text-[#09408C] flex items-center justify-center mx-auto">
+              <Calculator size={22} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-[#1B2A41] font-display">
+                Belum Ada Rekapitulasi Honor
+              </h3>
+              <p className="text-xs text-[#5B6882] mt-0.5 max-w-sm mx-auto">
+                Pilih periode bimbingan untuk menghitung honor otomatis berdasarkan jumlah sesi terlaksana.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowCalcModal(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-2xs"
+            >
+              <Calculator size={14} />
+              <span>Hitung Rekap Periode Sekarang</span>
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -237,15 +262,24 @@ export default function HonorManagerClient({
 
                       <td className="py-3.5 px-4">
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                             isPaid
-                              ? "bg-[#E3F4EC] text-[#1F6F4A] border border-[#A3E635]"
+                              ? "bg-[#E3F4EC] text-[#1F6F4A] border border-[#1F6F4A]/25"
                               : p.status === "DISETUJUI"
                               ? "bg-[#EAF1FA] text-[#09408C] border border-[#9AC1E2]"
-                              : "bg-[#FEF7E6] text-[#B45309] border border-[#F5B82E]"
+                              : "bg-[#FEF7E6] text-[#1B2A41] border border-[#F5B82E]"
                           }`}
                         >
-                          {p.status}
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isPaid
+                                ? "bg-[#1F6F4A]"
+                                : p.status === "DISETUJUI"
+                                ? "bg-[#09408C]"
+                                : "bg-[#B45309]"
+                            }`}
+                          />
+                          <span>{p.status}</span>
                         </span>
                       </td>
 
@@ -280,12 +314,20 @@ export default function HonorManagerClient({
 
       {/* Modal Hitung Rekap */}
       {showCalcModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="honor-calc-modal-title"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setShowCalcModal(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+        >
           <form
             onSubmit={handleCalculate}
             className="bg-white rounded-2xl p-6 max-w-md w-full border border-[#D5DDEB] shadow-xl space-y-4"
           >
-            <h3 className="text-lg font-bold text-[#09408C] font-display">
+            <h3 id="honor-calc-modal-title" className="text-lg font-bold text-[#09408C] font-display">
               Hitung Rekap Honor Tutor
             </h3>
 

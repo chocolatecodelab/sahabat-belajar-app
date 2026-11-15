@@ -869,7 +869,15 @@ export default function TutorPortalClient({
 
         {/* Modal: Formulir Cepat Absensi & Jurnal Pertemuan (Mobile First - BR-1) */}
         {selectedSessionForJournal && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tutor-journal-modal-title"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setSelectedSessionForJournal(null);
+            }}
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
+          >
             <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-[#D5DDEB] space-y-5 relative max-h-[90vh] overflow-y-auto no-scrollbar">
               <button
                 onClick={() => setSelectedSessionForJournal(null)}
@@ -883,7 +891,7 @@ export default function TutorPortalClient({
                 <span className="text-[10px] font-bold text-[#09408C] uppercase tracking-wider bg-[#EAF1FA] px-2.5 py-0.5 rounded-full">
                   Formulir Cepat Absensi & Jurnal (90 Mnt)
                 </span>
-                <h3 className="text-lg font-heading font-bold text-[#1B2A41] mt-1.5">
+                <h3 id="tutor-journal-modal-title" className="text-lg font-display font-bold text-[#1B2A41] mt-1.5">
                   Laporan Hasil Sesi Bimbingan
                 </h3>
                 <p className="text-xs text-[#5B6882]">
@@ -1005,7 +1013,15 @@ export default function TutorPortalClient({
         )}
         {/* Modal: Input / Perbarui Tautan Ruang Belajar Online (UX-FLOW-TUTOR-001) */}
         {sessionForLinkModal && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tutor-link-modal-title"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setSessionForLinkModal(null);
+            }}
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
+          >
             <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#D5DDEB] space-y-4 relative">
               <button
                 type="button"
@@ -1020,7 +1036,7 @@ export default function TutorPortalClient({
                 <span className="text-[10px] font-bold text-[#09408C] uppercase tracking-wider bg-[#EAF1FA] px-2.5 py-0.5 rounded-full">
                   Tautan Ruang Belajar Mandiri
                 </span>
-                <h3 className="text-base font-heading font-bold text-[#1B2A41] mt-1.5">
+                <h3 id="tutor-link-modal-title" className="text-base font-display font-bold text-[#1B2A41] mt-1.5">
                   Atur Tautan Zoom / Google Meet
                 </h3>
                 <p className="text-xs text-[#5B6882] mt-0.5">
@@ -1089,6 +1105,51 @@ export default function TutorPortalClient({
           </div>
         )}
       </main>
+
+      {/* Mobile Sticky Bottom Navigation Bar (DESIGN.md 4.4 - UX-MOB-001) */}
+      <nav
+        aria-label="Navigasi Bawah Portal Tutor"
+        className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#D5DDEB] px-2 py-1.5 flex items-center justify-around shadow-lg"
+      >
+        <button
+          type="button"
+          onClick={() => setActiveTab("jadwal")}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[11px] font-semibold transition-colors ${
+            activeTab === "jadwal"
+              ? "text-[#09408C] bg-[#EAF1FA]"
+              : "text-[#5B6882] hover:text-[#1B2A41]"
+          }`}
+        >
+          <Calendar size={17} />
+          <span className="mt-0.5">Jadwal ({todaySessions.length + upcomingSessions.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("jurnal")}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[11px] font-semibold transition-colors ${
+            activeTab === "jurnal"
+              ? "text-[#09408C] bg-[#EAF1FA]"
+              : "text-[#5B6882] hover:text-[#1B2A41]"
+          }`}
+        >
+          <BookOpen size={17} />
+          <span className="mt-0.5">Jurnal ({completedSessions.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("honor")}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[11px] font-semibold transition-colors ${
+            activeTab === "honor"
+              ? "text-[#09408C] bg-[#EAF1FA]"
+              : "text-[#5B6882] hover:text-[#1B2A41]"
+          }`}
+        >
+          <DollarSign size={17} />
+          <span className="mt-0.5">Honor</span>
+        </button>
+      </nav>
     </div>
   );
 }

@@ -53,19 +53,47 @@ export async function createSession(
     const recurrenceId = weeks > 1 ? `rec_${Date.now()}` : null;
     const createdSessionIds: string[] = [];
 
+    // QA-PERF-001: Ambil paket aktif untuk masing-masing siswa sekali saja di luar loop mingguan
+    const { data: allActivePkgs } = await supabaseAdmin
+      .from("StudentPackage")
+      .select("id, studentId, createdAt")
+      .in("studentId", input.studentIds)
+      .in("status", ["AKTIF", "HAMPIR_HABIS"])
+      .order("createdAt", { ascending: false });
+
+    const participantData = input.studentIds.map((studentId) => {
+      const matchedPkg = (allActivePkgs || []).find((pkg: any) => pkg.studentId === studentId);
+      return {
+        studentId,
+        studentPackageId: matchedPkg?.id || null,
+        attendance: "HADIR",
+        quotaDeducted: false,
+      };
+    });
+
     for (let w = 0; w < weeks; w++) {
       const currentStart = new Date(startDate.getTime() + w * 7 * 24 * 60 * 60 * 1000);
       const currentEnd = new Date(endDate.getTime() + w * 7 * 24 * 60 * 60 * 1000);
 
-      // BR-2: Deteksi Bentrok Jadwal Tutor
-      const { data: tutorConflicts } = await supabaseAdmin
-        .from("Session")
-        .select("id, tutor:Tutor(name)")
-        .eq("tutorId", input.tutorId)
-        .neq("status", "DIBATALKAN")
-        .lt("startAt", currentEnd.toISOString())
-        .gt("endAt", currentStart.toISOString())
-        .limit(1);
+      // BR-2 & QA-PERF-001: Deteksi Bentrok Jadwal Tutor & Siswa secara paralel
+      const [{ data: tutorConflicts }, { data: studentConflicts }] = await Promise.all([
+        supabaseAdmin
+          .from("Session")
+          .select("id, tutor:Tutor(name)")
+          .eq("tutorId", input.tutorId)
+          .neq("status", "DIBATALKAN")
+          .lt("startAt", currentEnd.toISOString())
+          .gt("endAt", currentStart.toISOString())
+          .limit(1),
+        supabaseAdmin
+          .from("SessionParticipant")
+          .select("id, studentId, student:Student(name), session:Session!inner(id, startAt, endAt, status)")
+          .in("studentId", input.studentIds)
+          .neq("session.status", "DIBATALKAN")
+          .lt("session.startAt", currentEnd.toISOString())
+          .gt("session.endAt", currentStart.toISOString())
+          .limit(1),
+      ]);
 
       if (tutorConflicts && tutorConflicts.length > 0) {
         const tutorName = (tutorConflicts[0] as any).tutor?.name || "Tutor";
@@ -75,16 +103,6 @@ export async function createSession(
         };
       }
 
-      // BR-2: Deteksi Bentrok Jadwal Siswa (Batch Query Tanpa Limit 10 - QA-FUNC-004 & QA-PERF-001)
-      const { data: studentConflicts } = await supabaseAdmin
-        .from("SessionParticipant")
-        .select("id, studentId, student:Student(name), session:Session!inner(id, startAt, endAt, status)")
-        .in("studentId", input.studentIds)
-        .neq("session.status", "DIBATALKAN")
-        .lt("session.startAt", currentEnd.toISOString())
-        .gt("session.endAt", currentStart.toISOString())
-        .limit(1);
-
       if (studentConflicts && studentConflicts.length > 0) {
         const studentName = (studentConflicts[0] as any).student?.name || "Salah satu siswa";
         return {
@@ -92,24 +110,6 @@ export async function createSession(
           message: `Bentrok jadwal! ${studentName} sudah memiliki sesi lain pada jam tersebut.`,
         };
       }
-
-      // Cari paket aktif untuk masing-masing siswa secara batch (QA-PERF-001)
-      const { data: allActivePkgs } = await supabaseAdmin
-        .from("StudentPackage")
-        .select("id, studentId, createdAt")
-        .in("studentId", input.studentIds)
-        .in("status", ["AKTIF", "HAMPIR_HABIS"])
-        .order("createdAt", { ascending: false });
-
-      const participantData = input.studentIds.map((studentId) => {
-        const matchedPkg = (allActivePkgs || []).find((pkg: any) => pkg.studentId === studentId);
-        return {
-          studentId,
-          studentPackageId: matchedPkg?.id || null,
-          attendance: "HADIR",
-          quotaDeducted: false,
-        };
-      });
 
       const now = new Date().toISOString();
       const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
@@ -341,100 +341,106 @@ export async function updateSessionStatus(
       })
       .eq("id", sessionId);
 
-    // 2. BR-1: Jika status diubah menjadi TERLAKSANA, potong kuota peserta hadir
+    // 2. BR-1 & QA-PERF-001: Jika status diubah menjadi TERLAKSANA, potong kuota peserta hadir secara paralel
     if (newStatus === ("TERLAKSANA" as any)) {
-      for (const p of session.participants || []) {
-        if (!p.quotaDeducted && p.studentPackageId && p.attendance === "HADIR") {
-          const { data: currentPkg } = await supabaseAdmin
-            .from("StudentPackage")
-            .select("*")
-            .eq("id", p.studentPackageId)
-            .single();
-
-          if (currentPkg) {
-            const newQuotaUsed = (currentPkg.quotaUsed || 0) + 1;
-            let newPkgStatus = currentPkg.status;
-
-            if (newQuotaUsed >= currentPkg.quotaTotal) {
-              newPkgStatus = "HABIS";
-            } else if (currentPkg.quotaTotal - newQuotaUsed <= 2) {
-              newPkgStatus = "HAMPIR_HABIS";
-            }
-
-            await supabaseAdmin
+      await Promise.all(
+        (session.participants || []).map(async (p: any) => {
+          if (!p.quotaDeducted && p.studentPackageId && p.attendance === "HADIR") {
+            const { data: currentPkg } = await supabaseAdmin
               .from("StudentPackage")
-              .update({
-                quotaUsed: newQuotaUsed,
-                status: newPkgStatus,
-                updatedAt: now,
-              })
-              .eq("id", p.studentPackageId);
+              .select("*")
+              .eq("id", p.studentPackageId)
+              .single();
 
-            await supabaseAdmin
-              .from("SessionParticipant")
-              .update({
-                quotaDeducted: true,
-              })
-              .eq("id", p.id);
+            if (currentPkg) {
+              const newQuotaUsed = (currentPkg.quotaUsed || 0) + 1;
+              let newPkgStatus = currentPkg.status;
 
-            // Trigger otomatis peringatan kuota kritis jika sisa kuota <= 2 sesi atau habis
-            const quotaRemaining = Math.max(0, currentPkg.quotaTotal - newQuotaUsed);
-            if (quotaRemaining <= 2) {
-              try {
-                const [{ data: stInfo }, { data: pkgInfo }] = await Promise.all([
-                  supabaseAdmin.from("Student").select("name, parentPhone").eq("id", p.studentId).maybeSingle(),
-                  supabaseAdmin.from("Package").select("name").eq("id", currentPkg.packageId).maybeSingle(),
-                ]);
-                await notifyLowQuotaAlert({
-                  studentName: stInfo?.name || "Siswa Sahabat Belajar",
-                  parentPhone: stInfo?.parentPhone || null,
-                  packageName: pkgInfo?.name || "Paket Bimbingan Belajar",
-                  quotaTotal: currentPkg.quotaTotal,
-                  quotaUsed: newQuotaUsed,
-                  quotaRemaining,
-                });
-              } catch (lowQuotaErr) {
-                console.error("lowQuotaAlert trigger error:", lowQuotaErr);
+              if (newQuotaUsed >= currentPkg.quotaTotal) {
+                newPkgStatus = "HABIS";
+              } else if (currentPkg.quotaTotal - newQuotaUsed <= 2) {
+                newPkgStatus = "HAMPIR_HABIS";
+              }
+
+              await Promise.all([
+                supabaseAdmin
+                  .from("StudentPackage")
+                  .update({
+                    quotaUsed: newQuotaUsed,
+                    status: newPkgStatus,
+                    updatedAt: now,
+                  })
+                  .eq("id", p.studentPackageId),
+                supabaseAdmin
+                  .from("SessionParticipant")
+                  .update({
+                    quotaDeducted: true,
+                  })
+                  .eq("id", p.id),
+              ]);
+
+              // Trigger otomatis peringatan kuota kritis jika sisa kuota <= 2 sesi atau habis
+              const quotaRemaining = Math.max(0, currentPkg.quotaTotal - newQuotaUsed);
+              if (quotaRemaining <= 2) {
+                try {
+                  const [{ data: stInfo }, { data: pkgInfo }] = await Promise.all([
+                    supabaseAdmin.from("Student").select("name, parentPhone").eq("id", p.studentId).maybeSingle(),
+                    supabaseAdmin.from("Package").select("name").eq("id", currentPkg.packageId).maybeSingle(),
+                  ]);
+                  await notifyLowQuotaAlert({
+                    studentName: stInfo?.name || "Siswa Sahabat Belajar",
+                    parentPhone: stInfo?.parentPhone || null,
+                    packageName: pkgInfo?.name || "Paket Bimbingan Belajar",
+                    quotaTotal: currentPkg.quotaTotal,
+                    quotaUsed: newQuotaUsed,
+                    quotaRemaining,
+                  });
+                } catch (lowQuotaErr) {
+                  console.error("lowQuotaAlert trigger error:", lowQuotaErr);
+                }
               }
             }
           }
-        }
-      }
+        })
+      );
     } else if (session.status === ("TERLAKSANA" as any) && newStatus !== ("TERLAKSANA" as any)) {
-      // 2b. BR-1 Quota Rollback (SB-QA-FUN-005): Pulihkan kuota jika sesi yang sebelumnya terlaksana dibatalkan/dijadwalkan ulang
-      for (const p of session.participants || []) {
-        if (p.quotaDeducted && p.studentPackageId) {
-          const { data: currentPkg } = await supabaseAdmin
-            .from("StudentPackage")
-            .select("*")
-            .eq("id", p.studentPackageId)
-            .single();
-
-          if (currentPkg) {
-            const newQuotaUsed = Math.max(0, (currentPkg.quotaUsed || 0) - 1);
-            let newPkgStatus = "AKTIF";
-            if (currentPkg.quotaTotal - newQuotaUsed <= 2) {
-              newPkgStatus = "HAMPIR_HABIS";
-            }
-
-            await supabaseAdmin
+      // 2b. BR-1 Quota Rollback (SB-QA-FUN-005 & QA-PERF-001): Pulihkan kuota secara paralel
+      await Promise.all(
+        (session.participants || []).map(async (p: any) => {
+          if (p.quotaDeducted && p.studentPackageId) {
+            const { data: currentPkg } = await supabaseAdmin
               .from("StudentPackage")
-              .update({
-                quotaUsed: newQuotaUsed,
-                status: newPkgStatus,
-                updatedAt: now,
-              })
-              .eq("id", p.studentPackageId);
+              .select("*")
+              .eq("id", p.studentPackageId)
+              .single();
 
-            await supabaseAdmin
-              .from("SessionParticipant")
-              .update({
-                quotaDeducted: false,
-              })
-              .eq("id", p.id);
+            if (currentPkg) {
+              const newQuotaUsed = Math.max(0, (currentPkg.quotaUsed || 0) - 1);
+              let newPkgStatus = "AKTIF";
+              if (currentPkg.quotaTotal - newQuotaUsed <= 2) {
+                newPkgStatus = "HAMPIR_HABIS";
+              }
+
+              await Promise.all([
+                supabaseAdmin
+                  .from("StudentPackage")
+                  .update({
+                    quotaUsed: newQuotaUsed,
+                    status: newPkgStatus,
+                    updatedAt: now,
+                  })
+                  .eq("id", p.studentPackageId),
+                supabaseAdmin
+                  .from("SessionParticipant")
+                  .update({
+                    quotaDeducted: false,
+                  })
+                  .eq("id", p.id),
+              ]);
+            }
           }
-        }
-      }
+        })
+      );
     }
 
     revalidatePath("/dashboard/jadwal");
@@ -480,14 +486,16 @@ export async function saveSessionJournal(
         updatedAt: now,
       }, { onConflict: "sessionId" });
 
-    // Update attendances if provided
+    // QA-PERF-001: Update attendances in parallel if provided
     if (data.attendances && data.attendances.length > 0) {
-      for (const att of data.attendances) {
-        await supabaseAdmin
-          .from("SessionParticipant")
-          .update({ attendance: att.attendance })
-          .eq("id", att.participantId);
-      }
+      await Promise.all(
+        data.attendances.map((att) =>
+          supabaseAdmin
+            .from("SessionParticipant")
+            .update({ attendance: att.attendance })
+            .eq("id", att.participantId)
+        )
+      );
     }
 
     revalidatePath("/dashboard/jadwal");

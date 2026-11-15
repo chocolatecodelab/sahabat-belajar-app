@@ -360,7 +360,7 @@ export default function ScheduleManagerClient({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={() => {
               setActiveTab("smart-match");
@@ -386,7 +386,7 @@ export default function ScheduleManagerClient({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#D5DDEB] pb-2 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-[#D5DDEB] pb-2 overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveTab("agenda")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
@@ -431,7 +431,10 @@ export default function ScheduleManagerClient({
               : "text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA]"
           }`}
         >
-          <UserCheck size={15} className="text-[#09408C]" />
+          <UserCheck
+            size={15}
+            className={activeTab === "smart-match" ? "text-[#9AC1E2]" : "text-[#09408C]"}
+          />
           <span>Auto-Match Tutor (Cerdas)</span>
         </button>
       </div>

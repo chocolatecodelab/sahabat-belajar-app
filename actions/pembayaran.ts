@@ -186,7 +186,7 @@ export async function getPayments(params?: {
         studentPackage:StudentPackage(
           *,
           student:Student(id, name, parentPhone),
-          package:Package(id, name, price)
+          package:Package(id, name, price, program:Program(id, name))
         )
       `)
       .order("paidAt", { ascending: false })

@@ -107,7 +107,11 @@ export default function PaymentManagerClient({
         const studentName = p.studentPackage?.student?.name || "Siswa";
         const parentPhone = p.studentPackage?.student?.parentPhone || "-";
         const packageName = p.studentPackage?.package?.name || "-";
-        const programName = p.studentPackage?.program?.name || "-";
+        const programName =
+          p.studentPackage?.package?.program?.name ||
+          p.studentPackage?.program?.name ||
+          p.studentPackage?.package?.name ||
+          "-";
         const amount = p.amount || 0;
         const method = p.method || "TRANSFER_BANK";
         const date = formatDate(p.paidAt);
@@ -355,12 +359,20 @@ export default function PaymentManagerClient({
 
       {/* Modal Catat Pembayaran */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-record-payment-title"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setShowAddModal(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+        >
           <form
             onSubmit={handleRecordPayment}
             className="bg-white rounded-2xl p-6 max-w-md w-full border border-[#D5DDEB] shadow-xl space-y-4"
           >
-            <h3 className="text-lg font-bold text-[#09408C] font-heading">
+            <h3 id="modal-record-payment-title" className="text-lg font-bold text-[#09408C] font-display">
               Catat Pembayaran Manual
             </h3>
 
@@ -385,7 +397,7 @@ export default function PaymentManagerClient({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="pay-amount-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
-                  Nominal Bayar (Rp) *
+                  Nominal Bayar (Rp) <span className="text-[#B4381F]">(Wajib)</span>
                 </label>
                 <input
                   id="pay-amount-input"
@@ -396,6 +408,11 @@ export default function PaymentManagerClient({
                   onChange={(e) => setAmount(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
                 />
+                {Number(amount) > 0 && (
+                  <p className="text-[11px] font-semibold text-[#09408C] mt-1 tabular-nums">
+                    Terbaca: Rp {Number(amount).toLocaleString("id-ID")}
+                  </p>
+                )}
               </div>
 
               <div>

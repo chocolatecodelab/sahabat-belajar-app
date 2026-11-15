@@ -497,25 +497,72 @@ export async function updateTutorMeetingLink(
       };
     }
 
-    const trimmedLink = (meetingLink || "").trim();
-    if (trimmedLink && !trimmedLink.startsWith("http://") && !trimmedLink.startsWith("https://")) {
+    // QA-FUNC-001: Role Authorization (Only Admin or Tutor may update meetingLink)
+    const userRole = ((session.user as any)?.role || "").toLowerCase();
+    const isAdmin = userRole.includes("admin") || userRole.includes("super");
+    const isTutor = userRole.includes("tutor");
+
+    if (!isAdmin && !isTutor) {
       return {
         success: false,
-        message: "Tautan harus diawali dengan http:// atau https:// (contoh: https://meet.google.com/... atau https://zoom.us/...)",
+        message: "Akses ditolak: Hanya Tutor pengajar atau Admin yang dapat memperbarui tautan ruang belajar.",
       };
     }
 
-    // 1. Update in Supabase DB if session exists
-    const { error } = await supabaseAdmin
-      .from("Session")
-      .update({
-        meetingLink: trimmedLink || null,
-        updatedAt: new Date().toISOString(),
-      })
-      .eq("id", sessionId);
+    const trimmedLink = (meetingLink || "").trim();
+    if (trimmedLink) {
+      try {
+        const parsedUrl = new URL(trimmedLink);
+        if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
+          throw new Error("Invalid protocol");
+        }
+      } catch {
+        return {
+          success: false,
+          message: "Tautan tidak valid. Harus diawali dengan https:// atau http:// (contoh: https://meet.google.com/... atau https://zoom.us/...)",
+        };
+      }
+    }
 
-    if (error) {
-      console.warn("Notice: Session DB update via Supabase:", error.message);
+    // QA-FUNC-001: Ownership Check (IDOR Prevention) if caller is a Tutor
+    const { data: existingSession } = await supabaseAdmin
+      .from("Session")
+      .select("id, tutorId")
+      .eq("id", sessionId)
+      .maybeSingle();
+
+    if (existingSession && !isAdmin) {
+      const userId = (session.user as any)?.id;
+      const userName = (session.user as any)?.name || "";
+
+      const { data: myTutor } = await supabaseAdmin
+        .from("Tutor")
+        .select("id")
+        .or(`userId.eq.${userId},name.ilike.%${userName}%`)
+        .limit(1)
+        .maybeSingle();
+
+      if (myTutor && existingSession.tutorId !== myTutor.id) {
+        return {
+          success: false,
+          message: "Akses ditolak: Anda hanya dapat mengubah tautan ruang belajar pada jadwal sesi mengajar milik Anda sendiri.",
+        };
+      }
+    }
+
+    // 1. Update in Supabase DB if session exists
+    if (existingSession) {
+      const { error } = await supabaseAdmin
+        .from("Session")
+        .update({
+          meetingLink: trimmedLink || null,
+          updatedAt: new Date().toISOString(),
+        })
+        .eq("id", sessionId);
+
+      if (error) {
+        console.warn("Notice: Session DB update via Supabase:", error.message);
+      }
     }
 
     // 2. Also update in-memory DEMO_TUTORS for seamless test/demo environments

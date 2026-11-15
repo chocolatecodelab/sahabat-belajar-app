@@ -124,6 +124,19 @@ h6,
   font-variant-numeric: tabular-nums;
 }
 
+/* UX-SYS-001: Ensure all interactive controls display pointer cursor in Tailwind v4 */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+select:not(:disabled),
+summary {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
 /* ============================
    TYPOGRAPHY UTILITY CLASSES
    ============================ */
@@ -251,6 +264,18 @@ h6,
 
 ::-webkit-scrollbar-thumb:hover {
   background: #9ac1e2;
+}
+
+/* QA-COMP-001: Cross-browser hidden scrollbar utility for horizontal tabs */
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* ============================

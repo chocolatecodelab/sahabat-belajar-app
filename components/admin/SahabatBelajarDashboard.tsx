@@ -478,10 +478,10 @@ export default function SahabatBelajarDashboard({
               {data.actionItems.lowQuotaStudents.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 rounded-2xl bg-[#FEF7E6] border border-[#F5B82E]/40 text-xs flex items-center justify-between gap-2"
+                  className="p-3 rounded-2xl bg-[#FEF7E6] border border-[#F5B82E]/40 text-xs flex flex-wrap sm:flex-nowrap items-center justify-between gap-2"
                 >
-                  <div>
-                    <div className="font-bold text-[#1B2A41]">{item.studentName}</div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-[#1B2A41] truncate">{item.studentName}</div>
                     <div className="text-[11px] text-[#B45309] mt-0.5">
                       Sisa: <strong className="font-bold">{item.quotaRemaining} Sesi</strong> ({item.packageName})
                     </div>
@@ -523,7 +523,7 @@ export default function SahabatBelajarDashboard({
           {/* Tagihan & Invoice Menunggu Pembayaran (Friksi A1) */}
           <div className="bg-white rounded-2xl border border-[#D5DDEB] p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-heading font-bold text-sm text-[#09408C] flex items-center gap-2">
+              <h3 className="font-display font-bold text-sm text-[#09408C] flex items-center gap-2">
                 <CreditCard size={16} className="text-[#09408C]" />
                 <span>Tagihan Menunggu Pembayaran</span>
               </h3>
@@ -539,9 +539,9 @@ export default function SahabatBelajarDashboard({
               {data.actionItems.unpaidPayments.map((inv) => (
                 <div
                   key={inv.id}
-                  className="p-3 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB] text-xs flex items-center justify-between gap-2"
+                  className="p-3 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB] text-xs flex flex-wrap sm:flex-nowrap items-center justify-between gap-2"
                 >
-                  <div className="space-y-0.5 max-w-[170px]">
+                  <div className="space-y-0.5 min-w-0 max-w-full sm:max-w-[170px]">
                     <div className="font-bold text-[#1B2A41] truncate">{inv.studentName}</div>
                     <div className="text-[11px] text-[#09408C] font-semibold truncate">
                       {inv.packageName}

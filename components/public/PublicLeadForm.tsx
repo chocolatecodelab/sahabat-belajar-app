@@ -69,7 +69,7 @@ export default function PublicLeadForm() {
 
         <div className="pt-4">
           <a
-            href={`https://wa.me/628123456789?text=Halo%20Sahabat%20Belajar%2C%20saya%20sudah%20mengisi%20formulir%20pendaftaran%20atas%20nama%20${encodeURIComponent(
+            href={`https://wa.me/${process.env.NEXT_PUBLIC_OFFICIAL_WA || "6281144556677"}?text=Halo%20Sahabat%20Belajar%2C%20saya%20sudah%20mengisi%20formulir%20pendaftaran%20atas%20nama%20${encodeURIComponent(
               name
             )}.`}
             target="_blank"

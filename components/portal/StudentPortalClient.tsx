@@ -151,7 +151,7 @@ export default function StudentPortalClient({
           </p>
           <div className="flex flex-col gap-2">
             <a
-              href="https://wa.me/628123456789?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20ingin%20menanyakan%20status%20akun%20siswa"
+              href={`https://wa.me/${process.env.NEXT_PUBLIC_OFFICIAL_WA || "6281144556677"}?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20ingin%20menanyakan%20status%20akun%20siswa`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#09408C] text-white font-medium text-sm hover:bg-[#0E3571] transition-colors"
@@ -185,9 +185,29 @@ export default function StudentPortalClient({
     router.push(`/portal?studentId=${id}`);
   };
 
-  const handleCopyText = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast.info("Berhasil Disalin", `${label} berhasil disalin ke clipboard.`);
+  const handleCopyText = async (text: string, label: string) => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        throw new Error("Clipboard API unavailable");
+      }
+      toast.info("Berhasil Disalin", `${label} berhasil disalin ke clipboard.`);
+    } catch {
+      try {
+        const tempInput = document.createElement("textarea");
+        tempInput.value = text;
+        tempInput.style.position = "fixed";
+        tempInput.style.opacity = "0";
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        toast.info("Berhasil Disalin", `${label} berhasil disalin ke clipboard.`);
+      } catch {
+        toast.error("Gagal Menyalin", `Silakan salin ${label} secara manual: ${text}`);
+      }
+    }
   };
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
@@ -557,7 +577,7 @@ export default function StudentPortalClient({
                       </div>
                       {nextRelInfo.isToday && (
                         <a
-                          href={`https://wa.me/628123456789?text=${encodeURIComponent(
+                          href={`https://wa.me/${process.env.NEXT_PUBLIC_OFFICIAL_WA || "6281144556677"}?text=${encodeURIComponent(
                             `Halo Admin Sahabat Belajar, saya ${student.name} ingin konfirmasi tautan Zoom untuk sesi ${nextSession.programName} hari ini pukul ${formatTime(nextSession.startAt)} WIB. Terima kasih!`
                           )}`}
                           target="_blank"
@@ -606,7 +626,7 @@ export default function StudentPortalClient({
               </div>
             </div>
             <a
-              href="https://wa.me/628123456789?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20ingin%20mengajukan%20jadwal%20bimbingan%20baru"
+              href={`https://wa.me/${process.env.NEXT_PUBLIC_OFFICIAL_WA || "6281144556677"}?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20ingin%20mengajukan%20jadwal%20bimbingan%20baru`}
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-bold transition-colors shrink-0 text-center shadow-2xs"
@@ -1967,7 +1987,7 @@ export default function StudentPortalClient({
             </div>
           </div>
           <a
-            href="https://wa.me/628123456789?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20ingin%20konsultasi%20mengenai%20jadwal%20dan%20perkembangan%20belajar"
+            href={`https://wa.me/${process.env.NEXT_PUBLIC_OFFICIAL_WA || "6281144556677"}?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20ingin%20konsultasi%20mengenai%20jadwal%20dan%20perkembangan%20belajar`}
             target="_blank"
             rel="noopener noreferrer"
             className="px-4 py-2 bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-semibold rounded-xl transition-colors shrink-0 shadow-xs"
@@ -1976,6 +1996,92 @@ export default function StudentPortalClient({
           </a>
         </div>
       </main>
+
+      {/* Mobile Sticky Bottom Navigation Bar (DESIGN.md 4.4 - UX-MOB-001) */}
+      <nav
+        aria-label="Navigasi Bawah Portal Siswa"
+        className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#D5DDEB] px-1.5 py-1.5 flex items-center justify-around shadow-lg"
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("overview");
+            document.getElementById("portal-tabs-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl text-[10px] font-semibold transition-colors ${
+            activeTab === "overview"
+              ? "text-[#09408C] bg-[#EAF1FA]"
+              : "text-[#5B6882] hover:text-[#1B2A41]"
+          }`}
+        >
+          <Calendar size={16} />
+          <span className="mt-0.5">Jadwal</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("history");
+            document.getElementById("portal-tabs-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl text-[10px] font-semibold transition-colors ${
+            activeTab === "history"
+              ? "text-[#09408C] bg-[#EAF1FA]"
+              : "text-[#5B6882] hover:text-[#1B2A41]"
+          }`}
+        >
+          <CheckCircle2 size={16} />
+          <span className="mt-0.5">Riwayat</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("ujian");
+            document.getElementById("portal-tabs-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl text-[10px] font-semibold transition-colors ${
+            activeTab === "ujian"
+              ? "text-[#09408C] bg-[#EAF1FA]"
+              : "text-[#5B6882] hover:text-[#1B2A41]"
+          }`}
+        >
+          <Award size={16} />
+          <span className="mt-0.5">{isK12 ? "Tryout" : "Ujian"}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("materi");
+            document.getElementById("portal-tabs-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl text-[10px] font-semibold transition-colors ${
+            activeTab === "materi"
+              ? "text-[#09408C] bg-[#EAF1FA]"
+              : "text-[#5B6882] hover:text-[#1B2A41]"
+          }`}
+        >
+          <BookOpen size={16} />
+          <span className="mt-0.5">Modul</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("tagihan");
+            document.getElementById("portal-tabs-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl text-[10px] font-semibold transition-colors ${
+            activeTab === "tagihan"
+              ? "text-[#09408C] bg-[#EAF1FA]"
+              : "text-[#5B6882] hover:text-[#1B2A41]"
+          }`}
+        >
+          <CreditCard size={16} />
+          <span className="mt-0.5">Tagihan</span>
+        </button>
+      </nav>
     </div>
   );
 }

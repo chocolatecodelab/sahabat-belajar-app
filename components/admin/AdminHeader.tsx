@@ -2,8 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, Menu, Globe, ExternalLink, GraduationCap } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { ChevronRight, Menu, Globe, ExternalLink, GraduationCap, LogOut } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
 import { useAdminSidebar } from "./AdminLayoutClient";
 
 const pathLabels: Record<string, string> = {
@@ -46,14 +46,11 @@ export default function AdminHeader() {
   const { data: session } = useSession();
   const { setMobileOpen } = useAdminSidebar();
 
-  const segments = pathname
-    .split("/")
-    .filter(Boolean)
-    .filter((s) => s !== "dashboard" || pathname === "/dashboard");
-
-  const breadcrumbs = segments.map((seg, i) => ({
+  const rawParts = pathname.split("/").filter(Boolean);
+  const breadcrumbs = rawParts.map((seg, i) => ({
     label: pathLabels[seg] || seg,
-    isLast: i === segments.length - 1,
+    href: "/" + rawParts.slice(0, i + 1).join("/"),
+    isLast: i === rawParts.length - 1,
   }));
 
   const initials = session?.user?.name
@@ -80,25 +77,28 @@ export default function AdminHeader() {
           <Menu size={20} />
         </button>
 
-        {/* Breadcrumb */}
+        {/* Breadcrumb (UX-IA-001: Interactive Links) */}
         <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs sm:text-sm">
           {breadcrumbs.map((crumb, i) => (
-            <span key={i} className="flex items-center gap-1.5">
+            <span key={crumb.href} className="flex items-center gap-1.5">
               {i > 0 && (
                 <ChevronRight
                   size={14}
                   className="text-[#5B6882]"
                 />
               )}
-              <span
-                className={
-                  crumb.isLast
-                    ? "text-[#1B2A41] font-semibold font-display"
-                    : "text-[#5B6882] font-normal"
-                }
-              >
-                {crumb.label}
-              </span>
+              {crumb.isLast ? (
+                <span className="text-[#1B2A41] font-semibold font-display">
+                  {crumb.label}
+                </span>
+              ) : (
+                <Link
+                  href={crumb.href}
+                  className="text-[#5B6882] hover:text-[#09408C] hover:underline font-medium transition-colors"
+                >
+                  {crumb.label}
+                </Link>
+              )}
             </span>
           ))}
         </nav>
@@ -144,6 +144,15 @@ export default function AdminHeader() {
               {(session?.user as any)?.role || "Super Admin"}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="p-2 rounded-xl text-[#5B6882] hover:text-[#B4381F] hover:bg-[#FBE9E5] transition-colors"
+            title="Keluar dari Akun"
+            aria-label="Keluar dari Akun"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </header>

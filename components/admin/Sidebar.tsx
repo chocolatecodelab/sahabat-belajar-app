@@ -125,14 +125,22 @@ export default function Sidebar({
     return Array.isArray(userPermissions) && userPermissions.includes(permission);
   };
 
-  // Filter only active menus & permitted menus
+  const isStaffRole = (userRole || "").toLowerCase().includes("staf");
+
+  // Filter only active menus & permitted menus (BR-7 & QA-REGR-001: hide /tutor and /dashboard/honor for Staf)
   const visibleMenus = dynamicMenus
-    .filter((m) => m.isActive !== false && canAccess(m.permission))
+    .filter((m) => {
+      if (m.isActive === false) return false;
+      if (isStaffRole && (m.url === "/tutor" || m.url === "/dashboard/honor")) return false;
+      return canAccess(m.permission);
+    })
     .map((m) => ({
       ...m,
-      children: (m.children || []).filter(
-        (child) => child.isActive !== false && canAccess(child.permission || m.permission)
-      ),
+      children: (m.children || []).filter((child) => {
+        if (child.isActive === false) return false;
+        if (isStaffRole && (child.url === "/tutor" || child.url === "/dashboard/honor")) return false;
+        return canAccess(child.permission || m.permission);
+      }),
     }));
 
   const getIcon = (iconName: string | null) => {

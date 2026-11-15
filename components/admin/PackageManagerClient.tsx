@@ -45,12 +45,28 @@ export default function PackageManagerClient({
       const matched = students.find((s) => s.id === paramStudentId);
       if (matched) {
         setStudentId(matched.id);
+      } else {
+        // QA-REGR-002: Jangan memilih siswa pertama secara salah jika ID dari URL tidak ditemukan di DB
+        setStudentId("");
       }
     }
     if (paramAction === "assign" || paramStudentId) {
       setShowAssignModal(true);
     }
   }, [searchParams, students]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowAssignModal(false);
+        setShowAddPackageModal(false);
+      }
+    };
+    if (showAssignModal || showAddPackageModal) {
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [showAssignModal, showAddPackageModal]);
 
   // Create Package states
   const [progId, setProgId] = useState(programs[0]?.id || "");
@@ -230,12 +246,17 @@ export default function PackageManagerClient({
 
       {/* Modal Tetapkan Paket ke Siswa */}
       {showAssignModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="assign-pkg-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+        >
           <form
             onSubmit={handleAssign}
             className="bg-white rounded-2xl p-6 max-w-md w-full border border-[#D5DDEB] shadow-xl space-y-4"
           >
-            <h3 className="text-lg font-bold text-[#09408C] font-display">
+            <h3 id="assign-pkg-modal-title" className="text-lg font-bold text-[#09408C] font-display">
               Tetapkan Paket ke Siswa
             </h3>
 
@@ -245,10 +266,14 @@ export default function PackageManagerClient({
               </label>
               <select
                 id="assign-student-select"
+                required
                 value={studentId}
                 onChange={(e) => setStudentId(e.target.value)}
                 className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
               >
+                <option value="" disabled>
+                  -- Pilih Siswa --
+                </option>
                 {students.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name} ({s.level} - {s.school || "Umum"})
@@ -300,12 +325,17 @@ export default function PackageManagerClient({
 
       {/* Modal Tambah Paket Baru */}
       {showAddPackageModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="create-pkg-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+        >
           <form
             onSubmit={handleCreatePackage}
             className="bg-white rounded-2xl p-6 max-w-md w-full border border-[#D5DDEB] shadow-xl space-y-4"
           >
-            <h3 className="text-lg font-bold text-[#09408C] font-display">
+            <h3 id="create-pkg-modal-title" className="text-lg font-bold text-[#09408C] font-display">
               Buat Paket Belajar Baru
             </h3>
 
@@ -373,7 +403,7 @@ export default function PackageManagerClient({
 
             <div>
               <label htmlFor="create-package-price" className="block text-xs font-bold text-[#1B2A41] mb-1">
-                Biaya Paket (Rp) *
+                Biaya Paket (Rp) <span className="text-[#B4381F]">(Wajib)</span>
               </label>
               <input
                 id="create-package-price"
@@ -383,6 +413,11 @@ export default function PackageManagerClient({
                 onChange={(e) => setPrice(e.target.value)}
                 className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
               />
+              {Number(price) > 0 && (
+                <p className="text-[11px] font-semibold text-[#09408C] mt-1 tabular-nums">
+                  Terbaca: Rp {Number(price).toLocaleString("id-ID")}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#D5DDEB]">

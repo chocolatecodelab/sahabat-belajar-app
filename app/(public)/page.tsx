@@ -24,8 +24,8 @@ import TestimoniSiswaSection from "@/components/public/TestimoniSiswaSection";
 export const dynamic = "force-dynamic";
 
 export default function HomePage() {
-  const waUrl =
-    "https://wa.me/628123456789?text=Halo%20Sahabat%20Belajar%2C%20saya%20tertarik%20untuk%20konsultasi%20bimbingan%20belajar.";
+  const officialWa = process.env.NEXT_PUBLIC_OFFICIAL_WA || "6281144556677";
+  const waUrl = `https://wa.me/${officialWa}?text=Halo%20Sahabat%20Belajar%2C%20saya%20tertarik%20untuk%20konsultasi%20bimbingan%20belajar.`;
 
   return (
     <div className="space-y-16 sm:space-y-24 pb-16">

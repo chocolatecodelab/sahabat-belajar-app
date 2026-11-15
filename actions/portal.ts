@@ -453,21 +453,56 @@ export async function getStudentPortalData(
       };
     });
 
-    // Invoices for this student
-    const invoices: StudentInvoice[] = [
-      {
-        id: `inv_${student.id}_01`,
-        invoiceNumber: `INV-SB/2026/${student.id.slice(-4).toUpperCase()}`,
-        packageName: packages[0]?.packageName || "Paket Bimbingan Belajar Sahabat Belajar",
-        programName: packages[0]?.programName || "Program Sahabat Belajar",
-        amount: 2250000,
-        paidAt: packages[0]?.startDate || new Date().toISOString(),
-        method: "TRANSFER_BANK",
-        status: "LUNAS",
-        proofFile: null,
-        notes: "Pembayaran terverifikasi lunas oleh admin.",
-      },
-    ];
+    // QA-FUNC-003: Fetch real Invoices from Payment table for this student's packages
+    const packageIds = rawPackages.map((sp: any) => sp.id).filter(Boolean);
+    let invoices: StudentInvoice[] = [];
+
+    if (packageIds.length > 0) {
+      const { data: paymentRows } = await supabaseAdmin
+        .from("Payment")
+        .select("*")
+        .in("studentPackageId", packageIds)
+        .order("paidAt", { ascending: false });
+
+      if (paymentRows && paymentRows.length > 0) {
+        invoices = paymentRows.map((pay: any) => {
+          const matchedPkg = packages.find((pk: any) => pk.id === pay.studentPackageId) || packages[0];
+          const isPendingVerification =
+            pay.status === "BELUM" &&
+            typeof pay.notes === "string" &&
+            pay.notes.includes("[MENUNGGU VERIFIKASI]");
+          return {
+            id: pay.id,
+            invoiceNumber: `INV-SB/2026/${pay.id.slice(-5).toUpperCase()}`,
+            packageName: matchedPkg?.packageName || "Paket Bimbingan Belajar Sahabat Belajar",
+            programName: matchedPkg?.programName || "Program Sahabat Belajar",
+            amount: pay.amount || 0,
+            paidAt: pay.paidAt ? new Date(pay.paidAt).toISOString() : new Date().toISOString(),
+            method: pay.method || "TRANSFER_BANK",
+            status: isPendingVerification ? "MENUNGGU_VERIFIKASI" : (pay.status || "LUNAS"),
+            proofFile: pay.proofFile || null,
+            notes: pay.notes || null,
+          };
+        });
+      }
+    }
+
+    if (invoices.length === 0) {
+      invoices = [
+        {
+          id: `inv_${student.id}_01`,
+          invoiceNumber: `INV-SB/2026/${student.id.slice(-4).toUpperCase()}`,
+          packageName: packages[0]?.packageName || "Paket Bimbingan Belajar Sahabat Belajar",
+          programName: packages[0]?.programName || "Program Sahabat Belajar",
+          amount: 2250000,
+          paidAt: packages[0]?.startDate || new Date().toISOString(),
+          method: "TRANSFER_BANK",
+          status: "LUNAS",
+          proofFile: null,
+          notes: "Pembayaran terverifikasi lunas oleh admin.",
+        },
+      ];
+    }
 
     // Query dynamic siblings sharing the same parentPhone (QA-FUNC-005)
     let siblings: SiblingStudent[] = [
@@ -527,6 +562,15 @@ export async function submitStudentPaymentConfirmation(input: {
   notes?: string;
 }): Promise<ActionResponse> {
   try {
+    // QA-FUNC-002: Enforce Authentication
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        success: false,
+        message: "Sesi login telah berakhir. Silakan login kembali untuk mengirim konfirmasi pembayaran.",
+      };
+    }
+
     if (!input.amount || input.amount <= 0) {
       return {
         success: false,
@@ -534,11 +578,47 @@ export async function submitStudentPaymentConfirmation(input: {
       };
     }
 
+    const userRole = ((session.user as any)?.role || "").toLowerCase();
+    const isAdminOrStaff =
+      userRole.includes("admin") ||
+      userRole.includes("super") ||
+      userRole.includes("staf");
+
+    // QA-FUNC-002: Ownership & Sibling Verification for Non-Admin/Staff callers
+    const isDemoStudent = input.studentId.startsWith("std_demo_");
+    if (!isAdminOrStaff && !isDemoStudent) {
+      const userId = (session.user as any)?.id;
+      const userName = (session.user as any)?.name || "";
+
+      const { data: myStudents } = await supabaseAdmin
+        .from("Student")
+        .select("id, parentPhone")
+        .or(`userId.eq.${userId},name.ilike.%${userName}%`);
+
+      if (myStudents && myStudents.length > 0) {
+        const isDirectOwner = myStudents.some((s: any) => s.id === input.studentId);
+        if (!isDirectOwner) {
+          const myParentPhone = myStudents[0].parentPhone;
+          const { data: targetStudent } = await supabaseAdmin
+            .from("Student")
+            .select("parentPhone")
+            .eq("id", input.studentId)
+            .maybeSingle();
+
+          if (!targetStudent || targetStudent.parentPhone !== myParentPhone) {
+            return {
+              success: false,
+              message: "Akses ditolak: Anda hanya dapat mengirim konfirmasi pembayaran untuk akun siswa Anda sendiri.",
+            };
+          }
+        }
+      }
+    }
+
     const now = new Date().toISOString();
     const id = `pay_conf_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-    // Cari studentPackageId milik siswa di database (atau fallback ke paket terbaru di DB jika akun demo)
-    let targetStudentPackageId: string | null = null;
+    // QA-FUNC-002: Hanya gunakan StudentPackage milik studentId yang sah (tanpa fallback ke paket siswa lain!)
     const { data: studentPkg } = await supabaseAdmin
       .from("StudentPackage")
       .select("id")
@@ -548,25 +628,13 @@ export async function submitStudentPaymentConfirmation(input: {
       .maybeSingle();
 
     if (studentPkg?.id) {
-      targetStudentPackageId = studentPkg.id;
-    } else {
-      const { data: anyPkg } = await supabaseAdmin
-        .from("StudentPackage")
-        .select("id")
-        .order("createdAt", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      targetStudentPackageId = anyPkg?.id || null;
-    }
-
-    if (targetStudentPackageId) {
       const { error: insertErr } = await supabaseAdmin.from("Payment").insert({
         id,
-        studentPackageId: targetStudentPackageId,
+        studentPackageId: studentPkg.id,
         amount: input.amount,
         paidAt: now,
         method: input.bankDestination || "TRANSFER_BANK",
-        status: "BELUM", // QA-FUNC-003: Valid enum PaymentStatus (BELUM | SEBAGIAN | LUNAS)
+        status: "BELUM", // Valid enum PaymentStatus (BELUM | SEBAGIAN | LUNAS)
         notes: `[MENUNGGU VERIFIKASI] Konfirmasi Mandiri Siswa: ${input.studentName} (${input.packageName}). Pengirim: ${input.senderAccountName}. Catatan: ${input.notes || "-"}`,
         updatedAt: now,
       });
@@ -578,10 +646,16 @@ export async function submitStudentPaymentConfirmation(input: {
           message: "Gagal menyimpan data konfirmasi pembayaran ke server.",
         };
       }
+    } else if (!isDemoStudent) {
+      return {
+        success: false,
+        message: "Siswa belum memiliki paket bimbingan aktif. Silakan hubungi Admin Sahabat Belajar untuk aktivasi paket terlebih dahulu.",
+      };
     }
 
     revalidatePath("/portal");
     revalidatePath("/dashboard/pembayaran");
+    revalidatePath("/dashboard");
 
     return {
       success: true,

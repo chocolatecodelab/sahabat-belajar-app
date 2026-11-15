@@ -24,6 +24,12 @@ export default async function TutorPortalPage({
   const userRole = ((session.user as any)?.role || "").toLowerCase();
   const isAdmin = userRole.includes("admin") || userRole.includes("super");
   const isTutor = userRole.includes("tutor");
+  const isStaff = userRole.includes("staf");
+
+  // QA-REGR-001 & BR-7: Jika Staf membuka /tutor, kembalikan ke /dashboard (karena /tutor memuat tarif honor)
+  if (isStaff) {
+    redirect("/dashboard");
+  }
 
   // Jika Siswa atau Orang Tua, arahkan ke Portal Siswa
   if (!isAdmin && !isTutor) {

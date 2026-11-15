@@ -78,7 +78,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             "dashboard.read", "analytics.read",
             "lead.read", "lead.manage",
             "student.read", "student.manage",
-            "tutor.read", "tutor.manage",
+            "tutor.read", "tutor.manage", "tutor.portal",
             "schedule.read", "schedule.manage",
             "package.read", "package.manage",
             "payment.read", "payment.manage",
@@ -103,6 +103,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             "schedule.read", "schedule.manage",
             "package.read", "package.manage",
             "payment.read", "payment.manage",
+            "material.read", "exam.read", "document.read",
+          ];
+        } else if (roleName.toLowerCase().includes("tutor") && permissions.length === 0) {
+          permissions = [
+            "dashboard.read",
+            "tutor.read", "tutor.portal",
+            "schedule.read",
             "material.read", "exam.read", "document.read",
           ];
         }

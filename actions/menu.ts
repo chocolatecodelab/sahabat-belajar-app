@@ -34,7 +34,7 @@ const INITIAL_MENUS = [
   // 4. Manajemen Tutor (Parent)
   { id: "menu_tutor_group", label: "Manajemen Tutor", icon: "BookOpen", url: "/dashboard/tutor", parentId: null, sortOrder: 4, isActive: true, permission: "tutor.read" },
   { id: "menu_tutor", label: "Direktori Tutor", icon: "BookOpen", url: "/dashboard/tutor", parentId: "menu_tutor_group", sortOrder: 1, isActive: true, permission: "tutor.read" },
-  { id: "menu_portal_tutor", label: "Portal Tutor (HP)", icon: "Compass", url: "/tutor", parentId: "menu_tutor_group", sortOrder: 2, isActive: true, permission: "tutor.read" },
+  { id: "menu_portal_tutor", label: "Portal Tutor (HP)", icon: "Compass", url: "/tutor", parentId: "menu_tutor_group", sortOrder: 2, isActive: true, permission: "tutor.portal" },
 
   // 5. Keuangan (Parent)
   { id: "menu_keuangan_group", label: "Keuangan & Kas", icon: "CreditCard", url: "/dashboard/pembayaran", parentId: null, sortOrder: 5, isActive: true, permission: "payment.read" },
