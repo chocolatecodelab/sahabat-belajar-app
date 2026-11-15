@@ -833,7 +833,7 @@ export default function NotificationSettingsClient({
                       type="text"
                       value={settings.emailSmtpUser}
                       onChange={(e) => setSettings({ ...settings, emailSmtpUser: e.target.value })}
-                      placeholder="akademik@biasristek.id"
+                      placeholder="akademik@sahabatbelajar.id"
                       className="w-full px-4 py-2.5 rounded-xl border text-body-sm focus-ring bg-gray-50 focus:bg-white"
                       style={{ borderColor: "var(--color-outline-variant)" }}
                     />

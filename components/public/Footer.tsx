@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, Phone, MapPin, Heart, GraduationCap } from "lucide-react";
+import { DEFAULT_SITE_CONFIG, getWhatsAppUrl } from "@/lib/site-config";
 
 export default function Footer() {
   return (
@@ -74,23 +75,26 @@ export default function Footer() {
             </h4>
             <div className="space-y-2.5 text-xs text-white/80">
               <a
-                href="https://wa.me/628123456789"
+                href={getWhatsAppUrl(DEFAULT_SITE_CONFIG.officialPhone)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 hover:text-white transition-colors"
               >
                 <Phone size={14} className="text-[#0CC0DF]" />
-                <span>+62 812-3456-789 (WhatsApp CS)</span>
+                <span>{DEFAULT_SITE_CONFIG.formattedPhone} (WhatsApp CS)</span>
               </a>
 
-              <div className="flex items-center gap-2">
+              <a
+                href={`mailto:${DEFAULT_SITE_CONFIG.officialEmail}`}
+                className="flex items-center gap-2 hover:text-white transition-colors"
+              >
                 <Mail size={14} className="text-[#0CC0DF]" />
-                <span>halo@sahabatbelajar.id</span>
-              </div>
+                <span>{DEFAULT_SITE_CONFIG.officialEmail}</span>
+              </a>
 
               <div className="flex items-start gap-2">
                 <MapPin size={14} className="text-[#0CC0DF] shrink-0 mt-0.5" />
-                <span>Layanan Home Visit & Online Terpadu Seluruh Indonesia</span>
+                <span>{DEFAULT_SITE_CONFIG.address}</span>
               </div>
             </div>
           </div>

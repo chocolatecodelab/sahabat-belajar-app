@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MessageCircle, ArrowRight, CheckCircle2, GraduationCap } from "lucide-react";
+import { DEFAULT_SITE_CONFIG, getWhatsAppUrl } from "@/lib/site-config";
 
 export default function CtaSection({
   contactPhone,
@@ -8,11 +9,11 @@ export default function CtaSection({
   contactPhone?: string | null;
   contactEmail?: string | null;
 }) {
-  const phone = contactPhone || "628123456789";
-  const cleanPhone = phone.replace(/[^0-9]/g, "");
-  const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+  const phone = contactPhone || DEFAULT_SITE_CONFIG.officialPhone;
+  const waUrl = getWhatsAppUrl(
+    phone,
     "Halo Sahabat Belajar, saya ingin konsultasi program bimbingan belajar untuk persiapan akademik dan tes."
-  )}`;
+  );
 
   return (
     <section className="py-16 lg:py-24 bg-[#F4F7FB] relative">

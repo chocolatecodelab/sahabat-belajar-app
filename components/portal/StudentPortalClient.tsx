@@ -37,13 +37,16 @@ import {
   ShieldCheck,
   Check,
   Eye,
+  QrCode,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import type { StudentPortalData, StudentInvoice } from "@/actions/portal";
 import { submitStudentPaymentConfirmation } from "@/actions/portal";
+import type { PaymentAccountItem } from "@/actions/pembayaran";
 import type { ExamItem, StudentExamSession } from "@/actions/ujian";
 import { trackMaterialDownload, type LearningMaterial, type ProgramCategory } from "@/actions/materi";
 import { formatDayDate, formatTime, formatDate } from "@/lib/date";
+import { DEFAULT_SITE_CONFIG, getWhatsAppUrl } from "@/lib/site-config";
 import ScoreProgressChart from "@/components/portal/ScoreProgressChart";
 import { useToast } from "@/components/ui/Toast";
 
@@ -53,12 +56,14 @@ export default function StudentPortalClient({
   examHistory = [],
   materials = [],
   currentStudentId,
+  paymentAccounts = [],
 }: {
   initialData: StudentPortalData | null;
   availableExams?: ExamItem[];
   examHistory?: StudentExamSession[];
   materials?: LearningMaterial[];
   currentStudentId?: string;
+  paymentAccounts?: PaymentAccountItem[];
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -128,9 +133,16 @@ export default function StudentPortalClient({
   const [selectedReceipt, setSelectedReceipt] = useState<StudentInvoice | null>(null);
   const [showPayModal, setShowPayModal] = useState(false);
   const [isSubmittingPay, setIsSubmittingPay] = useState(false);
+  const [selectedQrisModal, setSelectedQrisModal] = useState<PaymentAccountItem | null>(null);
 
   // Payment Form States
-  const [payBank, setPayBank] = useState("BCA (123-456-7890)");
+  const defaultBankValue =
+    paymentAccounts && paymentAccounts.length > 0
+      ? paymentAccounts[0].type === "QRIS"
+        ? "QRIS"
+        : `${paymentAccounts[0].bankName} (${paymentAccounts[0].accountNumber || ""})`
+      : "BCA (123-456-7890)";
+  const [payBank, setPayBank] = useState(defaultBankValue);
   const [paySenderName, setPaySenderName] = useState("");
   const [payAmount, setPayAmount] = useState("");
   const [payNotes, setPayNotes] = useState("");
@@ -151,7 +163,7 @@ export default function StudentPortalClient({
           </p>
           <div className="flex flex-col gap-2">
             <a
-              href={`https://wa.me/${process.env.NEXT_PUBLIC_OFFICIAL_WA || "6281144556677"}?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20ingin%20menanyakan%20status%20akun%20siswa`}
+              href={getWhatsAppUrl(DEFAULT_SITE_CONFIG.officialPhone, "Halo Admin Sahabat Belajar, saya ingin menanyakan status akun siswa")}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#09408C] text-white font-medium text-sm hover:bg-[#0E3571] transition-colors"
@@ -577,9 +589,10 @@ export default function StudentPortalClient({
                       </div>
                       {nextRelInfo.isToday && (
                         <a
-                          href={`https://wa.me/${process.env.NEXT_PUBLIC_OFFICIAL_WA || "6281144556677"}?text=${encodeURIComponent(
+                          href={getWhatsAppUrl(
+                            DEFAULT_SITE_CONFIG.officialPhone,
                             `Halo Admin Sahabat Belajar, saya ${student.name} ingin konfirmasi tautan Zoom untuk sesi ${nextSession.programName} hari ini pukul ${formatTime(nextSession.startAt)} WIB. Terima kasih!`
-                          )}`}
+                          )}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-[#09408C] hover:underline w-full py-1"
@@ -626,7 +639,7 @@ export default function StudentPortalClient({
               </div>
             </div>
             <a
-              href={`https://wa.me/${process.env.NEXT_PUBLIC_OFFICIAL_WA || "6281144556677"}?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20ingin%20mengajukan%20jadwal%20bimbingan%20baru`}
+              href={getWhatsAppUrl(DEFAULT_SITE_CONFIG.officialPhone, "Halo Admin Sahabat Belajar, saya ingin mengajukan jadwal bimbingan baru")}
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-bold transition-colors shrink-0 text-center shadow-2xs"
@@ -941,7 +954,7 @@ export default function StudentPortalClient({
                   Hubungi kami jika ada preferensi hari dan jam tertentu.
                 </p>
                 <a
-                  href="https://wa.me/628123456789?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20ingin%20request%20jadwal%20bimbingan"
+                  href={getWhatsAppUrl(DEFAULT_SITE_CONFIG.officialPhone, "Halo Admin Sahabat Belajar, saya ingin request jadwal bimbingan")}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors"
@@ -1029,9 +1042,10 @@ export default function StudentPortalClient({
                               {relInfo.isToday && (
                                 <div className="pt-0.5">
                                   <a
-                                    href={`https://wa.me/628123456789?text=${encodeURIComponent(
+                                    href={getWhatsAppUrl(
+                                      DEFAULT_SITE_CONFIG.officialPhone,
                                       `Halo Admin Sahabat Belajar, saya ${student.name} ingin konfirmasi link Zoom untuk sesi ${session.programName} hari ini pukul ${formatTime(session.startAt)} WIB. Terima kasih!`
-                                    )}`}
+                                    )}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1 text-[11px] font-bold text-[#09408C] hover:underline"
@@ -1565,54 +1579,111 @@ export default function StudentPortalClient({
               </button>
             </div>
 
-            {/* Official Bank Account Cards */}
+            {/* Official Bank Account Cards (Dynamic from Admin Settings) */}
             <div className="bg-white rounded-3xl border border-[#D5DDEB] p-6 shadow-xs space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#09408C]">
-                <ShieldCheck size={16} />
-                <span>Rekening Resmi Pembayaran Sahabat Belajar (Atas Nama Lembaga):</span>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#09408C]">
+                  <ShieldCheck size={16} />
+                  <span>Rekening Resmi Pembayaran Sahabat Belajar (Atas Nama Lembaga):</span>
+                </div>
+                {paymentAccounts && paymentAccounts.some((a) => a.type === "QRIS" && a.qrisImage) && (
+                  <span className="text-[11px] text-[#1F6F4A] font-semibold hidden sm:inline-flex items-center gap-1">
+                    <QrCode size={13} />
+                    <span>Klik kartu QRIS untuk memperbesar barcode</span>
+                  </span>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between">
-                  <div>
-                    <div className="text-[11px] text-[#5B6882] font-bold uppercase">Bank BCA</div>
-                    <div className="text-sm font-bold text-[#1B2A41] font-mono">123-456-7890</div>
-                    <div className="text-xs text-[#5B6882]">a.n. Sahabat Belajar</div>
-                  </div>
-                  <button
-                    onClick={() => handleCopyText("1234567890", "No. Rekening BCA")}
-                    className="p-2 rounded-xl text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
-                    title="Salin No. Rekening"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {paymentAccounts && paymentAccounts.length > 0 ? (
+                  paymentAccounts.map((acc) => {
+                    if (acc.type === "QRIS") {
+                      return (
+                        <div
+                          key={acc.id || acc.bankName}
+                          onClick={() => acc.qrisImage && setSelectedQrisModal(acc)}
+                          className={`bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between transition-all ${
+                            acc.qrisImage
+                              ? "cursor-pointer hover:border-[#09408C] hover:bg-[#EAF1FA] hover:shadow-xs group"
+                              : ""
+                          }`}
+                        >
+                          <div>
+                            <div className="text-[11px] text-[#5B6882] font-bold uppercase">{acc.bankName}</div>
+                            <div className="text-xs font-bold text-[#1F6F4A]">Scan Instan Semua Aplikasi</div>
+                            <div className="text-xs text-[#5B6882] line-clamp-1">
+                              {acc.instructions || "GoPay, OVO, ShopeePay, BCA Mobile, Livin"}
+                            </div>
+                            {acc.qrisImage && (
+                              <div className="text-[10px] text-[#09408C] font-semibold mt-1 group-hover:underline">
+                                🔍 Klik untuk lihat barcode
+                              </div>
+                            )}
+                          </div>
+                          <div className="w-9 h-9 rounded-xl bg-[#E3F4EC] text-[#1F6F4A] flex items-center justify-center font-bold text-xs shrink-0 group-hover:scale-105 transition-transform">
+                            <QrCode size={18} />
+                          </div>
+                        </div>
+                      );
+                    }
 
-                <div className="bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between">
-                  <div>
-                    <div className="text-[11px] text-[#5B6882] font-bold uppercase">Bank Mandiri</div>
-                    <div className="text-sm font-bold text-[#1B2A41] font-mono">137-00-1234567-8</div>
-                    <div className="text-xs text-[#5B6882]">a.n. Sahabat Belajar</div>
-                  </div>
-                  <button
-                    onClick={() => handleCopyText("1370012345678", "No. Rekening Mandiri")}
-                    className="p-2 rounded-xl text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
-                    title="Salin No. Rekening"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
+                    return (
+                      <div
+                        key={acc.id || acc.bankName}
+                        className="bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between"
+                      >
+                        <div>
+                          <div className="text-[11px] text-[#5B6882] font-bold uppercase">{acc.bankName}</div>
+                          <div className="text-sm font-bold text-[#1B2A41] font-mono">{acc.accountNumber}</div>
+                          <div className="text-xs text-[#5B6882]">a.n. {acc.accountHolder || "Sahabat Belajar"}</div>
+                        </div>
+                        {acc.accountNumber && (
+                          <button
+                            onClick={() =>
+                              handleCopyText(acc.accountNumber!.replace(/[^0-9]/g, ""), `No. Rekening ${acc.bankName}`)
+                            }
+                            className="p-2 rounded-xl text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                            title="Salin No. Rekening"
+                          >
+                            <Copy size={16} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <>
+                    <div className="bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between">
+                      <div>
+                        <div className="text-[11px] text-[#5B6882] font-bold uppercase">Bank BCA</div>
+                        <div className="text-sm font-bold text-[#1B2A41] font-mono">123-456-7890</div>
+                        <div className="text-xs text-[#5B6882]">a.n. Sahabat Belajar</div>
+                      </div>
+                      <button
+                        onClick={() => handleCopyText("1234567890", "No. Rekening BCA")}
+                        className="p-2 rounded-xl text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                        title="Salin No. Rekening"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    </div>
 
-                <div className="bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between">
-                  <div>
-                    <div className="text-[11px] text-[#5B6882] font-bold uppercase">QRIS Sahabat Belajar</div>
-                    <div className="text-xs font-bold text-[#1F6F4A]">Scan Instan Semua Aplikasi</div>
-                    <div className="text-xs text-[#5B6882]">GoPay, OVO, ShopeePay, BCA</div>
-                  </div>
-                  <div className="w-8 h-8 rounded-lg bg-[#E3F4EC] text-[#1F6F4A] flex items-center justify-center font-bold text-xs">
-                    QR
-                  </div>
-                </div>
+                    <div className="bg-[#F4F7FB] p-3.5 rounded-2xl border border-[#D5DDEB] flex items-center justify-between">
+                      <div>
+                        <div className="text-[11px] text-[#5B6882] font-bold uppercase">Bank Mandiri</div>
+                        <div className="text-sm font-bold text-[#1B2A41] font-mono">137-00-1234567-8</div>
+                        <div className="text-xs text-[#5B6882]">a.n. Sahabat Belajar</div>
+                      </div>
+                      <button
+                        onClick={() => handleCopyText("1370012345678", "No. Rekening Mandiri")}
+                        className="p-2 rounded-xl text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                        title="Salin No. Rekening"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -1839,10 +1910,28 @@ export default function StudentPortalClient({
                     onChange={(e) => setPayBank(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
                   >
-                    <option value="BCA (123-456-7890)">BCA — 123-456-7890 a.n Sahabat Belajar</option>
-                    <option value="Mandiri (137-00-1234567-8)">Mandiri — 137-00-1234567-8 a.n Sahabat Belajar</option>
-                    <option value="BSI (7123-456-789)">BSI — 7123-456-789 a.n Sahabat Belajar</option>
-                    <option value="QRIS">QRIS Sahabat Belajar</option>
+                    {paymentAccounts && paymentAccounts.length > 0 ? (
+                      paymentAccounts.map((acc) => {
+                        const val =
+                          acc.type === "QRIS" ? "QRIS" : `${acc.bankName} (${acc.accountNumber || ""})`;
+                        const label =
+                          acc.type === "QRIS"
+                            ? `${acc.bankName} — Scan Barcode QRIS`
+                            : `${acc.bankName} — ${acc.accountNumber} a.n. ${acc.accountHolder || "Sahabat Belajar"}`;
+                        return (
+                          <option key={acc.id || val} value={val}>
+                            {label}
+                          </option>
+                        );
+                      })
+                    ) : (
+                      <>
+                        <option value="BCA (123-456-7890)">BCA — 123-456-7890 a.n Sahabat Belajar</option>
+                        <option value="Mandiri (137-00-1234567-8)">Mandiri — 137-00-1234567-8 a.n Sahabat Belajar</option>
+                        <option value="BSI (712-3456-789)">BSI — 712-3456-789 a.n Sahabat Belajar</option>
+                        <option value="QRIS">QRIS Sahabat Belajar</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
@@ -1987,7 +2076,7 @@ export default function StudentPortalClient({
             </div>
           </div>
           <a
-            href={`https://wa.me/${process.env.NEXT_PUBLIC_OFFICIAL_WA || "6281144556677"}?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20ingin%20konsultasi%20mengenai%20jadwal%20dan%20perkembangan%20belajar`}
+            href={getWhatsAppUrl(DEFAULT_SITE_CONFIG.officialPhone, "Halo Admin Sahabat Belajar, saya ingin konsultasi mengenai jadwal dan perkembangan belajar")}
             target="_blank"
             rel="noopener noreferrer"
             className="px-4 py-2 bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-semibold rounded-xl transition-colors shrink-0 shadow-xs"
@@ -2082,6 +2171,57 @@ export default function StudentPortalClient({
           <span className="mt-0.5">Tagihan</span>
         </button>
       </nav>
+
+      {/* Modal Zoom Barcode QRIS Resmi */}
+      {selectedQrisModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-xl border border-[#D5DDEB] relative">
+            <button
+              onClick={() => setSelectedQrisModal(null)}
+              className="absolute top-4 right-4 p-2 rounded-xl text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#1B2A41] transition-colors"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="w-12 h-12 rounded-2xl bg-[#E3F4EC] text-[#1F6F4A] flex items-center justify-center mx-auto">
+              <QrCode size={24} />
+            </div>
+
+            <div>
+              <h3 className="font-heading font-bold text-base text-[#1B2A41]">
+                {selectedQrisModal.bankName}
+              </h3>
+              <p className="text-xs text-[#5B6882] mt-1">
+                Scan barcode ini menggunakan m-Banking atau aplikasi e-wallet apa pun.
+              </p>
+            </div>
+
+            {selectedQrisModal.qrisImage && (
+              <div className="bg-white p-3 rounded-2xl border-2 border-dashed border-[#D5DDEB] inline-block shadow-inner">
+                <Image
+                  src={selectedQrisModal.qrisImage}
+                  alt="QRIS Sahabat Belajar"
+                  width={240}
+                  height={240}
+                  className="rounded-xl mx-auto object-contain"
+                />
+              </div>
+            )}
+
+            <div className="text-[11px] text-[#5B6882] bg-[#F4F7FB] p-3 rounded-xl border border-[#D5DDEB]">
+              {selectedQrisModal.instructions ||
+                "Pastikan nominal transfer sesuai dengan invoice tagihan Anda."}
+            </div>
+
+            <button
+              onClick={() => setSelectedQrisModal(null)}
+              className="w-full py-2.5 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-bold transition-colors shadow-xs"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

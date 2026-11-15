@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Send, CheckCircle2, AlertCircle, Phone, FileText, ArrowRight, ArrowLeft } from "lucide-react";
 import { createPublicLead } from "@/actions/lead";
+import { DEFAULT_SITE_CONFIG, getWhatsAppUrl } from "@/lib/site-config";
 
 export default function PublicLeadForm() {
   const [step, setStep] = useState<1 | 2>(1);
@@ -69,9 +70,10 @@ export default function PublicLeadForm() {
 
         <div className="pt-4">
           <a
-            href={`https://wa.me/${process.env.NEXT_PUBLIC_OFFICIAL_WA || "6281144556677"}?text=Halo%20Sahabat%20Belajar%2C%20saya%20sudah%20mengisi%20formulir%20pendaftaran%20atas%20nama%20${encodeURIComponent(
-              name
-            )}.`}
+            href={getWhatsAppUrl(
+              DEFAULT_SITE_CONFIG.officialPhone,
+              `Halo Sahabat Belajar, saya sudah mengisi formulir pendaftaran atas nama ${name}.`
+            )}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#1F6F4A] text-white text-sm font-semibold hover:bg-[#165538] transition-colors shadow-xs"

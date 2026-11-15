@@ -1,0 +1,54 @@
+[
+  {
+    "id": "acc_bca",
+    "type": "BANK",
+    "bankName": "Bank Central Asia (BCA)",
+    "accountNumber": "123-456-7890",
+    "accountHolder": "Sahabat Belajar",
+    "qrisImage": null,
+    "instructions": "Transfer tepat sesuai nominal tagihan hingga 3 digit terakhir untuk verifikasi otomatis.",
+    "isActive": true,
+    "sortOrder": 1,
+    "createdAt": "2026-11-15T00:00:00.000Z",
+    "updatedAt": "2026-11-15T00:00:00.000Z"
+  },
+  {
+    "id": "acc_mandiri",
+    "type": "BANK",
+    "bankName": "Bank Mandiri",
+    "accountNumber": "137-00-1234567-8",
+    "accountHolder": "Sahabat Belajar",
+    "qrisImage": null,
+    "instructions": "Transfer ke rekening operasional resmi a.n. Sahabat Belajar.",
+    "isActive": true,
+    "sortOrder": 2,
+    "createdAt": "2026-11-15T00:00:00.000Z",
+    "updatedAt": "2026-11-15T00:00:00.000Z"
+  },
+  {
+    "id": "acc_bsi",
+    "type": "BANK",
+    "bankName": "Bank Syariah Indonesia (BSI)",
+    "accountNumber": "712-3456-789",
+    "accountHolder": "Sahabat Belajar",
+    "qrisImage": null,
+    "instructions": "Transfer melalui ATM, BSI Mobile, atau transfer antarbank berstandar syariah.",
+    "isActive": true,
+    "sortOrder": 3,
+    "createdAt": "2026-11-15T00:00:00.000Z",
+    "updatedAt": "2026-11-15T00:00:00.000Z"
+  },
+  {
+    "id": "acc_qris",
+    "type": "QRIS",
+    "bankName": "QRIS Sahabat Belajar",
+    "accountNumber": null,
+    "accountHolder": "Sahabat Belajar",
+    "qrisImage": "/images/qris-placeholder.png",
+    "instructions": "Scan barcode QRIS resmi dengan GoPay, OVO, Dana, ShopeePay, BCA Mobile, Livin, atau m-Banking apa pun.",
+    "isActive": true,
+    "sortOrder": 4,
+    "createdAt": "2026-11-15T00:00:00.000Z",
+    "updatedAt": "2026-11-15T00:00:00.000Z"
+  }
+]

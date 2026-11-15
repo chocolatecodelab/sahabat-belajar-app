@@ -1,7 +1,7 @@
 /**
- * BIAS RISTEK - n8n Workflow Automation Engine Egress
+ * Sahabat Belajar - n8n Workflow Automation Engine Egress
  * Handles outbound webhook events triggered by student registrations, payments, and LMS activity.
- * Conforms to PRD Phase #1 & Phase #2 specifications.
+ * Conforms to PRD specifications.
  */
 
 export type N8nEvent =
@@ -29,12 +29,12 @@ export async function triggerN8nWebhook(
   data: Record<string, any>
 ): Promise<{ success: boolean; simulated?: boolean; message?: string }> {
   const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
-  const n8nWebhookSecret = process.env.N8N_WEBHOOK_SECRET || "bias-ristek-n8n-secret";
+  const n8nWebhookSecret = process.env.N8N_WEBHOOK_SECRET || "sahabat-belajar-n8n-secret";
 
   const payload: N8nWebhookPayload = {
     event,
     timestamp: new Date().toISOString(),
-    source: "bias-ristek-app",
+    source: "sahabat-belajar-app",
     data,
   };
 
@@ -55,7 +55,7 @@ export async function triggerN8nWebhook(
       headers: {
         "Content-Type": "application/json",
         "X-Webhook-Secret": n8nWebhookSecret,
-        "User-Agent": "BIAS-Ristek-Automation/1.0",
+        "User-Agent": "Sahabat-Belajar-Automation/1.0",
       },
       body: JSON.stringify(payload),
       signal: controller.signal,

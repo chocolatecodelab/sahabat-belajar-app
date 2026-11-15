@@ -23,6 +23,7 @@ import {
   DIAGNOSTIC_QUESTIONS,
   type DiagnosticResult,
 } from "@/lib/diagnostic_questions";
+import { DEFAULT_SITE_CONFIG, getWhatsAppUrl } from "@/lib/site-config";
 import { useToast } from "@/components/ui/Toast";
 
 export default function PlacementTestClient() {
@@ -107,7 +108,6 @@ export default function PlacementTestClient() {
   // WhatsApp Consultation Link
   const getWhatsAppConsultationUrl = () => {
     if (!result) return "";
-    const cleanPhone = "628123456789"; // Admin default
     const text =
       `Halo Admin Sahabat Belajar! 🎓\n\n` +
       `Saya baru saja menyelesaikan *Placement Test Diagnostik Online* di website:\n` +
@@ -116,7 +116,7 @@ export default function PlacementTestClient() {
       `• Skor Kesiapan: *${result.percentage}% (${result.score}/${result.maxScore} Soal Benar)*\n` +
       `• Rekomendasi Paket: *${result.recommendedPackage}*\n\n` +
       `Saya ingin berkonsultasi mengenai hasil tes dan pendaftaran bimbingan belajar. Terima kasih! #BersamaSahabat`;
-    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+    return getWhatsAppUrl(DEFAULT_SITE_CONFIG.officialPhone, text);
   };
 
   return (

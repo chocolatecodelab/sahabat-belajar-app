@@ -267,7 +267,7 @@ export async function getSiteSettings() {
     const defaultObj = {
       id: "default_settings",
       siteName: "Sahabat Belajar",
-      siteDescription: "Badan Inovasi Akademik & Sains - Program Pengembangan Riset dan Teknologi",
+      siteDescription: "Bimbingan Belajar Privat & Semi-Privat K-12, UTBK, CPNS, Kedinasan, TOEFL, dan Pascasarjana",
       newsPerPage: 6,
       heroEnabled: true,
       serviceEnabled: true,

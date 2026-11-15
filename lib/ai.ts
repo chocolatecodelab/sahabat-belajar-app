@@ -91,7 +91,7 @@ function cleanJsonOutput(text: string): string {
 export async function generateArticleSEO(title: string, content: string) {
   const plainText = (content || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 3000);
 
-  const prompt = `Analisis artikel berikut dari platform kursus riset ilmiah "BIAS RISTEK":
+  const prompt = `Analisis artikel berikut dari platform bimbingan belajar "Sahabat Belajar":
 Judul Saat Ini: "${title || "Tanpa Judul"}"
 Isi Artikel:
 "${plainText}"
@@ -213,7 +213,7 @@ Keluarkan HANYA format JSON valid:
  * 4. AI Article Outline Generator (Formatted as HTML for TinyMCE)
  */
 export async function generateArticleOutline(topic: string, keywords?: string) {
-  const prompt = `Buat kerangka (outline) artikel riset & panduan mendalam untuk portal BIAS RISTEK berdasarkan topik berikut:
+  const prompt = `Buat kerangka (outline) artikel edukasi & panduan belajar mendalam untuk portal Sahabat Belajar berdasarkan topik berikut:
 Topik: "${topic}"
 Kata Kunci Terkait: "${keywords || "riset, publikasi, metode penelitian"}"
 
@@ -273,18 +273,21 @@ export async function callGeminiCounselor(
   }
 
   try {
-    const systemInstruction = `Anda adalah "Dr. Ristek AI", Konsultan Akademik Senior & Penasihat Program Riset di BIAS RISTEK.
+    const systemInstruction = `Anda adalah "Sahabat AI", Konsultan Akademik Resmi dari bimbingan belajar "Sahabat Belajar".
 
-IDENTITAS & KARAKTER:
-- Nama: Dr. Ristek AI
-- Gaya Bahasa: Ramah, empatik, berbasis solusi akademik, profesional, dan menyemangati (Academic Innovation).
+IDENTITAS & NILAI BRAND:
+- Nama: Sahabat AI
+- Brand: Sahabat Belajar (Sub-nama: Bimbingan Belajar)
+- Tagline: "Comprehensive Academic Solution" & "Paham Konsep Dasar hingga Siap Berprestasi"
+- Tagar: #BersamaSahabat
+- Gaya Bahasa: Bersahabat, rapi, fokus, empatik, berbasis solusi akademik, profesional, dan menyemangati.
 - Tugas Utama:
-  1. Membantu calon peserta (mahasiswa S1/S2/S3, dosen, dan peneliti) mendiagnosis kendala riset mereka (misal: penyusunan Bab 1-5 tesis/disertasi, perumusan GAP analysis/novelty, olah data statistik dengan SmartPLS 4 atau SPSS, penulisan artikel Scopus Q1-Q4 / SINTA 1-2, dan strategi menjawab reviewer).
-  2. Memberikan solusi akademis ringkas dan merekomendasikan program kursus / bimbingan BIAS RISTEK yang paling cocok dari daftar kelas aktif yang tersedia.
-  3. Menjawab pertanyaan seputar fasilitas (E-Sertifikat 32 JP, rekaman Zoom seumur hidup, review draft 1-on-1, komunitas alumni), jadwal batch, harga promo, dan metode pembayaran (QRIS & Transfer Bank BCA/Mandiri/BSI).
-  4. Jika peserta butuh konsultasi instansi kustom, sarankan untuk klik tombol WhatsApp Admin.
+  1. Membantu calon siswa dan orang tua mendiagnosis kebutuhan belajar (K-12: SD/SMP/SMA kurikulum merdeka & persiapan PAS/PAT, UTBK-SNBT masuk PTN, CPNS & Kedinasan berstandar CAT BKN, TOEFL/IELTS, serta Program Lanjutan S2/S3 & beasiswa LPDP/AAS).
+  2. Memberikan solusi belajar ringkas dan merekomendasikan program bimbingan Sahabat Belajar yang paling cocok (Privat 1-on-1 maupun Semi-Privat 2-5 siswa, durasi standar 90 menit/sesi, pilihan Online Zoom maupun Home Visit ke rumah).
+  3. Menjawab pertanyaan seputar metode pembelajaran, modul materi, rekam perkembangan siswa, tryout evaluasi, dan metode pembayaran (Transfer Bank BCA/Mandiri/BSI & QRIS resmi).
+  4. Jika butuh konsultasi privat lebih lanjut, sarankan untuk menghubungi nomor WhatsApp CS Sahabat Belajar.
 
-DATA KATALOG PROGRAM KELAS AKTIF BIAS RISTEK:
+DATA KATALOG PROGRAM & PAKET AKTIF SAHABAT BELAJAR:
 ${coursesContext}
 
 PETUNJUK FORMAT RESPON:
@@ -372,12 +375,12 @@ Catatan: "recommendedCourseSlugs" hanya diisi slug kelas yang benar-benar releva
     return {
       success: true,
       data: {
-        reply: "Halo! Saya **Dr. Ristek AI**, Konsultan Program Riset BIAS RISTEK. Kami siap mendampingi riset Anda mulai dari penulisan naskah, olah data statistik, hingga target publikasi Scopus / SINTA. Silakan ajukan pertanyaan seputar program atau hubungi admin WhatsApp kami untuk konsultasi privat.",
+        reply: "Halo! Saya **Sahabat AI**, Konsultan Akademik Sahabat Belajar (#BersamaSahabat). Kami siap mendampingi perjalanan belajar Anda mulai dari bimbingan K-12 (SD/SMP/SMA), persiapan intensif UTBK-SNBT, SKD CPNS & Kedinasan, hingga TOEFL & beasiswa pascasarjana. Silakan ajukan pertanyaan seputar program atau hubungi admin WhatsApp kami untuk konsultasi privat.",
         recommendedCourseSlugs: [],
         suggestedQuestions: [
-          "Bagaimana cara daftar kelas?",
-          "Apakah dapat sertifikat 32 JP?",
-          "Berapa biaya bimbingan riset?"
+          "Apa saja program bimbingan yang tersedia?",
+          "Bagaimana sistem kelas Home Visit vs Online?",
+          "Berapa pilihan kuota sesi bimbingan belajar?"
         ],
       },
     };

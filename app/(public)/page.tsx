@@ -20,12 +20,15 @@ import {
 import PublicLeadForm from "@/components/public/PublicLeadForm";
 import TutorShowcaseSection from "@/components/public/TutorShowcaseSection";
 import TestimoniSiswaSection from "@/components/public/TestimoniSiswaSection";
+import { DEFAULT_SITE_CONFIG, getWhatsAppUrl } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
 
 export default function HomePage() {
-  const officialWa = process.env.NEXT_PUBLIC_OFFICIAL_WA || "6281144556677";
-  const waUrl = `https://wa.me/${officialWa}?text=Halo%20Sahabat%20Belajar%2C%20saya%20tertarik%20untuk%20konsultasi%20bimbingan%20belajar.`;
+  const waUrl = getWhatsAppUrl(
+    DEFAULT_SITE_CONFIG.officialPhone,
+    "Halo Sahabat Belajar, saya tertarik untuk konsultasi bimbingan belajar."
+  );
 
   return (
     <div className="space-y-16 sm:space-y-24 pb-16">

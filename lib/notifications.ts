@@ -639,7 +639,7 @@ export async function sendEmail(
       });
 
       await transporter.sendMail({
-        from: `"${settings.emailSenderName || "BIAS RISTEK"}" <${settings.emailSenderAddress || settings.emailSmtpUser}>`,
+        from: `"${settings.emailSenderName || "Sahabat Belajar"}" <${settings.emailSenderAddress || settings.emailSmtpUser}>`,
         to: email,
         subject,
         html: htmlContent,
@@ -681,7 +681,7 @@ export async function sendEmail(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: `${settings.emailSenderName || "BIAS RISTEK"} <${settings.emailSenderAddress || "onboarding@resend.dev"}>`,
+          from: `${settings.emailSenderName || "Sahabat Belajar"} <${settings.emailSenderAddress || "onboarding@resend.dev"}>`,
           to: [email],
           subject,
           html: htmlContent,
@@ -777,7 +777,7 @@ export async function notifyInvoiceCreated(payload: {
       const html = renderTemplate(settings.template_email_invoiceCreated, variables);
       await sendEmail(
         payload.studentEmail,
-        `[BIAS RISTEK] Rincian Tagihan Pendaftaran - ${payload.invoiceNumber}`,
+        `[Sahabat Belajar] Rincian Tagihan Pendaftaran - ${payload.invoiceNumber}`,
         html,
         "INVOICE_CREATED",
         payload.studentName
@@ -787,7 +787,7 @@ export async function notifyInvoiceCreated(payload: {
     // Optional: Alert Admin via WhatsApp
     if (settings.whatsappAdminNumber) {
       const adminAlert = `🚨 *PESANAN BARU MASUK!* 🧾\n\nNama: ${payload.studentName}\nProgram: ${payload.courseTitle}\nTotal: ${formatRupiah(payload.totalAmount)}\nInvoice: ${payload.invoiceNumber}\n\nLihat di Dashboard: ${siteUrl}/dashboard/pendaftaran`;
-      await sendWhatsApp(settings.whatsappAdminNumber, adminAlert, "ADMIN_ALERT_INVOICE", "Admin BIAS RISTEK");
+      await sendWhatsApp(settings.whatsappAdminNumber, adminAlert, "ADMIN_ALERT_INVOICE", "Admin Sahabat Belajar");
     }
   } catch (err) {
     console.error("notifyInvoiceCreated error:", err);
@@ -832,7 +832,7 @@ export async function notifyPaymentVerified(payload: {
       const html = renderTemplate(settings.template_email_paymentVerified, variables);
       await sendEmail(
         payload.studentEmail,
-        `[BIAS RISTEK] Pembayaran Diterima & Akun Ruang Belajar Aktif!`,
+        `[Sahabat Belajar] Pembayaran Diterima & Akun Ruang Belajar Aktif!`,
         html,
         "PAYMENT_VERIFIED",
         payload.studentName
@@ -891,7 +891,7 @@ export async function notifySubmissionReviewed(payload: {
       const html = renderTemplate(settings.template_email_submissionReviewed, variables);
       await sendEmail(
         payload.studentEmail,
-        `[BIAS RISTEK] Review Tugas: ${payload.taskTitle} (${statusLabel})`,
+        `[Sahabat Belajar] Review Tugas: ${payload.taskTitle} (${statusLabel})`,
         html,
         "SUBMISSION_REVIEWED",
         payload.studentName
@@ -938,7 +938,7 @@ export async function notifyCertificateIssued(payload: {
       const html = renderTemplate(settings.template_email_certificateIssued, variables);
       await sendEmail(
         payload.studentEmail,
-        `[BIAS RISTEK] E-Sertifikat Resmi 32 JP Telah Terbit - ${payload.certificateCode}`,
+        `[Sahabat Belajar] E-Sertifikat Resmi 32 JP Telah Terbit - ${payload.certificateCode}`,
         html,
         "CERTIFICATE_ISSUED",
         payload.studentName
@@ -972,7 +972,7 @@ export async function notifyTutorBookingProposed(payload: {
     const declineUrl = `${siteUrl}/tutor/konfirmasi/${payload.confirmationToken}?action=DECLINE`;
     const detailsUrl = `${siteUrl}/tutor/konfirmasi/${payload.confirmationToken}`;
 
-    const waText = `Yth. ${payload.tutorName},\n\nTerdapat usulan penugasan bimbingan privat 1-on-1 baru dari BIAS RISTEK:\n\n👤 Mahasiswa/Peneliti: ${payload.studentName} (${payload.studentInstitution}, ${payload.studentEducationLevel})\n🔬 Topik Riset: ${payload.researchTopic}\n🛠️ Metodologi / Software: ${payload.researchSoftware || "Standar Riset Akademik"}\n📅 Jadwal Diusulkan: ${payload.scheduledDate}, Pukul ${payload.timeSlot}\n\nMohon konfirmasi ketersediaan Anda melalui tautan 1-klik di bawah ini:\n👉 TERIMA JADWAL: ${acceptUrl}\n👉 BERHALANGAN / RESCHEDULE: ${declineUrl}\n\nDetail lengkap bimbingan: ${detailsUrl}\n\nTerima kasih atas dedikasi akademik Anda bersama BIAS RISTEK.`;
+    const waText = `Yth. ${payload.tutorName},\n\nTerdapat usulan penugasan bimbingan privat 1-on-1 baru dari Sahabat Belajar:\n\n👤 Mahasiswa/Peneliti: ${payload.studentName} (${payload.studentInstitution}, ${payload.studentEducationLevel})\n🔬 Topik Riset: ${payload.researchTopic}\n🛠️ Metodologi / Software: ${payload.researchSoftware || "Standar Riset Akademik"}\n📅 Jadwal Diusulkan: ${payload.scheduledDate}, Pukul ${payload.timeSlot}\n\nMohon konfirmasi ketersediaan Anda melalui tautan 1-klik di bawah ini:\n👉 TERIMA JADWAL: ${acceptUrl}\n👉 BERHALANGAN / RESCHEDULE: ${declineUrl}\n\nDetail lengkap bimbingan: ${detailsUrl}\n\nTerima kasih atas dedikasi akademik Anda bersama Sahabat Belajar.`;
 
     if (payload.tutorPhone) {
       await sendWhatsApp(payload.tutorPhone, waText, "TUTOR_BOOKING_PROPOSED", payload.tutorName);
@@ -982,12 +982,12 @@ export async function notifyTutorBookingProposed(payload: {
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
           <div style="background-color: #001847; padding: 24px; text-align: center; color: #ffffff;">
-            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">BIAS RISTEK</h2>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Sahabat Belajar</h2>
             <p style="margin: 4px 0 0; font-size: 13px; color: #fdbc13;">Konfirmasi Penugasan Bimbingan Riset</p>
           </div>
           <div style="padding: 24px;">
             <p>Yth. <strong>${payload.tutorName}</strong>,</p>
-            <p>Koordinator akademik BIAS RISTEK mengusulkan penugasan bimbingan privat 1-on-1 baru yang sesuai dengan bidang keahlian Anda:</p>
+            <p>Koordinator akademik Sahabat Belajar mengusulkan penugasan bimbingan privat 1-on-1 baru yang sesuai dengan bidang keahlian Anda:</p>
             <div style="background-color: #f8f9ff; border-left: 4px solid #001847; padding: 16px; border-radius: 8px; margin: 16px 0;">
               <p style="margin: 0 0 8px;"><strong>Nama Peneliti:</strong> ${payload.studentName}</p>
               <p style="margin: 0 0 8px;"><strong>Instansi:</strong> ${payload.studentInstitution} (${payload.studentEducationLevel})</p>
@@ -1002,7 +1002,7 @@ export async function notifyTutorBookingProposed(payload: {
           </div>
         </div>
       `;
-      await sendEmail(payload.tutorEmail, `[BIAS RISTEK] Usulan Bimbingan Riset: ${payload.studentName}`, emailHtml, "TUTOR_BOOKING_PROPOSED", payload.tutorName);
+      await sendEmail(payload.tutorEmail, `[Sahabat Belajar] Usulan Bimbingan Riset: ${payload.studentName}`, emailHtml, "TUTOR_BOOKING_PROPOSED", payload.tutorName);
     }
   } catch (err) {
     console.error("notifyTutorBookingProposed error:", err);
@@ -1025,7 +1025,7 @@ export async function notifyStudentMentorshipConfirmed(payload: {
   researchTopic: string;
 }) {
   try {
-    const waText = `Halo ${payload.studentName}, kabar gembira!\n\nJadwal bimbingan privat riset Anda telah TERKONFIRMASI oleh Tim Pakar BIAS RISTEK:\n\n👨‍🏫 Tutor Pendamping: ${payload.tutorName} (${payload.tutorTitle})\n🏛️ Instansi: ${payload.tutorInstitution}\n🔬 Topik Bahasan: ${payload.researchTopic}\n📅 Waktu Sesi: ${payload.scheduledDate}, Pukul ${payload.timeSlot}\n\n🔗 Tautan Ruang Zoom Bimbingan:\n${payload.zoomJoinUrl}\n\nSilakan persiapkan draf naskah atau kendala olah data Anda sebelum sesi dimulai. Sampai jumpa di ruang bimbingan!`;
+    const waText = `Halo ${payload.studentName}, kabar gembira!\n\nJadwal bimbingan privat riset Anda telah TERKONFIRMASI oleh Tim Pakar Sahabat Belajar:\n\n👨‍🏫 Tutor Pendamping: ${payload.tutorName} (${payload.tutorTitle})\n🏛️ Instansi: ${payload.tutorInstitution}\n🔬 Topik Bahasan: ${payload.researchTopic}\n📅 Waktu Sesi: ${payload.scheduledDate}, Pukul ${payload.timeSlot}\n\n🔗 Tautan Ruang Zoom Bimbingan:\n${payload.zoomJoinUrl}\n\nSilakan persiapkan draf naskah atau kendala olah data Anda sebelum sesi dimulai. Sampai jumpa di ruang bimbingan!`;
 
     if (payload.studentPhone) {
       await sendWhatsApp(payload.studentPhone, waText, "MENTORSHIP_CONFIRMED", payload.studentName);
@@ -1035,7 +1035,7 @@ export async function notifyStudentMentorshipConfirmed(payload: {
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
           <div style="background-color: #001847; padding: 24px; text-align: center; color: #ffffff;">
-            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">BIAS RISTEK</h2>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Sahabat Belajar</h2>
             <p style="margin: 4px 0 0; font-size: 13px; color: #fdbc13;">Jadwal Bimbingan Riset Terkonfirmasi</p>
           </div>
           <div style="padding: 24px;">
@@ -1054,7 +1054,7 @@ export async function notifyStudentMentorshipConfirmed(payload: {
           </div>
         </div>
       `;
-      await sendEmail(payload.studentEmail, `[BIAS RISTEK] Jadwal Bimbingan Terkonfirmasi bersama ${payload.tutorName}`, emailHtml, "MENTORSHIP_CONFIRMED", payload.studentName);
+      await sendEmail(payload.studentEmail, `[Sahabat Belajar] Jadwal Bimbingan Terkonfirmasi bersama ${payload.tutorName}`, emailHtml, "MENTORSHIP_CONFIRMED", payload.studentName);
     }
   } catch (err) {
     console.error("notifyStudentMentorshipConfirmed error:", err);
@@ -1105,7 +1105,7 @@ export async function notifySessionEvaluationSubmitted(payload: {
     const avg = Math.round((payload.methodologyScore + payload.writingScore + payload.dataProcessingScore) / 3);
     const classroomUrl = payload.classroomUrl || "http://localhost:3000/belajar";
 
-    const waText = `Halo *${payload.studentName}*,\n\nMentor *${payload.tutorName}* telah menerbitkan lembar evaluasi untuk *Sesi Bimbingan Ke-${payload.sessionNumber}* Anda di BIAS RISTEK 🔬\n\n📌 *Progres Naskah:* ${payload.currentChapter}\n📊 *Rerata Skor Sesi:* ${avg}/100\n- Metodologi: ${payload.methodologyScore}/100\n- Penulisan Ilmiah: ${payload.writingScore}/100\n- Olah Data: ${payload.dataProcessingScore}/100\n\n📝 *Tindakan Perbaikan (Action Items):*\n${payload.actionItems}\n\n💬 *Catatan Mentor:*\n"${payload.tutorFeedback}"\n\nLihat log progres lengkap Anda di Ruang Belajar:\n🔗 ${classroomUrl}\n\nSemangat melanjutkan riset Anda!\n*Tim Akademik BIAS RISTEK*`;
+    const waText = `Halo *${payload.studentName}*,\n\nMentor *${payload.tutorName}* telah menerbitkan lembar evaluasi untuk *Sesi Bimbingan Ke-${payload.sessionNumber}* Anda di Sahabat Belajar 🔬\n\n📌 *Progres Naskah:* ${payload.currentChapter}\n📊 *Rerata Skor Sesi:* ${avg}/100\n- Metodologi: ${payload.methodologyScore}/100\n- Penulisan Ilmiah: ${payload.writingScore}/100\n- Olah Data: ${payload.dataProcessingScore}/100\n\n📝 *Tindakan Perbaikan (Action Items):*\n${payload.actionItems}\n\n💬 *Catatan Mentor:*\n"${payload.tutorFeedback}"\n\nLihat log progres lengkap Anda di Ruang Belajar:\n🔗 ${classroomUrl}\n\nSemangat melanjutkan riset Anda!\n*Tim Akademik Sahabat Belajar*`;
 
     if (payload.studentPhone) {
       await sendWhatsApp(payload.studentPhone, waText, "SESSION_EVALUATION", payload.studentName);
@@ -1115,7 +1115,7 @@ export async function notifySessionEvaluationSubmitted(payload: {
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
           <div style="background-color: #001847; padding: 24px; text-align: center; color: #ffffff;">
-            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">BIAS RISTEK</h2>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Sahabat Belajar</h2>
             <p style="margin: 4px 0 0; font-size: 13px; color: #fdbc13;">Evaluasi Sesi Bimbingan Ke-${payload.sessionNumber}</p>
           </div>
           <div style="padding: 24px;">
@@ -1142,7 +1142,7 @@ export async function notifySessionEvaluationSubmitted(payload: {
           </div>
         </div>
       `;
-      await sendEmail(payload.studentEmail, `[BIAS RISTEK] Lembar Evaluasi Sesi Ke-${payload.sessionNumber} oleh ${payload.tutorName}`, emailHtml, "SESSION_EVALUATION", payload.studentName);
+      await sendEmail(payload.studentEmail, `[Sahabat Belajar] Lembar Evaluasi Sesi Ke-${payload.sessionNumber} oleh ${payload.tutorName}`, emailHtml, "SESSION_EVALUATION", payload.studentName);
     }
   } catch (err) {
     console.error("notifySessionEvaluationSubmitted error:", err);
@@ -1172,7 +1172,7 @@ export async function notifyMonthlyReportGenerated(payload: {
     ];
     const monthName = monthNames[payload.periodMonth - 1] || "Bulan";
 
-    const waText = `Halo *${payload.studentName}*,\n\nKabar gembira! Dokumen *e-Rapor Kemajuan Riset Bulanan* Anda untuk periode *${monthName} ${payload.periodYear}* telah resmi diterbitkan oleh Tim Akademik BIAS RISTEK 🎓\n\n📋 *No. Register Rapor:* ${payload.reportNumber}\n📌 *Program:* ${payload.courseTitle}\n👨‍🏫 *Tutor Pendamping:* ${payload.tutorName}\n⭐ *Rata-rata Capaian:* ${payload.averageScore}/100 (${payload.progressStatus})\n\nDokumen e-Rapor resmi berstempel dan bertanda tangan digital dapat dilihat dan diunduh melalui tautan berikut:\n🔗 ${payload.reportUrl}\n\nSalam hangat,\n*Direktorat Akademik BIAS RISTEK*`;
+    const waText = `Halo *${payload.studentName}*,\n\nKabar gembira! Dokumen *e-Rapor Kemajuan Riset Bulanan* Anda untuk periode *${monthName} ${payload.periodYear}* telah resmi diterbitkan oleh Tim Akademik Sahabat Belajar 🎓\n\n📋 *No. Register Rapor:* ${payload.reportNumber}\n📌 *Program:* ${payload.courseTitle}\n👨‍🏫 *Tutor Pendamping:* ${payload.tutorName}\n⭐ *Rata-rata Capaian:* ${payload.averageScore}/100 (${payload.progressStatus})\n\nDokumen e-Rapor resmi berstempel dan bertanda tangan digital dapat dilihat dan diunduh melalui tautan berikut:\n🔗 ${payload.reportUrl}\n\nSalam hangat,\n*Direktorat Akademik Sahabat Belajar*`;
 
     if (payload.studentPhone) {
       await sendWhatsApp(payload.studentPhone, waText, "MONTHLY_REPORT", payload.studentName);
@@ -1182,7 +1182,7 @@ export async function notifyMonthlyReportGenerated(payload: {
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
           <div style="background-color: #001847; padding: 24px; text-align: center; color: #ffffff;">
-            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">BIAS RISTEK</h2>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Sahabat Belajar</h2>
             <p style="margin: 4px 0 0; font-size: 13px; color: #fdbc13;">e-Rapor Kemajuan Riset Bulanan</p>
           </div>
           <div style="padding: 24px;">
@@ -1204,7 +1204,7 @@ export async function notifyMonthlyReportGenerated(payload: {
           </div>
         </div>
       `;
-      await sendEmail(payload.studentEmail, `[BIAS RISTEK] e-Rapor Kemajuan Riset Bulan ${monthName} ${payload.periodYear} Telah Terbit - ${payload.reportNumber}`, emailHtml, "MONTHLY_REPORT", payload.studentName);
+      await sendEmail(payload.studentEmail, `[Sahabat Belajar] e-Rapor Kemajuan Riset Bulan ${monthName} ${payload.periodYear} Telah Terbit - ${payload.reportNumber}`, emailHtml, "MONTHLY_REPORT", payload.studentName);
     }
   } catch (err) {
     console.error("notifyMonthlyReportGenerated error:", err);
@@ -1228,14 +1228,14 @@ export async function notifyHumanHandoffEscalated(payload: {
 }) {
   try {
     const settings = await readNotificationSettings();
-    const adminPhone = settings.whatsappAdminNumber || "6287777659482";
+    const adminPhone = settings.whatsappAdminNumber || "6281144556677";
 
     // 1. Alert Admin CS
     const waAdminAlert = `🚨 *ESKALASI HUMAN HANDOFF CS!* 🚨\n\n📌 *Tiket:* ${payload.ticketNumber}\n👤 *Pengguna:* ${payload.customerName}\n📱 *Nomor WA:* +${payload.customerPhone}\n📁 *Kategori:* ${payload.category}\n⚡ *Pemicu:* ${payload.triggerReason}\n\n📝 *Ringkasan Kendala:*\n"${payload.summary}"\n\n💬 *Pesan Terakhir:*\n"${payload.lastUserMessage}"\n\n👉 Buka Dashboard CS: http://localhost:3000/dashboard/support\n👉 Chat Pelanggan: https://wa.me/${payload.customerPhone}`;
-    await sendWhatsApp(adminPhone, waAdminAlert, "HUMAN_HANDOFF_ADMIN", "Admin CS BIAS RISTEK");
+    await sendWhatsApp(adminPhone, waAdminAlert, "HUMAN_HANDOFF_ADMIN", "Admin CS Sahabat Belajar");
 
     // 2. Confirmation to Customer
-    const waCustomerMsg = `Halo *${payload.customerName}*,\n\nPertanyaan Anda telah kami teruskan ke *Konsultan Akademik Senior BIAS RISTEK* 🧑‍🏫\n\n📋 *No. Tiket Bantuan:* ${payload.ticketNumber}\n⏳ *Status:* Menunggu Konsultan Manusia\n🤖 *Catatan:* Bot auto-reply sementara dinonaktifkan agar percakapan ditangani langsung oleh staf kami.\n\nStaf kami akan segera membalas di chat ini dalam beberapa saat, atau Anda dapat langsung menghubungi layanan prioritas:\n👉 https://wa.me/${adminPhone}?text=${encodeURIComponent(`Halo Admin, saya dengan Tiket ${payload.ticketNumber} (${payload.customerName}) ingin melanjutkan konsultasi.`)}\n\nTerima kasih atas kesabaran Anda,\n*Tim Konsultan BIAS RISTEK*`;
+    const waCustomerMsg = `Halo *${payload.customerName}*,\n\nPertanyaan Anda telah kami teruskan ke *Konsultan Akademik Senior Sahabat Belajar* 🧑‍🏫\n\n📋 *No. Tiket Bantuan:* ${payload.ticketNumber}\n⏳ *Status:* Menunggu Konsultan Manusia\n🤖 *Catatan:* Bot auto-reply sementara dinonaktifkan agar percakapan ditangani langsung oleh staf kami.\n\nStaf kami akan segera membalas di chat ini dalam beberapa saat, atau Anda dapat langsung menghubungi layanan prioritas:\n👉 https://wa.me/${adminPhone}?text=${encodeURIComponent(`Halo Admin, saya dengan Tiket ${payload.ticketNumber} (${payload.customerName}) ingin melanjutkan konsultasi.`)}\n\nTerima kasih atas kesabaran Anda,\n*Tim Konsultan Sahabat Belajar*`;
     await sendWhatsApp(payload.customerPhone, waCustomerMsg, "HUMAN_HANDOFF_STUDENT", payload.customerName);
 
     // 3. Email Confirmation to Customer if email provided
@@ -1243,7 +1243,7 @@ export async function notifyHumanHandoffEscalated(payload: {
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
           <div style="background-color: #001847; padding: 24px; text-align: center; color: #ffffff;">
-            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">BIAS RISTEK</h2>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Sahabat Belajar</h2>
             <p style="margin: 4px 0 0; font-size: 13px; color: #fdbc13;">Pemberitahuan Eskalasi Konsultan Akademik</p>
           </div>
           <div style="padding: 24px;">

@@ -25,6 +25,7 @@ import {
 import type { AcademicDocument, DocumentCategory, DocumentStage } from "@/actions/dokumen";
 import { submitStudentDocument, uploadRevisedDraft } from "@/actions/dokumen";
 import { useToast } from "@/components/ui/Toast";
+import { DEFAULT_SITE_CONFIG, getWhatsAppUrl } from "@/lib/site-config";
 
 export default function StudentDocumentClient({
   initialDocuments = [],
@@ -305,7 +306,10 @@ export default function StudentDocumentClient({
 
           {isK12 ? (
             <a
-              href="https://wa.me/628123456789?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20siswa%20K-12%20ingin%20konsultasi%20bimbingan%20karya%20tulis%20atau%20esai%20seleksi%20PTN"
+              href={getWhatsAppUrl(
+                DEFAULT_SITE_CONFIG.officialPhone,
+                "Halo Admin Sahabat Belajar, saya siswa K-12 ingin konsultasi bimbingan karya tulis atau esai seleksi PTN"
+              )}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#EAF1FA] text-[#09408C] border border-[#9AC1E2] text-xs font-semibold hover:bg-[#D5DDEB] transition-colors shadow-xs shrink-0"
@@ -339,7 +343,10 @@ export default function StudentDocumentClient({
               </p>
               <div className="mt-2.5 flex items-center gap-3">
                 <a
-                  href="https://wa.me/628123456789?text=Halo%20Admin%20Sahabat%20Belajar,%20saya%20siswa%20K-12%20ingin%20konsultasi%20esai%20seleksi%20PTN%20atau%20lomba"
+                  href={getWhatsAppUrl(
+                    DEFAULT_SITE_CONFIG.officialPhone,
+                    "Halo Admin Sahabat Belajar, saya siswa K-12 ingin konsultasi esai seleksi PTN atau lomba"
+                  )}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#09408C] text-white font-semibold text-[11px] hover:bg-[#0E3571] transition-colors"

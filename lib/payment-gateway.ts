@@ -1,8 +1,8 @@
 /**
- * BIAS RISTEK - Payment Gateway & Auto-Settlement Engine
+ * Sahabat Belajar - Payment Gateway & Auto-Settlement Engine
  * Integrates Midtrans (QRIS & Virtual Accounts) with Cryptographic Verification (HMAC-SHA512)
- * and Idempotent Auto-Enrollment into Student LMS.
- * Conforms to PRD Phase #2 (Fase #2) Specifications.
+ * and Idempotent Auto-Enrollment into Student Portal.
+ * Conforms to PRD Specifications.
  */
 
 import crypto from "crypto";
@@ -30,14 +30,14 @@ export interface MidtransNotificationPayload {
  * Returns active Midtrans Server Key from environment variables with fallback
  */
 export function getMidtransServerKey(): string {
-  return process.env.MIDTRANS_SERVER_KEY || "SB-Mid-server-BIAS-RISTEK-SANDBOX-KEY";
+  return process.env.MIDTRANS_SERVER_KEY || "SB-Mid-server-SAHABAT-BELAJAR-SANDBOX-KEY";
 }
 
 /**
  * Returns active Midtrans Client Key
  */
 export function getMidtransClientKey(): string {
-  return process.env.MIDTRANS_CLIENT_KEY || "SB-Mid-client-BIAS-RISTEK-SANDBOX-KEY";
+  return process.env.MIDTRANS_CLIENT_KEY || "SB-Mid-client-SAHABAT-BELAJAR-SANDBOX-KEY";
 }
 
 /**
@@ -178,8 +178,8 @@ export async function processPaymentSettlement(
     }
 
     // 5. Auto-provision Student Account (Role: Student)
-    const studentEmail = (registration.email || "peserta@biasristek.id").trim().toLowerCase();
-    const studentName = registration.name || "Peserta Riset";
+    const studentEmail = (registration.email || "peserta@sahabatbelajar.id").trim().toLowerCase();
+    const studentName = registration.name || "Peserta Bimbingan";
     const studentPhone = (registration.phone || "12345678").replace(/\D/g, "");
 
     try {

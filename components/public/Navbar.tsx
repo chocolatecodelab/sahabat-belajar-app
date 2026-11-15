@@ -16,12 +16,15 @@ import {
   ArrowRight,
   Info,
 } from "lucide-react";
+import { DEFAULT_SITE_CONFIG, getWhatsAppUrl } from "@/lib/site-config";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const waUrl =
-    "https://wa.me/628123456789?text=Halo%20Sahabat%20Belajar%2C%20saya%20tertarik%20untuk%20konsultasi%20program%20bimbingan%20belajar.";
+  const waUrl = getWhatsAppUrl(
+    DEFAULT_SITE_CONFIG.officialPhone,
+    "Halo Sahabat Belajar, saya tertarik untuk konsultasi program bimbingan belajar."
+  );
 
   const navLinks = [
     { href: "/", label: "Beranda", icon: BookOpen },

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getStudentPortalData } from "@/actions/portal";
 import { getExams, getStudentExamHistory } from "@/actions/ujian";
 import { getLearningMaterials } from "@/actions/materi";
+import { getPaymentAccounts } from "@/actions/pembayaran";
 import StudentPortalClient from "@/components/portal/StudentPortalClient";
 
 export const metadata = {
@@ -24,10 +25,11 @@ export default async function StudentPortalPage({
   const resolvedParams = searchParams ? await searchParams : {};
   const requestedStudentId = resolvedParams.studentId;
 
-  const [portalRes, exams, materials] = await Promise.all([
+  const [portalRes, exams, materials, paymentAccounts] = await Promise.all([
     getStudentPortalData(requestedStudentId),
     getExams(),
     getLearningMaterials(),
+    getPaymentAccounts(true),
   ]);
 
   const studentId = portalRes.data?.student?.id || requestedStudentId || "std_demo_01";
@@ -40,6 +42,7 @@ export default async function StudentPortalPage({
       examHistory={examHistory}
       materials={materials}
       currentStudentId={studentId}
+      paymentAccounts={paymentAccounts}
     />
   );
 }
