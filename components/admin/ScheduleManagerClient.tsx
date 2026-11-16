@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Calendar,
@@ -26,11 +26,14 @@ import {
   UserCheck,
   RefreshCw,
   Search,
+  Edit3,
+  Ban,
 } from "lucide-react";
 import {
   createSession,
   updateSessionStatus,
   saveSessionJournal,
+  updateSessionScheduleAndLink,
 } from "@/actions/penjadwalan";
 import {
   DAYS_OF_WEEK,
@@ -85,6 +88,23 @@ export default function ScheduleManagerClient({
 
   // Confirm Complete Session Dialog state (SB-QA-UX-001)
   const [sessionToComplete, setSessionToComplete] = useState<any | null>(null);
+
+  // Reschedule / Edit Link & Cancel Session Modal states (PRD Modul C4)
+  const [editingSession, setEditingSession] = useState<any | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [editStartTime, setEditStartTime] = useState("16:00");
+  const [editDurationMinutes, setEditDurationMinutes] = useState(90);
+  const [editMode, setEditMode] = useState<"ONLINE" | "HOME_VISIT">("ONLINE");
+  const [editMeetingLink, setEditMeetingLink] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const [sessionToCancel, setSessionToCancel] = useState<any | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+
+  useEffect(() => {
+    setSessions(initialSessions);
+  }, [initialSessions]);
 
   // Form states for Create Session
   const [tutorId, setTutorId] = useState(tutors[0]?.id || "");
@@ -211,6 +231,104 @@ export default function ScheduleManagerClient({
       setSessions((prev) =>
         prev.map((s) => (s.id === session.id ? { ...s, status: "TERLAKSANA" } : s))
       );
+      router.refresh();
+    } else {
+      toast.error(res.message);
+    }
+  };
+
+  const openEditSessionModal = (session: any) => {
+    const startObj = new Date(session.startAt);
+    const endObj = new Date(session.endAt);
+    const diffMin = Math.round((endObj.getTime() - startObj.getTime()) / 60000);
+    const localYear = startObj.getFullYear();
+    const localMonth = String(startObj.getMonth() + 1).padStart(2, "0");
+    const localDay = String(startObj.getDate()).padStart(2, "0");
+    const localHours = String(startObj.getHours()).padStart(2, "0");
+    const localMinutes = String(startObj.getMinutes()).padStart(2, "0");
+
+    setEditingSession(session);
+    setEditDate(`${localYear}-${localMonth}-${localDay}`);
+    setEditStartTime(`${localHours}:${localMinutes}`);
+    setEditDurationMinutes(diffMin > 0 ? diffMin : 90);
+    setEditMode(session.mode === "HOME_VISIT" ? "HOME_VISIT" : "ONLINE");
+    setEditMeetingLink(session.meetingLink || "");
+    setEditAddress(session.address || "");
+    setEditError(null);
+  };
+
+  const executeUpdateScheduleAndLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSession) return;
+    setEditError(null);
+
+    const startObj = new Date(`${editDate}T${editStartTime}:00`);
+    const endObj = new Date(startObj.getTime() + editDurationMinutes * 60 * 1000);
+
+    setIsSubmitting(true);
+    const res = await updateSessionScheduleAndLink({
+      sessionId: editingSession.id,
+      startAt: startObj.toISOString(),
+      durationMinutes: editDurationMinutes,
+      mode: editMode,
+      meetingLink: editMode === "ONLINE" ? editMeetingLink : undefined,
+      address: editMode === "HOME_VISIT" ? editAddress : undefined,
+    });
+    setIsSubmitting(false);
+
+    if (res.success) {
+      toast.success(res.message, "Jadwal & Link Diperbarui");
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === editingSession.id
+            ? {
+                ...s,
+                startAt: startObj.toISOString(),
+                endAt: endObj.toISOString(),
+                mode: editMode,
+                meetingLink: editMode === "ONLINE" ? editMeetingLink.trim() || null : null,
+                address: editMode === "HOME_VISIT" ? editAddress.trim() || null : null,
+              }
+            : s
+        )
+      );
+      setEditingSession(null);
+      router.refresh();
+    } else {
+      setEditError(res.message || "Gagal memperbarui jadwal sesi.");
+      toast.error(res.message || "Gagal memperbarui jadwal.");
+    }
+  };
+
+  const executeCancelSession = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sessionToCancel) return;
+    if (!cancelReason.trim()) {
+      toast.warning("Alasan pembatalan sesi wajib diisi.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const res = await updateSessionStatus(
+      sessionToCancel.id,
+      SessionStatus.DIBATALKAN,
+      cancelReason.trim()
+    );
+    setIsSubmitting(false);
+
+    if (res.success) {
+      toast.success("Sesi Dibatalkan", res.message);
+      const targetId = sessionToCancel.id;
+      const reasonText = cancelReason.trim();
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === targetId
+            ? { ...s, status: "DIBATALKAN", cancelReason: reasonText }
+            : s
+        )
+      );
+      setSessionToCancel(null);
+      setCancelReason("");
       router.refresh();
     } else {
       toast.error(res.message);
@@ -553,6 +671,12 @@ export default function ScheduleManagerClient({
                             )}
                           </div>
                         )}
+
+                        {session.status === "DIBATALKAN" && session.cancelReason && (
+                          <div className="mt-2 text-xs text-[#B4381F] bg-[#FBE9E5] px-2.5 py-1 rounded-lg inline-block border border-[#B4381F]/20">
+                            Alasan pembatalan: <strong>{session.cancelReason}</strong>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -562,28 +686,57 @@ export default function ScheduleManagerClient({
                           isDone
                             ? "bg-[#E3F4EC] text-[#1F6F4A] border border-[#A3E635]"
                             : session.status === "DIBATALKAN"
-                            ? "bg-[#F1F5F9] text-[#5B6882] line-through"
+                            ? "bg-[#FBE9E5] text-[#B4381F] border border-[#B4381F]/20"
                             : "bg-[#EAF1FA] text-[#09408C] border border-[#9AC1E2]"
                         }`}
                       >
                         {session.status}
                       </span>
 
+                      {!isDone && session.status !== "DIBATALKAN" && (
+                        <button
+                          type="button"
+                          onClick={() => openEditSessionModal(session)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors cursor-pointer"
+                          title="Ubah Tanggal/Jam, Mode, atau Tautan Zoom/Meet"
+                        >
+                          <Edit3 size={12} />
+                          <span>Ubah Jadwal / Link</span>
+                        </button>
+                      )}
+
                       <button
+                        type="button"
                         onClick={() => openJournalModal(session)}
-                        className="px-3 py-1.5 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                        className="px-3 py-1.5 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors cursor-pointer"
                       >
                         Isi Jurnal & Absensi
                       </button>
 
                       {!isDone && session.status !== "DIBATALKAN" && (
-                        <button
-                          onClick={() => setSessionToComplete(session)}
-                          disabled={isSubmitting}
-                          className="px-3 py-1.5 rounded-xl bg-[#1F6F4A] text-white text-xs font-semibold hover:bg-[#165538] transition-colors shadow-2xs"
-                        >
-                          Tandai Selesai & Potong Kuota
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSessionToCancel(session);
+                              setCancelReason("");
+                            }}
+                            disabled={isSubmitting}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#B4381F]/30 text-xs font-semibold text-[#B4381F] bg-[#FBE9E5]/60 hover:bg-[#FBE9E5] transition-colors cursor-pointer"
+                          >
+                            <Ban size={12} />
+                            <span>Batalkan</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setSessionToComplete(session)}
+                            disabled={isSubmitting}
+                            className="px-3 py-1.5 rounded-xl bg-[#1F6F4A] text-white text-xs font-semibold hover:bg-[#165538] transition-colors shadow-2xs cursor-pointer"
+                          >
+                            Tandai Selesai & Potong Kuota
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -995,13 +1148,15 @@ export default function ScheduleManagerClient({
                       {/* Tutor Profile Header */}
                       <div>
                         <h4 className="text-sm font-bold text-[#1B2A41]">{rec.name}</h4>
-                        <div className="text-xs text-[#5B6882] mt-0.5">
-                          Tarif Sesi:{" "}
-                          <strong className="text-[#09408C]">
-                            Rp {rec.ratePerSession.toLocaleString("id-ID")}
-                          </strong>{" "}
-                          / 90 mnt
-                        </div>
+                        {rec.ratePerSession > 0 && (
+                          <div className="text-xs text-[#5B6882] mt-0.5 tabular-nums">
+                            Tarif Sesi:{" "}
+                            <strong className="text-[#09408C]">
+                              Rp {rec.ratePerSession.toLocaleString("id-ID")}
+                            </strong>{" "}
+                            / 90 mnt
+                          </div>
+                        )}
                       </div>
 
                       {/* Expertise Badges */}
@@ -1587,6 +1742,230 @@ export default function ScheduleManagerClient({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL UBAH JADWAL & TAUTAN PERTEMUAN (PRD MODUL C4 & BR-2)     */}
+      {/* ============================================================== */}
+      {editingSession && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-edit-schedule-title"
+        >
+          <form
+            onSubmit={executeUpdateScheduleAndLink}
+            className="bg-white rounded-2xl max-w-md w-full border border-[#D5DDEB] shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
+            <div className="flex items-center justify-between border-b border-[#D5DDEB] p-5 bg-white">
+              <div>
+                <h3 id="modal-edit-schedule-title" className="text-base font-bold text-[#09408C] font-display">
+                  Ubah Jadwal & Tautan Sesi
+                </h3>
+                <p className="text-[11px] text-[#5B6882] mt-0.5">
+                  {editingSession.program?.name} — {editingSession.tutor?.name}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingSession(null)}
+                className="text-[#5B6882] hover:text-[#1B2A41] p-1"
+                aria-label="Tutup dialog ubah jadwal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+              {editError && (
+                <div className="p-3 rounded-xl bg-[#FBE9E5] border border-[#B4381F]/30 text-[#B4381F] font-semibold flex items-start gap-2">
+                  <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                  <span>{editError}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="edit-session-date" className="block font-bold text-[#1B2A41] mb-1">
+                    Tanggal Sesi *
+                  </label>
+                  <input
+                    id="edit-session-date"
+                    type="date"
+                    required
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit-session-time" className="block font-bold text-[#1B2A41] mb-1">
+                    Jam Mulai *
+                  </label>
+                  <input
+                    id="edit-session-time"
+                    type="time"
+                    required
+                    value={editStartTime}
+                    onChange={(e) => setEditStartTime(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="edit-session-duration" className="block font-bold text-[#1B2A41] mb-1">
+                    Durasi (Menit)
+                  </label>
+                  <input
+                    id="edit-session-duration"
+                    type="number"
+                    min={30}
+                    max={240}
+                    step={15}
+                    value={editDurationMinutes}
+                    onChange={(e) => setEditDurationMinutes(Number(e.target.value) || 90)}
+                    className="w-full p-2.5 rounded-xl border border-[#D5DDEB] focus-ring tabular-nums"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit-session-mode" className="block font-bold text-[#1B2A41] mb-1">
+                    Mode Belajar
+                  </label>
+                  <select
+                    id="edit-session-mode"
+                    value={editMode}
+                    onChange={(e) => setEditMode(e.target.value as "ONLINE" | "HOME_VISIT")}
+                    className="w-full p-2.5 rounded-xl border border-[#D5DDEB] bg-white focus-ring"
+                  >
+                    <option value="ONLINE">Online (Zoom/Meet)</option>
+                    <option value="HOME_VISIT">Home Visit</option>
+                  </select>
+                </div>
+              </div>
+
+              {editMode === "ONLINE" ? (
+                <div>
+                  <label htmlFor="edit-meeting-link" className="block font-bold text-[#1B2A41] mb-1">
+                    Tautan Meeting (Zoom / Google Meet)
+                  </label>
+                  <input
+                    id="edit-meeting-link"
+                    type="url"
+                    placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                    value={editMeetingLink}
+                    onChange={(e) => setEditMeetingLink(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label htmlFor="edit-address" className="block font-bold text-[#1B2A41] mb-1">
+                    Alamat Home Visit
+                  </label>
+                  <textarea
+                    id="edit-address"
+                    rows={2}
+                    placeholder="Alamat lengkap lokasi kunjungan tutor..."
+                    value={editAddress}
+                    onChange={(e) => setEditAddress(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-[#D5DDEB] bg-white">
+              <button
+                type="button"
+                onClick={() => setEditingSession(null)}
+                className="px-4 py-2 text-xs font-semibold text-[#5B6882] hover:bg-[#F4F7FB] rounded-xl transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-4 py-2 text-xs font-bold bg-[#09408C] text-white hover:bg-[#0E3571] rounded-xl transition-colors disabled:opacity-50"
+              >
+                {isSubmitting ? "Menyimpan..." : "Simpan Perubahan Jadwal"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL KONFIRMASI PEMBATALAN SESI (PRD MODUL C4)                */}
+      {/* ============================================================== */}
+      {sessionToCancel && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-cancel-session-title"
+        >
+          <form
+            onSubmit={executeCancelSession}
+            className="bg-white rounded-2xl max-w-sm w-full p-6 border border-[#D5DDEB] shadow-xl space-y-4"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-[#FBE9E5] text-[#B4381F] flex items-center justify-center mx-auto border border-[#B4381F]/30">
+              <Ban size={22} />
+            </div>
+
+            <div className="text-center space-y-1">
+              <h3 id="modal-cancel-session-title" className="text-base font-bold text-[#1B2A41] font-display">
+                Batalkan Sesi Bimbingan?
+              </h3>
+              <p className="text-xs text-[#5B6882] leading-relaxed">
+                Sesi yang dibatalkan <strong>tidak memotong kuota siswa</strong> dan dapat dijadwalkan ulang kapan saja.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-[#F4F7FB] border border-[#D5DDEB] text-xs space-y-1">
+              <div className="font-bold text-[#09408C]">
+                {sessionToCancel.program?.name}
+              </div>
+              <div className="text-[#5B6882]">
+                Siswa: {sessionToCancel.participants?.map((p: any) => p.student.name).join(", ")}
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="cancel-reason-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
+                Alasan Pembatalan <span className="text-[#B4381F]">(Wajib)</span>
+              </label>
+              <textarea
+                id="cancel-reason-input"
+                required
+                rows={2}
+                placeholder="Contoh: Siswa izin sakit / perubahan jadwal mendadak dari wali..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                className="w-full text-xs p-2.5 rounded-xl border border-[#D5DDEB] focus-ring"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setSessionToCancel(null)}
+                className="flex-1 py-2 rounded-xl text-xs font-semibold text-[#5B6882] hover:bg-[#F4F7FB] border border-[#D5DDEB] transition-colors"
+              >
+                Kembali
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 py-2 rounded-xl text-xs font-bold text-white bg-[#B4381F] hover:bg-[#8E2B18] transition-colors shadow-2xs disabled:opacity-50"
+              >
+                {isSubmitting ? "Membatalkan..." : "Konfirmasi Batal"}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

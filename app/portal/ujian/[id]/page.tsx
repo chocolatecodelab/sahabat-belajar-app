@@ -1,16 +1,19 @@
 import { getExamById } from "@/actions/ujian";
+import { getStudentPortalData } from "@/actions/portal";
 import ExamSimulationClient from "@/components/portal/ExamSimulationClient";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 
 export const metadata = {
-  title: "Simulasi Ujian Online (CAT) | Sahabat Belajar",
+  title: "Ruang Ujian & Evaluasi Terpadu | Sahabat Belajar",
 };
 
 export default async function PortalExamRoomPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ studentId?: string }>;
 }) {
   const session = await auth();
 
@@ -18,18 +21,34 @@ export default async function PortalExamRoomPage({
     redirect("/login");
   }
 
-  const { id } = await params;
-  const exam = await getExamById(id);
+  const [{ id }, resolvedSearchParams] = await Promise.all([
+    params,
+    searchParams ? searchParams : Promise.resolve({ studentId: undefined }),
+  ]);
+
+  const [exam, portalRes] = await Promise.all([
+    getExamById(id),
+    getStudentPortalData(resolvedSearchParams?.studentId),
+  ]);
 
   if (!exam) {
     notFound();
   }
 
+  const activeStudentId =
+    portalRes.success && portalRes.data?.student?.id
+      ? portalRes.data.student.id
+      : resolvedSearchParams?.studentId || session.user.id;
+  const activeStudentName =
+    portalRes.success && portalRes.data?.student?.name
+      ? portalRes.data.student.name
+      : session.user.name || "Siswa";
+
   return (
     <ExamSimulationClient
       exam={exam}
-      studentId={session.user.id}
-      studentName={session.user.name || "Siswa"}
+      studentId={activeStudentId}
+      studentName={activeStudentName}
     />
   );
 }

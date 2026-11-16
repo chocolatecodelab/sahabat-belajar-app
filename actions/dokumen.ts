@@ -67,7 +67,7 @@ function sanitizeFileUrl(url?: string | null): string {
 const SAMPLE_DOCUMENTS: AcademicDocument[] = [
   {
     id: "doc_lpdp_01",
-    studentId: "std_demo_01",
+    studentId: "std_demo_03",
     studentName: "Dinda Kirana",
     title: "Esai Kontribusi untuk Indonesia - Beasiswa LPDP Tahap 1",
     category: "ESAI_BEASISWA",
@@ -105,7 +105,7 @@ const SAMPLE_DOCUMENTS: AcademicDocument[] = [
   },
   {
     id: "doc_motivation_01",
-    studentId: "std_demo_03",
+    studentId: "std_demo_04",
     studentName: "Kevin Pratama",
     title: "Personal Statement / Motivation Letter - Beasiswa Monbukagakusho (MEXT)",
     category: "MOTIVATION_LETTER",
@@ -124,14 +124,14 @@ const SAMPLE_DOCUMENTS: AcademicDocument[] = [
   },
   {
     id: "doc_skripsi_01",
-    studentId: "std_demo_01",
-    studentName: "Ahmad Fauzi",
+    studentId: "std_demo_05",
+    studentName: "Bagas Pradipta",
     title: "Draf Skripsi Bab 1-3: Analisis Komparasi Kinerja Algoritma Klasifikasi Data Mining",
     category: "SKRIPSI_KTI",
     targetInstitution: "Universitas Indonesia",
     stage: "REVIEW_MENTOR",
     version: 1,
-    fileName: "Draf_Skripsi_Bab1_3_Ahmad_Fauzi.pdf",
+    fileName: "Draf_Skripsi_Bab1_3_Bagas_Pradipta.pdf",
     fileUrl: "/materials/sample-document.pdf",
     studentNotes: "Mohon koreksi bagian batasan masalah dan tinjauan pustaka terkini terkait algoritma Random Forest vs XGBoost.",
     mentorId: "tut_dr_hendra",
@@ -162,17 +162,29 @@ export async function getDocuments(params?: {
       userRole.includes("mentor") ||
       process.env.IS_INTERNAL_CLI_TEST === "true";
 
+    const ALLOWED_DEMO_SIBLING_IDS = new Set([
+      "student_01",
+      "std_demo_01",
+      "std_demo_02",
+      "std_demo_03",
+    ]);
+
     let query = supabaseAdmin
       .from("AcademicDocument")
       .select("*")
       .order("updatedAt", { ascending: false });
 
     // Strict Tenant / Student Isolation:
-    // If not Admin/Staf/Tutor, force studentId filter to logged-in user
+    // If not Admin/Staf/Tutor, bind to logged-in user or valid switched demo sibling
+    let effectiveStudentFilter: string | undefined = params?.studentId;
     if (!isStaffOrTutor && session?.user?.id) {
-      query = query.eq("studentId", session.user.id);
-    } else if (params?.studentId) {
-      query = query.eq("studentId", params.studentId);
+      effectiveStudentFilter =
+        params?.studentId && ALLOWED_DEMO_SIBLING_IDS.has(params.studentId)
+          ? params.studentId
+          : session.user.id;
+      query = query.eq("studentId", effectiveStudentFilter);
+    } else if (effectiveStudentFilter) {
+      query = query.eq("studentId", effectiveStudentFilter);
     }
 
     if (params?.stage && params.stage !== "ALL") {
@@ -185,10 +197,8 @@ export async function getDocuments(params?: {
     const { data, error } = await query;
     if (error || !data || data.length === 0) {
       let filtered = [...SAMPLE_DOCUMENTS];
-      if (!isStaffOrTutor && session?.user?.id) {
-        filtered = filtered.filter((d) => d.studentId === session.user.id);
-      } else if (params?.studentId) {
-        filtered = filtered.filter((d) => d.studentId === params.studentId);
+      if (effectiveStudentFilter) {
+        filtered = filtered.filter((d) => d.studentId === effectiveStudentFilter);
       }
       if (params?.stage && params.stage !== "ALL") {
         filtered = filtered.filter((d) => d.stage === params.stage);
@@ -282,13 +292,18 @@ export async function submitStudentDocument(input: {
       userRole.includes("staf") ||
       process.env.IS_INTERNAL_CLI_TEST === "true";
 
-    // Anti-spoofing: Students can strictly only submit using their own user credentials
-    const actualStudentId = isAdminOrStaff
-      ? input.studentId || session.user.id
-      : session.user.id;
-    const actualStudentName = isAdminOrStaff
-      ? input.studentName || session.user.name || "Siswa"
-      : session.user.name || input.studentName || "Siswa";
+    // Anti-spoofing: Students can strictly only submit using their own user credentials or switched demo sibling profile
+    const isDemoSibling = ["student_01", "std_demo_01", "std_demo_02", "std_demo_03"].includes(
+      input.studentId
+    );
+    const actualStudentId =
+      isAdminOrStaff || isDemoSibling
+        ? input.studentId || session.user.id
+        : session.user.id;
+    const actualStudentName =
+      isAdminOrStaff || isDemoSibling
+        ? input.studentName || session.user.name || "Siswa"
+        : session.user.name || input.studentName || "Siswa";
 
     const id = "doc_" + Date.now();
     const now = new Date().toISOString();

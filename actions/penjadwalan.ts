@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { SessionStatus, AttendanceStatus } from "@prisma/client";
 import { requireStaffOrAdmin, requireOperationalOrTutor } from "@/lib/auth";
 import { notifySessionScheduled, notifyLowQuotaAlert } from "@/lib/notifications";
+import { logActivity } from "@/lib/audit";
 
 export type CreateSessionInput = {
   tutorId: string;
@@ -264,7 +265,7 @@ export async function getSessions(params?: {
           program: { id: "prog_01", name: "Persiapan CPNS & BUMN", category: "CPNS_BUMN" },
           tutor: { id: "tut_demo_01", name: "Hendra Wijaya, M.Pd.", phone: "081234567891" },
           participants: [
-            { id: "part_01", studentId: "std_demo_01", attendance: "HADIR", quotaDeducted: false, student: { id: "std_demo_01", name: "Ahmad Fauzi", parentPhone: "081298765432" } }
+            { id: "part_01", studentId: "std_demo_01", attendance: "HADIR", quotaDeducted: false, student: { id: "std_demo_01", name: "Rian Hendro", parentPhone: "081298765432" } }
           ],
           journal: null,
         },
@@ -326,6 +327,12 @@ export async function updateSessionStatus(
       .single();
 
     if (sessErr || !session) {
+      if (sessionId.startsWith("sess_demo_")) {
+        return {
+          success: true,
+          message: `Status sesi demo berhasil diperbarui menjadi ${newStatus}.`,
+        };
+      }
       return { success: false, message: "Sesi tidak ditemukan." };
     }
 
@@ -446,6 +453,8 @@ export async function updateSessionStatus(
     revalidatePath("/dashboard/jadwal");
     revalidatePath("/dashboard/paket");
     revalidatePath("/dashboard");
+    revalidatePath("/tutor");
+    revalidatePath("/portal");
 
     return {
       success: true,
@@ -456,6 +465,128 @@ export async function updateSessionStatus(
     return {
       success: false,
       message: "Gagal memperbarui status sesi.",
+    };
+  }
+}
+
+export async function updateSessionScheduleAndLink(input: {
+  sessionId: string;
+  startAt: string;
+  durationMinutes?: number;
+  mode: "ONLINE" | "HOME_VISIT";
+  meetingLink?: string;
+  address?: string;
+}): Promise<ActionResponse> {
+  try {
+    const authSession = await requireOperationalOrTutor();
+    const newStart = new Date(input.startAt);
+    const durationMin = Math.max(30, Math.min(240, Number(input.durationMinutes) || 90));
+    if (isNaN(newStart.getTime())) {
+      return { success: false, message: "Tanggal & jam mulai sesi tidak valid." };
+    }
+    const newEnd = new Date(newStart.getTime() + durationMin * 60 * 1000);
+
+    const { data: existing, error: fetchErr } = await supabaseAdmin
+      .from("Session")
+      .select("id, tutorId, status, participants:SessionParticipant(studentId)")
+      .eq("id", input.sessionId)
+      .maybeSingle();
+
+    if (fetchErr || !existing) {
+      if (input.sessionId.startsWith("sess_demo_")) {
+        return {
+          success: true,
+          message: "Jadwal & tautan sesi demo berhasil diperbarui.",
+        };
+      }
+      return { success: false, message: "Sesi tidak ditemukan." };
+    }
+
+    const participantStudentIds = (existing.participants || [])
+      .map((p: any) => p.studentId)
+      .filter(Boolean);
+
+    // BR-2: Validasi bentrok jadwal tutor & siswa (mengecualikan sesi yang sedang diubah)
+    const [{ data: tutorConflicts }, { data: studentConflicts }] = await Promise.all([
+      supabaseAdmin
+        .from("Session")
+        .select("id, tutor:Tutor(name)")
+        .eq("tutorId", existing.tutorId)
+        .neq("id", input.sessionId)
+        .neq("status", "DIBATALKAN")
+        .lt("startAt", newEnd.toISOString())
+        .gt("endAt", newStart.toISOString())
+        .limit(1),
+      participantStudentIds.length > 0
+        ? supabaseAdmin
+            .from("SessionParticipant")
+            .select("id, sessionId, studentId, student:Student(name), session:Session!inner(id, startAt, endAt, status)")
+            .in("studentId", participantStudentIds)
+            .neq("session.status", "DIBATALKAN")
+            .lt("session.startAt", newEnd.toISOString())
+            .gt("session.endAt", newStart.toISOString())
+            .limit(10)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    if (tutorConflicts && tutorConflicts.length > 0) {
+      const tutorName = (tutorConflicts[0] as any).tutor?.name || "Tutor";
+      return {
+        success: false,
+        message: `Bentrok jadwal (BR-2)! Tutor ${tutorName} sudah memiliki sesi lain pada rentang waktu baru.`,
+      };
+    }
+
+    const realStudentConflict = (studentConflicts || []).find(
+      (c: any) => c.sessionId !== input.sessionId && c.session?.id !== input.sessionId
+    );
+    if (realStudentConflict) {
+      const studentName = (realStudentConflict as any).student?.name || "Siswa";
+      return {
+        success: false,
+        message: `Bentrok jadwal (BR-2)! ${studentName} sudah memiliki jadwal bimbingan lain pada jam baru tersebut.`,
+      };
+    }
+
+    const now = new Date().toISOString();
+    const { error: updateErr } = await supabaseAdmin
+      .from("Session")
+      .update({
+        startAt: newStart.toISOString(),
+        endAt: newEnd.toISOString(),
+        mode: input.mode,
+        meetingLink: input.mode === "ONLINE" ? input.meetingLink?.trim() || null : null,
+        address: input.mode === "HOME_VISIT" ? input.address?.trim() || null : null,
+        updatedAt: now,
+      })
+      .eq("id", input.sessionId);
+
+    if (updateErr) throw updateErr;
+
+    await logActivity({
+      actorName: authSession?.user?.name || "Staf/Admin",
+      actorRole: (authSession?.user as any)?.role || "Admin",
+      action: "UPDATE",
+      entity: "Jadwal",
+      targetId: input.sessionId,
+      targetName: `Sesi ${input.sessionId.slice(-6)}`,
+      details: `Mengubah jadwal ke ${newStart.toLocaleString("id-ID")} WIB (${durationMin} mnt) - Mode ${input.mode}.`,
+    });
+
+    revalidatePath("/dashboard/jadwal");
+    revalidatePath("/dashboard");
+    revalidatePath("/tutor");
+    revalidatePath("/portal");
+
+    return {
+      success: true,
+      message: "Jadwal & tautan pertemuan berhasil diperbarui.",
+    };
+  } catch (error: any) {
+    console.error("updateSessionScheduleAndLink error:", error);
+    return {
+      success: false,
+      message: error?.message || "Gagal memperbarui jadwal & tautan sesi.",
     };
   }
 }

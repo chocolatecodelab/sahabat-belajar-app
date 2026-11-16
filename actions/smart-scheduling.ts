@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase";
+import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { ActionResponse } from "@/types";
 import { SessionStatus } from "@prisma/client";
@@ -132,6 +133,18 @@ export async function calculateSmartTutorRecommendations(params: {
 }): Promise<TutorRecommendation[]> {
   try {
     const { programName = "", programCategory = "", studentId, dateStr, startTime, endTime, mode = "ONLINE" } = params;
+
+    // BR-7 Server-side privacy: Tarif honor tutor hanya boleh dilihat oleh Admin / Super Admin (bukan Staf)
+    let isAdmin = process.env.IS_INTERNAL_CLI_TEST === "true";
+    if (!isAdmin) {
+      try {
+        const session = await auth();
+        const role = ((session?.user as any)?.role || "").toLowerCase();
+        isAdmin = role.includes("admin") || role.includes("super");
+      } catch {
+        isAdmin = false;
+      }
+    }
 
     const startDateTime = new Date(`${dateStr}T${startTime}:00`);
     const endDateTime = new Date(`${dateStr}T${endTime}:00`);
@@ -273,7 +286,7 @@ export async function calculateSmartTutorRecommendations(params: {
         name: t.name,
         phone: t.phone,
         expertise: t.expertise || [],
-        ratePerSession: t.ratePerSession,
+        ratePerSession: isAdmin ? (t.ratePerSession || 75000) : 0,
         matchScore: score,
         matchGrade,
         statusText,

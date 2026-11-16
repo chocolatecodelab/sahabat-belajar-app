@@ -16,8 +16,11 @@ import {
   X,
   ExternalLink,
   Download,
+  Search,
+  Clock,
+  Filter,
 } from "lucide-react";
-import { recordManualPayment } from "@/actions/pembayaran";
+import { recordManualPayment, updatePaymentStatus } from "@/actions/pembayaran";
 import { PaymentStatus } from "@prisma/client";
 import { formatDate } from "@/lib/date";
 import { useToast } from "@/components/ui/Toast";
@@ -33,9 +36,16 @@ export default function PaymentManagerClient({
   const searchParams = useSearchParams();
   const toast = useToast();
   const [payments, setPayments] = useState(initialPayments);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "LUNAS" | "BELUM" | "SEBAGIAN">("ALL");
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
+
+  useEffect(() => {
+    setPayments(initialPayments);
+  }, [initialPayments]);
 
   // Form states
   const [studentPackageId, setStudentPackageId] = useState(
@@ -91,18 +101,71 @@ export default function PaymentManagerClient({
     }
   };
 
+  const handleVerifyPayment = async (payment: any) => {
+    setVerifyingId(payment.id);
+    const res = await updatePaymentStatus(payment.id, "LUNAS");
+    setVerifyingId(null);
+
+    if (res.success) {
+      toast.success("Pembayaran Diverifikasi", res.message);
+      setPayments((prev) =>
+        prev.map((item) =>
+          item.id === payment.id
+            ? {
+                ...item,
+                status: "LUNAS",
+                notes:
+                  typeof item.notes === "string"
+                    ? item.notes.replace("[MENUNGGU VERIFIKASI]", "[TERVERIFIKASI ADMIN]")
+                    : item.notes,
+              }
+            : item
+        )
+      );
+      router.refresh();
+    } else {
+      toast.error("Gagal Memverifikasi", res.message);
+    }
+  };
+
+  const filteredPayments = payments.filter((p) => {
+    const matchesStatus = statusFilter === "ALL" || p.status === statusFilter;
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return matchesStatus;
+    const studentName = (p.studentPackage?.student?.name || "").toLowerCase();
+    const pkgName = (p.studentPackage?.package?.name || "").toLowerCase();
+    const notesText = (p.notes || "").toLowerCase();
+    const methodText = (p.method || "").toLowerCase();
+    return (
+      matchesStatus &&
+      (studentName.includes(q) ||
+        pkgName.includes(q) ||
+        notesText.includes(q) ||
+        methodText.includes(q))
+    );
+  });
+
+  const pendingVerificationCount = payments.filter(
+    (p) => p.status !== "LUNAS"
+  ).length;
+
   const getWhatsAppConfirmationUrl = (p: any) => {
-    const phone = p.studentPackage.student.parentPhone || "";
+    const phone = p.studentPackage?.student?.parentPhone || "";
     const cleanPhone = phone.replace(/[^0-9]/g, "");
     const formattedPhone = cleanPhone.startsWith("0") ? `62${cleanPhone.slice(1)}` : cleanPhone;
-    const msg = `Halo ${p.studentPackage.student.parentName || p.studentPackage.student.name}, pembayaran bimbingan Sahabat Belajar untuk paket *${p.studentPackage.package.name}* sebesar *Rp ${p.amount.toLocaleString("id-ID")}* telah kami terima dengan status *${p.status}*. Terima kasih! #BersamaSahabat`;
+    const targetName =
+      p.studentPackage?.student?.parentName ||
+      p.studentPackage?.student?.name ||
+      "Orang Tua/Wali";
+    const pkgName = p.studentPackage?.package?.name || "Paket Belajar";
+    const msg = `Halo ${targetName}, pembayaran bimbingan Sahabat Belajar untuk paket *${pkgName}* sebesar *Rp ${(p.amount || 0).toLocaleString("id-ID")}* telah kami terima dengan status *${p.status}*. Terima kasih! #BersamaSahabat`;
     return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
   };
 
   const exportToCsv = () => {
-    if (payments.length === 0) return;
+    if (filteredPayments.length === 0) return;
     const header = "Nama Siswa,Nomor Wali,Paket Terdaftar,Program,Nominal (Rp),Metode,Tanggal Pembayaran,Status,Catatan\n";
-    const rows = payments
+    const rows = filteredPayments
       .map((p) => {
         const studentName = p.studentPackage?.student?.name || "Siswa";
         const parentPhone = p.studentPackage?.student?.parentPhone || "-";
@@ -162,102 +225,274 @@ export default function PaymentManagerClient({
         </div>
       </div>
 
-      {/* Table */}
+      {/* Search & Status Filter Bar */}
+      <div className="bg-white rounded-2xl border border-[#D5DDEB] p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search
+            size={15}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5B6882]"
+          />
+          <input
+            type="text"
+            placeholder="Cari nama siswa, paket belajar, atau catatan transfer..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#D5DDEB] bg-[#F4F7FB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#09408C]/20"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#5B6882] mr-1">
+            <Filter size={12} /> Status:
+          </span>
+          {(
+            [
+              { key: "ALL", label: "Semua" },
+              { key: "BELUM", label: "Menunggu Verifikasi / Belum" },
+              { key: "SEBAGIAN", label: "Sebagian (DP)" },
+              { key: "LUNAS", label: "Lunas" },
+            ] as const
+          ).map((tab) => {
+            const active = statusFilter === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setStatusFilter(tab.key)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                  active
+                    ? "bg-[#09408C] text-white shadow-2xs"
+                    : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#09408C]"
+                }`}
+              >
+                {tab.label}
+                {tab.key === "BELUM" && pendingVerificationCount > 0 && (
+                  <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-[#F5B82E] text-[#1B2A41] font-bold">
+                    {pendingVerificationCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Table & Responsive Mobile Cards */}
       <div className="bg-white rounded-2xl border border-[#D5DDEB] shadow-xs overflow-hidden">
-        {payments.length === 0 ? (
+        {filteredPayments.length === 0 ? (
           <div className="p-12 text-center text-sm text-[#5B6882]">
-            Belum ada catatan pembayaran.
+            {payments.length === 0
+              ? "Belum ada catatan pembayaran."
+              : "Tidak ada transaksi yang cocok dengan filter pencarian."}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[#5B6882] font-semibold uppercase tracking-wider text-[11px]">
-                <tr>
-                  <th className="py-3 px-4">Nama Siswa</th>
-                  <th className="py-3 px-4">Paket Terdaftar</th>
-                  <th className="py-3 px-4">Nominal</th>
-                  <th className="py-3 px-4">Metode & Tanggal</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-center">Aksi Kwitansi</th>
-                </tr>
-              </thead>
+          <>
+            {/* Mobile Card View (DESIGN.md 5.5.1) */}
+            <div className="sm:hidden divide-y divide-[#D5DDEB]">
+              {filteredPayments.map((p) => {
+                const isPaid = p.status === "LUNAS";
+                const isPendingVerif =
+                  p.status === "BELUM" &&
+                  typeof p.notes === "string" &&
+                  p.notes.includes("[MENUNGGU VERIFIKASI]");
+                const studentName = p.studentPackage?.student?.name || "Siswa";
+                const parentPhone = p.studentPackage?.student?.parentPhone;
+                const pkgName = p.studentPackage?.package?.name || "Paket Belajar";
 
-              <tbody className="divide-y divide-[#D5DDEB]">
-                {payments.map((p) => {
-                  const isPaid = p.status === "LUNAS";
-                  return (
-                    <tr key={p.id} className="hover:bg-[#EAF1FA]/40 transition-colors">
-                      <td className="py-3.5 px-4">
-                        <div className="font-bold text-sm text-[#1B2A41]">
-                          {p.studentPackage.student.name}
+                return (
+                  <div key={p.id} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-bold text-sm text-[#1B2A41]">{studentName}</div>
+                        <div className="text-xs font-semibold text-[#09408C] mt-0.5">
+                          {pkgName}
                         </div>
-                        {p.studentPackage.student.parentPhone && (
-                          <div className="text-[11px] text-[#5B6882]">
-                            Wali: {p.studentPackage.student.parentPhone}
-                          </div>
-                        )}
-                      </td>
+                      </div>
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold shrink-0 ${
+                          isPaid
+                            ? "bg-[#E3F4EC] text-[#1F6F4A] border border-[#1F6F4A]/30"
+                            : isPendingVerif
+                            ? "bg-[#EAF1FA] text-[#09408C] border border-[#9AC1E2]"
+                            : "bg-[#FEF7E6] text-[#B45309] border border-[#F5B82E]"
+                        }`}
+                      >
+                        {isPaid ? <CheckCircle2 size={11} /> : <Clock size={11} />}
+                        {isPendingVerif ? "MENUNGGU VERIFIKASI" : p.status}
+                      </span>
+                    </div>
 
-                      <td className="py-3.5 px-4">
-                        <span className="font-semibold text-[#09408C]">
-                          {p.studentPackage.package.name}
-                        </span>
-                      </td>
-
-                      <td className="py-3.5 px-4">
-                        <span className="font-bold text-sm text-[#09408C] tabular-nums">
-                          Rp {p.amount.toLocaleString("id-ID")}
-                        </span>
-                      </td>
-
-                      <td className="py-3.5 px-4 text-[#5B6882]">
+                    <div className="flex items-center justify-between text-xs text-[#5B6882] bg-[#F4F7FB] rounded-xl p-2.5">
+                      <div>
                         <div className="font-semibold text-[#1B2A41]">{p.method}</div>
-                        <div className="text-[11px] tabular-nums">
-                          {formatDate(p.paidAt)}
-                        </div>
-                      </td>
+                        <div className="text-[11px] tabular-nums">{formatDate(p.paidAt)}</div>
+                      </div>
+                      <div className="font-bold text-sm text-[#09408C] tabular-nums">
+                        Rp {(p.amount || 0).toLocaleString("id-ID")}
+                      </div>
+                    </div>
 
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                            isPaid
-                              ? "bg-[#E3F4EC] text-[#1F6F4A] border border-[#A3E635]"
-                              : "bg-[#FEF7E6] text-[#B45309] border border-[#F5B82E]"
-                          }`}
+                    {p.notes && (
+                      <p className="text-[11px] text-[#5B6882] line-clamp-2">{p.notes}</p>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      {!isPaid && (
+                        <button
+                          onClick={() => handleVerifyPayment(p)}
+                          disabled={verifyingId === p.id}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1F6F4A] text-white text-xs font-semibold hover:bg-[#18583B] transition-colors disabled:opacity-50"
                         >
-                          {p.status}
-                        </span>
-                      </td>
+                          <CheckCircle2 size={13} />
+                          <span>
+                            {verifyingId === p.id ? "Memverifikasi..." : "Verifikasi Lunas"}
+                          </span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setSelectedReceipt(p)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                      >
+                        <Printer size={13} />
+                        <span>Kwitansi</span>
+                      </button>
+                      {parentPhone && (
+                        <a
+                          href={getWhatsAppConfirmationUrl(p)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 text-xs font-semibold transition-colors"
+                        >
+                          <Share2 size={13} />
+                          <span>WA</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
-                      <td className="py-3.5 px-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => setSelectedReceipt(p)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
-                            title="Cetak Kwitansi Resmi"
-                          >
-                            <Printer size={13} />
-                            <span>Kwitansi</span>
-                          </button>
-                          {p.studentPackage.student.parentPhone && (
-                            <a
-                              href={getWhatsAppConfirmationUrl(p)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-2 rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
-                              title="Kirim Konfirmasi via WhatsApp"
-                            >
-                              <Share2 size={13} />
-                            </a>
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#F4F7FB] border-b border-[#D5DDEB] text-[#5B6882] font-semibold uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th className="py-3 px-4">Nama Siswa</th>
+                    <th className="py-3 px-4">Paket Terdaftar</th>
+                    <th className="py-3 px-4">Nominal</th>
+                    <th className="py-3 px-4">Metode & Tanggal</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-center">Aksi & Verifikasi</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-[#D5DDEB]">
+                  {filteredPayments.map((p) => {
+                    const isPaid = p.status === "LUNAS";
+                    const isPendingVerif =
+                      p.status === "BELUM" &&
+                      typeof p.notes === "string" &&
+                      p.notes.includes("[MENUNGGU VERIFIKASI]");
+                    const studentName = p.studentPackage?.student?.name || "Siswa";
+                    const parentPhone = p.studentPackage?.student?.parentPhone;
+                    const pkgName = p.studentPackage?.package?.name || "Paket Belajar";
+
+                    return (
+                      <tr key={p.id} className="hover:bg-[#EAF1FA]/40 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <div className="font-bold text-sm text-[#1B2A41]">
+                            {studentName}
+                          </div>
+                          {parentPhone && (
+                            <div className="text-[11px] text-[#5B6882]">
+                              Wali: {parentPhone}
+                            </div>
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          <span className="font-semibold text-[#09408C]">
+                            {pkgName}
+                          </span>
+                          {p.notes && (
+                            <div className="text-[11px] text-[#5B6882] max-w-xs truncate mt-0.5" title={p.notes}>
+                              {p.notes}
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          <span className="font-bold text-sm text-[#09408C] tabular-nums">
+                            Rp {(p.amount || 0).toLocaleString("id-ID")}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-4 text-[#5B6882]">
+                          <div className="font-semibold text-[#1B2A41]">{p.method}</div>
+                          <div className="text-[11px] tabular-nums">
+                            {formatDate(p.paidAt)}
+                          </div>
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${
+                              isPaid
+                                ? "bg-[#E3F4EC] text-[#1F6F4A] border border-[#1F6F4A]/30"
+                                : isPendingVerif
+                                ? "bg-[#EAF1FA] text-[#09408C] border border-[#9AC1E2]"
+                                : "bg-[#FEF7E6] text-[#B45309] border border-[#F5B82E]"
+                            }`}
+                          >
+                            {isPaid ? <CheckCircle2 size={12} /> : <Clock size={12} />}
+                            {isPendingVerif ? "MENUNGGU VERIFIKASI" : p.status}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-4 text-center">
+                          <div className="flex flex-wrap items-center justify-center gap-2">
+                            {!isPaid && (
+                              <button
+                                onClick={() => handleVerifyPayment(p)}
+                                disabled={verifyingId === p.id}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#1F6F4A] text-white text-xs font-semibold hover:bg-[#18583B] transition-colors disabled:opacity-50 cursor-pointer"
+                                title="Verifikasi pembayaran mandiri menjadi LUNAS"
+                              >
+                                <CheckCircle2 size={13} />
+                                <span>
+                                  {verifyingId === p.id ? "Memproses..." : "Verifikasi Lunas"}
+                                </span>
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setSelectedReceipt(p)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors"
+                              title="Cetak Kwitansi Resmi"
+                            >
+                              <Printer size={13} />
+                              <span>Kwitansi</span>
+                            </button>
+                            {parentPhone && (
+                              <a
+                                href={getWhatsAppConfirmationUrl(p)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                                title="Kirim Konfirmasi via WhatsApp"
+                              >
+                                <Share2 size={13} />
+                              </a>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
@@ -334,9 +569,15 @@ export default function PaymentManagerClient({
               </div>
 
               <div className="flex items-center justify-between pt-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
-                  <CheckCircle2 size={14} /> STATUS {selectedReceipt.status}
-                </div>
+                {selectedReceipt.status === "LUNAS" ? (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E3F4EC] text-[#1F6F4A] text-xs font-bold border border-[#1F6F4A]/30">
+                    <CheckCircle2 size={14} /> STATUS {selectedReceipt.status}
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEF7E6] text-[#B45309] text-xs font-bold border border-[#F5B82E]">
+                    <Clock size={14} /> STATUS {selectedReceipt.status}
+                  </div>
+                )}
                 <div className="text-right text-[11px] text-[#5B6882]">
                   <p>Administrasi Sahabat Belajar</p>
                   <p className="font-bold text-[#1B2A41] mt-4">Sahabat Belajar Official</p>

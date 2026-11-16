@@ -1311,7 +1311,7 @@ export default function StudentPortalClient({
 
                     <div className="mt-5 pt-4 border-t border-[#D5DDEB]">
                       <Link
-                        href={`/portal/ujian/${exam.id}`}
+                        href={`/portal/ujian/${exam.id}?studentId=${encodeURIComponent(student.id)}`}
                         className="w-full py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-bold hover:bg-[#0E3571] transition-colors flex items-center justify-center gap-2 shadow-xs"
                       >
                         <Play size={14} className="fill-white" />
@@ -1378,7 +1378,7 @@ export default function StudentPortalClient({
                         </div>
 
                         <Link
-                          href={`/portal/ujian/${sess.examId}/hasil?sessionId=${sess.id}`}
+                          href={`/portal/ujian/${sess.examId}/hasil?sessionId=${sess.id}&studentId=${encodeURIComponent(student.id)}`}
                           className="px-3.5 py-2 rounded-xl bg-white border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] transition-colors flex items-center gap-1.5 shadow-2xs"
                         >
                           <FileText size={14} />
@@ -1710,10 +1710,18 @@ export default function StudentPortalClient({
                             className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                               inv.status === "LUNAS"
                                 ? "bg-[#E3F4EC] text-[#1F6F4A] border-[#1F6F4A]/30"
+                                : inv.status === "MENUNGGU_VERIFIKASI"
+                                ? "bg-[#EAF1FA] text-[#09408C] border-[#9AC1E2]"
                                 : "bg-[#FEF7E6] text-[#B45309] border-[#F5B82E]/50"
                             }`}
                           >
-                            {inv.status === "LUNAS" ? "LUNAS" : "MENUNGGU PEMBAYARAN"}
+                            {inv.status === "LUNAS"
+                              ? "LUNAS"
+                              : inv.status === "MENUNGGU_VERIFIKASI"
+                              ? "MENUNGGU VERIFIKASI ADMIN"
+                              : inv.status === "SEBAGIAN"
+                              ? "PEMBAYARAN SEBAGIAN (DP)"
+                              : "MENUNGGU PEMBAYARAN"}
                           </span>
                           <span className="text-xs text-[#5B6882] font-mono">
                             {inv.invoiceNumber}
@@ -1785,8 +1793,22 @@ export default function StudentPortalClient({
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-bold text-[#1F6F4A] bg-[#E3F4EC] px-2.5 py-0.5 rounded-full inline-block border border-[#1F6F4A]/30">
-                    LUNAS
+                  <div
+                    className={`text-xs font-bold px-2.5 py-0.5 rounded-full inline-block border ${
+                      selectedReceipt.status === "LUNAS"
+                        ? "text-[#1F6F4A] bg-[#E3F4EC] border-[#1F6F4A]/30"
+                        : selectedReceipt.status === "MENUNGGU_VERIFIKASI"
+                        ? "text-[#09408C] bg-[#EAF1FA] border-[#9AC1E2]"
+                        : "text-[#B45309] bg-[#FEF7E6] border-[#F5B82E]/60"
+                    }`}
+                  >
+                    {selectedReceipt.status === "LUNAS"
+                      ? "LUNAS"
+                      : selectedReceipt.status === "MENUNGGU_VERIFIKASI"
+                      ? "MENUNGGU VERIFIKASI"
+                      : selectedReceipt.status === "SEBAGIAN"
+                      ? "SEBAGIAN (DP)"
+                      : "BELUM LUNAS"}
                   </div>
                   <div className="text-[10px] text-[#5B6882] font-mono mt-1">
                     {selectedReceipt.invoiceNumber}
@@ -1847,11 +1869,23 @@ export default function StudentPortalClient({
                     * Dokumen ini adalah bukti pembayaran sah yang diterbitkan oleh sistem digital Sahabat Belajar.
                   </div>
                   <div className="text-center">
-                    <div className="w-20 h-20 rounded-full border-2 border-dashed border-[#1F6F4A] flex flex-col items-center justify-center mx-auto text-[#1F6F4A] text-[9px] font-bold rotate-[-12deg] bg-[#E3F4EC]/30 mb-1">
-                      <span>SAHABAT BELAJAR</span>
-                      <span className="text-[11px]">★ LUNAS ★</span>
-                      <span>TERVERIFIKASI</span>
-                    </div>
+                    {selectedReceipt.status === "LUNAS" ? (
+                      <div className="w-20 h-20 rounded-full border-2 border-dashed border-[#1F6F4A] flex flex-col items-center justify-center mx-auto text-[#1F6F4A] text-[9px] font-bold rotate-[-12deg] bg-[#E3F4EC]/30 mb-1">
+                        <span>SAHABAT BELAJAR</span>
+                        <span className="text-[11px]">★ LUNAS ★</span>
+                        <span>TERVERIFIKASI</span>
+                      </div>
+                    ) : (
+                      <div className="w-24 h-20 rounded-2xl border-2 border-dashed border-[#F5B82E] flex flex-col items-center justify-center mx-auto text-[#B45309] text-[9px] font-bold bg-[#FEF7E6]/60 px-1 mb-1">
+                        <span>SAHABAT BELAJAR</span>
+                        <span className="text-[10px]">⏳ MENUNGGU</span>
+                        <span>
+                          {selectedReceipt.status === "MENUNGGU_VERIFIKASI"
+                            ? "VERIFIKASI ADMIN"
+                            : "PELUNASAN"}
+                        </span>
+                      </div>
+                    )}
                     <div className="text-[11px] font-bold text-[#1B2A41]">Bagian Keuangan</div>
                   </div>
                 </div>

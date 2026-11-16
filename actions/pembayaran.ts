@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { PaymentStatus, StudentPackageStatus } from "@prisma/client";
 import { requireStaffOrAdmin } from "@/lib/auth";
 import { notifyPackagePaymentVerified } from "@/lib/notifications";
+import { logActivity } from "@/lib/audit";
 import fs from "fs/promises";
 import path from "path";
 
@@ -143,6 +144,112 @@ export async function recordManualPayment(input: {
   } catch (error: any) {
     console.error("recordManualPayment error:", error);
     return { success: false, message: "Gagal mencatat pembayaran." };
+  }
+}
+
+export async function updatePaymentStatus(
+  paymentId: string,
+  status: PaymentStatus,
+  notes?: string
+): Promise<ActionResponse> {
+  try {
+    const session = await requireStaffOrAdmin();
+    if (!paymentId) {
+      return { success: false, message: "ID pembayaran tidak valid." };
+    }
+
+    const { data: existingPayment, error: fetchErr } = await supabaseAdmin
+      .from("Payment")
+      .select(`
+        *,
+        studentPackage:StudentPackage(
+          id,
+          quotaTotal,
+          student:Student(name, parentPhone),
+          package:Package(name)
+        )
+      `)
+      .eq("id", paymentId)
+      .maybeSingle();
+
+    if (fetchErr || !existingPayment) {
+      return { success: false, message: "Data pembayaran tidak ditemukan." };
+    }
+
+    let finalNotes = notes !== undefined ? notes : existingPayment.notes || null;
+    if (status === "LUNAS" && typeof finalNotes === "string") {
+      finalNotes = finalNotes.includes("[MENUNGGU VERIFIKASI]")
+        ? finalNotes.replace("[MENUNGGU VERIFIKASI]", "[TERVERIFIKASI ADMIN]").trim()
+        : finalNotes;
+    }
+
+    const now = new Date().toISOString();
+    const { error: updateErr } = await supabaseAdmin
+      .from("Payment")
+      .update({
+        status,
+        notes: finalNotes,
+        updatedAt: now,
+      })
+      .eq("id", paymentId);
+
+    if (updateErr) throw updateErr;
+
+    const spDetail: any = Array.isArray(existingPayment.studentPackage)
+      ? existingPayment.studentPackage[0]
+      : existingPayment.studentPackage;
+    const studentObj: any = Array.isArray(spDetail?.student)
+      ? spDetail.student[0]
+      : spDetail?.student;
+    const packageObj: any = Array.isArray(spDetail?.package)
+      ? spDetail.package[0]
+      : spDetail?.package;
+
+    if (status === "LUNAS") {
+      try {
+        await notifyPackagePaymentVerified({
+          paymentId,
+          studentName: studentObj?.name || "Siswa Sahabat Belajar",
+          parentPhone: studentObj?.parentPhone || null,
+          packageName: packageObj?.name || "Paket Bimbingan Belajar",
+          amount: existingPayment.amount || 0,
+          method: existingPayment.method || "TRANSFER_BANK",
+          status: "LUNAS",
+          quotaTotal: spDetail?.quotaTotal,
+        });
+      } catch (notifErr) {
+        console.error("updatePaymentStatus notification error:", notifErr);
+      }
+    }
+
+    await logActivity({
+      actorName: session?.user?.name || "Staf/Admin",
+      actorRole: (session?.user as any)?.role || "Admin",
+      action: "STATUS_CHANGE",
+      entity: "Pembayaran",
+      targetId: paymentId,
+      targetName: `${studentObj?.name || "Siswa"} — ${packageObj?.name || "Paket"}`,
+      details: `Mengubah status pembayaran Rp ${(existingPayment.amount || 0).toLocaleString("id-ID")} dari ${existingPayment.status} menjadi ${status}.`,
+    });
+
+    revalidatePath("/dashboard/pembayaran");
+    revalidatePath("/dashboard/paket");
+    revalidatePath("/dashboard");
+    revalidatePath("/portal");
+
+    return {
+      success: true,
+      message:
+        status === "LUNAS"
+          ? "Pembayaran berhasil diverifikasi LUNAS dan notifikasi telah dikirim."
+          : `Status pembayaran diperbarui menjadi ${status}.`,
+    };
+  } catch (error: any) {
+    console.error("updatePaymentStatus error:", error);
+    return {
+      success: false,
+      message: error?.message || "Gagal memperbarui status pembayaran.",
+    };
   }
 }
 

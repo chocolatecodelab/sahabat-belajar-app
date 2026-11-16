@@ -19,7 +19,7 @@ export type StudentInvoice = {
   amount: number;
   paidAt: string | null;
   method: string;
-  status: "LUNAS" | "MENUNGGU_PEMBAYARAN";
+  status: "LUNAS" | "MENUNGGU_VERIFIKASI" | "MENUNGGU_PEMBAYARAN" | "BELUM" | "SEBAGIAN";
   proofFile?: string | null;
   notes?: string | null;
 };
@@ -89,6 +89,7 @@ const SIBLINGS_MAP: Record<string, StudentPortalData> = {
     siblings: [
       { id: "student_01", name: "Ahmad Fauzi", level: "Kelas 12 SMA" },
       { id: "std_demo_01", name: "Rian Hendro", level: "Alumni / CPNS" },
+      { id: "std_demo_03", name: "Dinda Kirana", level: "S2 / Beasiswa LPDP" },
     ],
     packages: [
       {
@@ -182,6 +183,7 @@ const SIBLINGS_MAP: Record<string, StudentPortalData> = {
     siblings: [
       { id: "student_01", name: "Ahmad Fauzi", level: "Kelas 12 SMA" },
       { id: "std_demo_01", name: "Rian Hendro", level: "Alumni / CPNS" },
+      { id: "std_demo_03", name: "Dinda Kirana", level: "S2 / Beasiswa LPDP" },
     ],
     packages: [
       {
@@ -252,6 +254,7 @@ const SIBLINGS_MAP: Record<string, StudentPortalData> = {
     siblings: [
       { id: "student_01", name: "Ahmad Fauzi", level: "Kelas 12 SMA" },
       { id: "std_demo_01", name: "Rian Hendro", level: "Alumni / CPNS" },
+      { id: "std_demo_03", name: "Dinda Kirana", level: "S2 / Beasiswa LPDP" },
     ],
     packages: [
       {
@@ -308,6 +311,77 @@ const SIBLINGS_MAP: Record<string, StudentPortalData> = {
       },
     ],
   },
+
+  std_demo_03: {
+    student: {
+      id: "std_demo_03",
+      name: "Dinda Kirana",
+      level: "S2 / Beasiswa LPDP",
+      school: "Alumni S1 / Kandidat Master",
+      parentName: "Bapak Hendro",
+      parentPhone: "+62 812-9988-7766",
+      status: "AKTIF",
+    },
+    siblings: [
+      { id: "student_01", name: "Ahmad Fauzi", level: "Kelas 12 SMA" },
+      { id: "std_demo_01", name: "Rian Hendro", level: "Alumni / CPNS" },
+      { id: "std_demo_03", name: "Dinda Kirana", level: "S2 / Beasiswa LPDP" },
+    ],
+    packages: [
+      {
+        id: "sp_demo_03",
+        packageName: "Mentoring Beasiswa LPDP & Review Esai Intensif",
+        programName: "Persiapan S2/S3 & Beasiswa",
+        quotaTotal: 10,
+        quotaUsed: 4,
+        quotaRemaining: 6,
+        startDate: new Date(Date.now() - 86400000 * 18).toISOString(),
+        endDate: new Date(Date.now() + 86400000 * 42).toISOString(),
+        status: "AKTIF",
+      },
+    ],
+    upcomingSessions: [
+      {
+        id: "sess_up_lpdp_01",
+        programName: "Persiapan S2/S3 & Beasiswa",
+        tutorName: "Dr. Citra Lestari, M.A.",
+        classType: "PRIVAT",
+        mode: "ONLINE",
+        startAt: new Date(Date.now() + 86400000 * 2 + 3600000 * 19).toISOString(),
+        endAt: new Date(Date.now() + 86400000 * 2 + 3600000 * 20.5).toISOString(),
+        meetingLink: "https://meet.google.com/sb-lpdp-citra",
+        address: null,
+      },
+    ],
+    pastSessions: [
+      {
+        id: "sess_past_lpdp_01",
+        programName: "Persiapan S2/S3 & Beasiswa",
+        tutorName: "Dr. Citra Lestari, M.A.",
+        startAt: new Date(Date.now() - 86400000 * 4 + 3600000 * 19).toISOString(),
+        endAt: new Date(Date.now() - 86400000 * 4 + 3600000 * 20.5).toISOString(),
+        status: "TERLAKSANA",
+        attendance: "HADIR",
+        topic: "Bedah Esai Kontribusi Indonesia & Mock Interview Substansi LPDP",
+        notes: "Argumen dampak pascastudi sudah tajam. Perkuat data kontribusi lokal pada paragraf penutup.",
+        homework: "Finalisasi revisi draf esai halaman 2 dan unggah di menu Review Draf.",
+      },
+    ],
+    invoices: [
+      {
+        id: "inv_lpdp_01",
+        invoiceNumber: "INV-SB/2026/04/0145",
+        packageName: "Mentoring Beasiswa LPDP & Review Esai Intensif (10 Sesi)",
+        programName: "Persiapan S2/S3 & Beasiswa",
+        amount: 2500000,
+        paidAt: new Date(Date.now() - 86400000 * 18).toISOString(),
+        method: "TRANSFER_MANDIRI",
+        status: "LUNAS",
+        proofFile: null,
+        notes: "Pembayaran lunas untuk paket mentoring S2/Beasiswa.",
+      },
+    ],
+  },
 };
 
 export async function getStudentPortalData(
@@ -336,17 +410,24 @@ export async function getStudentPortalData(
       if (myStudents && myStudents.length > 0) {
         const isOwner = myStudents.some((s: any) => s.id === effectiveTargetId);
         if (!isOwner) {
-          // Periksa apakah memiliki nomor telepon wali yang sama (sibling)
+          // Periksa apakah memiliki nomor telepon wali yang sama (sibling DB atau demo family)
           const myParentPhone = myStudents[0].parentPhone;
-          const { data: requestedStudent } = await supabaseAdmin
-            .from("Student")
-            .select("parentPhone")
-            .eq("id", effectiveTargetId)
-            .maybeSingle();
+          const demoSibling = SIBLINGS_MAP[effectiveTargetId];
+          const isAllowedDemoSibling =
+            Boolean(demoSibling) &&
+            demoSibling.student.parentPhone === myParentPhone;
 
-          if (!requestedStudent || requestedStudent.parentPhone !== myParentPhone) {
-            // Akses ditolak ke ID siswa asing! Paksa kembali ke ID siswa milik sendiri
-            effectiveTargetId = myStudents[0].id;
+          if (!isAllowedDemoSibling) {
+            const { data: requestedStudent } = await supabaseAdmin
+              .from("Student")
+              .select("parentPhone")
+              .eq("id", effectiveTargetId)
+              .maybeSingle();
+
+            if (!requestedStudent || requestedStudent.parentPhone !== myParentPhone) {
+              // Akses ditolak ke ID siswa asing! Paksa kembali ke ID siswa milik sendiri
+              effectiveTargetId = myStudents[0].id;
+            }
           }
         }
       }
@@ -522,6 +603,19 @@ export async function getStudentPortalData(
           level: s.level,
         }));
       }
+
+      // Untuk akun keluarga demo (Bapak Hendro / +62 812-9988-7766), sertakan profil demo segmen CPNS & S2/Beasiswa
+      if (student.parentPhone === "+62 812-9988-7766") {
+        const extraDemoSiblings: SiblingStudent[] = [
+          { id: "std_demo_01", name: "Rian Hendro", level: "Alumni / CPNS" },
+          { id: "std_demo_03", name: "Dinda Kirana", level: "S2 / Beasiswa LPDP" },
+        ];
+        extraDemoSiblings.forEach((ds) => {
+          if (!siblings.some((s) => s.id === ds.id || s.name === ds.name)) {
+            siblings.push(ds);
+          }
+        });
+      }
     }
 
     return {
@@ -585,7 +679,7 @@ export async function submitStudentPaymentConfirmation(input: {
       userRole.includes("staf");
 
     // QA-FUNC-002: Ownership & Sibling Verification for Non-Admin/Staff callers
-    const isDemoStudent = input.studentId.startsWith("std_demo_");
+    const isDemoStudent = input.studentId.startsWith("std_demo_") || input.studentId === "student_01";
     if (!isAdminOrStaff && !isDemoStudent) {
       const userId = (session.user as any)?.id;
       const userName = (session.user as any)?.name || "";

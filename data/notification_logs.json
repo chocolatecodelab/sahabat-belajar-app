@@ -1,5 +1,57 @@
 [
   {
+    "id": "notif_1794812239184_z3mml",
+    "channel": "WHATSAPP",
+    "recipient": "6281311223344",
+    "recipientName": "Dr. Hendra Wijaya, M.Pd",
+    "event": "TUTOR_SESSION_ASSIGNED",
+    "message": "Halo *Dr. Hendra Wijaya, M.Pd*, terdapat jadwal mengajar baru di *Sahabat Belajar*! 👨‍🏫\n\n📌 *Program:* Bimbel K-12 (SD, SMP, SMA) (PRIVAT)\n👥 *Siswa:* Ahmad Fauzi\n📅 *Hari/Tanggal:* Senin, 16 November 2026\n⏰ *Waktu:* 16.00 - 17.30 WIB (90 Menit)\n📍 *Mode:* Online via Zoom/Meet: https://meet.google.com/sb-demo-ahmad\n\nBuka Portal Tutor untuk detail sesi & pengisian absensi:\n🔗 http://localhost:3000/tutor",
+    "status": "SIMULATED",
+    "sentAt": "2026-11-16T06:57:19.184Z"
+  },
+  {
+    "id": "notif_1794812238460_ehd6h",
+    "channel": "EMAIL",
+    "recipient": "ahmad.fauzi@simulasi.sahabatbelajar.id",
+    "recipientName": "Ahmad Fauzi",
+    "event": "SESSION_SCHEDULED",
+    "subject": "[Sahabat Belajar] Jadwal Sesi Bimbingan Baru — Senin, 16 November 2026 (16.00 - 17.30 WIB)",
+    "message": "<h2>Informasi Jadwal Sesi & Status Kuota Bimbingan</h2>\n<p>Halo <strong>Ahmad Fauzi</strong>,</p>\n<p>Berikut pembaruan jadwal sesi bimbingan atau status kuota paket belajar Anda pada program <strong>Bimbel K-12 (SD, SMP, SMA)</strong>:</p>\n<ul>\n  <li><strong>Rincian Sesi / Paket:</strong> Sesi PRIVAT bersama Dr. Hendra Wijaya, M.Pd (Senin, 16 November 2026, 16.00 - 17.30 WIB)</li>\n  <li><strong>Status:</strong> <strong>TERJADWAL (90 Menit)</strong></li>\n  <li><strong>Sisa Kuota / Capaian:</strong> ONLINE</li>\n</ul>\n<div style=\"background:#F4F7FB;border-left:4px solid #09408C;padding:12px 16px;margin:16px 0;\">\n  <strong>Detail / Catatan Akademik:</strong><br />\n  <em>Online via Zoom/Meet: https://meet.google.com/sb-demo-ahmad</em>\n</div>\n<p><a href=\"http://localhost:3000/portal\" style=\"display:inline-block;padding:10px 20px;background:#09408C;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;\">Buka Portal Siswa</a></p>\n<p>Salam hangat,<br /><strong>Tim Akademik Sahabat Belajar</strong></p>",
+    "status": "SIMULATED",
+    "sentAt": "2026-11-16T06:57:18.460Z"
+  },
+  {
+    "id": "notif_1794812237884_28hjy",
+    "channel": "WHATSAPP",
+    "recipient": "6281299887766",
+    "recipientName": "Ahmad Fauzi (Orang Tua/Siswa)",
+    "event": "SESSION_SCHEDULED",
+    "message": "Halo Ahmad Fauzi, informasi jadwal & kuota bimbingan Anda di *Sahabat Belajar*! 📅\n\n📌 *Program:* Bimbel K-12 (SD, SMP, SMA)\n📝 *Agenda / Sesi:* Sesi PRIVAT bersama Dr. Hendra Wijaya, M.Pd (Senin, 16 November 2026, 16.00 - 17.30 WIB)\n📊 *Status:* *TERJADWAL (90 Menit)* (Info Kuota: ONLINE)\n\n💬 *Catatan Akademik:*\n\"Online via Zoom/Meet: https://meet.google.com/sb-demo-ahmad\"\n\nPantau jadwal lengkap, tautan Zoom/Meet, dan sisa kuota di Portal Siswa:\n🔗 http://localhost:3000/portal\n\nSemangat belajar!\n*Tim Akademik Sahabat Belajar*",
+    "status": "SIMULATED",
+    "sentAt": "2026-11-16T06:57:17.884Z"
+  },
+  {
+    "id": "notif_1794812128229_zs8lq",
+    "channel": "EMAIL",
+    "recipient": "ahmad.fauzi@simulasi.sahabatbelajar.id",
+    "recipientName": "Orang Tua Ahmad Fauzi",
+    "event": "PAYMENT_VERIFIED",
+    "subject": "[Sahabat Belajar] Bukti Pembayaran Paket Paket 10 Sesi Privat K-12 Diverifikasi (Rp 2.250.000)",
+    "message": "<h2>Pembayaran Diverifikasi & Kuota Bimbingan Aktif</h2>\n<p>Halo <strong>Ahmad Fauzi</strong>,</p>\n<p>Pembayaran Anda untuk paket bimbingan <strong>Paket 10 Sesi Privat K-12 (Rp 2.250.000)</strong> telah berhasil kami verifikasi.</p>\n<p>Paket belajar dan kuota sesi (90 menit/pertemuan) Anda kini telah aktif:</p>\n<ul>\n  <li><strong>Referensi Pembayaran:</strong> PAY_CONF_17948</li>\n  <li><strong>Portal Siswa & Orang Tua:</strong> <a href=\"http://localhost:3000/portal\">http://localhost:3000/portal</a></li>\n</ul>\n<p><a href=\"http://localhost:3000/portal\" style=\"display:inline-block;padding:10px 20px;background:#09408C;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;\">Masuk ke Portal Siswa</a></p>\n<p>Selamat belajar!<br /><strong>Tim Akademik Sahabat Belajar</strong></p>",
+    "status": "SIMULATED",
+    "sentAt": "2026-11-16T06:55:28.229Z"
+  },
+  {
+    "id": "notif_1794812126863_q2ed7",
+    "channel": "WHATSAPP",
+    "recipient": "6281299887766",
+    "recipientName": "Orang Tua Ahmad Fauzi",
+    "event": "PAYMENT_VERIFIED",
+    "message": "Halo Ahmad Fauzi, kabar gembira! 🎉\n\nPembayaran paket bimbingan *Paket 10 Sesi Privat K-12 (Rp 2.250.000)* (Ref: PAY_CONF_17948) telah *BERHASIL DIVERIFIKASI*.\n\nKuota belajar dan akses Portal Siswa Anda telah aktif:\n📧 *Email Akun:* ahmad.fauzi@simulasi.sahabatbelajar.id\n🌐 *Buka Portal Siswa & Jadwal:* http://localhost:3000/portal\n\nSelamat belajar bersama tutor terbaik kami, dari paham konsep dasar hingga siap berprestasi!\n\nSalam,\n*Tim Akademik Sahabat Belajar*",
+    "status": "SIMULATED",
+    "sentAt": "2026-11-16T06:55:26.863Z"
+  },
+  {
     "id": "notif_sb_sim_01",
     "channel": "WHATSAPP",
     "recipient": "6281298765432",

@@ -282,6 +282,8 @@ export default function ExamSimulationClient({
           `sb_exam_res_${res.data.sessionId}`,
           JSON.stringify({
             exam,
+            studentId,
+            studentName,
             score: res.data.score,
             isPassed: res.data.isPassed,
             answers,
@@ -291,7 +293,11 @@ export default function ExamSimulationClient({
         );
       } catch (e) {}
 
-      router.push(`/portal/ujian/${exam.id}/hasil?sessionId=${res.data.sessionId}`);
+      router.push(
+        `/portal/ujian/${exam.id}/hasil?sessionId=${res.data.sessionId}${
+          studentId ? `&studentId=${encodeURIComponent(studentId)}` : ""
+        }`
+      );
     } else {
       toast.error("Gagal Mengumpulkan", res.message || "Gagal mengumpulkan ujian.");
     }
@@ -309,7 +315,13 @@ export default function ExamSimulationClient({
             Paket ujian ini belum memiliki butir soal yang diinput oleh admin.
           </p>
           <button
-            onClick={() => router.push("/portal")}
+            onClick={() =>
+              router.push(
+                studentId && studentId !== "std_demo"
+                  ? `/portal?studentId=${encodeURIComponent(studentId)}`
+                  : "/portal"
+              )
+            }
             className="px-4 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold"
           >
             Kembali ke Portal Siswa

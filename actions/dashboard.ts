@@ -222,7 +222,7 @@ export async function getSahabatBelajarDashboardData(): Promise<SahabatBelajarDa
           tutorName: "Hendra Wijaya, M.Pd.",
           tutorPhone: "081234567891",
           programName: "Persiapan CPNS & BUMN",
-          studentNames: ["Ahmad Fauzi"],
+          studentNames: ["Rian Hendro"],
           meetingLink: "https://meet.google.com/sb-cpns-hendra",
           address: null,
         },
@@ -310,7 +310,7 @@ export async function getSahabatBelajarDashboardData(): Promise<SahabatBelajarDa
         },
         {
           id: "pay_pend_02",
-          studentName: "Ahmad Fauzi",
+          studentName: "Rian Hendro",
           parentPhone: "081298765432",
           studentPackageId: "sp_demo_02",
           amount: 1500000,

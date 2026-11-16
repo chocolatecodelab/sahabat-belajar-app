@@ -92,7 +92,7 @@ const DEMO_TUTORS: Record<string, TutorPortalData> = {
           {
             participantId: "part_01",
             studentId: "std_demo_01",
-            name: "Ahmad Fauzi",
+            name: "Rian Hendro",
             phone: "081298765432",
             attendance: AttendanceStatus.HADIR,
           },
@@ -143,7 +143,7 @@ const DEMO_TUTORS: Record<string, TutorPortalData> = {
           {
             participantId: "part_03",
             studentId: "std_demo_01",
-            name: "Ahmad Fauzi",
+            name: "Rian Hendro",
             phone: "081298765432",
             attendance: AttendanceStatus.HADIR,
           },
@@ -166,7 +166,7 @@ const DEMO_TUTORS: Record<string, TutorPortalData> = {
           {
             participantId: "part_past_01",
             studentId: "std_demo_01",
-            name: "Ahmad Fauzi",
+            name: "Rian Hendro",
             phone: "081298765432",
             attendance: AttendanceStatus.HADIR,
           },
@@ -191,7 +191,7 @@ const DEMO_TUTORS: Record<string, TutorPortalData> = {
           {
             participantId: "part_past_02",
             studentId: "std_demo_01",
-            name: "Ahmad Fauzi",
+            name: "Rian Hendro",
             phone: "081298765432",
             attendance: AttendanceStatus.HADIR,
           },

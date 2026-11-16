@@ -26,21 +26,29 @@ export default function ExamResultClient({
   exam,
   sessionId,
   initialSession = null,
+  studentId,
+  studentName,
 }: {
   exam: ExamItem;
   sessionId: string;
   initialSession?: StudentExamSession | null;
+  studentId?: string;
+  studentName?: string;
 }) {
   const [filterMode, setFilterMode] = useState<"ALL" | "WRONG" | "CORRECT">("ALL");
   const [sectionFilter, setSectionFilter] = useState("ALL");
   const [copied, setCopied] = useState(false);
   const [sessionData, setSessionData] = useState<{
+    studentId?: string;
+    studentName?: string | null;
     score: number;
     isPassed: boolean;
     answers: Record<string, { selectedKey: string; isDoubtful?: boolean; pointsEarned?: number }>;
     durationSecondsUsed: number;
     submittedAt: string;
   } | null>(initialSession ? {
+    studentId: initialSession.studentId,
+    studentName: initialSession.studentName,
     score: initialSession.score,
     isPassed: initialSession.isPassed,
     answers: initialSession.answers as any,
@@ -162,6 +170,20 @@ export default function ExamResultClient({
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const resolvedStudentId =
+    studentId || initialSession?.studentId || sessionData?.studentId || "";
+  const resolvedStudentName =
+    initialSession?.studentName ||
+    sessionData?.studentName ||
+    studentName ||
+    "Peserta Evaluasi";
+  const portalHref = resolvedStudentId
+    ? `/portal?studentId=${encodeURIComponent(resolvedStudentId)}`
+    : "/portal";
+  const retryExamHref = resolvedStudentId
+    ? `/portal/ujian/${exam.id}?studentId=${encodeURIComponent(resolvedStudentId)}`
+    : `/portal/ujian/${exam.id}`;
+
   return (
     <div className="min-h-screen bg-[#F4F7FB] text-[#1B2A41] py-8 px-4 sm:px-6 lg:px-8 font-sans">
       <style
@@ -186,7 +208,7 @@ export default function ExamResultClient({
         {/* Navigation & Action Bar (Hidden on Print) */}
         <div className="flex items-center justify-between gap-4 print:hidden">
           <Link
-            href="/portal"
+            href={portalHref}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5B6882] hover:text-[#09408C] transition-colors"
           >
             <ArrowLeft size={16} />
@@ -211,7 +233,7 @@ export default function ExamResultClient({
             </button>
 
             <Link
-              href={`/portal/ujian/${exam.id}`}
+              href={retryExamHref}
               className="px-3.5 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors flex items-center gap-1.5 shadow-2xs"
             >
               <RotateCcw size={14} />
@@ -621,9 +643,9 @@ export default function ExamResultClient({
         {/* Print Signature Footer (Only in Print) */}
         <div className="hidden print:flex justify-between pt-12 text-xs">
           <div>
-            <p className="text-[#5B6882]">Siswa Peserta Tryout,</p>
+            <p className="text-[#5B6882]">Siswa Peserta Evaluasi,</p>
             <div className="h-16"></div>
-            <p className="font-bold text-[#1B2A41] underline">Ahmad Fauzi</p>
+            <p className="font-bold text-[#1B2A41] underline">{resolvedStudentName}</p>
           </div>
           <div className="text-right">
             <p className="text-[#5B6882]">Kepala Akademik Sahabat Belajar,</p>
@@ -644,7 +666,7 @@ export default function ExamResultClient({
           </div>
 
           <Link
-            href="/portal"
+            href={portalHref}
             className="px-6 py-3 rounded-xl bg-white text-[#09408C] font-bold text-xs sm:text-sm hover:bg-[#EAF1FA] transition-colors shadow-xs shrink-0"
           >
             Kembali ke Portal Siswa

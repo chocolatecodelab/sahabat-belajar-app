@@ -1,5 +1,27 @@
 [
   {
+    "id": "log_1794812278339_52kqa",
+    "timestamp": "2026-11-16T06:57:58.339Z",
+    "actorName": "Admin Sahabat Belajar",
+    "actorRole": "Admin",
+    "action": "UPDATE",
+    "entity": "Jadwal",
+    "targetId": "sess_1794812236173_1z5m5",
+    "targetName": "Sesi _1z5m5",
+    "details": "Mengubah jadwal ke 16/11/2026, 09.00.00 WIB (90 mnt) - Mode ONLINE."
+  },
+  {
+    "id": "log_1794812128845_y9des",
+    "timestamp": "2026-11-16T06:55:28.845Z",
+    "actorName": "Admin Sahabat Belajar",
+    "actorRole": "Admin",
+    "action": "STATUS_CHANGE",
+    "entity": "Pembayaran",
+    "targetId": "pay_conf_1794811635014_kjsc3",
+    "targetName": "Ahmad Fauzi — Paket 10 Sesi Privat K-12",
+    "details": "Mengubah status pembayaran Rp 2.250.000 dari BELUM menjadi LUNAS."
+  },
+  {
     "id": "log_init_001",
     "actorName": "Admin Sahabat Belajar",
     "actorRole": "Admin",

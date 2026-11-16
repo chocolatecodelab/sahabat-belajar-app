@@ -283,7 +283,7 @@ export default function StudentDocumentClient({
           <div>
             <div className="mb-3">
               <Link
-                href="/portal"
+                href={studentId ? `/portal?studentId=${encodeURIComponent(studentId)}` : "/portal"}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5B6882] hover:text-[#09408C] transition-colors"
               >
                 <ArrowLeft size={16} />
@@ -417,13 +417,28 @@ export default function StudentDocumentClient({
             <p className="text-xs text-[#5B6882] mt-1 max-w-md mx-auto">
               Mulai kirimkan draf esai atau proposal penelitian Anda untuk mendapatkan masukan mendalam dari tim mentor Sahabat Belajar.
             </p>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571]"
-            >
-              <Upload size={15} />
-              <span>Kirim Draf Pertama</span>
-            </button>
+            {isK12 ? (
+              <a
+                href={getWhatsAppUrl(
+                  DEFAULT_SITE_CONFIG.officialPhone,
+                  "Halo Admin Sahabat Belajar, saya siswa K-12 ingin konsultasi bimbingan karya tulis, PR, atau esai seleksi PTN"
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#EAF1FA] text-[#09408C] border border-[#9AC1E2] text-xs font-semibold hover:bg-[#D5DDEB] transition-colors"
+              >
+                <span>Konsultasi Tugas / Esai via WhatsApp</span>
+                <ExternalLink size={14} />
+              </a>
+            ) : (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571]"
+              >
+                <Upload size={15} />
+                <span>Kirim Draf Pertama</span>
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-4">

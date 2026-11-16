@@ -237,7 +237,7 @@ const SAMPLE_SESSIONS: Record<string, StudentExamSession> = {
     id: "sess_demo_01",
     examId: "exam_cpns_01",
     studentId: "std_demo_01",
-    studentName: "Ahmad Fauzi",
+    studentName: "Rian Hendro",
     startedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
     submittedAt: new Date(Date.now() - 86400000 * 3 + 4500000).toISOString(),
     durationSecondsUsed: 4500,
@@ -256,7 +256,7 @@ const SAMPLE_SESSIONS: Record<string, StudentExamSession> = {
   sess_demo_02: {
     id: "sess_demo_02",
     examId: "exam_snbt_01",
-    studentId: "std_demo_01",
+    studentId: "student_01",
     studentName: "Ahmad Fauzi",
     startedAt: new Date(Date.now() - 86400000 * 7).toISOString(),
     submittedAt: new Date(Date.now() - 86400000 * 7 + 4200000).toISOString(),
@@ -269,6 +269,40 @@ const SAMPLE_SESSIONS: Record<string, StudentExamSession> = {
     },
     sectionScores: { "Penalaran Umum": 650, "Kuantitatif": 640 },
     exam: SAMPLE_EXAMS[1],
+  },
+  sess_demo_03: {
+    id: "sess_demo_03",
+    examId: "exam_k12_01",
+    studentId: "student_01",
+    studentName: "Ahmad Fauzi",
+    startedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    submittedAt: new Date(Date.now() - 86400000 * 2 + 3600000).toISOString(),
+    durationSecondsUsed: 3600,
+    score: 85,
+    isPassed: true,
+    status: "SELESAI",
+    answers: {
+      q_k12_01: { selectedKey: "C", pointsEarned: 10 },
+    },
+    sectionScores: { Matematika: 85 },
+    exam: SAMPLE_EXAMS[3],
+  },
+  sess_demo_04: {
+    id: "sess_demo_04",
+    examId: "exam_toefl_01",
+    studentId: "std_demo_03",
+    studentName: "Dinda Kirana",
+    startedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    submittedAt: new Date(Date.now() - 86400000 * 5 + 2100000).toISOString(),
+    durationSecondsUsed: 2100,
+    score: 560,
+    isPassed: true,
+    status: "SELESAI",
+    answers: {
+      q_toefl_01: { selectedKey: "D", pointsEarned: 5 },
+    },
+    sectionScores: { Structure: 560 },
+    exam: SAMPLE_EXAMS[2],
   },
 };
 
@@ -519,12 +553,27 @@ export async function submitExamSession(input: {
     }
 
     const userRole = (session.user as any)?.role;
-    // Anti-Spoofing: Siswa strictly tied to session
+    const allowedDemoSiblingIds = ["student_01", "std_demo_01", "std_demo_02", "std_demo_03"];
     let studentId = input.studentId;
-    let studentName = input.studentName || "Siswa";
+    let studentName = input.studentName || session.user.name || "Siswa";
     if (userRole === "Siswa") {
-      studentId = session.user.id;
-      studentName = session.user.name || "Siswa";
+      const isValidSibling = allowedDemoSiblingIds.includes(input.studentId);
+      if (!isValidSibling) {
+        // Pastikan jika input.studentId bukan sibling demo, cek apakah milik user sendiri atau gunakan session.user.id
+        const { data: myStudent } = await supabaseAdmin
+          .from("Student")
+          .select("id, name")
+          .eq("userId", session.user.id)
+          .maybeSingle();
+
+        if (myStudent && (!input.studentId || input.studentId === myStudent.id)) {
+          studentId = myStudent.id;
+          studentName = input.studentName || myStudent.name || session.user.name || "Siswa";
+        } else if (!input.studentId) {
+          studentId = session.user.id;
+          studentName = session.user.name || "Siswa";
+        }
+      }
     }
 
     const exam = await getExamById(input.examId);
@@ -616,35 +665,47 @@ export async function submitExamSession(input: {
 }
 
 export async function getStudentExamHistory(studentId?: string): Promise<StudentExamSession[]> {
-  try {
-    const session = await auth();
-    let targetStudentId = studentId;
-
-    if (session?.user) {
-      const userRole = (session.user as any)?.role;
-      if (userRole === "Siswa") {
-        targetStudentId = session.user.id;
-      }
+  const filterSamplesByStudent = (targetId: string) => {
+    const allSamples = Object.values(SAMPLE_SESSIONS);
+    if (targetId === "std_demo_01") {
+      return allSamples.filter((s) => s.studentId === "std_demo_01");
     }
+    if (targetId === "std_demo_02") {
+      return allSamples.filter((s) => s.studentId === "std_demo_02");
+    }
+    if (targetId === "std_demo_03") {
+      return allSamples.filter((s) => s.studentId === "std_demo_03");
+    }
+    return allSamples.filter(
+      (s) => s.studentId === targetId || s.studentId === "student_01"
+    );
+  };
 
+  const session = await auth();
+  const targetStudentId = studentId || session?.user?.id || "student_01";
+
+  try {
     let query = supabaseAdmin
       .from("StudentExamSession")
       .select("*, exam:Exam(*)")
       .order("createdAt", { ascending: false });
 
-    if (targetStudentId) {
+    const isSpecificDemoSibling = ["std_demo_01", "std_demo_02", "std_demo_03"].includes(targetStudentId);
+    if (isSpecificDemoSibling) {
+      query = query.eq("studentId", targetStudentId);
+    } else if (targetStudentId) {
       query = query.or(`studentId.eq.${targetStudentId},studentId.eq.student_01,studentId.eq.user_siswa_01`);
     }
 
     const { data, error } = await query;
     if (error || !data || data.length === 0) {
-      return Object.values(SAMPLE_SESSIONS);
+      return filterSamplesByStudent(targetStudentId);
     }
 
     return data as StudentExamSession[];
   } catch (err) {
     console.error("getStudentExamHistory error:", err);
-    return Object.values(SAMPLE_SESSIONS);
+    return filterSamplesByStudent(targetStudentId);
   }
 }
 
@@ -868,30 +929,34 @@ export async function getExamSessionResult(sessionId: string): Promise<StudentEx
       .eq("id", sessionId)
       .maybeSingle();
 
+    const allowedIds = new Set([
+      session?.user?.id,
+      "student_01",
+      "user_siswa_01",
+      "std_demo_01",
+      "std_demo_02",
+      "std_demo_03",
+    ]);
+
     if (!error && data) {
-      // Horizontal data isolation: If user is Siswa, verify ownership
-      if (
-        userRole === "Siswa" &&
-        data.studentId !== session?.user?.id &&
-        data.studentId !== "student_01" &&
-        data.studentId !== "user_siswa_01" &&
-        data.studentId !== "std_demo_01"
-      ) {
-        return null;
+      // Horizontal data isolation: If user is Siswa, verify ownership or sibling demo profile
+      if (userRole === "Siswa" && !allowedIds.has(data.studentId)) {
+        const { data: myStudent } = await supabaseAdmin
+          .from("Student")
+          .select("id")
+          .eq("userId", session?.user?.id || "")
+          .maybeSingle();
+
+        if (!myStudent || myStudent.id !== data.studentId) {
+          return null;
+        }
       }
       return data as StudentExamSession;
     }
 
     const fallback = SAMPLE_SESSIONS[sessionId] || null;
-    if (fallback && userRole === "Siswa") {
-      if (
-        fallback.studentId !== session?.user?.id &&
-        fallback.studentId !== "student_01" &&
-        fallback.studentId !== "user_siswa_01" &&
-        fallback.studentId !== "std_demo_01"
-      ) {
-        return null;
-      }
+    if (fallback && userRole === "Siswa" && !allowedIds.has(fallback.studentId)) {
+      return null;
     }
     return fallback;
   } catch (err) {
