@@ -50,10 +50,12 @@ const INITIAL_MENUS = [
   // 7. Pengaturan & Sistem (Parent)
   { id: "menu_pengaturan", label: "Pengaturan & Sistem", icon: "Settings", url: "/dashboard/pengaturan", parentId: null, sortOrder: 7, isActive: true, permission: "settings.read" },
   { id: "menu_set_umum", label: "Pengaturan Umum", icon: "Settings", url: "/dashboard/pengaturan", parentId: "menu_pengaturan", sortOrder: 1, isActive: true, permission: "settings.read" },
-  { id: "menu_set_menu", label: "Kelola Menu Sidebar", icon: "Menu", url: "/dashboard/pengguna/menu", parentId: "menu_pengaturan", sortOrder: 2, isActive: true, permission: "menu.read" },
-  { id: "menu_set_role", label: "Role & Hak Akses", icon: "Shield", url: "/dashboard/pengguna/role", parentId: "menu_pengaturan", sortOrder: 3, isActive: true, permission: "role.read" },
-  { id: "menu_set_user", label: "Akun Pengguna & Staf", icon: "Users", url: "/dashboard/pengguna", parentId: "menu_pengaturan", sortOrder: 4, isActive: true, permission: "user.read" },
-  { id: "menu_media", label: "Pustaka Media", icon: "Image", url: "/dashboard/media", parentId: "menu_pengaturan", sortOrder: 5, isActive: true, permission: "media.read" },
+  { id: "menu_set_faq", label: "Kelola FAQ Konten", icon: "HelpCircle", url: "/dashboard/tampilan/faq", parentId: "menu_pengaturan", sortOrder: 2, isActive: true, permission: "appearance.read" },
+  { id: "menu_audit_log", label: "Audit Trail Log", icon: "Shield", url: "/dashboard/pengaturan/audit-log", parentId: "menu_pengaturan", sortOrder: 3, isActive: true, permission: "settings.read" },
+  { id: "menu_set_menu", label: "Kelola Menu Sidebar", icon: "Menu", url: "/dashboard/pengguna/menu", parentId: "menu_pengaturan", sortOrder: 4, isActive: true, permission: "menu.read" },
+  { id: "menu_set_role", label: "Role & Hak Akses", icon: "Shield", url: "/dashboard/pengguna/role", parentId: "menu_pengaturan", sortOrder: 5, isActive: true, permission: "role.read" },
+  { id: "menu_set_user", label: "Akun Pengguna & Staf", icon: "Users", url: "/dashboard/pengguna", parentId: "menu_pengaturan", sortOrder: 6, isActive: true, permission: "user.read" },
+  { id: "menu_media", label: "Pustaka Media", icon: "Image", url: "/dashboard/media", parentId: "menu_pengaturan", sortOrder: 7, isActive: true, permission: "media.read" },
 ];
 
 function groupMenus(menus: AdminMenuItem[]): AdminMenuItem[] {

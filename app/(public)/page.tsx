@@ -20,11 +20,14 @@ import {
 import PublicLeadForm from "@/components/public/PublicLeadForm";
 import TutorShowcaseSection from "@/components/public/TutorShowcaseSection";
 import TestimoniSiswaSection from "@/components/public/TestimoniSiswaSection";
+import FaqSection from "@/components/public/FaqSection";
+import { getFaqs } from "@/actions/tampilan";
 import { DEFAULT_SITE_CONFIG, getWhatsAppUrl } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const faqs = await getFaqs();
   const waUrl = getWhatsAppUrl(
     DEFAULT_SITE_CONFIG.officialPhone,
     "Halo Sahabat Belajar, saya tertarik untuk konsultasi bimbingan belajar."
@@ -551,6 +554,9 @@ export default function HomePage() {
 
       {/* 8. TESTIMONI SISWA & ORANG TUA */}
       <TestimoniSiswaSection />
+
+      {/* 9. PERTANYAAN YANG SERING DIAJUKAN (FAQ) */}
+      <FaqSection faqs={faqs} />
 
       {/* 7. FORMULIR PENDAFTARAN & LEAD CAPTURE (A2) */}
       <section id="daftar" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

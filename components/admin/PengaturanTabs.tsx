@@ -2,13 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, Menu, Shield, Users } from "lucide-react";
+import { Settings, Menu, Shield, Users, ShieldAlert } from "lucide-react";
 
 const TABS = [
   {
     href: "/dashboard/pengaturan",
     label: "Pengaturan Umum",
     icon: <Settings size={16} />,
+  },
+  {
+    href: "/dashboard/pengaturan/audit-log",
+    label: "Audit Trail Log",
+    icon: <ShieldAlert size={16} />,
   },
   {
     href: "/dashboard/pengguna/menu",

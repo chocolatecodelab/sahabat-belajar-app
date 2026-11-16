@@ -1,0 +1,32 @@
+[
+  {
+    "id": "log_init_001",
+    "actorName": "Admin Sahabat Belajar",
+    "actorRole": "Admin",
+    "action": "UPDATE",
+    "entity": "Paket",
+    "targetName": "Standarisasi Durasi 90 Menit Sesi (BR-5)",
+    "details": "Menyesuaikan seluruh paket bimbingan K-12, CPNS, dan Beasiswa ke standar 90 menit per sesi sesuai BR-5.",
+    "timestamp": "2026-11-16T05:45:00.000Z"
+  },
+  {
+    "id": "log_init_002",
+    "actorName": "Admin Sahabat Belajar",
+    "actorRole": "Admin",
+    "action": "STATUS_CHANGE",
+    "entity": "Tutor",
+    "targetName": "Proteksi Privasi Honor Tutor (BR-7)",
+    "details": "Mengaktifkan enkapsulasi tarif honor tutor agar hanya dapat diakses oleh peran Admin dan Tutor bersangkutan.",
+    "timestamp": "2026-11-16T06:00:00.000Z"
+  },
+  {
+    "id": "log_init_003",
+    "actorName": "Admin Sahabat Belajar",
+    "actorRole": "Admin",
+    "action": "UPDATE",
+    "entity": "Siswa",
+    "targetName": "Integritas Soft Deactivate Siswa & Tutor",
+    "details": "Menerapkan proteksi soft delete berbasis deteksi paket dan sesi aktif untuk menjaga integritas data akademik.",
+    "timestamp": "2026-11-16T06:15:00.000Z"
+  }
+]

@@ -5,6 +5,7 @@ import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { PackageType } from "@prisma/client";
 import { requireStaffOrAdmin } from "@/lib/auth";
+import { logActivity } from "@/lib/audit";
 
 export type ProgramItem = {
   id: string;
@@ -182,6 +183,16 @@ export async function createProgram(data: {
 
     if (error) throw error;
 
+    await logActivity({
+      actorName: "Admin/Staf Akademik",
+      actorRole: "Admin",
+      action: "CREATE",
+      entity: "Program",
+      targetId: program.id,
+      targetName: data.name.trim(),
+      details: `Menambahkan program baru kategori ${data.category || "K12"}`,
+    });
+
     revalidatePath("/dashboard/paket");
     revalidatePath("/dashboard/jadwal");
 
@@ -226,6 +237,16 @@ export async function updateProgram(
 
     if (error) throw error;
 
+    await logActivity({
+      actorName: "Admin/Staf Akademik",
+      actorRole: "Admin",
+      action: "UPDATE",
+      entity: "Program",
+      targetId: id,
+      targetName: data.name || `Program ID ${id}`,
+      details: `Memperbarui program: kategori ${data.category || "tetap"}, aktif: ${data.isActive ?? "tetap"}`,
+    });
+
     revalidatePath("/dashboard/paket");
     revalidatePath("/dashboard/jadwal");
 
@@ -261,6 +282,16 @@ export async function deleteProgram(id: string): Promise<ActionResponse> {
         .update({ isActive: false, updatedAt: new Date().toISOString() })
         .eq("id", id);
 
+      await logActivity({
+        actorName: "Admin/Staf Akademik",
+        actorRole: "Admin",
+        action: "STATUS_CHANGE",
+        entity: "Program",
+        targetId: id,
+        targetName: `Program ID ${id}`,
+        details: `Nonaktifkan aman (soft delete): memiliki riwayat ${pkgCount || 0} paket dan ${sessionCount || 0} sesi`,
+      });
+
       revalidatePath("/dashboard/paket");
       revalidatePath("/dashboard/jadwal");
 
@@ -273,6 +304,16 @@ export async function deleteProgram(id: string): Promise<ActionResponse> {
     // Hard delete jika program masih baru/kosong
     const { error } = await supabaseAdmin.from("Program").delete().eq("id", id);
     if (error) throw error;
+
+    await logActivity({
+      actorName: "Admin/Staf Akademik",
+      actorRole: "Admin",
+      action: "DELETE",
+      entity: "Program",
+      targetId: id,
+      targetName: `Program ID ${id}`,
+      details: "Menghapus program permanen (tanpa paket)",
+    });
 
     revalidatePath("/dashboard/paket");
     revalidatePath("/dashboard/jadwal");
@@ -328,6 +369,16 @@ export async function createPackage(data: {
 
     if (error) throw error;
 
+    await logActivity({
+      actorName: "Admin/Staf Akademik",
+      actorRole: "Admin",
+      action: "CREATE",
+      entity: "Paket",
+      targetId: pkg.id,
+      targetName: data.name.trim(),
+      details: `Menambahkan paket bimbingan baru: kuota ${data.quotaSessions || 10} sesi, durasi ${data.sessionMinutes || 90} menit (BR-5), harga Rp ${(data.price || 0).toLocaleString("id-ID")}`,
+    });
+
     revalidatePath("/dashboard/paket");
     revalidatePath("/portal");
 
@@ -378,6 +429,16 @@ export async function updatePackage(
 
     if (error) throw error;
 
+    await logActivity({
+      actorName: "Admin/Staf Akademik",
+      actorRole: "Admin",
+      action: "UPDATE",
+      entity: "Paket",
+      targetId: id,
+      targetName: data.name || `Paket ID ${id}`,
+      details: `Memperbarui paket belajar: kuota ${data.quotaSessions ?? "tetap"} sesi, harga Rp ${(data.price || 0).toLocaleString("id-ID")}`,
+    });
+
     revalidatePath("/dashboard/paket");
     revalidatePath("/portal");
 
@@ -401,6 +462,16 @@ export async function togglePackageStatus(id: string, isActive: boolean): Promis
       .eq("id", id);
 
     if (error) throw error;
+
+    await logActivity({
+      actorName: "Admin/Staf Akademik",
+      actorRole: "Admin",
+      action: "STATUS_CHANGE",
+      entity: "Paket",
+      targetId: id,
+      targetName: `Paket ID ${id}`,
+      details: `Mengubah status paket menjadi ${isActive ? "Aktif" : "Nonaktif"}`,
+    });
 
     revalidatePath("/dashboard/paket");
     revalidatePath("/portal");
@@ -432,6 +503,16 @@ export async function deletePackage(id: string): Promise<ActionResponse> {
         .update({ isActive: false, updatedAt: new Date().toISOString() })
         .eq("id", id);
 
+      await logActivity({
+        actorName: "Admin/Staf Akademik",
+        actorRole: "Admin",
+        action: "STATUS_CHANGE",
+        entity: "Paket",
+        targetId: id,
+        targetName: `Paket ID ${id}`,
+        details: `Nonaktifkan aman (soft delete): memiliki riwayat ${studentPackageCount} siswa terdaftar`,
+      });
+
       revalidatePath("/dashboard/paket");
       revalidatePath("/portal");
 
@@ -444,6 +525,16 @@ export async function deletePackage(id: string): Promise<ActionResponse> {
     // Hard delete jika belum pernah ada siswa yang membeli paket ini
     const { error } = await supabaseAdmin.from("Package").delete().eq("id", id);
     if (error) throw error;
+
+    await logActivity({
+      actorName: "Admin/Staf Akademik",
+      actorRole: "Admin",
+      action: "DELETE",
+      entity: "Paket",
+      targetId: id,
+      targetName: `Paket ID ${id}`,
+      details: "Menghapus paket bimbingan permanen (tanpa siswa terdaftar)",
+    });
 
     revalidatePath("/dashboard/paket");
     revalidatePath("/portal");

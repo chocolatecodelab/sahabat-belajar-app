@@ -5,6 +5,7 @@ import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { TutorStatus } from "@prisma/client";
 import { auth, requireAdminOnly, requireOperationalOrTutor } from "@/lib/auth";
+import { logActivity } from "@/lib/audit";
 
 export type TutorInput = {
   name: string;
@@ -140,6 +141,16 @@ export async function createTutor(input: TutorInput): Promise<ActionResponse<{ i
 
     if (error) throw error;
 
+    await logActivity({
+      actorName: "Admin Akademik",
+      actorRole: "Admin",
+      action: "CREATE",
+      entity: "Tutor",
+      targetId: tutor.id,
+      targetName: input.name.trim(),
+      details: `Mendaftarkan tutor baru: ${input.name.trim()} (${(input.expertise || []).join(", ")})`,
+    });
+
     revalidatePath("/dashboard/tutor");
 
     return {
@@ -179,6 +190,16 @@ export async function updateTutor(
 
     if (error) throw error;
 
+    await logActivity({
+      actorName: "Admin Akademik",
+      actorRole: "Admin",
+      action: "UPDATE",
+      entity: "Tutor",
+      targetId: id,
+      targetName: input.name || `Tutor ID ${id}`,
+      details: `Memperbarui profil tutor: status ${input.status || "tetap"}, keahlian ${(input.expertise || []).join(", ")}`,
+    });
+
     revalidatePath("/dashboard/tutor");
 
     return {
@@ -205,6 +226,16 @@ export async function toggleTutorStatus(
       .eq("id", id);
 
     if (error) throw error;
+
+    await logActivity({
+      actorName: "Admin Akademik",
+      actorRole: "Admin",
+      action: "STATUS_CHANGE",
+      entity: "Tutor",
+      targetId: id,
+      targetName: `Tutor ID ${id}`,
+      details: `Mengubah status tutor menjadi ${status}`,
+    });
 
     revalidatePath("/dashboard/tutor");
     return {
@@ -246,6 +277,16 @@ export async function deleteTutor(id: string): Promise<ActionResponse> {
         })
         .eq("id", id);
 
+      await logActivity({
+        actorName: "Admin Akademik",
+        actorRole: "Admin",
+        action: "STATUS_CHANGE",
+        entity: "Tutor",
+        targetId: id,
+        targetName: `Tutor ID ${id}`,
+        details: `Nonaktifkan aman (soft delete): memiliki riwayat ${sessionCount || 0} sesi dan ${payoutCount || 0} rekap honor`,
+      });
+
       revalidatePath("/dashboard/tutor");
       return {
         success: true,
@@ -256,6 +297,16 @@ export async function deleteTutor(id: string): Promise<ActionResponse> {
     // Hard delete jika belum pernah ada sesi atau pembayaran honor
     const { error } = await supabaseAdmin.from("Tutor").delete().eq("id", id);
     if (error) throw error;
+
+    await logActivity({
+      actorName: "Admin Akademik",
+      actorRole: "Admin",
+      action: "DELETE",
+      entity: "Tutor",
+      targetId: id,
+      targetName: `Tutor ID ${id}`,
+      details: "Menghapus data tutor permanen (tanpa riwayat sesi/honor)",
+    });
 
     revalidatePath("/dashboard/tutor");
     return {

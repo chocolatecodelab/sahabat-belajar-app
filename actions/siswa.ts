@@ -5,6 +5,7 @@ import { ActionResponse } from "@/types";
 import { revalidatePath } from "next/cache";
 import { StudentStatus } from "@prisma/client";
 import { requireStaffOrAdmin } from "@/lib/auth";
+import { logActivity } from "@/lib/audit";
 
 export type StudentInput = {
   name: string;
@@ -112,6 +113,16 @@ export async function createStudent(input: StudentInput): Promise<ActionResponse
         .update({ status: "DAFTAR", updatedAt: new Date().toISOString() })
         .eq("id", input.leadId);
     }
+
+    await logActivity({
+      actorName: "Admin/Staf Akademik",
+      actorRole: "Admin",
+      action: "CREATE",
+      entity: "Siswa",
+      targetId: student.id,
+      targetName: input.name.trim(),
+      details: `Mendaftarkan siswa baru jenjang ${input.level} (${input.school || "Umum"})`,
+    });
 
     revalidatePath("/dashboard/siswa");
     revalidatePath("/dashboard/lead");
@@ -223,6 +234,16 @@ export async function updateStudent(
 
     if (error) throw error;
 
+    await logActivity({
+      actorName: "Admin/Staf Akademik",
+      actorRole: "Admin",
+      action: "UPDATE",
+      entity: "Siswa",
+      targetId: id,
+      targetName: input.name || `Siswa ID ${id}`,
+      details: `Memperbarui profil siswa: jenjang ${input.level || "-"}, status ${input.status || "tetap"}`,
+    });
+
     revalidatePath("/dashboard/siswa");
 
     return {
@@ -249,6 +270,16 @@ export async function toggleStudentStatus(
       .eq("id", id);
 
     if (error) throw error;
+
+    await logActivity({
+      actorName: "Admin/Staf Akademik",
+      actorRole: "Admin",
+      action: "STATUS_CHANGE",
+      entity: "Siswa",
+      targetId: id,
+      targetName: `Siswa ID ${id}`,
+      details: `Mengubah status siswa menjadi ${status}`,
+    });
 
     revalidatePath("/dashboard/siswa");
     return {
@@ -290,6 +321,16 @@ export async function deleteStudent(id: string): Promise<ActionResponse> {
         })
         .eq("id", id);
 
+      await logActivity({
+        actorName: "Admin/Staf Akademik",
+        actorRole: "Admin",
+        action: "STATUS_CHANGE",
+        entity: "Siswa",
+        targetId: id,
+        targetName: `Siswa ID ${id}`,
+        details: `Nonaktifkan aman (soft delete): memiliki riwayat ${pkgCount || 0} paket dan ${sessionCount || 0} sesi`,
+      });
+
       revalidatePath("/dashboard/siswa");
       return {
         success: true,
@@ -300,6 +341,16 @@ export async function deleteStudent(id: string): Promise<ActionResponse> {
     // Hard delete jika siswa baru mendaftar dan belum memiliki riwayat paket/sesi
     const { error } = await supabaseAdmin.from("Student").delete().eq("id", id);
     if (error) throw error;
+
+    await logActivity({
+      actorName: "Admin/Staf Akademik",
+      actorRole: "Admin",
+      action: "DELETE",
+      entity: "Siswa",
+      targetId: id,
+      targetName: `Siswa ID ${id}`,
+      details: "Menghapus data siswa permanen (tanpa riwayat paket)",
+    });
 
     revalidatePath("/dashboard/siswa");
     return {

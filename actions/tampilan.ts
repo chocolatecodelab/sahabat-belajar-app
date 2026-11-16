@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import type { ActionResponse } from "@/types";
+import { logActivity } from "@/lib/audit";
 
 // ============================
 // HERO SLIDES
@@ -755,14 +756,66 @@ export async function deleteTestimonial(id: string): Promise<ActionResponse> {
 }
 
 // ============================
-// FAQS (PERTANYAAN UMUM)
+// FAQS (PERTANYAAN UMUM SAHABAT BELAJAR)
 // ============================
 
 const INITIAL_FAQS = [
-  { id: "faq_1", question: "Apakah pemula yang belum punya judul riset bisa mendaftar?", answer: "Sangat bisa! Kami memiliki program kelas dasar dan bimbingan 1-on-1 yang akan memandu Anda mulai dari penentuan topik, perumusan research gap, hingga penyusunan proposal.", category: "Pendaftaran", sortOrder: 1, isActive: true },
-  { id: "faq_2", question: "Apakah peserta akan mendapatkan sertifikat resmi?", answer: "Ya, setiap peserta yang menyelesaikan program kursus atau bootcamp akan mendapatkan e-Sertifikat resmi ber-SKP yang dapat digunakan sebagai portofolio akademik.", category: "Sertifikat", sortOrder: 2, isActive: true },
-  { id: "faq_3", question: "Bagaimana jika saya berhalangan hadir saat live session?", answer: "Jangan khawatir, semua sesi live class direkam dengan kualitas HD dan dapat Anda tonton ulang kapan saja di portal pembelajaran tanpa batas waktu kedaluwarsa.", category: "Bimbingan", sortOrder: 3, isActive: true },
-  { id: "faq_4", question: "Bagaimana sistem bimbingan dan bedah draft manuskrip?", answer: "Peserta dapat mengunggah draft (proposal, bab tugas akhir, atau artikel). Mentor akan memberikan catatan perbaikan mendalam (inline feedback) dan sesi diskusi privat via Zoom/Google Meet.", category: "Bimbingan", sortOrder: 4, isActive: true },
+  {
+    id: "faq_1",
+    question: "Bagaimana sistem dan metode bimbingan belajar di Sahabat Belajar?",
+    answer: "Sahabat Belajar menyelenggarakan bimbingan intensif model Privat (1 tutor 1 siswa) dan Semi-Privat (kelompok kecil 2 hingga maksimal 5 siswa). Kami menyediakan opsi bimbingan Online interaktif via Zoom/Google Meet serta Home Visit (tutor berkompeten hadir langsung ke rumah siswa).",
+    category: "Metode & Jadwal",
+    sortOrder: 1,
+    isActive: true,
+  },
+  {
+    id: "faq_2",
+    question: "Apakah jadwal bimbingan bisa disesuaikan dengan waktu luang siswa?",
+    answer: "Tentu saja! Jadwal bimbingan bersifat fleksibel. Siswa dan orang tua dapat berdiskusi dengan tim akademik untuk menentukan hari dan jam belajar yang paling kondusif. Durasi standar per sesi adalah 90 menit (sesuai BR-5).",
+    category: "Metode & Jadwal",
+    sortOrder: 2,
+    isActive: true,
+  },
+  {
+    id: "faq_3",
+    question: "Program bimbingan apa saja yang disediakan Sahabat Belajar?",
+    answer: "Kami melayani program berjenjang: K-12 (SD, SMP, SMA untuk persiapan ulangan harian, PAS/PAT, dan UTBK-SNBT), serta Program Lanjutan (Persiapan CAT SKD CPNS & Kedinasan, BUMN, S2/S3 & Persiapan Beasiswa LPDP, TOEFL/IELTS, serta Pendampingan Karya Tulis Ilmiah).",
+    category: "Program Bimbingan",
+    sortOrder: 3,
+    isActive: true,
+  },
+  {
+    id: "faq_4",
+    question: "Bagaimana aturan pengurangan kuota pertemuan?",
+    answer: "Kuota paket bimbingan Anda hanya akan berkurang 1 sesi ketika pertemuan telah selesai terlaksana (BR-1). Jika sesi belum terlaksana atau dijadwalkan ulang sesuai ketentuan, kuota Anda tetap aman.",
+    category: "Pendaftaran & Biaya",
+    sortOrder: 4,
+    isActive: true,
+  },
+  {
+    id: "faq_5",
+    question: "Bagaimana jika siswa berhalangan hadir pada sesi yang telah dijadwalkan?",
+    answer: "Siswa atau orang tua cukup mengonfirmasi kepada tutor atau admin minimal 6 jam sebelum sesi dimulai. Sesi akan dijadwalkan ulang (reschedule) tanpa pemotongan kuota pertemuan.",
+    category: "Metode & Jadwal",
+    sortOrder: 5,
+    isActive: true,
+  },
+  {
+    id: "faq_6",
+    question: "Bagaimana orang tua dapat memantau perkembangan belajar anak?",
+    answer: "Orang tua diberikan akses ke Portal Siswa & Wali Murid Sahabat Belajar. Melalui portal ini, orang tua dapat memantau presensi, topik yang dipelajari, jurnal catatan tutor, serta sisa kuota paket bimbingan secara transparan dan real-time.",
+    category: "Tutor & Garansi",
+    sortOrder: 6,
+    isActive: true,
+  },
+  {
+    id: "faq_7",
+    question: "Berapa kapasitas peserta maksimal untuk kelas Semi-Privat?",
+    answer: "Kelas Semi-Privat dibatasi maksimal 5 peserta (BR-3) agar interaksi antara tutor dan siswa tetap fokus, mendalam, dan setiap siswa mendapatkan perhatian personal yang optimal.",
+    category: "Program Bimbingan",
+    sortOrder: 7,
+    isActive: true,
+  },
 ];
 
 export async function getFaqs() {
@@ -772,7 +825,16 @@ export async function getFaqs() {
       .select("*")
       .order("sortOrder", { ascending: true });
 
-    if (error || !data || data.length === 0) {
+    // Cek apakah data kosong atau masih memuat data template lama (riset/manuskrip)
+    const isLegacy =
+      data &&
+      data.some(
+        (f: any) =>
+          (f.question && f.question.toLowerCase().includes("riset")) ||
+          (f.answer && f.answer.toLowerCase().includes("manuskrip"))
+      );
+
+    if (error || !data || data.length === 0 || isLegacy) {
       try {
         await supabaseAdmin.from("Faq").upsert(INITIAL_FAQS);
       } catch {}
@@ -809,6 +871,16 @@ export async function createFaq(formData: FormData): Promise<ActionResponse> {
 
   if (error) return { success: false, message: error.message };
 
+  await logActivity({
+    actorName: "Admin Akademik",
+    actorRole: "Admin",
+    action: "CREATE",
+    entity: "FAQ",
+    targetId: id,
+    targetName: question,
+    details: `Menambahkan FAQ baru kategori ${category}`,
+  });
+
   revalidatePath("/dashboard/tampilan/faq");
   revalidatePath("/");
   return { success: true, message: "FAQ berhasil ditambahkan" };
@@ -841,9 +913,50 @@ export async function updateFaq(id: string, formData: FormData): Promise<ActionR
 
   if (error) return { success: false, message: error.message };
 
+  await logActivity({
+    actorName: "Admin Akademik",
+    actorRole: "Admin",
+    action: "UPDATE",
+    entity: "FAQ",
+    targetId: id,
+    targetName: question,
+    details: `Memperbarui FAQ kategori ${category}`,
+  });
+
   revalidatePath("/dashboard/tampilan/faq");
   revalidatePath("/");
   return { success: true, message: "FAQ berhasil diperbarui" };
+}
+
+export async function toggleFaqStatus(id: string, isActive: boolean): Promise<ActionResponse> {
+  await requirePermission("appearance.update");
+
+  const { error } = await supabaseAdmin
+    .from("Faq")
+    .update({
+      isActive,
+      updatedAt: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) return { success: false, message: error.message };
+
+  await logActivity({
+    actorName: "Admin Akademik",
+    actorRole: "Admin",
+    action: "STATUS_CHANGE",
+    entity: "FAQ",
+    targetId: id,
+    targetName: `FAQ ID ${id}`,
+    details: `Mengubah status tampilan FAQ menjadi ${isActive ? "Aktif" : "Nonaktif"}`,
+  });
+
+  revalidatePath("/dashboard/tampilan/faq");
+  revalidatePath("/");
+  return {
+    success: true,
+    message: `FAQ berhasil di-${isActive ? "aktifkan" : "nonaktifkan"}`,
+  };
 }
 
 export async function deleteFaq(id: string): Promise<ActionResponse> {
@@ -851,6 +964,16 @@ export async function deleteFaq(id: string): Promise<ActionResponse> {
 
   const { error } = await supabaseAdmin.from("Faq").delete().eq("id", id);
   if (error) return { success: false, message: error.message };
+
+  await logActivity({
+    actorName: "Admin Akademik",
+    actorRole: "Admin",
+    action: "DELETE",
+    entity: "FAQ",
+    targetId: id,
+    targetName: `FAQ ID ${id}`,
+    details: `Menghapus pertanyaan FAQ dari basis data`,
+  });
 
   revalidatePath("/dashboard/tampilan/faq");
   revalidatePath("/");
