@@ -3,6 +3,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { auth } from "@/lib/auth";
 import { UPLOAD_MAX_SIZE, UPLOAD_ALLOWED_TYPES } from "@/lib/constants";
+import { supabaseAdmin } from "@/lib/supabase";
 
 // Whitelist of valid upload folders to prevent directory traversal
 const ALLOWED_FOLDERS = [
@@ -130,18 +131,42 @@ export async function POST(request: NextRequest) {
       .slice(0, 50); // limit length
     const uniqueName = `${sanitizedName}-${Date.now()}${ext}`;
 
-    // Ensure upload directory exists
-    const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
-    await mkdir(uploadDir, { recursive: true });
+    // 1. Primary: Upload to Supabase Cloud Storage (ensures persistence on Vercel deployment)
+    const storagePath = `${folder}/${uniqueName}`;
+    let finalUrl: string | null = null;
 
-    // Write file
-    const filePath = path.join(uploadDir, uniqueName);
-    await writeFile(filePath, buffer);
+    try {
+      const { data: uploadData, error: uploadErr } = await supabaseAdmin.storage
+        .from("uploads")
+        .upload(storagePath, buffer, {
+          contentType: file.type,
+          upsert: true,
+        });
 
-    // Return the public URL
-    const url = `/uploads/${folder}/${uniqueName}`;
+      if (!uploadErr && uploadData) {
+        const { data: pubData } = supabaseAdmin.storage
+          .from("uploads")
+          .getPublicUrl(storagePath);
+        if (pubData?.publicUrl) {
+          finalUrl = pubData.publicUrl;
+        }
+      } else if (uploadErr) {
+        console.warn("Supabase Storage upload warning (falling back to disk):", uploadErr.message);
+      }
+    } catch (sbErr) {
+      console.warn("Supabase Storage upload exception (falling back to disk):", sbErr);
+    }
 
-    return NextResponse.json({ url, location: url, success: true });
+    // 2. Fallback: Write to local disk (ensures local development offline works seamlessly)
+    if (!finalUrl) {
+      const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
+      await mkdir(uploadDir, { recursive: true });
+      const filePath = path.join(uploadDir, uniqueName);
+      await writeFile(filePath, buffer);
+      finalUrl = `/uploads/${folder}/${uniqueName}`;
+    }
+
+    return NextResponse.json({ url: finalUrl, location: finalUrl, success: true });
   } catch (error: any) {
     console.error("Upload error:", error);
     return NextResponse.json(
