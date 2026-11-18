@@ -1,5 +1,16 @@
 [
   {
+    "id": "log_1795013670230_66pe3",
+    "timestamp": "2026-11-18T14:54:30.230Z",
+    "actorName": "Admin Sahabat Belajar",
+    "actorRole": "Admin",
+    "action": "STATUS_CHANGE",
+    "entity": "Pembayaran",
+    "targetId": "pay_conf_1795013582904_t1mle",
+    "targetName": "Ahmad Fauzi — Paket 10 Sesi Privat K-12",
+    "details": "Mengubah status pembayaran Rp 2.250.000 dari BELUM menjadi LUNAS."
+  },
+  {
     "id": "log_1794812278339_52kqa",
     "timestamp": "2026-11-16T06:57:58.339Z",
     "actorName": "Admin Sahabat Belajar",

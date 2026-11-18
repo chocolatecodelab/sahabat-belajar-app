@@ -653,6 +653,7 @@ export async function submitStudentPaymentConfirmation(input: {
   amount: number;
   bankDestination: string;
   senderAccountName: string;
+  proofFile?: string | null;
   notes?: string;
 }): Promise<ActionResponse> {
   try {
@@ -728,6 +729,7 @@ export async function submitStudentPaymentConfirmation(input: {
         amount: input.amount,
         paidAt: now,
         method: input.bankDestination || "TRANSFER_BANK",
+        proofFile: input.proofFile || null,
         status: "BELUM", // Valid enum PaymentStatus (BELUM | SEBAGIAN | LUNAS)
         notes: `[MENUNGGU VERIFIKASI] Konfirmasi Mandiri Siswa: ${input.studentName} (${input.packageName}). Pengirim: ${input.senderAccountName}. Catatan: ${input.notes || "-"}`,
         updatedAt: now,
@@ -740,7 +742,24 @@ export async function submitStudentPaymentConfirmation(input: {
           message: "Gagal menyimpan data konfirmasi pembayaran ke server.",
         };
       }
-    } else if (!isDemoStudent) {
+    } else if (isDemoStudent) {
+      const demoKey = input.studentId as keyof typeof SIBLINGS_MAP;
+      if (SIBLINGS_MAP[demoKey]) {
+        SIBLINGS_MAP[demoKey].invoices = SIBLINGS_MAP[demoKey].invoices || [];
+        SIBLINGS_MAP[demoKey].invoices.unshift({
+          id,
+          invoiceNumber: `INV-SB/2026/${Math.floor(1000 + Math.random() * 9000)}`,
+          packageName: input.packageName,
+          programName: SIBLINGS_MAP[demoKey].packages?.[0]?.programName || "Program Sahabat Belajar",
+          amount: input.amount,
+          paidAt: now,
+          method: input.bankDestination || "QRIS",
+          status: "MENUNGGU_VERIFIKASI",
+          proofFile: input.proofFile || null,
+          notes: `[MENUNGGU VERIFIKASI] Konfirmasi Mandiri Siswa: ${input.studentName}. Pengirim: ${input.senderAccountName}. Catatan: ${input.notes || "-"}`,
+        });
+      }
+    } else {
       return {
         success: false,
         message: "Siswa belum memiliki paket bimbingan aktif. Silakan hubungi Admin Sahabat Belajar untuk aktivasi paket terlebih dahulu.",

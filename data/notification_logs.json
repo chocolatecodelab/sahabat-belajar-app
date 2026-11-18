@@ -1,5 +1,26 @@
 [
   {
+    "id": "notif_1795013669821_jayqe",
+    "channel": "EMAIL",
+    "recipient": "ahmad.fauzi@simulasi.sahabatbelajar.id",
+    "recipientName": "Orang Tua Ahmad Fauzi",
+    "event": "PAYMENT_VERIFIED",
+    "subject": "[Sahabat Belajar] Bukti Pembayaran Paket Paket 10 Sesi Privat K-12 Diverifikasi (Rp 2.250.000)",
+    "message": "<h2>Pembayaran Diverifikasi & Kuota Bimbingan Aktif</h2>\n<p>Halo <strong>Ahmad Fauzi</strong>,</p>\n<p>Pembayaran Anda untuk paket bimbingan <strong>Paket 10 Sesi Privat K-12 (Rp 2.250.000)</strong> telah berhasil kami verifikasi.</p>\n<p>Paket belajar dan kuota sesi (90 menit/pertemuan) Anda kini telah aktif:</p>\n<ul>\n  <li><strong>Referensi Pembayaran:</strong> PAY_CONF_17950</li>\n  <li><strong>Portal Siswa & Orang Tua:</strong> <a href=\"http://localhost:3000/portal\">http://localhost:3000/portal</a></li>\n</ul>\n<p><a href=\"http://localhost:3000/portal\" style=\"display:inline-block;padding:10px 20px;background:#09408C;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;\">Masuk ke Portal Siswa</a></p>\n<p>Selamat belajar!<br /><strong>Tim Akademik Sahabat Belajar</strong></p>",
+    "status": "SIMULATED",
+    "sentAt": "2026-11-18T14:54:29.821Z"
+  },
+  {
+    "id": "notif_1795013668944_fy22d",
+    "channel": "WHATSAPP",
+    "recipient": "6281299887766",
+    "recipientName": "Orang Tua Ahmad Fauzi",
+    "event": "PAYMENT_VERIFIED",
+    "message": "Halo Ahmad Fauzi, kabar gembira! 🎉\n\nPembayaran paket bimbingan *Paket 10 Sesi Privat K-12 (Rp 2.250.000)* (Ref: PAY_CONF_17950) telah *BERHASIL DIVERIFIKASI*.\n\nKuota belajar dan akses Portal Siswa Anda telah aktif:\n📧 *Email Akun:* ahmad.fauzi@simulasi.sahabatbelajar.id\n🌐 *Buka Portal Siswa & Jadwal:* http://localhost:3000/portal\n\nSelamat belajar bersama tutor terbaik kami, dari paham konsep dasar hingga siap berprestasi!\n\nSalam,\n*Tim Akademik Sahabat Belajar*",
+    "status": "SIMULATED",
+    "sentAt": "2026-11-18T14:54:28.944Z"
+  },
+  {
     "id": "notif_1794812239184_z3mml",
     "channel": "WHATSAPP",
     "recipient": "6281311223344",

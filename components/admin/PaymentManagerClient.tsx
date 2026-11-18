@@ -19,6 +19,7 @@ import {
   Search,
   Clock,
   Filter,
+  Eye,
 } from "lucide-react";
 import { recordManualPayment, updatePaymentStatus } from "@/actions/pembayaran";
 import { PaymentStatus } from "@prisma/client";
@@ -42,6 +43,7 @@ export default function PaymentManagerClient({
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
+  const [previewProof, setPreviewProof] = useState<any | null>(null);
 
   useEffect(() => {
     setPayments(initialPayments);
@@ -337,6 +339,16 @@ export default function PaymentManagerClient({
                     )}
 
                     <div className="flex flex-wrap items-center gap-2 pt-1">
+                      {p.proofFile && (
+                        <button
+                          onClick={() => setPreviewProof(p)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#9AC1E2] bg-[#EAF1FA] text-xs font-semibold text-[#09408C] hover:bg-[#D5DDEB] transition-colors"
+                          title="Lihat Bukti Foto Transfer / QRIS"
+                        >
+                          <Eye size={13} />
+                          <span>Bukti</span>
+                        </button>
+                      )}
                       {!isPaid && (
                         <button
                           onClick={() => handleVerifyPayment(p)}
@@ -452,6 +464,16 @@ export default function PaymentManagerClient({
 
                         <td className="py-3.5 px-4 text-center">
                           <div className="flex flex-wrap items-center justify-center gap-2">
+                            {p.proofFile && (
+                              <button
+                                onClick={() => setPreviewProof(p)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#9AC1E2] bg-[#EAF1FA] text-xs font-semibold text-[#09408C] hover:bg-[#D5DDEB] transition-colors"
+                                title="Lihat Bukti Foto Transfer / QRIS"
+                              >
+                                <Eye size={13} />
+                                <span>Bukti</span>
+                              </button>
+                            )}
                             {!isPaid && (
                               <button
                                 onClick={() => handleVerifyPayment(p)}
@@ -734,6 +756,89 @@ export default function PaymentManagerClient({
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Modal Pratinjau Bukti Transfer / QRIS untuk Admin */}
+      {previewProof && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#D5DDEB] relative">
+            <button
+              onClick={() => setPreviewProof(null)}
+              className="absolute top-4 right-4 p-2 rounded-xl text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#1B2A41] transition-colors"
+            >
+              <X size={18} />
+            </button>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EAF1FA] text-[#09408C] border border-[#9AC1E2]">
+                  Foto Bukti Transaksi
+                </span>
+                <span className="text-xs text-[#5B6882] font-mono">
+                  {previewProof.id}
+                </span>
+              </div>
+              <h3 className="font-heading font-bold text-base text-[#1B2A41] mt-1">
+                {previewProof.studentPackage?.student?.name || "Siswa"} — Rp {(previewProof.amount || 0).toLocaleString("id-ID")}
+              </h3>
+              <p className="text-xs text-[#5B6882]">
+                Paket: {previewProof.studentPackage?.package?.name || "Paket Belajar"} | Metode: {previewProof.method}
+              </p>
+            </div>
+
+            {/* Container Foto */}
+            <div className="bg-slate-100 rounded-2xl overflow-hidden border border-[#D5DDEB] max-h-[55vh] flex items-center justify-center p-2">
+              <img
+                src={previewProof.proofFile}
+                alt="Bukti Transfer Pembayaran"
+                className="w-full h-auto max-h-[50vh] object-contain rounded-xl"
+              />
+            </div>
+
+            {previewProof.notes && (
+              <div className="text-[11px] text-[#5B6882] bg-[#F4F7FB] p-2.5 rounded-xl border border-[#D5DDEB]">
+                <strong className="text-[#1B2A41]">Catatan Pengirim:</strong> {previewProof.notes}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#D5DDEB]">
+              <a
+                href={previewProof.proofFile}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] flex items-center gap-1.5"
+              >
+                <ExternalLink size={14} />
+                <span>Buka Tab Baru</span>
+              </a>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPreviewProof(null)}
+                  className="px-4 py-2 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#5B6882] hover:bg-slate-50"
+                >
+                  Tutup
+                </button>
+                {previewProof.status !== "LUNAS" && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const p = previewProof;
+                      setPreviewProof(null);
+                      await handleVerifyPayment(p);
+                    }}
+                    disabled={verifyingId === previewProof.id}
+                    className="px-4 py-2 rounded-xl bg-[#1F6F4A] hover:bg-[#18583B] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+                  >
+                    <CheckCircle2 size={14} />
+                    <span>Verifikasi Lunas</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

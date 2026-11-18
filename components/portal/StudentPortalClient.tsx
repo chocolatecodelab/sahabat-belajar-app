@@ -38,6 +38,7 @@ import {
   Check,
   Eye,
   QrCode,
+  Upload,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import type { StudentPortalData, StudentInvoice } from "@/actions/portal";
@@ -134,6 +135,7 @@ export default function StudentPortalClient({
   const [showPayModal, setShowPayModal] = useState(false);
   const [isSubmittingPay, setIsSubmittingPay] = useState(false);
   const [selectedQrisModal, setSelectedQrisModal] = useState<PaymentAccountItem | null>(null);
+  const [selectedProofModal, setSelectedProofModal] = useState<string | null>(null);
 
   // Payment Form States
   const defaultBankValue =
@@ -146,6 +148,8 @@ export default function StudentPortalClient({
   const [paySenderName, setPaySenderName] = useState("");
   const [payAmount, setPayAmount] = useState("");
   const [payNotes, setPayNotes] = useState("");
+  const [payProofUrl, setPayProofUrl] = useState<string | null>(null);
+  const [isUploadingProof, setIsUploadingProof] = useState(false);
 
   if (!initialData) {
     return (
@@ -222,6 +226,45 @@ export default function StudentPortalClient({
     }
   };
 
+  const handleProofUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Format Berkas Salah", "Bukti transfer harus berupa file gambar (JPG, PNG, atau WebP).");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Ukuran Terlalu Besar", "Ukuran foto bukti transfer maksimal 5MB.");
+      return;
+    }
+
+    setIsUploadingProof(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "payments");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "Gagal mengunggah foto bukti pembayaran.");
+      }
+
+      setPayProofUrl(data.url);
+      toast.success("Foto Bukti Terunggah", "Foto bukti pembayaran berhasil dilampirkan.");
+    } catch (err: any) {
+      toast.error("Gagal Mengunggah", err.message || "Terjadi kesalahan saat mengunggah foto.");
+    } finally {
+      setIsUploadingProof(false);
+    }
+  };
+
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!paySenderName.trim() || !payAmount) return;
@@ -234,6 +277,7 @@ export default function StudentPortalClient({
       amount: parseInt(payAmount) || 0,
       bankDestination: payBank,
       senderAccountName: paySenderName,
+      proofFile: payProofUrl || undefined,
       notes: payNotes,
     });
     setIsSubmittingPay(false);
@@ -244,6 +288,7 @@ export default function StudentPortalClient({
       setPaySenderName("");
       setPayAmount("");
       setPayNotes("");
+      setPayProofUrl(null);
       router.refresh();
     } else {
       toast.error("Gagal Mengirim", res.message);
@@ -1736,13 +1781,24 @@ export default function StudentPortalClient({
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-4 shrink-0">
+                      <div className="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap">
                         <div className="text-right">
                           <div className="text-[10px] text-[#5B6882]">Total Tagihan</div>
                           <div className="text-lg font-extrabold text-[#09408C] font-heading">
                             Rp {inv.amount.toLocaleString("id-ID")}
                           </div>
                         </div>
+
+                        {inv.proofFile && (
+                          <button
+                            onClick={() => setSelectedProofModal(inv.proofFile || null)}
+                            className="px-3 py-2 rounded-xl bg-[#EAF1FA] border border-[#9AC1E2] text-xs font-semibold text-[#09408C] hover:bg-[#D5DDEB] transition-colors flex items-center gap-1.5 shadow-2xs"
+                            title="Lihat Bukti Foto yang Dilampirkan"
+                          >
+                            <Eye size={14} />
+                            <span>Bukti Foto</span>
+                          </button>
+                        )}
 
                         <button
                           onClick={() => setSelectedReceipt(inv)}
@@ -1999,6 +2055,72 @@ export default function StudentPortalClient({
                   />
                 </div>
 
+                {/* Unggah Bukti Transfer / Struk Scan QRIS */}
+                <div>
+                  <label className="block font-semibold text-[#1B2A41] mb-1">
+                    Unggah Bukti Transfer / Scan QRIS (Foto / Screenshot)
+                  </label>
+                  {payProofUrl ? (
+                    <div className="p-3 bg-[#EAF1FA] border border-[#9AC1E2] rounded-2xl flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 overflow-hidden">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-[#D5DDEB] shrink-0">
+                          <img
+                            src={payProofUrl}
+                            alt="Bukti Transfer"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="truncate">
+                          <span className="text-xs font-bold text-[#09408C] block truncate">
+                            Bukti Pembayaran Terlampir
+                          </span>
+                          <span className="text-[10px] text-[#1F6F4A] font-semibold flex items-center gap-1">
+                            <Check size={12} /> Siap dikirim ke Admin
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedProofModal(payProofUrl)}
+                          className="px-2.5 py-1.5 rounded-lg bg-white border border-[#D5DDEB] text-[11px] font-semibold text-[#09408C] hover:bg-[#F4F7FB]"
+                        >
+                          Lihat
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPayProofUrl(null)}
+                          className="p-1.5 rounded-lg text-red-600 hover:bg-red-50"
+                          title="Hapus foto bukti"
+                        >
+                          <X size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative border-2 border-dashed border-[#D5DDEB] hover:border-[#09408C] rounded-2xl p-4 text-center bg-[#F4F7FB] transition-colors cursor-pointer group">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleProofUpload}
+                        disabled={isUploadingProof}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                      />
+                      <div className="flex flex-col items-center justify-center gap-1">
+                        <div className="w-8 h-8 rounded-full bg-[#EAF1FA] text-[#09408C] flex items-center justify-center group-hover:scale-105 transition-transform">
+                          <Upload size={16} />
+                        </div>
+                        <span className="text-xs font-semibold text-[#1B2A41]">
+                          {isUploadingProof ? "Sedang Mengunggah Foto..." : "Klik untuk Pilih Foto Struk / Bukti QRIS"}
+                        </span>
+                        <span className="text-[10px] text-[#5B6882]">
+                          Format JPG, PNG, atau WebP (Maks. 5MB)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label htmlFor="pay-notes" className="block font-semibold text-[#1B2A41] mb-1">
                     Catatan Tambahan (Opsional)
@@ -2253,6 +2375,51 @@ export default function StudentPortalClient({
             >
               Tutup
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Zoom Foto Bukti Transfer Siswa */}
+      {selectedProofModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border border-[#D5DDEB] relative">
+            <button
+              onClick={() => setSelectedProofModal(null)}
+              className="absolute top-4 right-4 p-2 rounded-xl text-[#5B6882] hover:bg-[#EAF1FA] hover:text-[#1B2A41] transition-colors"
+            >
+              <X size={18} />
+            </button>
+            <div className="text-left">
+              <h3 className="font-heading font-bold text-base text-[#09408C]">
+                Foto Bukti Pembayaran
+              </h3>
+              <p className="text-xs text-[#5B6882]">
+                Dokumen bukti transaksi transfer / struk QRIS yang dilampirkan.
+              </p>
+            </div>
+            <div className="bg-slate-100 rounded-2xl overflow-hidden border border-[#D5DDEB] max-h-[60vh] flex items-center justify-center p-2">
+              <img
+                src={selectedProofModal}
+                alt="Bukti Transfer Siswa"
+                className="w-full h-auto max-h-[55vh] object-contain rounded-xl"
+              />
+            </div>
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <a
+                href={selectedProofModal}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA]"
+              >
+                Buka Tab Baru
+              </a>
+              <button
+                onClick={() => setSelectedProofModal(null)}
+                className="px-5 py-2 rounded-xl bg-[#09408C] hover:bg-[#0E3571] text-white text-xs font-bold"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}
