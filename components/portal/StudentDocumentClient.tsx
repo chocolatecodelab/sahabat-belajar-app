@@ -638,17 +638,22 @@ export default function StudentDocumentClient({
                                   <Sparkles size={14} className="text-[#0CC0DF]" />
                                   <span>Rubrik Penilaian 4 Pilar Esai Akademik:</span>
                                 </span>
-                                <span className="text-[11px] font-bold text-[#1F6F4A]">
-                                  Rata-rata:{" "}
-                                  {Math.round(
-                                    (doc.rubricScores.argumentation +
-                                      doc.rubricScores.structure +
-                                      doc.rubricScores.relevance +
-                                      doc.rubricScores.academicWriting) /
-                                      4
-                                  )}
-                                  /100
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] font-bold text-[#1F6F4A]">
+                                    Rata-rata:{" "}
+                                    {Math.round(
+                                      (doc.rubricScores.argumentation +
+                                        doc.rubricScores.structure +
+                                        doc.rubricScores.relevance +
+                                        doc.rubricScores.academicWriting) /
+                                        4
+                                    )}
+                                    /100
+                                  </span>
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E3F4EC] text-[#1F6F4A] border border-[#1F6F4A]/30">
+                                    ✓ Sangat Siap
+                                  </span>
+                                </div>
                               </div>
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">

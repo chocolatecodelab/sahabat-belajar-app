@@ -267,7 +267,12 @@ const SAMPLE_SESSIONS: Record<string, StudentExamSession> = {
     answers: {
       q_snbt_01: { selectedKey: "C", pointsEarned: 5 },
     },
-    sectionScores: { "Penalaran Umum": 650, "Kuantitatif": 640 },
+    sectionScores: {
+      "Penalaran Umum": 710,
+      "Pemahaman Bacaan & Menulis": 650,
+      "Pengetahuan & Pemahaman Umum": 670,
+      "Penalaran Matematika": 550,
+    },
     exam: SAMPLE_EXAMS[1],
   },
   sess_demo_03: {

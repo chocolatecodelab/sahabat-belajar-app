@@ -47,11 +47,11 @@ export default function ScoreProgressChart({ sessions }: ScoreProgressChartProps
   const passRate = Math.round((passedCount / sortedSessions.length) * 100);
 
   // Line Chart Dimensions
-  const chartHeight = 160;
-  const chartWidth = 520;
-  const paddingX = 45;
-  const paddingY = 25;
-  const maxVal = Math.max(highestScore * 1.15, 500);
+  const chartHeight = 180;
+  const chartWidth = 540;
+  const paddingX = 64;
+  const paddingY = 32;
+  const maxVal = Math.max(highestScore * 1.35, (latestSession.exam?.passingGrade || 0) * 1.25, 500);
   const minVal = 0;
 
   const points = sortedSessions.map((s, index) => {
@@ -102,6 +102,10 @@ export default function ScoreProgressChart({ sessions }: ScoreProgressChartProps
         } else if (lower.includes("tkp")) {
           max = 225;
           target = 166;
+        } else if (score > 400) {
+          // Standard UTBK-SNBT scale (200 - 1000)
+          max = 1000;
+          target = 650;
         } else if (score > 200) {
           max = 500;
           target = 350;
@@ -132,7 +136,7 @@ export default function ScoreProgressChart({ sessions }: ScoreProgressChartProps
   // Radar geometry calculations
   const radarSize = 340;
   const radarCenter = radarSize / 2;
-  const radarRadius = 110;
+  const radarRadius = 92;
   const numAxes = radarSections.length;
 
   const getCoordinates = (index: number, ratio: number) => {
@@ -285,8 +289,8 @@ export default function ScoreProgressChart({ sessions }: ScoreProgressChartProps
               </div>
 
               {/* Radar SVG */}
-              <div className="w-full max-w-[340px] aspect-square flex items-center justify-center">
-                <svg viewBox={`0 0 ${radarSize} ${radarSize}`} className="w-full h-full overflow-visible">
+              <div className="w-full max-w-[360px] aspect-square flex items-center justify-center">
+                <svg viewBox="-65 -20 470 380" className="w-full h-full overflow-visible">
                   {/* Web Rings */}
                   {webRings.map((pointsStr, ringIdx) => (
                     <polygon
@@ -593,15 +597,15 @@ export default function ScoreProgressChart({ sessions }: ScoreProgressChartProps
                               strokeDasharray="4 4"
                             />
                             <text
-                              x={chartWidth - paddingX}
+                              x={paddingX + 6}
                               y={pgY - 5}
                               fill="#B45309"
                               fontSize="9"
                               fontWeight="bold"
-                              textAnchor="end"
+                              textAnchor="start"
                               fontFamily="sans-serif"
                             >
-                              Passing Grade: {pg}
+                              Ambang Kelulusan (Passing Grade: {pg})
                             </text>
                           </>
                         );
