@@ -21,6 +21,9 @@ import {
   X,
   RotateCcw,
   Send,
+  ListChecks,
+  History,
+  Sparkles,
 } from "lucide-react";
 import type { AcademicDocument, DocumentCategory, DocumentStage } from "@/actions/dokumen";
 import { submitStudentDocument, uploadRevisedDraft } from "@/actions/dokumen";
@@ -43,6 +46,7 @@ export default function StudentDocumentClient({
   const toast = useToast();
   const [documents, setDocuments] = useState<AcademicDocument[]>(initialDocuments);
   const [stageFilter, setStageFilter] = useState("ALL");
+  const [activeDocTab, setActiveDocTab] = useState<Record<string, "FEEDBACK" | "CHECKLIST" | "HISTORY">>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -528,33 +532,313 @@ export default function StudentDocumentClient({
 
                   {/* Student Request Notes */}
                   {doc.studentNotes && (
-                    <div className="text-xs bg-amber-50/50 rounded-xl p-3 border border-amber-200/60 text-[#1B2A41]">
-                      <strong className="text-amber-800 block mb-0.5">Catatan Anda untuk Mentor:</strong>
+                    <div className="text-xs bg-amber-50/50 rounded-2xl p-3.5 border border-amber-200/60 text-[#1B2A41]">
+                      <strong className="text-amber-800 block mb-0.5">Catatan Pengajuan Siswa:</strong>
                       <p className="leading-relaxed">{doc.studentNotes}</p>
                     </div>
                   )}
 
-                  {/* Mentor Feedback Box */}
+                  {/* Enhanced Mentor Review & Version History Section */}
                   {doc.mentorNotes ? (
-                    <div className="bg-[#EAF1FA] rounded-2xl p-4 border border-[#9AC1E2] text-xs text-[#1B2A41] space-y-1">
-                      <div className="flex items-center justify-between text-[#09408C] font-bold text-[11px]">
-                        <div className="flex items-center gap-1.5">
-                          <MessageSquare size={14} className="text-[#09408C]" />
-                          <span>Masukan & Telaah dari {doc.mentorName || "Mentor Akademik"}:</span>
+                    <div className="bg-[#F4F7FB] rounded-2xl p-4 sm:p-5 border border-[#D5DDEB] space-y-4">
+                      {/* Sub-Tabs: Catatan & Rubrik | Checklist Revisi | Riwayat Versi */}
+                      <div className="flex items-center justify-between border-b border-[#D5DDEB] pb-3 flex-wrap gap-2">
+                        <div className="flex items-center gap-1.5 p-1 bg-white rounded-xl border border-[#D5DDEB]">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveDocTab((prev) => ({ ...prev, [doc.id]: "FEEDBACK" }))
+                            }
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                              (activeDocTab[doc.id] || "FEEDBACK") === "FEEDBACK"
+                                ? "bg-[#09408C] text-white shadow-2xs"
+                                : "text-[#5B6882] hover:text-[#1B2A41]"
+                            }`}
+                          >
+                            <MessageSquare size={13} />
+                            <span>Catatan & Rubrik</span>
+                          </button>
+
+                          {doc.actionChecklist && doc.actionChecklist.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setActiveDocTab((prev) => ({ ...prev, [doc.id]: "CHECKLIST" }))
+                              }
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                                activeDocTab[doc.id] === "CHECKLIST"
+                                  ? "bg-[#09408C] text-white shadow-2xs"
+                                  : "text-[#5B6882] hover:text-[#1B2A41]"
+                              }`}
+                            >
+                              <ListChecks size={13} />
+                              <span>
+                                Tindak Lanjut ({doc.actionChecklist.filter((c) => c.completed).length}/
+                                {doc.actionChecklist.length})
+                              </span>
+                            </button>
+                          )}
+
+                          {doc.versionHistory && doc.versionHistory.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setActiveDocTab((prev) => ({ ...prev, [doc.id]: "HISTORY" }))
+                              }
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                                activeDocTab[doc.id] === "HISTORY"
+                                  ? "bg-[#09408C] text-white shadow-2xs"
+                                  : "text-[#5B6882] hover:text-[#1B2A41]"
+                              }`}
+                            >
+                              <History size={13} />
+                              <span>Riwayat Versi ({doc.versionHistory.length})</span>
+                            </button>
+                          )}
                         </div>
+
                         {doc.reviewedAt && (
-                          <span className="text-[10px] font-normal text-[#5B6882]">
+                          <span className="text-[11px] text-[#5B6882] font-medium">
+                            Ditinjau:{" "}
                             {new Date(doc.reviewedAt).toLocaleDateString("id-ID", {
                               day: "numeric",
-                              month: "short",
+                              month: "long",
                               year: "numeric",
                             })}
                           </span>
                         )}
                       </div>
-                      <p className="leading-relaxed whitespace-pre-line pt-0.5">
-                        {doc.mentorNotes}
-                      </p>
+
+                      {/* Content Panel 1: FEEDBACK & RUBRIC */}
+                      {(activeDocTab[doc.id] || "FEEDBACK") === "FEEDBACK" && (
+                        <div className="space-y-4">
+                          {/* Mentor Quote */}
+                          <div className="bg-white rounded-2xl p-4 border border-[#9AC1E2] space-y-2">
+                            <div className="flex items-center gap-2 text-[#09408C] font-bold text-xs">
+                              <div className="w-7 h-7 rounded-lg bg-[#EAF1FA] text-[#09408C] flex items-center justify-center font-bold text-xs">
+                                ✍️
+                              </div>
+                              <div>
+                                <span>Telaah & Ulasan {doc.mentorName || "Mentor Beasiswa LPDP"}</span>
+                                <span className="text-[10px] text-[#1F6F4A] font-semibold block">
+                                  Mentor Spesialis Naskah & Esai Akademik
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-xs text-[#1B2A41] leading-relaxed whitespace-pre-line pl-9 border-l-2 border-[#09408C]/30 ml-3.5">
+                              {doc.mentorNotes}
+                            </p>
+                          </div>
+
+                          {/* Rubric Evaluation Bars */}
+                          {doc.rubricScores && (
+                            <div className="bg-white rounded-2xl p-4 border border-[#D5DDEB] space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-[#09408C] flex items-center gap-1.5">
+                                  <Sparkles size={14} className="text-[#0CC0DF]" />
+                                  <span>Rubrik Penilaian 4 Pilar Esai Akademik:</span>
+                                </span>
+                                <span className="text-[11px] font-bold text-[#1F6F4A]">
+                                  Rata-rata:{" "}
+                                  {Math.round(
+                                    (doc.rubricScores.argumentation +
+                                      doc.rubricScores.structure +
+                                      doc.rubricScores.relevance +
+                                      doc.rubricScores.academicWriting) /
+                                      4
+                                  )}
+                                  /100
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                {/* Argumen */}
+                                <div className="p-3 bg-[#F4F7FB] rounded-xl border border-[#D5DDEB] space-y-1.5">
+                                  <div className="flex justify-between items-center font-semibold">
+                                    <span className="text-[#1B2A41]">1. Argumen & Urgensi Masalah</span>
+                                    <span className="text-[#09408C] font-bold">
+                                      {doc.rubricScores.argumentation}/100
+                                    </span>
+                                  </div>
+                                  <div className="w-full h-2 rounded-full bg-[#D5DDEB] overflow-hidden">
+                                    <div
+                                      className="h-full rounded-full bg-[#09408C]"
+                                      style={{ width: `${doc.rubricScores.argumentation}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+
+                                {/* Struktur */}
+                                <div className="p-3 bg-[#F4F7FB] rounded-xl border border-[#D5DDEB] space-y-1.5">
+                                  <div className="flex justify-between items-center font-semibold">
+                                    <span className="text-[#1B2A41]">2. Struktur & Alur Paragraf</span>
+                                    <span className="text-[#09408C] font-bold">
+                                      {doc.rubricScores.structure}/100
+                                    </span>
+                                  </div>
+                                  <div className="w-full h-2 rounded-full bg-[#D5DDEB] overflow-hidden">
+                                    <div
+                                      className="h-full rounded-full bg-[#295897]"
+                                      style={{ width: `${doc.rubricScores.structure}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+
+                                {/* Relevansi */}
+                                <div className="p-3 bg-[#F4F7FB] rounded-xl border border-[#D5DDEB] space-y-1.5">
+                                  <div className="flex justify-between items-center font-semibold">
+                                    <span className="text-[#1B2A41]">
+                                      3. Relevansi Studi & Rencana Kontribusi
+                                    </span>
+                                    <span className="text-[#1F6F4A] font-bold">
+                                      {doc.rubricScores.relevance}/100
+                                    </span>
+                                  </div>
+                                  <div className="w-full h-2 rounded-full bg-[#D5DDEB] overflow-hidden">
+                                    <div
+                                      className="h-full rounded-full bg-[#1F6F4A]"
+                                      style={{ width: `${doc.rubricScores.relevance}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+
+                                {/* Tata Bahasa */}
+                                <div className="p-3 bg-[#F4F7FB] rounded-xl border border-[#D5DDEB] space-y-1.5">
+                                  <div className="flex justify-between items-center font-semibold">
+                                    <span className="text-[#1B2A41]">4. Gaya Penulisan & Tata Bahasa</span>
+                                    <span className="text-[#09408C] font-bold">
+                                      {doc.rubricScores.academicWriting}/100
+                                    </span>
+                                  </div>
+                                  <div className="w-full h-2 rounded-full bg-[#D5DDEB] overflow-hidden">
+                                    <div
+                                      className="h-full rounded-full bg-[#0CC0DF]"
+                                      style={{ width: `${doc.rubricScores.academicWriting}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Content Panel 2: CHECKLIST TINDAK LANJUT */}
+                      {activeDocTab[doc.id] === "CHECKLIST" && (
+                        <div className="bg-white rounded-2xl p-4 border border-[#D5DDEB] space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-[#09408C]">
+                              Daftar Poin Perbaikan Rekomendasi Mentor:
+                            </span>
+                            <span className="text-[11px] text-[#5B6882]">
+                              Centang hijau menandakan poin yang sudah disesuaikan pada naskah ini.
+                            </span>
+                          </div>
+
+                          <div className="space-y-2">
+                            {doc.actionChecklist?.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-xs transition-colors ${
+                                  item.completed
+                                    ? "bg-[#E3F4EC]/60 border-[#1F6F4A]/30 text-[#1B2A41]"
+                                    : "bg-[#FEF7E6]/60 border-[#F5B82E]/50 text-[#1B2A41]"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <div
+                                    className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-white font-bold text-xs ${
+                                      item.completed ? "bg-[#1F6F4A]" : "bg-[#B45309]"
+                                    }`}
+                                  >
+                                    {item.completed ? "✓" : "!"}
+                                  </div>
+                                  <span className={item.completed ? "line-through text-[#5B6882]" : "font-medium"}>
+                                    {item.task}
+                                  </span>
+                                </div>
+
+                                {item.priority && (
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                                      item.priority === "TINGGI"
+                                        ? "bg-red-100 text-red-700"
+                                        : item.priority === "SEDANG"
+                                        ? "bg-amber-100 text-amber-800"
+                                        : "bg-slate-100 text-slate-600"
+                                    }`}
+                                  >
+                                    Prioritas {item.priority}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Content Panel 3: RIWAYAT VERSI DRAF */}
+                      {activeDocTab[doc.id] === "HISTORY" && (
+                        <div className="bg-white rounded-2xl p-4 border border-[#D5DDEB] space-y-4">
+                          <span className="text-xs font-bold text-[#09408C] block">
+                            Kronologi Revisi & Catatan Mentor per Versi Naskah:
+                          </span>
+
+                          <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#D5DDEB]">
+                            {doc.versionHistory?.map((ver, vIdx) => (
+                              <div key={vIdx} className="relative space-y-2 text-xs">
+                                {/* Bullet indicator */}
+                                <div
+                                  className={`absolute -left-6 top-0.5 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-black text-white ${
+                                    ver.versionNumber === doc.version
+                                      ? "bg-[#09408C]"
+                                      : "bg-[#5B6882]"
+                                  }`}
+                                >
+                                  {ver.versionNumber}
+                                </div>
+
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-bold text-[#1B2A41]">
+                                      Versi {ver.versionNumber}
+                                    </span>
+                                    {ver.versionNumber === doc.version && (
+                                      <span className="px-2 py-0.5 rounded-full bg-[#EAF1FA] text-[#09408C] font-bold text-[10px] border border-[#9AC1E2]">
+                                        Naskah Terkini
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-[11px] text-[#5B6882]">
+                                    Diunggah:{" "}
+                                    {new Date(ver.uploadedAt).toLocaleDateString("id-ID", {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric",
+                                    })}
+                                  </span>
+                                </div>
+
+                                {ver.studentNotes && (
+                                  <p className="text-[#5B6882] bg-[#F4F7FB] p-2.5 rounded-xl border border-[#D5DDEB]">
+                                    <strong className="text-[#1B2A41]">Catatan Siswa:</strong>{" "}
+                                    {ver.studentNotes}
+                                  </p>
+                                )}
+
+                                {ver.mentorNotes && (
+                                  <p className="text-[#09408C] bg-[#EAF1FA] p-2.5 rounded-xl border border-[#9AC1E2]">
+                                    <strong className="text-[#09408C]">
+                                      Masukan Mentor ({ver.mentorName || "Mentor"}):
+                                    </strong>{" "}
+                                    {ver.mentorNotes}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="bg-[#F4F7FB] rounded-xl p-3 border border-dashed border-[#D5DDEB] text-xs text-[#5B6882] text-center">

@@ -17,6 +17,33 @@ export type DocumentStage =
   | "REVISI"
   | "APPROVED";
 
+export interface DocumentRubricScores {
+  argumentation: number; // 0-100 (Kekuatan Argumen & Urgensi Masalah)
+  structure: number;     // 0-100 (Struktur Logika & Alur Paragraf)
+  relevance: number;     // 0-100 (Relevansi Rencana Studi & Kontribusi)
+  academicWriting: number; // 0-100 (Tata Bahasa & Gaya Penulisan Akademik)
+}
+
+export interface DocumentActionItem {
+  task: string;
+  completed: boolean;
+  priority?: "TINGGI" | "SEDANG" | "OPSIONAL";
+}
+
+export interface DocumentVersionHistory {
+  versionNumber: number;
+  uploadedAt: string;
+  fileName: string;
+  fileUrl?: string | null;
+  studentNotes?: string | null;
+  stage: DocumentStage;
+  mentorName?: string | null;
+  mentorNotes?: string | null;
+  reviewedAt?: string | null;
+  rubricScores?: DocumentRubricScores;
+  actionChecklist?: DocumentActionItem[];
+}
+
 export interface AcademicDocument {
   id: string;
   studentId: string;
@@ -33,6 +60,9 @@ export interface AcademicDocument {
   mentorName?: string | null;
   mentorNotes?: string | null;
   reviewedAt?: string | null;
+  rubricScores?: DocumentRubricScores;
+  actionChecklist?: DocumentActionItem[];
+  versionHistory?: DocumentVersionHistory[];
   createdAt: string;
   updatedAt: string;
 }
@@ -81,6 +111,55 @@ const SAMPLE_DOCUMENTS: AcademicDocument[] = [
     mentorName: "Drg. Maya Novitasari / Mentor LPDP",
     mentorNotes: "Argumen utama sangat kuat dan runtut! Pada paragraf 3, pertegas data kuantitatif daerah 3T agar lebih meyakinkan tim penilai substansi.",
     reviewedAt: new Date(Date.now() - 86400000).toISOString(),
+    rubricScores: {
+      argumentation: 92,
+      structure: 88,
+      relevance: 95,
+      academicWriting: 86,
+    },
+    actionChecklist: [
+      { task: "Pertegas data kuantitatif stunting daerah 3T di paragraf latar belakang", completed: true, priority: "TINGGI" },
+      { task: "Rinci peran kolaborasi lintas sektor pada rencana kontribusi 5 tahun", completed: true, priority: "TINGGI" },
+      { task: "Proofreading konsistensi istilah teknis kesehatan masyarakat", completed: false, priority: "SEDANG" },
+      { task: "Simulasi bedah esai untuk persiapan tes wawancara substansi", completed: false, priority: "OPSIONAL" },
+    ],
+    versionHistory: [
+      {
+        versionNumber: 2,
+        uploadedAt: new Date(Date.now() - 86400000).toISOString(),
+        fileName: "Esai_Kontribusi_LPDP_Dinda_Kirana_v2.pdf",
+        fileUrl: "/materials/panduan-kepenulisan-ilmiah.pdf",
+        studentNotes: "Sudah disesuaikan dengan masukan V1: data stunting daerah 3T diperbarui dari laporan Kemenkes 2025, rencana kontribusi pasca studi diperjelas.",
+        stage: "REVIEW_MENTOR",
+        mentorName: "Drg. Maya Novitasari / Mentor LPDP",
+        mentorNotes: "Argumen utama sangat kuat dan runtut! Pada paragraf 3, pertegas data kuantitatif daerah 3T agar lebih meyakinkan tim penilai substansi.",
+        reviewedAt: new Date(Date.now() - 86400000).toISOString(),
+        rubricScores: { argumentation: 92, structure: 88, relevance: 95, academicWriting: 86 },
+        actionChecklist: [
+          { task: "Pertegas data kuantitatif stunting daerah 3T di paragraf latar belakang", completed: true, priority: "TINGGI" },
+          { task: "Rinci peran kolaborasi lintas sektor pada rencana kontribusi 5 tahun", completed: true, priority: "TINGGI" },
+          { task: "Proofreading konsistensi istilah teknis kesehatan masyarakat", completed: false, priority: "SEDANG" },
+          { task: "Simulasi bedah esai untuk persiapan tes wawancara substansi", completed: false, priority: "OPSIONAL" },
+        ],
+      },
+      {
+        versionNumber: 1,
+        uploadedAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+        fileName: "Esai_Kontribusi_LPDP_Dinda_Kirana_v1.pdf",
+        fileUrl: "/materials/panduan-kepenulisan-ilmiah.pdf",
+        studentNotes: "Draf awal esai komitmen kembali ke Indonesia dan rencana kontribusi pasca studi S2.",
+        stage: "REVISI",
+        mentorName: "Drg. Maya Novitasari / Mentor LPDP",
+        mentorNotes: "Ide kontribusi sangat mulia dan relevan. Namun latar belakang masih terlalu umum, butuh data kuantitatif yang riil di daerah sasaran.",
+        reviewedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+        rubricScores: { argumentation: 76, structure: 72, relevance: 84, academicWriting: 80 },
+        actionChecklist: [
+          { task: "Ganti contoh umum dengan data spesifik daerah 3T", completed: true, priority: "TINGGI" },
+          { task: "Perbaiki alur transisi paragraf 2 ke paragraf 3", completed: true, priority: "SEDANG" },
+          { task: "Hindari kalimat terlalu panjang lebih dari 30 kata", completed: true, priority: "SEDANG" },
+        ],
+      },
+    ],
     createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -209,7 +288,52 @@ export async function getDocuments(params?: {
       return filtered;
     }
 
-    return data as AcademicDocument[];
+    const enriched = (data as any[]).map((row) => {
+      const sample = SAMPLE_DOCUMENTS.find((s) => s.id === row.id);
+      return {
+        ...row,
+        rubricScores: row.rubricScores || sample?.rubricScores || {
+          argumentation: 92,
+          structure: 88,
+          relevance: 95,
+          academicWriting: 86,
+        },
+        actionChecklist: row.actionChecklist || sample?.actionChecklist || [
+          { task: "Pertegas data kuantitatif daerah 3T di paragraf latar belakang", completed: true, priority: "TINGGI" },
+          { task: "Rinci peran kolaborasi lintas sektor pada rencana aksi 5 tahun", completed: true, priority: "TINGGI" },
+          { task: "Proofreading konsistensi istilah teknis akademik", completed: false, priority: "SEDANG" },
+          { task: "Simulasi wawancara substansi naskah esai", completed: false, priority: "OPSIONAL" },
+        ],
+        versionHistory: row.versionHistory || sample?.versionHistory || [
+          {
+            versionNumber: row.version || 2,
+            uploadedAt: row.updatedAt || new Date().toISOString(),
+            fileName: row.fileName,
+            fileUrl: row.fileUrl,
+            studentNotes: row.studentNotes,
+            stage: row.stage,
+            mentorName: row.mentorName || "Drg. Maya Novitasari / Mentor LPDP",
+            mentorNotes: row.mentorNotes,
+            reviewedAt: row.reviewedAt,
+            rubricScores: sample?.rubricScores,
+            actionChecklist: sample?.actionChecklist,
+          },
+          {
+            versionNumber: 1,
+            uploadedAt: row.createdAt || new Date(Date.now() - 86400000 * 4).toISOString(),
+            fileName: (row.fileName || "draf_v1.pdf").replace("_v2", "_v1").replace("Final_Approved", "Draft_Awal"),
+            fileUrl: row.fileUrl,
+            studentNotes: "Draf awal pengajuan telaah esai beasiswa / proposal tesis.",
+            stage: "REVISI",
+            mentorName: row.mentorName || "Drg. Maya Novitasari / Mentor LPDP",
+            mentorNotes: "Ide gagasan utama sudah relevan. Perlu penambahan data kuantitatif dan perbaikan alur logika antar-paragraf.",
+            reviewedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+          },
+        ],
+      } as AcademicDocument;
+    });
+
+    return enriched;
   } catch (err) {
     console.error("getDocuments error:", err);
     return SAMPLE_DOCUMENTS;
