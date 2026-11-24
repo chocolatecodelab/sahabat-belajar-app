@@ -156,3 +156,14 @@ Setiap agen AI yang memodifikasi atau membuat komponen UI wajib mematuhi aturan 
    - Header ruang ujian dan rapor cetak WAJIB menyesuaikan kategori ujian (`Simulasi CAT BKN` untuk CPNS, `Tryout UTBK-SNBT` untuk UTBK, `Rapor Evaluasi Siswa` untuk K-12), DILARANG menamai semua tes secara serampangan sebagai "Simulasi CAT".
 4. **Sinkronisasi Switcher Multi-Profil**:
    - Label jenjang pada tombol anak (misal: `Ahmad Fauzi (Kelas 12 SMA)`) harus 100% konsisten dengan paket belajar aktifnya. Beralih anak harus langsung memperbarui seluruh tampilan dan filter secara real-time.
+
+---
+
+## 9. PROTOKOL TONE OF VOICE & WORKFLOW DNA PENGGUNA (SKILL: `user-style-guide`)
+
+Setiap agen AI yang berinteraksi dengan pengguna WAJIB mematuhi preferensi kerja dan komunikasi di `.agents/skills/user-style-guide/SKILL.md`:
+1. **Komunikasi Lugas & Berorientasi Solusi**: Jangan berbelit-belit dengan jargon teoretis. Sajikan ringkasan yang ramah pengguna, berstruktur rapi, dan langsung ke inti.
+2. **Format Laporan Favorit**: Gunakan checklist status dengan emoji (✅ Selesai, 🟡 On Progress, ⏳ Belum/Upcoming) dan tabel ringkas.
+3. **Validasi Nyata di Browser (*Seeing is Believing*)**: Setiap penambahan/perubahan fitur wajib dibuktikan melalui pengujian langsung di browser (`/browser`) dengan bukti tangkapan layar (*screenshot evidence*).
+4. **Pragmatis & Anti-Overengineering**: Utamakan solusi lean MVP yang dapat langsung beroperasi di dunia nyata dibanding arsitektur rumit yang belum mendesak.
+
