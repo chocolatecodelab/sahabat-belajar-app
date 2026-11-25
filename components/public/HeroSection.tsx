@@ -31,33 +31,28 @@ export default function HeroSection({ slides }: { slides: Slide[] }) {
       <section className="relative bg-[#09408C] border-b border-[#0E3571] text-white py-28 px-4">
         <div className="max-w-7xl mx-auto text-center space-y-6">
           <span
-            className="inline-block text-xs font-semibold uppercase tracking-widest px-3.5 py-1.5 rounded-full"
-            style={{
-              background: "var(--color-secondary-container)",
-              color: "var(--color-on-secondary-container)",
-            }}
+            className="inline-block text-xs font-semibold uppercase tracking-widest px-3.5 py-1.5 rounded-full bg-[#EAF1FA] text-[#09408C]"
           >
-            Badan Inovasi Akademik & Sains
+            Comprehensive Academic Solution
           </span>
           <h1 className="text-display-lg max-w-4xl mx-auto leading-tight font-extrabold">
-            Pusat Unggulan Riset, Laboratorium & Inovasi Teknologi
+            Paham Konsep Dasar hingga Siap Berprestasi
           </h1>
-          <p className="text-body-lg text-gray-300 max-w-2xl mx-auto">
-            Menyediakan fasilitas riset terpadu, layanan pengujian sampel terakreditasi ISO 17025, dan pembinaan talenta inovasi.
+          <p className="text-body-lg text-white/85 max-w-2xl mx-auto">
+            Bimbingan belajar privat &amp; semi-privat (2-5 siswa) untuk K-12, CPNS/BUMN, S2/S3 &amp; Beasiswa, TOEFL/IELTS, serta pendampingan kepenulisan ilmiah.
           </p>
           <div className="pt-4 flex flex-wrap justify-center gap-4">
             <Link
-              href="/#layanan"
-              className="px-6 py-3 rounded-xl font-semibold text-white transition-all shadow-md hover:shadow-lg flex items-center gap-2"
-              style={{ background: "var(--color-primary-container)" }}
+              href="/#program"
+              className="px-6 py-3 rounded-xl font-semibold bg-white text-[#09408C] hover:bg-[#EAF1FA] transition-all shadow-md hover:shadow-lg flex items-center gap-2"
             >
-              Jelajahi Layanan <ArrowRight size={16} />
+              Jelajahi Program <ArrowRight size={16} />
             </Link>
             <Link
-              href="/berita"
-              className="px-6 py-3 rounded-xl font-semibold bg-white/10 hover:bg-white/20 text-white transition-all"
+              href="/placement-test"
+              className="px-6 py-3 rounded-xl font-semibold bg-white/15 hover:bg-white/25 text-white transition-all"
             >
-              Lihat Berita Terbaru
+              Ikuti Placement Test
             </Link>
           </div>
         </div>
@@ -117,8 +112,7 @@ export default function HeroSection({ slides }: { slides: Slide[] }) {
                   <div className="pt-3">
                     <Link
                       href={slide.ctaLink}
-                      className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold text-white transition-all shadow-lg hover:shadow-xl hover:scale-105"
-                      style={{ background: "var(--color-primary-container)" }}
+                      className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold bg-[#09408C] hover:bg-[#0E3571] text-white transition-all shadow-lg hover:shadow-xl hover:scale-105"
                     >
                       <span>{slide.ctaText}</span>
                       <ArrowRight size={18} />

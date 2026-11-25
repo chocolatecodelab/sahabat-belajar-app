@@ -167,17 +167,17 @@ export default function KategoriClient({ categories: initial }: { categories: Ca
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label htmlFor="cat-name-input" className="text-xs font-semibold text-[#1B2A41] block mb-1.5">Nama Kategori</label>
-                <input id="cat-name-input" type="text" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Nama kategori" className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus:outline-none focus:border-[#09408C]" />
+                <input id="cat-name-input" type="text" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Nama kategori" className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus-ring" />
               </div>
               <div>
                 <label htmlFor="cat-desc-input" className="text-xs font-semibold text-[#1B2A41] block mb-1.5">Deskripsi</label>
-                <textarea id="cat-desc-input" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Deskripsi singkat" className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus:outline-none focus:border-[#09408C] resize-none" />
+                <textarea id="cat-desc-input" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Deskripsi singkat" className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus-ring resize-none" />
               </div>
               <div>
                 <label htmlFor="cat-color-input" className="text-xs font-semibold text-[#1B2A41] block mb-1.5">Warna Penanda</label>
                 <div className="flex items-center gap-3">
                   <input id="cat-color-picker" aria-label="Pemilih warna kategori" type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-10 h-10 rounded-xl border border-[#D5DDEB] cursor-pointer" />
-                  <input id="cat-color-input" type="text" value={color} onChange={(e) => setColor(e.target.value)} className="flex-1 px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] font-mono focus:outline-none focus:border-[#09408C]" />
+                  <input id="cat-color-input" type="text" value={color} onChange={(e) => setColor(e.target.value)} className="flex-1 px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] font-mono focus-ring" />
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">

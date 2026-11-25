@@ -39,7 +39,7 @@ export default function AdminLayoutClient({
     >
       <div
         className="min-h-screen flex"
-        style={{ background: "var(--color-surface)" }}
+        style={{ background: "var(--color-canvas)" }}
         suppressHydrationWarning
       >
         {/* Backdrop for mobile */}

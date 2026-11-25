@@ -1462,7 +1462,7 @@ export default function StudentPortalClient({
                   placeholder="Cari modul atau materi..."
                   value={materialSearch}
                   onChange={(e) => setMaterialSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] placeholder:text-[#5B6882]/70 focus:outline-none focus:border-[#09408C] bg-[#F4F7FB]"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] placeholder:text-[#5B6882]/70 focus-ring bg-[#F4F7FB]"
                 />
               </div>
             </div>
@@ -1998,7 +1998,7 @@ export default function StudentPortalClient({
                     id="pay-bank"
                     value={payBank}
                     onChange={(e) => setPayBank(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus-ring"
                   >
                     {paymentAccounts && paymentAccounts.length > 0 ? (
                       paymentAccounts.map((acc) => {
@@ -2036,7 +2036,7 @@ export default function StudentPortalClient({
                     placeholder="Contoh: Bambang Haryanto"
                     value={paySenderName}
                     onChange={(e) => setPaySenderName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus-ring"
                   />
                 </div>
 
@@ -2051,7 +2051,7 @@ export default function StudentPortalClient({
                     placeholder="Contoh: 2250000"
                     value={payAmount}
                     onChange={(e) => setPayAmount(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus-ring"
                   />
                 </div>
 
@@ -2131,7 +2131,7 @@ export default function StudentPortalClient({
                     placeholder="Contoh: Pelunasan sisa 5 sesi bimbingan"
                     value={payNotes}
                     onChange={(e) => setPayNotes(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus-ring"
                   />
                 </div>
 

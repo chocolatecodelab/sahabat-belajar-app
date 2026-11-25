@@ -33,8 +33,18 @@ export default function PlacementTestClient() {
   // Candidate Data Form
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [targetProgram, setTargetProgram] = useState("CPNS & BUMN");
+
+  const validateWhatsApp = (val: string) => {
+    const cleaned = val.replace(/[\s-]/g, "");
+    if (!cleaned) return "Nomor WhatsApp wajib diisi.";
+    if (!/^(\+62|62|08)\d{7,13}$/.test(cleaned)) {
+      return "Nomor WhatsApp harus diawali 08 atau +62 (minimal 9 digit).";
+    }
+    return null;
+  };
 
   // Quiz State
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -63,6 +73,12 @@ export default function PlacementTestClient() {
         "Data Belum Lengkap",
         "Mohon masukkan nama lengkap dan nomor WhatsApp aktif Anda."
       );
+      return;
+    }
+    const waErr = validateWhatsApp(phone);
+    if (waErr) {
+      setPhoneError(waErr);
+      toast.warning("Format WhatsApp Tidak Sesuai", waErr);
       return;
     }
     setStep("quiz");
@@ -195,7 +211,7 @@ export default function PlacementTestClient() {
                   <form onSubmit={handleStartQuiz} className="space-y-4">
                     <div>
                       <label htmlFor="placement-name" className="block text-xs font-semibold text-[#1B2A41] mb-1.5">
-                        Nama Lengkap <span className="text-red-500">*</span>
+                        Nama Lengkap <span className="text-[#5B6882] font-normal">(wajib)</span>
                       </label>
                       <input
                         id="placement-name"
@@ -204,14 +220,14 @@ export default function PlacementTestClient() {
                         placeholder="Contoh: Budi Santoso"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] placeholder:text-[#5B6882]/60 focus:outline-none focus:border-[#09408C] bg-[#F4F7FB]"
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#D5DDEB] text-base sm:text-sm text-[#1B2A41] placeholder:text-[#5B6882]/60 focus-ring bg-[#F4F7FB]"
                       />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="placement-phone" className="block text-xs font-semibold text-[#1B2A41] mb-1.5">
-                          Nomor WhatsApp <span className="text-red-500">*</span>
+                          Nomor WhatsApp <span className="text-[#5B6882] font-normal">(wajib)</span>
                         </label>
                         <input
                           id="placement-phone"
@@ -219,9 +235,23 @@ export default function PlacementTestClient() {
                           required
                           placeholder="0812xxxxxxx"
                           value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] placeholder:text-[#5B6882]/60 focus:outline-none focus:border-[#09408C] bg-[#F4F7FB]"
+                          onChange={(e) => {
+                            setPhone(e.target.value);
+                            if (phoneError) setPhoneError(null);
+                          }}
+                          onBlur={() => setPhoneError(validateWhatsApp(phone))}
+                          aria-invalid={Boolean(phoneError)}
+                          aria-describedby={phoneError ? "placement-phone-error" : undefined}
+                          className={`w-full px-4 py-2.5 rounded-xl border text-base sm:text-sm text-[#1B2A41] placeholder:text-[#5B6882]/60 focus-ring bg-[#F4F7FB] ${
+                            phoneError ? "border-[#B4381F]" : "border-[#D5DDEB]"
+                          }`}
                         />
+                        {phoneError && (
+                          <p id="placement-phone-error" className="mt-1.5 text-xs text-[#B4381F] flex items-center gap-1 font-medium">
+                            <AlertCircle size={13} className="shrink-0" />
+                            <span>{phoneError}</span>
+                          </p>
+                        )}
                       </div>
 
                       <div>
@@ -234,20 +264,20 @@ export default function PlacementTestClient() {
                           placeholder="nama@email.com"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] placeholder:text-[#5B6882]/60 focus:outline-none focus:border-[#09408C] bg-[#F4F7FB]"
+                          className="w-full px-4 py-2.5 rounded-xl border border-[#D5DDEB] text-base sm:text-sm text-[#1B2A41] placeholder:text-[#5B6882]/60 focus-ring bg-[#F4F7FB]"
                         />
                       </div>
                     </div>
 
                     <div>
                       <label htmlFor="placement-program" className="block text-xs font-semibold text-[#1B2A41] mb-1.5">
-                        Fokus Program yang Dituju <span className="text-red-500">*</span>
+                        Fokus Program yang Dituju <span className="text-[#5B6882] font-normal">(wajib)</span>
                       </label>
                       <select
                         id="placement-program"
                         value={targetProgram}
                         onChange={(e) => setTargetProgram(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus:outline-none focus:border-[#09408C] bg-[#F4F7FB]"
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#D5DDEB] text-base sm:text-sm text-[#1B2A41] focus-ring bg-[#F4F7FB]"
                       >
                         <option value="CPNS & BUMN">Persiapan CPNS, BUMN & Kedinasan</option>
                         <option value="UTBK-SNBT">UTBK-SNBT Masuk PTN</option>

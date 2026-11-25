@@ -685,6 +685,29 @@ export default function ScoreProgressChart({ sessions }: ScoreProgressChartProps
         </div>
       )}
 
+      {/* Screen-Reader Accessible Data Table (DESIGN.md 5.8 - UX-A11Y-002) */}
+      <table className="sr-only">
+        <caption>Riwayat Perkembangan Skor Tryout &amp; Evaluasi</caption>
+        <thead>
+          <tr>
+            <th scope="col">Percobaan</th>
+            <th scope="col">Judul Ujian</th>
+            <th scope="col">Skor</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sortedSessions.map((s, idx) => (
+            <tr key={s.id || idx}>
+              <td>Tes #{idx + 1}</td>
+              <td>{s.exam?.title || "Tryout"}</td>
+              <td>{s.score}</td>
+              <td>{s.isPassed ? "Lulus" : "Belum Lulus"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
       {/* Academic Recommendation Box */}
       <div className="bg-[#EAF1FA] p-4 sm:p-5 rounded-2xl border border-[#9AC1E2] text-xs space-y-1.5">
         <div className="flex items-center gap-1.5 font-bold text-[#09408C]">

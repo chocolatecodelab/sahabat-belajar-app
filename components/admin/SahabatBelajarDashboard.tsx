@@ -49,6 +49,13 @@ export default function SahabatBelajarDashboard({
   const maxRevenue = Math.max(...trends.map((t) => t.revenue), 30000000);
   const maxSessions = Math.max(...trends.map((t) => t.sessionsCount), 70);
 
+  const prevMonthRevenue = trends.length >= 2 ? trends[trends.length - 2].revenue : 0;
+  const currMonthRevenue = trends.length >= 1 ? trends[trends.length - 1].revenue : data.monthlyRevenue;
+  const revenueGrowthPct =
+    prevMonthRevenue > 0
+      ? Number((((currMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100).toFixed(1))
+      : null;
+
   // Helper WhatsApp generator for low quota renewal
   const getRenewalWaUrl = (item: (typeof data.actionItems.lowQuotaStudents)[0]) => {
     const phone = (item.parentPhone || "628123456789").replace(/[^0-9]/g, "");
@@ -138,10 +145,22 @@ export default function SahabatBelajarDashboard({
             <div className="text-2xl font-black text-[#09408C] tabular-nums font-heading">
               Rp {data.monthlyRevenue.toLocaleString("id-ID")}
             </div>
-            <div className="text-[11px] text-[#1F6F4A] font-semibold mt-1 flex items-center gap-1">
-              <TrendingUp size={13} />
-              <span>+14.2% dibanding bulan lalu</span>
-            </div>
+            {revenueGrowthPct !== null ? (
+              <div
+                className={`text-[11px] font-semibold mt-1 flex items-center gap-1 ${
+                  revenueGrowthPct >= 0 ? "text-[#1F6F4A]" : "text-[#B4381F]"
+                }`}
+              >
+                <TrendingUp size={13} />
+                <span>
+                  {revenueGrowthPct >= 0 ? `+${revenueGrowthPct}%` : `${revenueGrowthPct}%`} dibanding bulan lalu
+                </span>
+              </div>
+            ) : (
+              <div className="text-[11px] text-[#5B6882] font-medium mt-1">
+                Rekap omset bulan berjalan
+              </div>
+            )}
           </div>
           <p className="text-[11px] text-[#5B6882] mt-2 pt-2 border-t border-[#D5DDEB]/60">
             {isAdmin ? (

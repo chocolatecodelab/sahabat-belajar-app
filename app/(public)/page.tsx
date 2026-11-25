@@ -117,16 +117,8 @@ export default async function HomePage() {
                       className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
                       sizes="(max-width: 640px) 256px, (max-width: 1024px) 320px, 368px"
                     />
-                    {/* Gradient overlay for contrast */}
-                    <div className="absolute inset-0 bg-linear-to-t from-[#09408C]/50 via-transparent to-transparent pointer-events-none" />
-
-                    {/* Bottom pill overlay */}
-                    <div className="absolute bottom-4 inset-x-0 flex justify-center z-20 pointer-events-none">
-                      <div className="bg-[#09408C]/90 backdrop-blur-xs text-white px-3.5 py-1 rounded-full text-[11px] font-bold shadow-md flex items-center gap-1.5 border border-white/20">
-                        <GraduationCap size={13} className="text-[#9AC1E2]" />
-                        <span>#BersamaSahabat</span>
-                      </div>
-                    </div>
+                    {/* Gradient overlay for subtle framing */}
+                    <div className="absolute inset-0 bg-linear-to-t from-[#09408C]/25 via-transparent to-transparent pointer-events-none" />
                   </div>
                 </div>
 

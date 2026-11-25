@@ -572,7 +572,7 @@ export default function PackageManagerClient({
                 placeholder="Cari paket / program..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-[#D5DDEB] bg-white focus:outline-none focus:border-[#09408C]"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-[#D5DDEB] bg-white focus-ring"
               />
             </div>
 
@@ -580,7 +580,7 @@ export default function PackageManagerClient({
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-2.5 py-1.5 text-xs rounded-xl border border-[#D5DDEB] bg-white text-[#1B2A41] focus:outline-none focus:border-[#09408C]"
+                className="px-2.5 py-1.5 text-xs rounded-xl border border-[#D5DDEB] bg-white text-[#1B2A41] focus-ring"
               >
                 <option value="ALL">Semua Kategori</option>
                 <option value="K12">Bimbel K-12</option>

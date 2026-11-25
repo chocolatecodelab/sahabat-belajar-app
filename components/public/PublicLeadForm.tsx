@@ -19,6 +19,16 @@ export default function PublicLeadForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  const validateWhatsApp = (val: string) => {
+    const cleaned = val.replace(/[\s-]/g, "");
+    if (!cleaned) return "Nomor WhatsApp wajib diisi.";
+    if (!/^(\+62|62|08)\d{7,13}$/.test(cleaned)) {
+      return "Nomor WhatsApp harus diawali 08 atau +62 (minimal 9 digit).";
+    }
+    return null;
+  };
 
   const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +42,13 @@ export default function PublicLeadForm() {
 
     if (!name.trim() || !phone.trim()) {
       setErrorMessage("Nama lengkap dan nomor WhatsApp wajib diisi.");
+      return;
+    }
+
+    const waErr = validateWhatsApp(phone);
+    if (waErr) {
+      setPhoneError(waErr);
+      setErrorMessage(waErr);
       return;
     }
 
@@ -148,7 +165,7 @@ export default function PublicLeadForm() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="lead-program" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
-                Program Bimbingan yang Diminati *
+                Program Bimbingan yang Diminati <span className="text-[#5B6882] font-normal">(wajib)</span>
               </label>
               <select
                 id="lead-program"
@@ -170,7 +187,7 @@ export default function PublicLeadForm() {
                     setLevel("Kuliah (S1/S2)");
                   }
                 }}
-                className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
+                className="w-full text-base sm:text-sm p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
               >
                 <option value="K-12 (SD/SMP/SMA)">Bimbel K-12 (SD, SMP, SMA)</option>
                 <option value="Persiapan CPNS / BUMN / PPPK">Persiapan CPNS / BUMN / PPPK</option>
@@ -188,7 +205,7 @@ export default function PublicLeadForm() {
                 id="lead-level"
                 value={level}
                 onChange={(e) => setLevel(e.target.value)}
-                className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
+                className="w-full text-base sm:text-sm p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
               >
                 <option value="SD">SD (Sekolah Dasar)</option>
                 <option value="SMP">SMP</option>
@@ -206,7 +223,7 @@ export default function PublicLeadForm() {
                 id="lead-class-model"
                 value={classModel}
                 onChange={(e) => setClassModel(e.target.value)}
-                className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
+                className="w-full text-base sm:text-sm p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
               >
                 <option value="PRIVAT">Privat 1-on-1 (Intensif)</option>
                 <option value="SEMI_PRIVAT">Semi-Privat (2-5 Siswa Bersama Teman)</option>
@@ -221,7 +238,7 @@ export default function PublicLeadForm() {
                 id="lead-learning-mode"
                 value={learningMode}
                 onChange={(e) => setLearningMode(e.target.value)}
-                className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
+                className="w-full text-base sm:text-sm p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white font-medium text-[#1B2A41]"
               >
                 <option value="ONLINE">Online (Live Zoom / Google Meet)</option>
                 <option value="HOME_VISIT">Home Visit (Tutor Datang ke Rumah)</option>
@@ -262,7 +279,7 @@ export default function PublicLeadForm() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="lead-name" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
-                Nama Lengkap Anda / Siswa *
+                Nama Lengkap Anda / Siswa <span className="text-[#5B6882] font-normal">(wajib)</span>
               </label>
               <input
                 id="lead-name"
@@ -271,13 +288,13 @@ export default function PublicLeadForm() {
                 placeholder="Contoh: Nabil Ramadhan"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+                className="w-full text-base sm:text-sm p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
               />
             </div>
 
             <div>
               <label htmlFor="lead-phone" className="block text-xs font-bold text-[#1B2A41] mb-1.5">
-                Nomor WhatsApp Aktif *
+                Nomor WhatsApp Aktif <span className="text-[#5B6882] font-normal">(wajib)</span>
               </label>
               <input
                 id="lead-phone"
@@ -285,9 +302,23 @@ export default function PublicLeadForm() {
                 required
                 placeholder="Contoh: 08123456789"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  if (phoneError) setPhoneError(null);
+                }}
+                onBlur={() => setPhoneError(validateWhatsApp(phone))}
+                aria-invalid={Boolean(phoneError)}
+                aria-describedby={phoneError ? "lead-phone-error" : undefined}
+                className={`w-full text-base sm:text-sm p-3 rounded-xl border focus-ring bg-white ${
+                  phoneError ? "border-[#B4381F]" : "border-[#D5DDEB]"
+                }`}
               />
+              {phoneError && (
+                <p id="lead-phone-error" className="mt-1.5 text-xs text-[#B4381F] flex items-center gap-1 font-medium">
+                  <AlertCircle size={13} className="shrink-0" />
+                  <span>{phoneError}</span>
+                </p>
+              )}
             </div>
           </div>
 
@@ -301,7 +332,7 @@ export default function PublicLeadForm() {
               placeholder="Contoh: nabil@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+              className="w-full text-base sm:text-sm p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
             />
           </div>
 
@@ -315,7 +346,7 @@ export default function PublicLeadForm() {
               placeholder="Misal: Kesulitan memahami rumus fisika dasar, ingin persiapan UTBK / tes SKD CPNS bulan depan..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full text-xs p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
+              className="w-full text-base sm:text-sm p-3 rounded-xl border border-[#D5DDEB] focus-ring bg-white"
             />
           </div>
 

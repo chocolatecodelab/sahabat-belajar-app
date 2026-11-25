@@ -79,7 +79,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       {/* Toast Overlay Container */}
       <div
-        className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2.5 max-w-sm w-full px-4 sm:px-0 pointer-events-none"
+        className="fixed top-20 right-4 z-[9999] flex flex-col gap-2.5 max-w-sm w-full px-4 sm:px-0 pointer-events-none"
         aria-live="polite"
         role="region"
         aria-label="Notifikasi sistem"
@@ -88,7 +88,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           const config = {
             success: {
               bg: "bg-[#E3F4EC]",
-              border: "border-[#A3E635]",
+              border: "border-[#1F6F4A]/30",
               text: "text-[#1F6F4A]",
               icon: <CheckCircle2 size={18} className="text-[#1F6F4A] shrink-0" />,
             },

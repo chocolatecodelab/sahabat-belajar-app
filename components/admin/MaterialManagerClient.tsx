@@ -477,7 +477,7 @@ export default function MaterialManagerClient({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-3 py-1.5 text-xs rounded-xl border border-[#D5DDEB] bg-[#F4F7FB] text-[#09408C] font-semibold focus:outline-none focus:border-[#09408C]"
+              className="px-3 py-1.5 text-xs rounded-xl border border-[#D5DDEB] bg-[#F4F7FB] text-[#09408C] font-semibold focus-ring"
             >
               <option value="NEWEST">Terbaru Ditambahkan</option>
               <option value="DOWNLOADS">Paling Banyak Diunduh</option>

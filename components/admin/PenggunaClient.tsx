@@ -226,7 +226,7 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nama atau email..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus:outline-none focus:border-[#09408C] bg-[#F4F7FB]/50"
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus-ring bg-[#F4F7FB]/50"
           />
         </div>
       </div>
@@ -345,7 +345,7 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Nama pengguna"
                   required
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus:outline-none focus:border-[#09408C] bg-[#F4F7FB]/50"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus-ring bg-[#F4F7FB]/50"
                 />
               </div>
 
@@ -358,7 +358,7 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nama@sahabatbelajar.id"
                   required
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus:outline-none focus:border-[#09408C] bg-[#F4F7FB]/50"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus-ring bg-[#F4F7FB]/50"
                 />
               </div>
 
@@ -373,7 +373,7 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={editing ? "••••••••" : "Minimal 6 karakter"}
                   required={!editing}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus:outline-none focus:border-[#09408C] bg-[#F4F7FB]/50"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus-ring bg-[#F4F7FB]/50"
                 />
               </div>
 
@@ -384,7 +384,7 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
                   value={roleId}
                   onChange={(e) => setRoleId(e.target.value)}
                   required
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus:outline-none focus:border-[#09408C] bg-white"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5DDEB] text-xs text-[#1B2A41] focus-ring bg-white"
                 >
                   {roles.map((r) => (
                     <option key={r.id} value={r.id}>

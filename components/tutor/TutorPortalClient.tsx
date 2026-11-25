@@ -166,7 +166,7 @@ export default function TutorPortalClient({
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB] text-[#1B2A41] font-sans pb-16">
+    <div className="min-h-screen bg-[#F4F7FB] text-[#1B2A41] font-sans pb-24 sm:pb-16">
       {/* Top Mobile-First Header */}
       <header className="bg-white border-b border-[#D5DDEB] sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -198,7 +198,7 @@ export default function TutorPortalClient({
                 aria-label="Pilih profil tutor"
                 value={tutor.id}
                 onChange={(e) => handleSwitchTutor(e.target.value)}
-                className="text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-[#D5DDEB] bg-[#F4F7FB] text-[#09408C] focus:outline-none focus:border-[#09408C] max-w-[150px] sm:max-w-none truncate"
+                className="text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-[#D5DDEB] bg-[#F4F7FB] text-[#09408C] focus-ring max-w-[150px] sm:max-w-none truncate"
               >
                 {availableTutors.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -951,7 +951,7 @@ export default function TutorPortalClient({
                     placeholder="Contoh: Trik Cepat Silogisme & Penalaran Logis Bab 4"
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus-ring"
                   />
                 </div>
 
@@ -966,7 +966,7 @@ export default function TutorPortalClient({
                     placeholder="Contoh: Siswa memahami konsep dasar silogisme dengan baik. Tingkatkan ketelitian pada penarikan kesimpulan negatif."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus-ring"
                   />
                 </div>
 
@@ -981,7 +981,7 @@ export default function TutorPortalClient({
                     placeholder="Contoh: Kerjakan 10 butir soal latihan mandiri di modul halaman 35"
                     value={homework}
                     onChange={(e) => setHomework(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus-ring"
                   />
                 </div>
 
@@ -1055,7 +1055,7 @@ export default function TutorPortalClient({
                     placeholder="https://meet.google.com/xxx-xxxx-xxx atau https://us02web.zoom.us/..."
                     value={meetingLinkInput}
                     onChange={(e) => setMeetingLinkInput(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus:outline-none focus:border-[#09408C]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs bg-[#F4F7FB] focus-ring"
                   />
                   <p className="text-[11px] text-[#5B6882] mt-1 leading-relaxed">
                     Tautan ini akan langsung muncul dan dapat diklik oleh siswa di Portal Siswa mereka. Kosongkan jika ingin menghapus tautan.
@@ -1114,7 +1114,7 @@ export default function TutorPortalClient({
         <button
           type="button"
           onClick={() => setActiveTab("jadwal")}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[11px] font-semibold transition-colors ${
+          className={`flex flex-col items-center justify-center min-h-[48px] py-1.5 px-3 rounded-xl text-[11px] font-semibold transition-colors ${
             activeTab === "jadwal"
               ? "text-[#09408C] bg-[#EAF1FA]"
               : "text-[#5B6882] hover:text-[#1B2A41]"
@@ -1127,7 +1127,7 @@ export default function TutorPortalClient({
         <button
           type="button"
           onClick={() => setActiveTab("jurnal")}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[11px] font-semibold transition-colors ${
+          className={`flex flex-col items-center justify-center min-h-[48px] py-1.5 px-3 rounded-xl text-[11px] font-semibold transition-colors ${
             activeTab === "jurnal"
               ? "text-[#09408C] bg-[#EAF1FA]"
               : "text-[#5B6882] hover:text-[#1B2A41]"
@@ -1140,7 +1140,7 @@ export default function TutorPortalClient({
         <button
           type="button"
           onClick={() => setActiveTab("honor")}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[11px] font-semibold transition-colors ${
+          className={`flex flex-col items-center justify-center min-h-[48px] py-1.5 px-3 rounded-xl text-[11px] font-semibold transition-colors ${
             activeTab === "honor"
               ? "text-[#09408C] bg-[#EAF1FA]"
               : "text-[#5B6882] hover:text-[#1B2A41]"
