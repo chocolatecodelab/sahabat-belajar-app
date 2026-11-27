@@ -28,6 +28,8 @@ import {
   Check,
   ArrowUpDown,
   BookOpen,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import type { AcademicDocument, DocumentStage, DocumentCategory } from "@/actions/dokumen";
 import {
@@ -37,6 +39,7 @@ import {
   updateDocumentDetails,
 } from "@/actions/dokumen";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 export default function DocumentManagerClient({
   initialDocuments = [],
@@ -79,6 +82,13 @@ export default function DocumentManagerClient({
   const [reviewStage, setReviewStage] = useState<DocumentStage>("APPROVED");
   const [mentorName, setMentorName] = useState("Dr. Hendra Wijaya / Mentor Akademik");
   const [mentorNotes, setMentorNotes] = useState("");
+  const [reviewedFileName, setReviewedFileName] = useState("");
+  const [reviewedFileUrl, setReviewedFileUrl] = useState("");
+  const [isUploadingReviewFile, setIsUploadingReviewFile] = useState(false);
+
+  // Delete Confirmation State
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Create Form State
   const [newTitle, setNewTitle] = useState("");
@@ -150,6 +160,8 @@ export default function DocumentManagerClient({
     setReviewStage(doc.stage === "REVIEW_MENTOR" ? "APPROVED" : doc.stage);
     setMentorName(doc.mentorName || "Dr. Hendra Wijaya / Mentor Akademik");
     setMentorNotes(doc.mentorNotes || "");
+    setReviewedFileName(doc.reviewedFileName || "");
+    setReviewedFileUrl(doc.reviewedFileUrl || "");
     setIsReviewModalOpen(true);
   };
 
@@ -161,6 +173,44 @@ export default function DocumentManagerClient({
     setEditFileName(doc.fileName || "");
     setEditStudentNotes(doc.studentNotes || "");
     setIsEditModalOpen(true);
+  };
+
+  const handleReviewFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxBytes = 15 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      toast.error("Ukuran File Terlalu Besar", "Maksimal ukuran file hasil review adalah 15 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setIsUploadingReviewFile(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "reviews");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data?.url) {
+        toast.error("Gagal Mengunggah", data?.error || "Terjadi kesalahan saat mengunggah file.");
+      } else {
+        setReviewedFileName(file.name);
+        setReviewedFileUrl(data.url);
+        toast.success("File Diunggah", `File "${file.name}" berhasil dilampirkan.`);
+      }
+    } catch {
+      toast.error("Gagal Mengunggah", "Koneksi gagal saat mengunggah file hasil review.");
+    } finally {
+      setIsUploadingReviewFile(false);
+      e.target.value = "";
+    }
   };
 
   const handleSaveReview = async (e: React.FormEvent) => {
@@ -176,6 +226,8 @@ export default function DocumentManagerClient({
       stage: reviewStage,
       mentorName,
       mentorNotes,
+      reviewedFileName: reviewedFileName || null,
+      reviewedFileUrl: reviewedFileUrl || null,
     });
     setIsSubmitting(false);
 
@@ -188,6 +240,8 @@ export default function DocumentManagerClient({
                 stage: reviewStage,
                 mentorName,
                 mentorNotes,
+                reviewedFileName: reviewedFileName || null,
+                reviewedFileUrl: reviewedFileUrl || null,
                 reviewedAt: new Date().toISOString(),
                 version: reviewStage === "REVISI" ? d.version + 1 : d.version,
                 updatedAt: new Date().toISOString(),
@@ -299,13 +353,20 @@ export default function DocumentManagerClient({
     }
   };
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Hapus draf naskah "${title}" secara permanen?`)) return;
+  const handleDelete = (id: string, title: string) => {
+    setDeleteTarget({ id, title });
+  };
 
-    const res = await deleteDocument(id);
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    const res = await deleteDocument(deleteTarget.id);
+    setIsDeleting(false);
+
     if (res.success) {
-      setDocuments(documents.filter((d) => d.id !== id));
-      toast.success("Naskah Dihapus", `Naskah "${title}" berhasil dihapus.`);
+      setDocuments(documents.filter((d) => d.id !== deleteTarget.id));
+      toast.success("Naskah Dihapus", `Naskah "${deleteTarget.title}" berhasil dihapus.`);
+      setDeleteTarget(null);
     } else {
       toast.error("Gagal Menghapus", res.message);
     }
@@ -733,6 +794,20 @@ export default function DocumentManagerClient({
                   <p className="leading-relaxed text-[#1B2A41] whitespace-pre-line pt-0.5">
                     {doc.mentorNotes}
                   </p>
+                  {doc.reviewedFileUrl && (
+                    <div className="pt-2">
+                      <a
+                        href={doc.reviewedFileUrl}
+                        download={doc.reviewedFileName || "file-hasil-review"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#9AC1E2] text-[#09408C] text-[11px] font-bold hover:bg-[#09408C] hover:text-white transition-colors shadow-2xs"
+                      >
+                        <Download size={12} />
+                        <span>File Hasil Review{doc.reviewedFileName ? `: ${doc.reviewedFileName}` : ""}</span>
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -848,6 +923,27 @@ export default function DocumentManagerClient({
               <p className="text-xs text-[#5B6882] mt-0.5">
                 Draf: <strong>{selectedDoc.title}</strong> (Siswa: {selectedDoc.studentName})
               </p>
+
+              {selectedDoc.fileUrl && (
+                <div className="mt-3 p-3 rounded-xl bg-[#F4F7FB] border border-[#D5DDEB] flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileText size={16} className="text-[#09408C] shrink-0" />
+                    <span className="text-xs font-semibold text-[#1B2A41] truncate">
+                      {selectedDoc.fileName}
+                    </span>
+                  </div>
+                  <a
+                    href={selectedDoc.fileUrl}
+                    download={selectedDoc.fileName}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#EAF1FA] text-[#09408C] text-xs font-bold hover:bg-[#09408C] hover:text-white transition-colors shrink-0"
+                  >
+                    <Download size={14} />
+                    <span>Unduh Naskah Siswa</span>
+                  </a>
+                </div>
+              )}
             </div>
 
             <form onSubmit={handleSaveReview} className="space-y-4">
@@ -922,6 +1018,61 @@ export default function DocumentManagerClient({
                 />
               </div>
 
+              {/* Optional Review File Upload */}
+              <div>
+                <label className="block text-xs font-bold text-[#1B2A41] mb-1">
+                  Unggah File Hasil Review / Koreksi (Opsional)
+                </label>
+                {reviewedFileUrl ? (
+                  <div className="p-3 rounded-xl bg-[#EAF1FA] border border-[#9AC1E2] flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText size={16} className="text-[#09408C] shrink-0" />
+                      <a
+                        href={reviewedFileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-semibold text-[#09408C] hover:underline truncate"
+                      >
+                        {reviewedFileName || "File Hasil Review"}
+                      </a>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReviewedFileName("");
+                        setReviewedFileUrl("");
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-white border border-[#D5DDEB] text-[#B4381F] text-[11px] font-bold hover:bg-[#FBE9E5] transition-colors shrink-0"
+                    >
+                      Hapus File
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-[#D5DDEB] bg-[#F4F7FB] hover:bg-[#EAF1FA] hover:border-[#9AC1E2] transition-colors cursor-pointer text-xs text-[#5B6882]">
+                    {isUploadingReviewFile ? (
+                      <>
+                        <Loader2 size={15} className="animate-spin text-[#09408C]" />
+                        <span className="font-semibold text-[#09408C]">Mengunggah file koreksi...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={15} className="text-[#09408C]" />
+                        <span>
+                          Pilih file koreksi (<strong className="text-[#09408C]">.pdf, .doc, .docx</strong>, maks 15 MB)
+                        </span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      disabled={isUploadingReviewFile}
+                      onChange={handleReviewFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
               <div className="pt-3 border-t border-[#D5DDEB] flex items-center justify-between gap-2">
                 <button
                   type="button"
@@ -942,7 +1093,7 @@ export default function DocumentManagerClient({
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isUploadingReviewFile}
                     className="px-5 py-2.5 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] disabled:opacity-50 flex items-center gap-1.5"
                   >
                     <Send size={14} />
@@ -1203,6 +1354,22 @@ export default function DocumentManagerClient({
           </div>
         </div>
       )}
+      {/* Modal Konfirmasi Hapus Naskah */}
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Hapus Draf Naskah?"
+        description={
+          <>
+            Draf naskah <strong>&ldquo;{deleteTarget?.title}&rdquo;</strong> akan dihapus secara permanen dan tidak dapat dikembalikan.
+          </>
+        }
+        confirmLabel="Ya, Hapus Naskah"
+        cancelLabel="Batal"
+        variant="danger"
+        loading={isDeleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

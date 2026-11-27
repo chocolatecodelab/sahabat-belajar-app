@@ -18,6 +18,10 @@ import {
   RotateCcw,
   Type,
   Check,
+  ZoomIn,
+  PenLine,
+  ShieldCheck,
+  Trash2,
 } from "lucide-react";
 import type { ExamItem, ExamQuestion } from "@/actions/ujian";
 import { submitExamSession } from "@/actions/ujian";
@@ -55,10 +59,16 @@ export default function ExamSimulationClient({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [fontSize, setFontSize] = useState<"normal" | "medium" | "large">("normal");
   const [activeSectionFilter, setActiveSectionFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "UNANSWERED" | "DOUBTFUL">("ALL");
+  const [hasStarted, setHasStarted] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+  const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
+  const [scratchpadText, setScratchpadText] = useState("");
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Restore previous answers from localStorage if available
+  // Restore previous answers, scratchpad, and check active timer session
   useEffect(() => {
     const storageKey = `sb_exam_${studentId}_${exam.id}_answers`;
     const saved = localStorage.getItem(storageKey);
@@ -69,7 +79,31 @@ export default function ExamSimulationClient({
         console.error("Failed to parse saved answers", e);
       }
     }
+
+    const scratchpadKey = `sb_exam_${studentId}_${exam.id}_scratchpad`;
+    const savedScratchpad = localStorage.getItem(scratchpadKey);
+    if (savedScratchpad !== null) {
+      setScratchpadText(savedScratchpad);
+    }
+
+    const timerStorageKey = `sb_exam_${studentId}_${exam.id}_targetEndTime`;
+    const savedTarget = localStorage.getItem(timerStorageKey);
+    if (savedTarget) {
+      setHasStarted(true);
+    }
+    setIsCheckingSession(false);
   }, [exam.id, studentId]);
+
+  // Persist scratchpad
+  const handleScratchpadChange = (value: string) => {
+    setScratchpadText(value);
+    try {
+      localStorage.setItem(
+        `sb_exam_${studentId}_${exam.id}_scratchpad`,
+        value
+      );
+    } catch (e) {}
+  };
 
   // Persist answers
   const saveAnswers = (newAnswers: Record<string, AnswerState>) => {
@@ -82,8 +116,10 @@ export default function ExamSimulationClient({
     } catch (e) {}
   };
 
-  // Persistent cheat-proof timer
+  // Persistent cheat-proof timer (only starts after readiness gate)
   useEffect(() => {
+    if (!hasStarted || questions.length === 0) return;
+
     const timerStorageKey = `sb_exam_${studentId}_${exam.id}_targetEndTime`;
     let targetEndTime: number;
 
@@ -114,19 +150,19 @@ export default function ExamSimulationClient({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [exam.id, exam.durationMinutes, studentId]);
+  }, [hasStarted, exam.id, exam.durationMinutes, studentId, questions.length]);
 
   // Prevent accidental navigation
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (!isSubmitting) {
+      if (hasStarted && !isSubmitting) {
         e.preventDefault();
         e.returnValue = "Ujian sedang berlangsung. Apakah Anda yakin ingin meninggalkan ruang ujian?";
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isSubmitting]);
+  }, [hasStarted, isSubmitting]);
 
   const formatTimer = (totalSec: number) => {
     const mins = Math.floor(totalSec / 60);
@@ -173,6 +209,7 @@ export default function ExamSimulationClient({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        if (zoomedImage) setZoomedImage(null);
         if (isSubmitModalOpen) setIsSubmitModalOpen(false);
         if (isKeyboardModalOpen) setIsKeyboardModalOpen(false);
         if (isDrawerOpen) setIsDrawerOpen(false);
@@ -180,6 +217,8 @@ export default function ExamSimulationClient({
       }
 
       if (
+        !hasStarted ||
+        zoomedImage ||
         isSubmitModalOpen ||
         isKeyboardModalOpen ||
         ["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement)?.tagName)
@@ -205,7 +244,7 @@ export default function ExamSimulationClient({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentIndex, currentQ, answers, isSubmitModalOpen, isKeyboardModalOpen, isDrawerOpen, questions.length]);
+  }, [hasStarted, zoomedImage, currentIndex, currentQ, answers, isSubmitModalOpen, isKeyboardModalOpen, isDrawerOpen, questions.length]);
 
   // Section list
   const uniqueSections = useMemo(() => {
@@ -223,10 +262,16 @@ export default function ExamSimulationClient({
     return questions
       .map((q, idx) => ({ q, idx }))
       .filter(({ q }) => {
-        if (activeSectionFilter === "ALL") return true;
-        return q.section === activeSectionFilter;
+        const matchSection =
+          activeSectionFilter === "ALL" || q.section === activeSectionFilter;
+        const ans = answers[q.id];
+        const matchStatus =
+          statusFilter === "ALL" ||
+          (statusFilter === "UNANSWERED" && !ans?.selectedKey) ||
+          (statusFilter === "DOUBTFUL" && !!ans?.isDoubtful);
+        return matchSection && matchStatus;
       });
-  }, [questions, activeSectionFilter]);
+  }, [questions, activeSectionFilter, statusFilter, answers]);
 
   // Stats calculation
   const stats = useMemo(() => {
@@ -275,6 +320,7 @@ export default function ExamSimulationClient({
       try {
         localStorage.removeItem(`sb_exam_${studentId}_${exam.id}_answers`);
         localStorage.removeItem(`sb_exam_${studentId}_${exam.id}_targetEndTime`);
+        localStorage.removeItem(`sb_exam_${studentId}_${exam.id}_scratchpad`);
       } catch (e) {}
 
       try {
@@ -326,6 +372,167 @@ export default function ExamSimulationClient({
           >
             Kembali ke Portal Siswa
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  const categoryLabel =
+    exam.category === "CPNS_BUMN" || exam.category === "KEDINASAN"
+      ? "Simulasi CAT Digital BKN"
+      : exam.category === "UTBK_SNBT"
+      ? "Simulasi Tryout UTBK-SNBT"
+      : exam.category === "K12"
+      ? "Tryout & Evaluasi Kurikulum K-12"
+      : exam.category === "TOEFL_IELTS"
+      ? "Diagnostic Test TOEFL / Bahasa Inggris"
+      : "Ruang Ujian Digital Sahabat Belajar";
+
+  const portalHref =
+    studentId && studentId !== "std_demo"
+      ? `/portal?studentId=${encodeURIComponent(studentId)}`
+      : "/portal";
+
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-[#F4F7FB] flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl px-8 py-6 border border-[#D5DDEB] shadow-xs text-center space-y-2">
+          <div className="w-8 h-8 rounded-full border-2 border-[#09408C] border-t-transparent animate-spin mx-auto" />
+          <p className="text-xs font-semibold text-[#5B6882]">
+            Menyiapkan ruang ujian...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasStarted) {
+    return (
+      <div className="min-h-screen bg-[#F4F7FB] text-[#1B2A41] flex items-center justify-center p-4 sm:p-6 font-sans">
+        <div className="bg-white rounded-3xl border border-[#D5DDEB] shadow-sm max-w-2xl w-full p-6 sm:p-8 space-y-6">
+          {/* Header Brand */}
+          <div className="flex items-center justify-between gap-4 pb-4 border-b border-[#D5DDEB]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white p-0.5 border border-[#D5DDEB] flex items-center justify-center shrink-0">
+                <Image
+                  src="/images/logo-sahabat-belajar.png"
+                  alt="Sahabat Belajar"
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-contain"
+                  priority
+                />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-[#09408C] uppercase tracking-wider">
+                  Persiapan Sebelum Memulai Ujian
+                </p>
+                <p className="text-xs text-[#5B6882]">
+                  Sahabat Belajar • #BersamaSahabat
+                </p>
+              </div>
+            </div>
+
+            <span className="px-3 py-1 rounded-full bg-[#EAF1FA] text-[#09408C] text-[11px] font-bold border border-[#9AC1E2]/60 shrink-0">
+              {categoryLabel}
+            </span>
+          </div>
+
+          {/* Exam Title */}
+          <div className="space-y-1.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#09408C] font-display">
+              {exam.title}
+            </h1>
+            {exam.description && (
+              <p className="text-xs sm:text-sm text-[#5B6882] leading-relaxed">
+                {exam.description}
+              </p>
+            )}
+          </div>
+
+          {/* Exam Metrics */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB] text-center">
+              <div className="text-[11px] text-[#5B6882] font-medium">
+                Jumlah Soal
+              </div>
+              <div className="text-lg font-bold text-[#09408C] font-display mt-0.5 tabular-nums">
+                {questions.length} Butir
+              </div>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB] text-center">
+              <div className="text-[11px] text-[#5B6882] font-medium">
+                Durasi Ujian
+              </div>
+              <div className="text-lg font-bold text-[#09408C] font-display mt-0.5 tabular-nums">
+                {exam.durationMinutes} Menit
+              </div>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-[#F4F7FB] border border-[#D5DDEB] text-center">
+              <div className="text-[11px] text-[#5B6882] font-medium">
+                Passing Grade
+              </div>
+              <div className="text-lg font-bold text-[#1F6F4A] font-display mt-0.5 tabular-nums">
+                {exam.passingGrade}
+              </div>
+            </div>
+          </div>
+
+          {/* 3 Readiness Notes */}
+          <div className="bg-[#EAF1FA]/60 rounded-2xl p-4 sm:p-5 border border-[#9AC1E2]/60 space-y-2.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#09408C]">
+              <ShieldCheck size={16} />
+              <span>Hal Penting Sebelum Memulai</span>
+            </div>
+            <ul className="space-y-2 text-xs text-[#1B2A41]">
+              <li className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-white text-[#09408C] font-bold text-[10px] flex items-center justify-center shrink-0 border border-[#D5DDEB]">
+                  1
+                </span>
+                <span>
+                  Timer hitung mundur baru akan berjalan setelah Anda menekan tombol{" "}
+                  <strong>&ldquo;Saya Siap, Mulai Ujian Sekarang&rdquo;</strong>.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-white text-[#09408C] font-bold text-[10px] flex items-center justify-center shrink-0 border border-[#D5DDEB]">
+                  2
+                </span>
+                <span>
+                  Fitur <strong>simpan otomatis (auto-save)</strong> aktif. Jawaban dan coretan Anda tetap aman jika halaman ter-refresh.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-white text-[#09408C] font-bold text-[10px] flex items-center justify-center shrink-0 border border-[#D5DDEB]">
+                  3
+                </span>
+                <span>
+                  Anda dapat menggunakan <strong>Shortcut Keyboard</strong> (A–E pilih jawaban, R ragu-ragu, ←/→ pindah soal) serta papan <strong>Coretan</strong> di bilah atas.
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => router.push(portalHref)}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-[#D5DDEB] text-xs font-semibold text-[#5B6882] hover:bg-[#F4F7FB] hover:text-[#1B2A41] transition-colors flex items-center justify-center gap-1.5"
+            >
+              <ArrowLeft size={15} />
+              <span>Kembali ke Portal</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setHasStarted(true)}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#09408C] text-white text-xs sm:text-sm font-bold hover:bg-[#0E3571] transition-colors shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <CheckCircle2 size={16} />
+              <span>Saya Siap, Mulai Ujian Sekarang</span>
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -430,6 +637,21 @@ export default function ExamSimulationClient({
               </button>
             </div>
 
+            {/* Scratchpad (Coretan) Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsScratchpadOpen((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-colors ${
+                isScratchpadOpen
+                  ? "bg-[#EAF1FA] text-[#09408C] border-[#09408C]"
+                  : "border-[#D5DDEB] text-[#5B6882] hover:text-[#09408C] hover:bg-[#EAF1FA]"
+              }`}
+              title="Buka Coretan Hitungan"
+            >
+              <PenLine size={15} />
+              <span className="hidden sm:inline">Coretan</span>
+            </button>
+
             {/* Keyboard Shortcuts Trigger */}
             <button
               onClick={() => setIsKeyboardModalOpen(true)}
@@ -505,6 +727,29 @@ export default function ExamSimulationClient({
               <div className={`${fontStyles.question} text-[#1B2A41] font-medium mb-6 whitespace-pre-line`}>
                 {currentQ.questionText}
               </div>
+
+              {/* Question Image */}
+              {currentQ.image && (
+                <div className="mb-6 bg-[#F4F7FB] border border-[#D5DDEB] rounded-2xl p-3 sm:p-4 flex flex-col items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setZoomedImage(currentQ.image!)}
+                    className="group flex flex-col items-center gap-2 cursor-zoom-in focus:outline-none"
+                    title="Klik untuk memperbesar gambar"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={currentQ.image}
+                      alt={`Gambar soal ${currentQ.questionNumber || currentIndex + 1}`}
+                      className="max-h-72 w-auto object-contain rounded-xl"
+                    />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-[#D5DDEB] text-[11px] font-semibold text-[#09408C] shadow-2xs group-hover:bg-[#EAF1FA] transition-colors">
+                      <ZoomIn size={12} />
+                      <span>Klik untuk memperbesar</span>
+                    </span>
+                  </button>
+                </div>
+              )}
 
               {/* Answer Options */}
               <div className="space-y-3">
@@ -621,7 +866,7 @@ export default function ExamSimulationClient({
 
             {/* Sub-test Filter Tabs */}
             {uniqueSections.length > 1 && (
-              <div className="flex flex-wrap gap-1 mb-4 pb-3 border-b border-[#D5DDEB]">
+              <div className="flex flex-wrap gap-1 mb-3 pb-3 border-b border-[#D5DDEB]">
                 <button
                   onClick={() => setActiveSectionFilter("ALL")}
                   className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all ${
@@ -648,7 +893,49 @@ export default function ExamSimulationClient({
               </div>
             )}
 
+            {/* Quick Status Filter Pills */}
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              <button
+                type="button"
+                onClick={() => setStatusFilter("ALL")}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${
+                  statusFilter === "ALL"
+                    ? "bg-[#09408C] text-white"
+                    : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA]"
+                }`}
+              >
+                Semua ({questions.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("UNANSWERED")}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${
+                  statusFilter === "UNANSWERED"
+                    ? "bg-[#09408C] text-white"
+                    : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA]"
+                }`}
+              >
+                Belum ({stats.unanswered})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("DOUBTFUL")}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${
+                  statusFilter === "DOUBTFUL"
+                    ? "bg-[#F5B82E] text-[#1B2A41]"
+                    : "bg-[#F4F7FB] text-[#5B6882] hover:bg-[#EAF1FA]"
+                }`}
+              >
+                Ragu ({stats.doubtful})
+              </button>
+            </div>
+
             {/* Grid Palette */}
+            {displayedQuestionIndices.length === 0 ? (
+              <div className="py-6 text-center text-xs text-[#5B6882] bg-[#F4F7FB] rounded-2xl border border-[#D5DDEB]">
+                Tidak ada soal pada filter ini.
+              </div>
+            ) : (
             <div className="grid grid-cols-5 gap-2 max-h-72 overflow-y-auto pr-1">
               {displayedQuestionIndices.map(({ q, idx }) => {
                 const ans = answers[q.id];
@@ -681,6 +968,7 @@ export default function ExamSimulationClient({
                 );
               })}
             </div>
+            )}
 
             {/* Status Legend */}
             <div className="mt-5 pt-4 border-t border-[#D5DDEB] space-y-2 text-xs">
@@ -749,8 +1037,50 @@ export default function ExamSimulationClient({
               </button>
             </div>
 
+            {/* Quick Status Filter Pills (Mobile) */}
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setStatusFilter("ALL")}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all ${
+                  statusFilter === "ALL"
+                    ? "bg-[#09408C] text-white"
+                    : "bg-[#F4F7FB] text-[#5B6882]"
+                }`}
+              >
+                Semua ({questions.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("UNANSWERED")}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all ${
+                  statusFilter === "UNANSWERED"
+                    ? "bg-[#09408C] text-white"
+                    : "bg-[#F4F7FB] text-[#5B6882]"
+                }`}
+              >
+                Belum ({stats.unanswered})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("DOUBTFUL")}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all ${
+                  statusFilter === "DOUBTFUL"
+                    ? "bg-[#F5B82E] text-[#1B2A41]"
+                    : "bg-[#F4F7FB] text-[#5B6882]"
+                }`}
+              >
+                Ragu ({stats.doubtful})
+              </button>
+            </div>
+
+            {displayedQuestionIndices.length === 0 ? (
+              <div className="py-6 text-center text-xs text-[#5B6882] bg-[#F4F7FB] rounded-2xl border border-[#D5DDEB]">
+                Tidak ada soal pada filter ini.
+              </div>
+            ) : (
             <div className="grid grid-cols-5 gap-2">
-              {questions.map((q, idx) => {
+              {displayedQuestionIndices.map(({ q, idx }) => {
                 const ans = answers[q.id];
                 const isCurrent = idx === currentIndex;
                 const isAnswered = !!ans?.selectedKey;
@@ -784,6 +1114,7 @@ export default function ExamSimulationClient({
                 );
               })}
             </div>
+            )}
 
             {/* Mobile Drawer Submit Button */}
             <div className="pt-3 border-t border-[#D5DDEB]">
@@ -932,6 +1263,74 @@ export default function ExamSimulationClient({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Scratchpad (Coretan Hitungan) */}
+      {isScratchpadOpen && (
+        <div className="fixed bottom-4 right-4 z-40 w-[calc(100vw-2rem)] sm:w-96 bg-white rounded-2xl border border-[#D5DDEB] shadow-xl overflow-hidden animate-in fade-in duration-150">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-[#EAF1FA] border-b border-[#D5DDEB]">
+            <div className="flex items-center gap-2">
+              <PenLine size={15} className="text-[#09408C]" />
+              <span className="text-xs font-bold text-[#09408C] font-display">
+                Coretan Hitungan
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {scratchpadText && (
+                <button
+                  type="button"
+                  onClick={() => handleScratchpadChange("")}
+                  className="px-2 py-1 rounded-lg text-[10px] font-semibold text-[#B4381F] hover:bg-[#FBE9E5] transition-colors flex items-center gap-1"
+                  title="Bersihkan coretan"
+                >
+                  <Trash2 size={12} />
+                  <span>Bersihkan</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsScratchpadOpen(false)}
+                aria-label="Tutup coretan"
+                className="p-1 rounded-lg text-[#5B6882] hover:bg-white/70 transition-colors"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          </div>
+          <div className="p-3 bg-[#F4F7FB]/50">
+            <textarea
+              value={scratchpadText}
+              onChange={(e) => handleScratchpadChange(e.target.value)}
+              placeholder="Tulis hitungan cepat, rumus, atau catatan di sini... (tersimpan otomatis)"
+              rows={6}
+              className="w-full rounded-xl border border-[#D5DDEB] bg-white p-3 text-xs text-[#1B2A41] placeholder:text-[#5B6882]/70 focus:outline-none focus:border-[#09408C] resize-y select-text"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Image Zoom Lightbox Modal */}
+      {zoomedImage && (
+        <div
+          onClick={() => setZoomedImage(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4"
+        >
+          <button
+            type="button"
+            onClick={() => setZoomedImage(null)}
+            aria-label="Tutup pratinjau gambar"
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/90 text-[#1B2A41] hover:bg-white shadow-lg transition-colors"
+          >
+            <X size={20} />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={zoomedImage}
+            alt="Perbesaran gambar soal"
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[85vh] max-w-[90vw] object-contain rounded-2xl bg-white p-2 shadow-2xl"
+          />
         </div>
       )}
     </div>

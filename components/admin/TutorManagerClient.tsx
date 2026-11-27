@@ -28,6 +28,7 @@ import {
 } from "@/actions/tutor";
 import { TutorStatus } from "@prisma/client";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 export default function TutorManagerClient({
   initialTutors,
@@ -43,6 +44,8 @@ export default function TutorManagerClient({
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTutor, setEditingTutor] = useState<any | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [confirmToggleTutor, setConfirmToggleTutor] = useState<any | null>(null);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form states
@@ -169,16 +172,27 @@ export default function TutorManagerClient({
     }
   };
 
-  const handleToggleStatus = async (tutor: any) => {
+  const executeToggleStatus = async (tutor: any) => {
     const nextStatus: TutorStatus = tutor.status === "AKTIF" ? "NONAKTIF" : "AKTIF";
+    setIsTogglingStatus(true);
     const res = await toggleTutorStatus(tutor.id, nextStatus);
+    setIsTogglingStatus(false);
     if (res.success) {
       setTutors((prev) =>
         prev.map((t) => (t.id === tutor.id ? { ...t, status: nextStatus } : t))
       );
+      setConfirmToggleTutor(null);
       toast.success("Status Diperbarui", res.message);
     } else {
       toast.error("Gagal Mengubah Status", res.message);
+    }
+  };
+
+  const handleToggleStatus = (tutor: any) => {
+    if (tutor.status === "AKTIF") {
+      setConfirmToggleTutor(tutor);
+    } else {
+      executeToggleStatus(tutor);
     }
   };
 
@@ -656,6 +670,28 @@ export default function TutorManagerClient({
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Nonaktifkan Tutor */}
+      <ConfirmModal
+        open={Boolean(confirmToggleTutor)}
+        title="Nonaktifkan Status Tutor?"
+        description={
+          <>
+            Tutor{" "}
+            <strong className="text-[#1B2A41]">{confirmToggleTutor?.name}</strong>{" "}
+            akan ditandai <strong>NONAKTIF</strong> dan tidak akan muncul pada pilihan penjadwalan baru. Anda dapat mengaktifkannya kembali kapan saja.
+          </>
+        }
+        confirmLabel="Ya, Nonaktifkan"
+        variant="warning"
+        loading={isTogglingStatus}
+        onConfirm={() => {
+          if (confirmToggleTutor) {
+            executeToggleStatus(confirmToggleTutor);
+          }
+        }}
+        onCancel={() => setConfirmToggleTutor(null)}
+      />
     </div>
   );
 }

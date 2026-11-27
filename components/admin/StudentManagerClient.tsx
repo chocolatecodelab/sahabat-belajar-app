@@ -33,6 +33,7 @@ import {
 } from "@/actions/siswa";
 import { StudentStatus } from "@prisma/client";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 function getStudentStatusBadge(status: string) {
   switch (status) {
@@ -78,6 +79,8 @@ export default function StudentManagerClient({
   const toast = useToast();
   const [students, setStudents] = useState(initialStudents);
   const [searchQuery, setSearchQuery] = useState("");
+  const [confirmToggleStudent, setConfirmToggleStudent] = useState<any | null>(null);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
   const [levelFilter, setLevelFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -205,16 +208,27 @@ export default function StudentManagerClient({
     }
   };
 
-  const handleToggleStatus = async (student: any) => {
+  const executeToggleStatus = async (student: any) => {
     const nextStatus: StudentStatus = student.status === "AKTIF" ? "NONAKTIF" : "AKTIF";
+    setIsTogglingStatus(true);
     const res = await toggleStudentStatus(student.id, nextStatus);
+    setIsTogglingStatus(false);
     if (res.success) {
       setStudents((prev) =>
         prev.map((s) => (s.id === student.id ? { ...s, status: nextStatus } : s))
       );
+      setConfirmToggleStudent(null);
       toast.success("Status Diperbarui", res.message);
     } else {
       toast.error("Gagal Mengubah Status", res.message);
+    }
+  };
+
+  const handleToggleStatus = (student: any) => {
+    if (student.status === "AKTIF") {
+      setConfirmToggleStudent(student);
+    } else {
+      executeToggleStatus(student);
     }
   };
 
@@ -1034,6 +1048,28 @@ export default function StudentManagerClient({
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Nonaktifkan Siswa */}
+      <ConfirmModal
+        open={Boolean(confirmToggleStudent)}
+        title="Nonaktifkan Status Siswa?"
+        description={
+          <>
+            Siswa{" "}
+            <strong className="text-[#1B2A41]">{confirmToggleStudent?.name}</strong>{" "}
+            akan ditandai <strong>NONAKTIF</strong> dan tidak dapat dipilih pada penjadwalan sesi baru. Anda dapat mengaktifkannya kembali kapan saja.
+          </>
+        }
+        confirmLabel="Ya, Nonaktifkan"
+        variant="warning"
+        loading={isTogglingStatus}
+        onConfirm={() => {
+          if (confirmToggleStudent) {
+            executeToggleStatus(confirmToggleStudent);
+          }
+        }}
+        onCancel={() => setConfirmToggleStudent(null)}
+      />
     </div>
   );
 }

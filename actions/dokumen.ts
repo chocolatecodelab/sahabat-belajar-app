@@ -39,6 +39,8 @@ export interface DocumentVersionHistory {
   stage: DocumentStage;
   mentorName?: string | null;
   mentorNotes?: string | null;
+  reviewedFileName?: string | null;
+  reviewedFileUrl?: string | null;
   reviewedAt?: string | null;
   rubricScores?: DocumentRubricScores;
   actionChecklist?: DocumentActionItem[];
@@ -59,6 +61,8 @@ export interface AcademicDocument {
   mentorId?: string | null;
   mentorName?: string | null;
   mentorNotes?: string | null;
+  reviewedFileName?: string | null;
+  reviewedFileUrl?: string | null;
   reviewedAt?: string | null;
   rubricScores?: DocumentRubricScores;
   actionChecklist?: DocumentActionItem[];
@@ -481,6 +485,8 @@ export async function reviewDocument(input: {
   mentorName: string;
   mentorNotes: string;
   mentorId?: string;
+  reviewedFileName?: string | null;
+  reviewedFileUrl?: string | null;
 }): Promise<ActionResponse> {
   try {
     const session = await requirePermission("document.update");
@@ -508,6 +514,15 @@ export async function reviewDocument(input: {
       reviewedAt: now,
       updatedAt: now,
     };
+
+    if (input.reviewedFileUrl !== undefined) {
+      updatePayload.reviewedFileUrl = input.reviewedFileUrl
+        ? sanitizeFileUrl(input.reviewedFileUrl)
+        : null;
+      updatePayload.reviewedFileName = input.reviewedFileName
+        ? input.reviewedFileName.trim().slice(0, 255)
+        : null;
+    }
 
     if (input.mentorId) {
       updatePayload.mentorId = input.mentorId;

@@ -19,6 +19,8 @@ import {
   Check,
   GraduationCap,
   AlertCircle,
+  ZoomIn,
+  X,
 } from "lucide-react";
 import type { ExamItem, ExamQuestion, StudentExamSession } from "@/actions/ujian";
 
@@ -38,6 +40,7 @@ export default function ExamResultClient({
   const [filterMode, setFilterMode] = useState<"ALL" | "WRONG" | "CORRECT">("ALL");
   const [sectionFilter, setSectionFilter] = useState("ALL");
   const [copied, setCopied] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [sessionData, setSessionData] = useState<{
     studentId?: string;
     studentName?: string | null;
@@ -76,6 +79,16 @@ export default function ExamResultClient({
       });
     }
   }, [sessionId, exam.category, initialSession]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && zoomedImage) {
+        setZoomedImage(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [zoomedImage]);
 
   const questions = exam.questions || [];
 
@@ -576,6 +589,29 @@ export default function ExamResultClient({
                     {q.questionText}
                   </p>
 
+                  {/* Question Image */}
+                  {q.image && (
+                    <div className="bg-[#F4F7FB] border border-[#D5DDEB] rounded-2xl p-3 flex flex-col items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setZoomedImage(q.image!)}
+                        className="group relative cursor-zoom-in focus:outline-none"
+                        title="Klik untuk memperbesar gambar"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={q.image}
+                          alt={`Ilustrasi soal ${q.questionNumber || idx + 1}`}
+                          className="max-h-64 w-auto object-contain rounded-xl"
+                        />
+                        <span className="print:hidden mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 border border-[#D5DDEB] text-[11px] font-semibold text-[#09408C] shadow-2xs group-hover:bg-[#EAF1FA] transition-colors">
+                          <ZoomIn size={12} />
+                          <span>Klik untuk memperbesar</span>
+                        </span>
+                      </button>
+                    </div>
+                  )}
+
                   {/* Options List */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {q.options.map((opt) => {
@@ -673,6 +709,30 @@ export default function ExamResultClient({
           </Link>
         </div>
       </div>
+
+      {/* Image Zoom Lightbox Modal */}
+      {zoomedImage && (
+        <div
+          onClick={() => setZoomedImage(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 print:hidden"
+        >
+          <button
+            type="button"
+            onClick={() => setZoomedImage(null)}
+            aria-label="Tutup pratinjau gambar"
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/90 text-[#1B2A41] hover:bg-white shadow-lg transition-colors"
+          >
+            <X size={20} />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={zoomedImage}
+            alt="Perbesaran gambar soal"
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[85vh] max-w-[90vw] object-contain rounded-2xl bg-white p-2 shadow-2xl"
+          />
+        </div>
+      )}
     </div>
   );
 }

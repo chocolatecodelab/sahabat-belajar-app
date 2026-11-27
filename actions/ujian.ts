@@ -459,6 +459,7 @@ export async function createExamQuestion(input: {
   examId: string;
   section?: string;
   questionText: string;
+  image?: string | null;
   options: QuestionOption[];
   correctKey: string;
   points?: number;
@@ -507,6 +508,7 @@ export async function createExamQuestion(input: {
         questionNumber,
         section: input.section?.trim().slice(0, 100) || null,
         questionText,
+        image: input.image ?? null,
         options: input.options,
         correctKey: input.correctKey.trim().toUpperCase(),
         points: Math.max(1, Number(input.points) || 5),
@@ -531,6 +533,7 @@ export async function createExamQuestion(input: {
       questionNumber,
       section: input.section?.trim().slice(0, 100) || null,
       questionText,
+      image: input.image ?? null,
       options: input.options,
       correctKey: input.correctKey.trim().toUpperCase(),
       points: Math.max(1, Number(input.points) || 5),
@@ -815,6 +818,7 @@ export async function updateExamQuestion(
     examId: string;
     section?: string;
     questionText?: string;
+    image?: string | null;
     options?: QuestionOption[];
     correctKey?: string;
     points?: number;
@@ -840,6 +844,7 @@ export async function updateExamQuestion(
     const updatePayload: Record<string, any> = {};
     if (input.section !== undefined) updatePayload.section = input.section.trim().slice(0, 100);
     if (input.questionText !== undefined) updatePayload.questionText = input.questionText.trim();
+    if (input.image !== undefined) updatePayload.image = input.image ?? null;
     if (input.options !== undefined) updatePayload.options = input.options;
     if (input.correctKey !== undefined) updatePayload.correctKey = input.correctKey.trim().toUpperCase();
     if (input.points !== undefined) updatePayload.points = Math.max(1, Number(input.points) || 5);
@@ -1177,6 +1182,7 @@ export async function duplicateExamQuestion(
       questionNumber,
       section: sourceQ.section,
       questionText: `${sourceQ.questionText} (Salinan)`,
+      image: sourceQ.image ?? null,
       options: sourceQ.options,
       correctKey: sourceQ.correctKey,
       points: sourceQ.points,

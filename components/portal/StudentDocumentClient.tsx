@@ -471,6 +471,13 @@ export default function StudentDocumentClient({
                         <span className="text-[11px] font-bold text-[#5B6882] bg-slate-100 px-2 py-0.5 rounded-md">
                           Versi {doc.version}
                         </span>
+
+                        {doc.reviewedFileUrl && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EAF1FA] text-[#09408C] border border-[#9AC1E2] text-[11px] font-bold">
+                            <FileText size={12} />
+                            <span>Ada File Koreksi Mentor</span>
+                          </span>
+                        )}
                       </div>
 
                       <h3 className="font-bold text-base text-[#1B2A41] font-display mt-1">
@@ -539,7 +546,7 @@ export default function StudentDocumentClient({
                   )}
 
                   {/* Enhanced Mentor Review & Version History Section */}
-                  {doc.mentorNotes ? (
+                  {doc.mentorNotes || doc.reviewedFileUrl ? (
                     <div className="bg-[#F4F7FB] rounded-2xl p-4 sm:p-5 border border-[#D5DDEB] space-y-4">
                       {/* Sub-Tabs: Catatan & Rubrik | Checklist Revisi | Riwayat Versi */}
                       <div className="flex items-center justify-between border-b border-[#D5DDEB] pb-3 flex-wrap gap-2">
@@ -613,22 +620,52 @@ export default function StudentDocumentClient({
                       {(activeDocTab[doc.id] || "FEEDBACK") === "FEEDBACK" && (
                         <div className="space-y-4">
                           {/* Mentor Quote */}
-                          <div className="bg-white rounded-2xl p-4 border border-[#9AC1E2] space-y-2">
-                            <div className="flex items-center gap-2 text-[#09408C] font-bold text-xs">
-                              <div className="w-7 h-7 rounded-lg bg-[#EAF1FA] text-[#09408C] flex items-center justify-center font-bold text-xs">
-                                ✍️
+                          {doc.mentorNotes && (
+                            <div className="bg-white rounded-2xl p-4 border border-[#9AC1E2] space-y-2">
+                              <div className="flex items-center gap-2 text-[#09408C] font-bold text-xs">
+                                <div className="w-7 h-7 rounded-lg bg-[#EAF1FA] text-[#09408C] flex items-center justify-center font-bold text-xs">
+                                  ✍️
+                                </div>
+                                <div>
+                                  <span>Telaah & Ulasan {doc.mentorName || "Mentor Beasiswa LPDP"}</span>
+                                  <span className="text-[10px] text-[#1F6F4A] font-semibold block">
+                                    Mentor Spesialis Naskah & Esai Akademik
+                                  </span>
+                                </div>
                               </div>
-                              <div>
-                                <span>Telaah & Ulasan {doc.mentorName || "Mentor Beasiswa LPDP"}</span>
-                                <span className="text-[10px] text-[#1F6F4A] font-semibold block">
-                                  Mentor Spesialis Naskah & Esai Akademik
-                                </span>
-                              </div>
+                              <p className="text-xs text-[#1B2A41] leading-relaxed whitespace-pre-line pl-9 border-l-2 border-[#09408C]/30 ml-3.5">
+                                {doc.mentorNotes}
+                              </p>
                             </div>
-                            <p className="text-xs text-[#1B2A41] leading-relaxed whitespace-pre-line pl-9 border-l-2 border-[#09408C]/30 ml-3.5">
-                              {doc.mentorNotes}
-                            </p>
-                          </div>
+                          )}
+
+                          {/* Mentor Reviewed File Box */}
+                          {doc.reviewedFileUrl && (
+                            <div className="bg-[#EAF1FA] rounded-2xl p-4 border border-[#9AC1E2] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-start sm:items-center gap-3 min-w-0">
+                                <div className="w-9 h-9 rounded-xl bg-white text-[#09408C] border border-[#D5DDEB] flex items-center justify-center shrink-0">
+                                  <FileText size={18} />
+                                </div>
+                                <div className="min-w-0">
+                                  <span className="text-xs font-bold text-[#09408C] block">
+                                    File Hasil Review / Koreksi Mentor
+                                  </span>
+                                  <span className="text-xs text-[#1B2A41] font-medium truncate block mt-0.5">
+                                    {doc.reviewedFileName || "Hasil_Review_Mentor.pdf"}
+                                  </span>
+                                </div>
+                              </div>
+                              <a
+                                href={doc.reviewedFileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-2xs shrink-0"
+                              >
+                                <Download size={14} />
+                                <span>Unduh Hasil Review</span>
+                              </a>
+                            </div>
+                          )}
 
                           {/* Rubric Evaluation Bars */}
                           {doc.rubricScores && (

@@ -332,7 +332,7 @@ export default function MaterialManagerClient({
   };
 
   const handleDelete = async (id: string, matTitle: string) => {
-    if (!confirm(`Hapus modul "${matTitle}" secara permanen dari database bank materi?`)) return;
+    if (!confirm(`Hapus modul "${matTitle}" secara permanen dari bank materi?`)) return;
 
     const res = await deleteLearningMaterial(id);
     if (res.success) {
@@ -393,14 +393,14 @@ export default function MaterialManagerClient({
               Sinkronisasi Langsung ke Portal Siswa & Orang Tua
             </div>
             <p className="text-[#5B6882] mt-0.5 leading-relaxed">
-              Seluruh modul yang diunggah di sini tersimpan di database cloud Supabase dan otomatis dapat diakses oleh siswa aktif pada tab <strong>Materi Belajar</strong>, lengkap dengan pembaca in-app PDF dan pelacakan unduhan.
+              Seluruh modul yang diunggah di sini tersimpan aman dan langsung dapat diakses oleh siswa aktif pada menu <strong>Bank Modul &amp; Materi</strong>, lengkap dengan pratinjau dokumen langsung dan catatan jumlah unduhan.
             </p>
           </div>
         </div>
         <div className="shrink-0 flex items-center gap-2">
           <span className="px-3 py-1 rounded-full bg-[#09408C] text-white font-bold text-[11px] flex items-center gap-1">
             <CheckCircle2 size={12} />
-            <span>Database Terhubung</span>
+            <span>Tersinkron ke Portal Siswa</span>
           </span>
         </div>
       </div>

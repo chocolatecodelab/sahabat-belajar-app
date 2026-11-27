@@ -22,6 +22,8 @@ import {
   RefreshCw,
   FileText,
   Check,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import type { ExamItem, ExamQuestion, QuestionOption } from "@/actions/ujian";
 import {
@@ -32,6 +34,26 @@ import {
   bulkImportExamQuestions,
 } from "@/actions/ujian";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+
+const MATH_SYMBOLS = [
+  "√",
+  "π",
+  "²",
+  "³",
+  "≤",
+  "≥",
+  "≠",
+  "×",
+  "÷",
+  "∫",
+  "∑",
+  "→",
+  "°",
+  "α",
+  "β",
+  "θ",
+];
 
 export default function ExamDetailClient({
   exam,
@@ -58,6 +80,10 @@ export default function ExamDetailClient({
   // Duplicating state
   const [duplicatingQId, setDuplicatingQId] = useState<string | null>(null);
 
+  // Delete confirmation modal state
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; num: number } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Escape key listener to close modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -72,6 +98,8 @@ export default function ExamDetailClient({
 
   // Form state
   const [questionText, setQuestionText] = useState("");
+  const [image, setImage] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [section, setSection] = useState("TWK (Nasionalisme)");
   const [correctKey, setCorrectKey] = useState("A");
   const [points, setPoints] = useState("5");
@@ -137,6 +165,7 @@ export default function ExamDetailClient({
   const openCreateModal = () => {
     setEditingQuestion(null);
     setQuestionText("");
+    setImage(null);
     setSection(uniqueSections[0] || "TWK (Nasionalisme)");
     setCorrectKey("A");
     setPoints("5");
@@ -152,6 +181,7 @@ export default function ExamDetailClient({
   const openEditModal = (q: ExamQuestion) => {
     setEditingQuestion(q);
     setQuestionText(q.questionText);
+    setImage(q.image || null);
     setSection(q.section || "Umum");
     setCorrectKey(q.correctKey);
     setPoints(String(q.points || 5));
@@ -210,6 +240,7 @@ export default function ExamDetailClient({
         examId: exam.id,
         section,
         questionText,
+        image,
         options,
         correctKey,
         points: Number(points) || 5,
@@ -225,6 +256,7 @@ export default function ExamDetailClient({
                   ...q,
                   section,
                   questionText,
+                  image,
                   options,
                   correctKey,
                   points: Number(points) || 5,
@@ -244,6 +276,7 @@ export default function ExamDetailClient({
         examId: exam.id,
         section,
         questionText,
+        image,
         options,
         correctKey,
         points: Number(points) || 5,
@@ -258,6 +291,7 @@ export default function ExamDetailClient({
           questionNumber: nextNumber,
           section,
           questionText,
+          image,
           options,
           correctKey,
           points: Number(points) || 5,
@@ -296,13 +330,60 @@ export default function ExamDetailClient({
     }
   };
 
-  const handleDeleteQuestion = async (qId: string, qNum: number) => {
-    if (!confirm(`Hapus butir soal nomor ${qNum}?`)) return;
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
 
-    const res = await deleteExamQuestion(qId, exam.id);
+    if (!file.type.startsWith("image/")) {
+      toast.warning("Format Tidak Didukung", "Harap unggah berkas gambar (PNG, JPG, WebP, atau GIF).");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.warning("Ukuran Terlalu Besar", "Ukuran gambar maksimal adalah 5 MB.");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "exams");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.url) {
+        toast.error("Gagal Mengunggah Gambar", data.error || "Terjadi kesalahan saat mengunggah gambar.");
+      } else {
+        setImage(data.url);
+        toast.success("Gambar Diunggah", "Gambar soal berhasil dilampirkan.");
+      }
+    } catch {
+      toast.error("Gagal Mengunggah Gambar", "Tidak dapat terhubung ke server upload.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleDeleteQuestion = (qId: string, qNum: number) => {
+    setDeleteTarget({ id: qId, num: qNum });
+  };
+
+  const confirmDeleteQuestion = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    const res = await deleteExamQuestion(deleteTarget.id, exam.id);
+    setIsDeleting(false);
+
     if (res.success) {
-      toast.success("Soal Dihapus", `Butir soal nomor ${qNum} berhasil dihapus.`);
-      setQuestions(questions.filter((q) => q.id !== qId));
+      toast.success("Soal Dihapus", `Butir soal nomor ${deleteTarget.num} berhasil dihapus.`);
+      setQuestions(questions.filter((q) => q.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } else {
       toast.error("Gagal Menghapus", res.message);
     }
@@ -319,7 +400,7 @@ export default function ExamDetailClient({
     try {
       parsed = JSON.parse(importJsonText);
     } catch (err: any) {
-      toast.error("Format JSON Tidak Valid", "Pastikan format JSON sudah sesuai sintaks array.");
+      toast.error("Format Data Tidak Sesuai", "Pastikan daftar soal mengikuti format contoh yang tersedia.");
       return;
     }
 
@@ -420,7 +501,7 @@ export default function ExamDetailClient({
           <button
             onClick={() => setIsImportModalOpen(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#09408C] text-[#09408C] text-xs font-semibold hover:bg-[#EAF1FA] transition-colors"
-            title="Impor batch soal via format JSON"
+            title="Impor banyak soal sekaligus dari daftar terstruktur"
           >
             <FileUp size={14} />
             <span>Impor Batch</span>
@@ -647,6 +728,17 @@ export default function ExamDetailClient({
                 {q.questionText}
               </p>
 
+              {/* Question Image Thumbnail */}
+              {q.image && (
+                <div className="mb-4">
+                  <img
+                    src={q.image}
+                    alt={`Gambar soal nomor ${q.questionNumber || idx + 1}`}
+                    className="max-h-56 w-auto rounded-xl border border-[#D5DDEB] bg-[#F4F7FB] object-contain p-1"
+                  />
+                </div>
+              )}
+
               {/* Options List */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                 {q.options.map((opt) => {
@@ -744,9 +836,27 @@ export default function ExamDetailClient({
               </div>
 
               <div>
-                <label htmlFor="q-text-input" className="block text-xs font-bold text-[#1B2A41] mb-1">
-                  Teks Pertanyaan Soal *
-                </label>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                  <label htmlFor="q-text-input" className="block text-xs font-bold text-[#1B2A41]">
+                    Teks Pertanyaan Soal *
+                  </label>
+                  <span className="text-[11px] text-[#5B6882]">
+                    Sisipkan simbol cepat:
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1 mb-2 p-1.5 rounded-xl bg-[#F4F7FB] border border-[#D5DDEB]">
+                  {MATH_SYMBOLS.map((sym) => (
+                    <button
+                      key={sym}
+                      type="button"
+                      onClick={() => setQuestionText((prev) => prev + sym)}
+                      className="px-2 py-1 rounded-lg bg-white border border-[#D5DDEB] text-xs font-semibold text-[#1B2A41] hover:bg-[#EAF1FA] hover:text-[#09408C] hover:border-[#9AC1E2] transition-colors"
+                      title={`Sisipkan simbol ${sym}`}
+                    >
+                      {sym}
+                    </button>
+                  ))}
+                </div>
                 <textarea
                   id="q-text-input"
                   rows={4}
@@ -756,6 +866,60 @@ export default function ExamDetailClient({
                   onChange={(e) => setQuestionText(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-[#D5DDEB] focus-ring"
                 />
+              </div>
+
+              {/* Upload Gambar Soal / Rumus (Opsional) */}
+              <div>
+                <label className="block text-xs font-bold text-[#1B2A41] mb-1.5">
+                  Upload Gambar Soal / Rumus (Opsional)
+                </label>
+                {image ? (
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-xl bg-[#F4F7FB] border border-[#D5DDEB]">
+                    <img
+                      src={image}
+                      alt="Pratinjau gambar soal"
+                      className="max-h-32 w-auto rounded-lg border border-[#D5DDEB] bg-white object-contain"
+                    />
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[11px] text-[#5B6882] break-all max-w-xs">
+                        Gambar terlampir
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setImage(null)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FBE9E5] text-[#B4381F] text-xs font-semibold hover:bg-[#f7d8d1] transition-colors w-fit"
+                      >
+                        <X size={13} />
+                        <span>Hapus Gambar</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-[#D5DDEB] bg-[#F4F7FB]/60 hover:bg-[#EAF1FA]/50 hover:border-[#09408C] transition-colors cursor-pointer">
+                    {isUploadingImage ? (
+                      <>
+                        <RefreshCw size={15} className="animate-spin text-[#09408C]" />
+                        <span className="text-xs font-semibold text-[#09408C]">
+                          Mengunggah gambar...
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <ImagePlus size={16} className="text-[#09408C]" />
+                        <span className="text-xs font-semibold text-[#1B2A41]">
+                          Pilih gambar soal/rumus (maks. 5 MB)
+                        </span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploadingImage}
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
               </div>
 
               {/* Pilihan Jawaban */}
@@ -1016,6 +1180,24 @@ export default function ExamDetailClient({
           </div>
         </div>
       )}
+      {/* Modal Konfirmasi Hapus Soal */}
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Hapus Butir Soal?"
+        description={
+          deleteTarget
+            ? `Apakah Anda yakin ingin menghapus butir soal nomor ${deleteTarget.num}? Tindakan ini tidak dapat dibatalkan.`
+            : ""
+        }
+        confirmLabel="Ya, Hapus Soal"
+        cancelLabel="Batal"
+        variant="danger"
+        loading={isDeleting}
+        onConfirm={confirmDeleteQuestion}
+        onCancel={() => {
+          if (!isDeleting) setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { calculateTutorPayout, updatePayoutStatus } from "@/actions/honor";
 import { PayoutStatus } from "@prisma/client";
 import { formatDate } from "@/lib/date";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 export default function HonorManagerClient({
   initialPayouts,
@@ -28,6 +29,7 @@ export default function HonorManagerClient({
   const [showCalcModal, setShowCalcModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [updatingPayoutId, setUpdatingPayoutId] = useState<string | null>(null);
+  const [confirmPayTarget, setConfirmPayTarget] = useState<any | null>(null);
 
   // Form states
   const [tutorId, setTutorId] = useState(tutors[0]?.id || "");
@@ -66,13 +68,6 @@ export default function HonorManagerClient({
   };
 
   const handleUpdateStatus = async (id: string, status: PayoutStatus) => {
-    if (status === "DIBAYAR") {
-      const targetPayout = payouts.find((p) => p.id === id);
-      const confirmed = window.confirm(
-        `Apakah Anda yakin ingin menandai honor ${targetPayout?.tutor?.name || "Tutor"} sebesar Rp ${(targetPayout?.totalAmount || 0).toLocaleString("id-ID")} sebagai DIBAYAR? Status yang sudah dibayar akan dikunci.`
-      );
-      if (!confirmed) return;
-    }
     setUpdatingPayoutId(id);
     const res = await updatePayoutStatus(id, status);
     setUpdatingPayoutId(null);
@@ -81,6 +76,7 @@ export default function HonorManagerClient({
       setPayouts((prev) =>
         prev.map((p) => (p.id === id ? { ...p, status } : p))
       );
+      setConfirmPayTarget(null);
     } else {
       toast.error("Gagal Memperbarui", res.message);
     }
@@ -287,12 +283,13 @@ export default function HonorManagerClient({
                         {!isPaid && (
                           <button
                             disabled={updatingPayoutId === p.id}
-                            onClick={() =>
-                              handleUpdateStatus(
-                                p.id,
-                                p.status === "DRAFT" ? "DISETUJUI" : "DIBAYAR"
-                              )
-                            }
+                            onClick={() => {
+                              if (p.status === "DRAFT") {
+                                handleUpdateStatus(p.id, "DISETUJUI");
+                              } else {
+                                setConfirmPayTarget(p);
+                              }
+                            }}
                             className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-[#09408C] text-white hover:bg-[#0E3571] transition-colors disabled:opacity-50"
                           >
                             {updatingPayoutId === p.id
@@ -412,6 +409,34 @@ export default function HonorManagerClient({
           </form>
         </div>
       )}
+
+      {/* Modal Konfirmasi Pembayaran Honor Tutor */}
+      <ConfirmModal
+        open={Boolean(confirmPayTarget)}
+        title="Tandai Honor Sudah Dibayar?"
+        description={
+          <>
+            Anda akan menandai honor{" "}
+            <strong className="text-[#1B2A41]">
+              {confirmPayTarget?.tutor?.name || "Tutor"}
+            </strong>{" "}
+            sebesar{" "}
+            <strong className="text-[#1F6F4A]">
+              Rp {(confirmPayTarget?.totalAmount || 0).toLocaleString("id-ID")}
+            </strong>{" "}
+            sebagai <strong>DIBAYAR</strong>. Status yang sudah dibayar akan dikunci.
+          </>
+        }
+        confirmLabel="Ya, Tandai Dibayar"
+        variant="success"
+        loading={Boolean(updatingPayoutId)}
+        onConfirm={() => {
+          if (confirmPayTarget) {
+            handleUpdateStatus(confirmPayTarget.id, "DIBAYAR");
+          }
+        }}
+        onCancel={() => setConfirmPayTarget(null)}
+      />
     </div>
   );
 }

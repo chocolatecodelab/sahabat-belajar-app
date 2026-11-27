@@ -25,6 +25,7 @@ import { recordManualPayment, updatePaymentStatus } from "@/actions/pembayaran";
 import { PaymentStatus } from "@prisma/client";
 import { formatDate } from "@/lib/date";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 export default function PaymentManagerClient({
   initialPayments,
@@ -44,6 +45,7 @@ export default function PaymentManagerClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
   const [previewProof, setPreviewProof] = useState<any | null>(null);
+  const [confirmVerifyPayment, setConfirmVerifyPayment] = useState<any | null>(null);
 
   useEffect(() => {
     setPayments(initialPayments);
@@ -124,6 +126,7 @@ export default function PaymentManagerClient({
             : item
         )
       );
+      setConfirmVerifyPayment(null);
       router.refresh();
     } else {
       toast.error("Gagal Memverifikasi", res.message);
@@ -351,7 +354,7 @@ export default function PaymentManagerClient({
                       )}
                       {!isPaid && (
                         <button
-                          onClick={() => handleVerifyPayment(p)}
+                          onClick={() => setConfirmVerifyPayment(p)}
                           disabled={verifyingId === p.id}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1F6F4A] text-white text-xs font-semibold hover:bg-[#18583B] transition-colors disabled:opacity-50"
                         >
@@ -476,7 +479,7 @@ export default function PaymentManagerClient({
                             )}
                             {!isPaid && (
                               <button
-                                onClick={() => handleVerifyPayment(p)}
+                                onClick={() => setConfirmVerifyPayment(p)}
                                 disabled={verifyingId === p.id}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#1F6F4A] text-white text-xs font-semibold hover:bg-[#18583B] transition-colors disabled:opacity-50 cursor-pointer"
                                 title="Verifikasi pembayaran mandiri menjadi LUNAS"
@@ -517,6 +520,38 @@ export default function PaymentManagerClient({
           </>
         )}
       </div>
+
+      {/* Modal Konfirmasi Verifikasi Pembayaran Lunas */}
+      <ConfirmModal
+        open={Boolean(confirmVerifyPayment)}
+        title="Verifikasi Pembayaran Lunas?"
+        description={
+          <>
+            Konfirmasi bahwa pembayaran dari{" "}
+            <strong className="text-[#1B2A41]">
+              {confirmVerifyPayment?.studentPackage?.student?.name || "Siswa"}
+            </strong>{" "}
+            sebesar{" "}
+            <strong className="text-[#1F6F4A]">
+              Rp {(confirmVerifyPayment?.amount || 0).toLocaleString("id-ID")}
+            </strong>{" "}
+            untuk paket{" "}
+            <strong>
+              {confirmVerifyPayment?.studentPackage?.package?.name || "Paket Belajar"}
+            </strong>{" "}
+            sudah diterima dengan benar.
+          </>
+        }
+        confirmLabel="Ya, Verifikasi Lunas"
+        variant="success"
+        loading={Boolean(verifyingId)}
+        onConfirm={() => {
+          if (confirmVerifyPayment) {
+            handleVerifyPayment(confirmVerifyPayment);
+          }
+        }}
+        onCancel={() => setConfirmVerifyPayment(null)}
+      />
 
       {/* Kwitansi Modal (Printable) */}
       {selectedReceipt && (

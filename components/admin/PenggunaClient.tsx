@@ -7,6 +7,7 @@ import { getUsers, createUser, updateUser, deleteUser } from "@/actions/pengguna
 import { formatDate } from "@/lib/date";
 import PengaturanTabs from "@/components/admin/PengaturanTabs";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 type UserItem = {
   id: string;
@@ -38,6 +39,8 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
   const [editing, setEditing] = useState<UserItem | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState<UserItem | null>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   useEffect(() => {
     setUsers(initialUsers);
@@ -130,10 +133,13 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
   };
 
   const handleDelete = async (id: string) => {
+    setIsDeletingUser(true);
     const result = await deleteUser(id);
+    setIsDeletingUser(false);
     if (result.success) {
       toast.success("Pengguna Dihapus", "Akun pengguna berhasil dihapus.");
       setUsers((prev) => prev.filter((u) => u.id !== id));
+      setConfirmDeleteUser(null);
       const res = await getUsers(1, 50);
       setUsers(res.data);
       router.refresh();
@@ -296,7 +302,7 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleDelete(u.id)}
+                            onClick={() => setConfirmDeleteUser(u)}
                             className="p-1.5 rounded-xl border border-[#D5DDEB] hover:bg-[#FBE9E5] hover:border-[#B4381F]/30 text-[#B4381F] transition-colors cursor-pointer"
                             title="Hapus Pengguna"
                             aria-label={`Hapus pengguna ${u.name}`}
@@ -414,6 +420,28 @@ export default function PenggunaClient({ users: initialUsers, roles }: PenggunaC
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Hapus Pengguna */}
+      <ConfirmModal
+        open={Boolean(confirmDeleteUser)}
+        title="Hapus Akun Pengguna?"
+        description={
+          <>
+            Akun{" "}
+            <strong className="text-[#1B2A41]">{confirmDeleteUser?.name}</strong>{" "}
+            ({confirmDeleteUser?.email}) akan dihapus permanen dan tidak lagi dapat masuk ke sistem.
+          </>
+        }
+        confirmLabel="Ya, Hapus Pengguna"
+        variant="danger"
+        loading={isDeletingUser}
+        onConfirm={() => {
+          if (confirmDeleteUser) {
+            handleDelete(confirmDeleteUser.id);
+          }
+        }}
+        onCancel={() => setConfirmDeleteUser(null)}
+      />
     </div>
   );
 }

@@ -25,6 +25,7 @@ import { convertLeadToStudent } from "@/actions/siswa";
 import { LeadStatus } from "@prisma/client";
 import { formatDate } from "@/lib/date";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 const STATUS_CONFIG: Record<
   LeadStatus,
@@ -81,6 +82,7 @@ export default function LeadManagerClient({
   const [notes, setNotes] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [confirmConvertLead, setConfirmConvertLead] = useState<any | null>(null);
 
   const filteredLeads = leads.filter((l) => {
     const matchStatus = selectedStatus === "ALL" || l.status === selectedStatus;
@@ -132,6 +134,7 @@ export default function LeadManagerClient({
             : l
         )
       );
+      setConfirmConvertLead(null);
       setSelectedLead(null);
     } else {
       toast.error("Gagal Konversi", res.message);
@@ -296,7 +299,7 @@ export default function LeadManagerClient({
 
                       {lead.status !== "DAFTAR" ? (
                         <button
-                          onClick={() => handleConvertToStudent(lead.id)}
+                          onClick={() => setConfirmConvertLead(lead)}
                           disabled={isConverting}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#09408C] text-white text-xs font-semibold hover:bg-[#0E3571] transition-colors shadow-xs"
                         >
@@ -411,7 +414,7 @@ export default function LeadManagerClient({
 
                           {lead.status !== "DAFTAR" ? (
                             <button
-                              onClick={() => handleConvertToStudent(lead.id)}
+                              onClick={() => setConfirmConvertLead(lead)}
                               disabled={isConverting}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#09408C] text-white font-semibold hover:bg-[#0E3571] transition-colors shadow-xs"
                               title="Konversi langsung menjadi siswa aktif"
@@ -484,7 +487,7 @@ export default function LeadManagerClient({
               {selectedLead.status !== "DAFTAR" ? (
                 <button
                   type="button"
-                  onClick={() => handleConvertToStudent(selectedLead.id)}
+                  onClick={() => setConfirmConvertLead(selectedLead)}
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#09408C] hover:bg-[#EAF1FA] rounded-xl transition-colors cursor-pointer"
                 >
                   <UserPlus size={14} />
@@ -513,6 +516,29 @@ export default function LeadManagerClient({
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Jadikan Siswa */}
+      <ConfirmModal
+        open={Boolean(confirmConvertLead)}
+        title="Konversi Prospek Menjadi Siswa?"
+        description={
+          <>
+            Anda akan mendaftarkan{" "}
+            <strong className="text-[#1B2A41]">{confirmConvertLead?.name}</strong>{" "}
+            sebagai siswa aktif. Status prospek akan berubah menjadi{" "}
+            <strong>Daftar</strong> dan Anda dapat langsung mengatur paket belajarnya.
+          </>
+        }
+        confirmLabel="Ya, Jadikan Siswa"
+        variant="primary"
+        loading={isConverting}
+        onConfirm={() => {
+          if (confirmConvertLead) {
+            handleConvertToStudent(confirmConvertLead.id);
+          }
+        }}
+        onCancel={() => setConfirmConvertLead(null)}
+      />
     </div>
   );
 }
